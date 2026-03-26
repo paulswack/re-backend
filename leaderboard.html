@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-title="Leaderboard — RE Back Office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard — RE Back Office</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .podium {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 16px; margin-bottom: 32px; padding: 20px 0;
+    }
+    .podium-item {
+      text-align: center; flex: 0 0 180px;
+    }
+    .podium-avatar {
+      width: 64px; height: 64px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 800; color: #fff;
+      margin: 0 auto 10px; position: relative;
+    }
+    .podium-avatar.first { width: 80px; height: 80px; font-size: 1.4rem; }
+    .podium-rank {
+      position: absolute; bottom: -6px; right: -6px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--white); color: var(--gray-900);
+      font-size: .72rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,.1); border: 2px solid var(--white);
+    }
+    .podium-rank.gold { background: #FEF3C7; color: #92400E; }
+    .podium-rank.silver { background: var(--gray-100); color: var(--gray-600); }
+    .podium-rank.bronze { background: #FED7AA; color: #9A3412; }
+    .podium-name { font-size: .92rem; font-weight: 700; color: var(--gray-900); }
+    .podium-stat { font-size: .78rem; color: var(--gray-400); margin-top: 2px; }
+    .podium-bar {
+      margin-top: 12px; border-radius: 10px 10px 0 0;
+      width: 100%;
+    }
+    .podium-bar.first { height: 120px; background: linear-gradient(180deg, #FEF3C7, #FDE68A); }
+    .podium-bar.second { height: 90px; background: linear-gradient(180deg, var(--gray-100), var(--gray-200)); }
+    .podium-bar.third { height: 65px; background: linear-gradient(180deg, #FED7AA, #FDBA74); }
+
+    .time-filter {
+      display: flex; gap: 8px; margin-bottom: 24px;
+    }
+    .time-filter button {
+      padding: 7px 16px; border-radius: 8px; font-size: .82rem; font-weight: 600;
+      border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600);
+      cursor: pointer; transition: all .15s;
+    }
+    .time-filter button:hover { border-color: var(--gray-300); background: var(--gray-50); }
+    .time-filter button.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+
+    .rank-number {
+      width: 28px; height: 28px; border-radius: 8px; font-size: .75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: var(--gray-50); color: var(--gray-500);
+    }
+
+    @media (max-width: 768px) {
+      .podium { flex-direction: column; align-items: center; }
+      .podium-item { flex: none; width: 100%; max-width: 240px; }
+      .podium-bar { height: 16px !important; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <div><div class="sidebar-logo-text">RE Back Office</div><div class="sidebar-logo-sub">Real Estate Tools</div></div>
+      </div>
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="sidebarAvatar">--</div>
+        <div><div class="sidebar-user-name" id="sidebarName">Loading...</div><div class="sidebar-user-role" id="sidebarRole"></div></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">Menu</div>
+        <a href="dashboard.html" class="nav-item" data-page="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</a>
+        <a href="transactions.html" class="nav-item" data-page="transactions.html"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Transactions</a>
+        <a href="listings.html" class="nav-item" data-page="listings.html"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Listings</a>
+        <a href="leaderboard.html" class="nav-item" data-page="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>Leaderboard</a>
+        <a href="tax-center.html" class="nav-item" data-page="tax-center.html"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>Tax Center</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="topbar-title">
+          <h1>Leaderboard</h1>
+          <p>Team performance rankings based on closed deals.</p>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <!-- Time Filter -->
+        <div class="time-filter" id="timeFilter">
+          <button data-range="all" class="active">All Time</button>
+          <button data-range="year">This Year</button>
+          <button data-range="quarter">This Quarter</button>
+          <button data-range="month">This Month</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="lbStats"></div>
+
+        <!-- Podium -->
+        <div class="card" style="padding:32px 24px;">
+          <div id="podiumSection"></div>
+        </div>
+
+        <!-- Rankings Table -->
+        <div class="card" style="margin-top:20px;">
+          <div style="padding:20px 24px 12px;">
+            <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Full Rankings</h3>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Agent</th>
+                  <th>Closed Deals</th>
+                  <th>Total Volume</th>
+                  <th>Avg Deal</th>
+                  <th>Active</th>
+                  <th>Pending</th>
+                </tr>
+              </thead>
+              <tbody id="rankTableBody"></tbody>
+            </table>
+          </div>
+          <div id="rankEmpty" class="empty-state" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+            <h3>No data yet</h3>
+            <p>Close some deals to see rankings.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/leaderboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" data-title="Tax Center — RE Back Office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Center — RE Back Office</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .tab-bar {
+      display: flex; gap: 0; margin-bottom: 24px;
+      border-bottom: 2px solid var(--gray-100);
+    }
+    .tab-btn {
+      padding: 10px 20px; font-size: .88rem; font-weight: 600;
+      color: var(--gray-400); background: none; border: none;
+      cursor: pointer; position: relative; transition: color .15s;
+    }
+    .tab-btn:hover { color: var(--gray-600); }
+    .tab-btn.active { color: var(--indigo); }
+    .tab-btn.active::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+      height: 2px; background: var(--indigo); border-radius: 2px;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .category-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+    .category-card {
+      background: var(--white); border-radius: 12px; padding: 16px;
+      box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 12px;
+    }
+    .category-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .category-name { font-size: .85rem; font-weight: 600; color: var(--gray-700); }
+    .category-amount { font-size: 1rem; font-weight: 800; color: var(--gray-900); }
+
+    .expense-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px; border-bottom: 1px solid var(--gray-50);
+    }
+    .expense-row:last-child { border-bottom: none; }
+    .expense-cat-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .summary-bar {
+      display: flex; gap: 0; height: 8px; border-radius: 8px; overflow: hidden;
+      margin-top: 8px; margin-bottom: 4px;
+    }
+    .summary-bar div { height: 100%; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <div><div class="sidebar-logo-text">RE Back Office</div><div class="sidebar-logo-sub">Real Estate Tools</div></div>
+      </div>
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="sidebarAvatar">--</div>
+        <div><div class="sidebar-user-name" id="sidebarName">Loading...</div><div class="sidebar-user-role" id="sidebarRole"></div></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">Menu</div>
+        <a href="dashboard.html" class="nav-item" data-page="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</a>
+        <a href="transactions.html" class="nav-item" data-page="transactions.html"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Transactions</a>
+        <a href="listings.html" class="nav-item" data-page="listings.html"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Listings</a>
+        <a href="leaderboard.html" class="nav-item" data-page="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>Leaderboard</a>
+        <a href="tax-center.html" class="nav-item" data-page="tax-center.html"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>Tax Center</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="topbar-title">
+          <h1>Tax Center</h1>
+          <p>Track income and expenses for tax purposes.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" id="addExpenseBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add Entry
+          </button>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <!-- Summary Stats -->
+        <div class="stats-grid" id="taxStats"></div>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="income">Income</button>
+          <button class="tab-btn" data-tab="expenses">Expenses</button>
+          <button class="tab-btn" data-tab="all">All Entries</button>
+        </div>
+
+        <!-- Income Tab -->
+        <div class="tab-content active" id="tab-income">
+          <div class="card">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Commission Income</h3>
+              <p style="font-size:.78rem;color:var(--gray-400);">Income from closed transactions (auto-calculated at 3% commission).</p>
+            </div>
+            <div id="incomeList"></div>
+          </div>
+        </div>
+
+        <!-- Expenses Tab -->
+        <div class="tab-content" id="tab-expenses">
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Expense Breakdown</h3>
+            </div>
+            <div style="padding:0 24px 20px;">
+              <div class="summary-bar" id="expenseBar"></div>
+              <div class="category-grid" id="categoryGrid"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">All Expenses</h3>
+            </div>
+            <div id="expenseList"></div>
+          </div>
+        </div>
+
+        <!-- All Entries Tab -->
+        <div class="tab-content" id="tab-all">
+          <div class="card">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="allEntriesBody"></tbody>
+              </table>
+            </div>
+            <div id="allEmpty" class="empty-state" style="display:none;">
+              <h3>No entries yet</h3>
+              <p>Add income or expenses to start tracking.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Entry Modal -->
+  <div class="modal-overlay" id="entryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Entry</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="entryForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="entryType">Type</label>
+              <select id="entryType">
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="entryCategory">Category</label>
+              <select id="entryCategory">
+                <option value="Marketing">Marketing</option>
+                <option value="Office">Office Supplies</option>
+                <option value="Travel">Travel / Mileage</option>
+                <option value="Technology">Technology / Software</option>
+                <option value="Education">Education / CE</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Dues">Dues &amp; Memberships</option>
+                <option value="Commission">Commission</option>
+                <option value="Referral Fee">Referral Fee</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="entryAmount">Amount</label>
+              <input type="number" id="entryAmount" required placeholder="500" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label for="entryDate">Date</label>
+              <input type="date" id="entryDate" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="entryDescription">Description</label>
+            <input type="text" id="entryDescription" placeholder="e.g. Facebook ad spend for March">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/tax-center.js"></script>
+</body>
+</html>

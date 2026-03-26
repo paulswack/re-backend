@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" data-title="RE Back Office — Real Estate Tools">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RE Back Office — Real Estate Tools</title>
+  <style>
+    :root {
+      --indigo: #6366F1;
+      --indigo-dark: #4F46E5;
+      --violet: #8B5CF6;
+      --gray-50: #F8FAFC;
+      --gray-100: #F1F5F9;
+      --gray-200: #E2E8F0;
+      --gray-300: #CBD5E1;
+      --gray-400: #94A3B8;
+      --gray-500: #64748B;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1E293B;
+      --gray-900: #0F172A;
+      --emerald: #10B981;
+      --rose: #F43F5E;
+      --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-family: var(--font); font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body { background: #fff; color: var(--gray-800); line-height: 1.6; }
+    a { text-decoration: none; color: inherit; }
+
+    /* -- Fixed Nav -- */
+    .landing-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 40px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .landing-nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1rem; font-weight: 800; color: #fff;
+    }
+
+    .landing-nav-logo-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .landing-nav-logo-mark svg { width: 16px; height: 16px; fill: #fff; }
+
+    .landing-nav-links { display: flex; align-items: center; gap: 28px; }
+
+    .landing-nav-links a {
+      font-size: .88rem; font-weight: 500; color: rgba(255,255,255,.7);
+      transition: color .15s;
+    }
+
+    .landing-nav-links a:hover { color: #fff; }
+
+    .landing-nav-links .nav-cta {
+      background: var(--indigo); color: #fff; padding: 8px 20px;
+      border-radius: 8px; font-weight: 600; font-size: .85rem;
+      transition: background .15s;
+    }
+
+    .landing-nav-links .nav-cta:hover { background: var(--indigo-dark); }
+
+    /* -- Hero -- */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--indigo), var(--violet), #6D28D9);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,.08), transparent 60%),
+                  radial-gradient(ellipse at 70% 50%, rgba(139,92,246,.2), transparent 60%);
+    }
+
+    .hero-content { position: relative; max-width: 680px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
+      padding: 6px 16px; border-radius: 99px;
+      font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.9);
+      margin-bottom: 24px; border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .hero h1 {
+      font-size: 3.2rem; font-weight: 900; color: #fff;
+      line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 20px;
+    }
+
+    .hero p {
+      font-size: 1.15rem; color: rgba(255,255,255,.75);
+      max-width: 520px; margin: 0 auto 32px;
+    }
+
+    .hero-stats {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap; margin-bottom: 36px;
+    }
+
+    .hero-stat-pill {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15);
+      padding: 8px 18px; border-radius: 99px;
+      font-size: .82rem; font-weight: 600; color: #fff;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-stat-pill strong { font-weight: 800; }
+
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; color: var(--indigo); padding: 14px 32px;
+      border-radius: 12px; font-size: 1rem; font-weight: 700;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    }
+
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.2); }
+
+    .hero-cta svg { width: 18px; height: 18px; fill: var(--indigo); }
+
+    /* -- Features -- */
+    .features {
+      padding: 100px 24px;
+      max-width: 1100px; margin: 0 auto;
+      text-align: center;
+    }
+
+    .features h2 {
+      font-size: 2rem; font-weight: 800; color: var(--gray-900);
+      letter-spacing: -.5px; margin-bottom: 12px;
+    }
+
+    .features > p {
+      font-size: 1rem; color: var(--gray-400); margin-bottom: 48px;
+      max-width: 500px; margin-left: auto; margin-right: auto;
+    }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px; text-align: left;
+    }
+
+    .feature-card {
+      background: var(--gray-50); border-radius: 16px; padding: 28px;
+      border: 1px solid var(--gray-100); transition: transform .15s, box-shadow .15s;
+    }
+
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .feature-icon svg { width: 24px; height: 24px; fill: currentColor; }
+    .feature-icon.indigo { background: #EEF2FF; color: var(--indigo); }
+    .feature-icon.emerald { background: #ECFDF5; color: var(--emerald); }
+    .feature-icon.amber { background: #FFFBEB; color: #F59E0B; }
+    .feature-icon.violet { background: #F5F3FF; color: var(--violet); }
+
+    .feature-card h3 {
+      font-size: 1.05rem; font-weight: 700; color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .feature-card p { font-size: .88rem; color: var(--gray-500); line-height: 1.5; }
+
+    /* -- Pricing -- */
+    .pricing {
+      padding: 100px 24px; background: var(--gray-50);
+      text-align: center;
+    }
+
+    .pricing h2 {
+      font-size: 2rem; font-weight: 800; color: var(--gray-900);
+      letter-spacing: -.5px; margin-bottom: 12px;
+    }
+
+    .pricing > p { font-size: 1rem; color: var(--gray-400); margin-bottom: 40px; }
+
+    .pricing-card {
+      background: #fff; border-radius: 20px; padding: 40px;
+      max-width: 380px; margin: 0 auto;
+      box-shadow: 0 8px 30px rgba(99,102,241,.1);
+      border: 2px solid var(--indigo);
+    }
+
+    .pricing-amount {
+      font-size: 3rem; font-weight: 900; color: var(--gray-900);
+      line-height: 1;
+    }
+
+    .pricing-amount span { font-size: 1rem; font-weight: 500; color: var(--gray-400); }
+
+    .pricing-label {
+      font-size: .88rem; color: var(--gray-400); margin-top: 4px; margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      list-style: none; text-align: left; margin-bottom: 28px;
+    }
+
+    .pricing-features li {
+      padding: 8px 0; font-size: .9rem; color: var(--gray-600);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .pricing-features li::before {
+      content: '';
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #ECFDF5;
+      flex-shrink: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310B981'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
+      background-size: 14px; background-repeat: no-repeat; background-position: center;
+    }
+
+    .pricing-cta {
+      display: block; width: 100%;
+      background: var(--indigo); color: #fff; padding: 14px;
+      border-radius: 10px; font-size: 1rem; font-weight: 700;
+      border: none; cursor: pointer; transition: background .15s;
+    }
+
+    .pricing-cta:hover { background: var(--indigo-dark); }
+
+    /* -- Login Section -- */
+    .login-section {
+      padding: 100px 24px; max-width: 440px; margin: 0 auto;
+      text-align: center;
+    }
+
+    .login-section h2 {
+      font-size: 1.8rem; font-weight: 800; color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .login-section > p { font-size: .9rem; color: var(--gray-400); margin-bottom: 32px; }
+
+    .login-card {
+      background: #fff; border-radius: 16px; padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.06);
+      border: 1px solid var(--gray-100); text-align: left;
+    }
+
+    .login-card .form-group { margin-bottom: 16px; }
+
+    .login-card label {
+      display: block; font-size: .82rem; font-weight: 600;
+      color: var(--gray-700); margin-bottom: 6px;
+    }
+
+    .login-card input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-size: .9rem; color: var(--gray-800); background: #fff;
+      transition: border-color .15s;
+    }
+
+    .login-card input:focus {
+      border-color: var(--indigo); outline: none;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+
+    .login-btn {
+      display: block; width: 100%;
+      background: var(--indigo); color: #fff; padding: 12px;
+      border-radius: 8px; font-size: .95rem; font-weight: 700;
+      border: none; cursor: pointer; transition: background .15s;
+      margin-top: 8px;
+    }
+
+    .login-btn:hover { background: var(--indigo-dark); }
+
+    .login-error {
+      color: var(--rose); font-size: .82rem; font-weight: 600;
+      margin-top: 10px; display: none;
+    }
+
+    .demo-hint {
+      margin-top: 16px; padding: 12px;
+      background: var(--gray-50); border-radius: 8px;
+      font-size: .78rem; color: var(--gray-500); text-align: center;
+    }
+
+    .demo-hint code {
+      background: var(--gray-100); padding: 2px 6px; border-radius: 4px;
+      font-family: monospace; font-size: .78rem; color: var(--indigo);
+    }
+
+    /* -- Footer -- */
+    .landing-footer {
+      text-align: center; padding: 40px 24px;
+      border-top: 1px solid var(--gray-100);
+      font-size: .82rem; color: var(--gray-400);
+    }
+
+    /* -- Toast -- */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: .88rem; font-weight: 600; color: #fff;
+      background: var(--gray-900); z-index: 9999;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      animation: toastIn .3s ease;
+    }
+    .toast.success { background: var(--emerald); }
+    .toast.error { background: var(--rose); }
+    @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    @media (max-width: 768px) {
+      .landing-nav { padding: 12px 20px; }
+      .landing-nav-links a:not(.nav-cta) { display: none; }
+      .hero h1 { font-size: 2rem; }
+      .hero p { font-size: 1rem; }
+      .hero-stats { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="landing-nav">
+    <div class="landing-nav-logo">
+      <div class="landing-nav-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+      RE Back Office
+    </div>
+    <div class="landing-nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#login" class="nav-cta">Sign In</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Built for real estate professionals</div>
+      <h1>The Real Estate Agent's Back Office</h1>
+      <p>Track transactions, manage listings, monitor team performance, and stay on top of your taxes — all in one clean dashboard.</p>
+      <div class="hero-stats">
+        <div class="hero-stat-pill"><strong>38+</strong> Features</div>
+        <div class="hero-stat-pill"><strong>Real-time</strong> Analytics</div>
+        <div class="hero-stat-pill"><strong>Tax</strong> Tracking</div>
+        <div class="hero-stat-pill"><strong>Team</strong> Leaderboard</div>
+      </div>
+      <a href="#login" class="hero-cta">
+        Get Started
+        <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <h2>Everything You Need</h2>
+    <p>Powerful tools designed specifically for real estate agents and teams.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon indigo">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        </div>
+        <h3>Transaction Tracking</h3>
+        <p>Monitor every deal from contract to close. Track status, agent assignments, notes, and key dates in one place.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon emerald">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </div>
+        <h3>Listing Management</h3>
+        <p>Keep all your active, pending, and sold listings organized. Beds, baths, price, photos, and agent details at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon amber">
+          <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+        </div>
+        <h3>Team Leaderboard</h3>
+        <p>See who is closing the most deals and generating the highest volume. Motivate your team with real-time rankings.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon violet">
+          <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+        </div>
+        <h3>Tax Center</h3>
+        <p>Track income and expenses by category. Always be prepared for tax season with organized financial records.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <h2>Simple Pricing</h2>
+    <p>One plan. Everything included. No surprises.</p>
+    <div class="pricing-card">
+      <div class="pricing-amount">$49<span>/month</span></div>
+      <div class="pricing-label">Per agent, billed monthly</div>
+      <ul class="pricing-features">
+        <li>Unlimited transactions</li>
+        <li>Listing management</li>
+        <li>Team leaderboard</li>
+        <li>Tax tracking &amp; reports</li>
+        <li>Task management</li>
+        <li>Unlimited team members</li>
+      </ul>
+      <button class="pricing-cta" onclick="document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
+    </div>
+  </section>
+
+  <!-- Login -->
+  <section class="login-section" id="login">
+    <h2>Sign In</h2>
+    <p>Access your back office dashboard.</p>
+    <div class="login-card">
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Enter your username" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="login-btn">Sign In</button>
+        <div class="login-error" id="loginError">Invalid username or password.</div>
+      </form>
+      <div class="demo-hint">
+        Demo credentials: <code>admin</code> / <code>admin123</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    RE Back Office &copy; 2026. Built for real estate professionals.
+  </footer>
+
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      // If already logged in, redirect to dashboard
+      if (Auth.isLoggedIn()) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      var form = document.getElementById('loginForm');
+      var errorEl = document.getElementById('loginError');
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorEl.style.display = 'none';
+
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+
+        if (Auth.login(username, password)) {
+          window.location.href = 'dashboard.html';
+        } else {
+          errorEl.style.display = 'block';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

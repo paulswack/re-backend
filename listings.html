@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" data-title="Listings — RE Back Office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listings — RE Back Office</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .listings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .listing-card {
+      background: var(--white); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm); overflow: hidden; cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .listing-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .listing-card-img {
+      height: 160px; background: linear-gradient(135deg, var(--indigo-light), #F5F3FF);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .listing-card-img svg { width: 48px; height: 48px; fill: var(--gray-300); }
+    .listing-card-status {
+      position: absolute; top: 12px; right: 12px;
+    }
+    .listing-card-body { padding: 16px 20px; }
+    .listing-card-price { font-size: 1.25rem; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
+    .listing-card-address { font-size: .88rem; color: var(--gray-600); margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .listing-card-details { display: flex; gap: 16px; font-size: .82rem; color: var(--gray-400); }
+    .listing-card-details span { display: flex; align-items: center; gap: 4px; }
+    .listing-card-footer { padding: 12px 20px; border-top: 1px solid var(--gray-50); display: flex; align-items: center; justify-content: space-between; }
+    .listing-card-agent { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--gray-600); }
+
+    .detail-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 520px;
+      background: var(--white); box-shadow: -8px 0 30px rgba(0,0,0,.08);
+      z-index: 200; transform: translateX(100%); transition: transform .25s ease;
+      display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .detail-panel.open { transform: translateX(0); }
+    .detail-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.3);
+      z-index: 199; opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .detail-overlay.open { opacity: 1; pointer-events: auto; }
+    .detail-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--gray-100); }
+    .detail-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-900); }
+    .detail-body { padding: 20px 24px; flex: 1; }
+    .detail-field { margin-bottom: 16px; }
+    .detail-field-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-400); margin-bottom: 4px; }
+    .detail-field-value { font-size: .9rem; color: var(--gray-800); }
+    .detail-actions { padding: 16px 24px; border-top: 1px solid var(--gray-100); display: flex; gap: 8px; }
+
+    @media (max-width: 768px) {
+      .detail-panel { width: 100%; }
+      .listings-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <div><div class="sidebar-logo-text">RE Back Office</div><div class="sidebar-logo-sub">Real Estate Tools</div></div>
+      </div>
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="sidebarAvatar">--</div>
+        <div><div class="sidebar-user-name" id="sidebarName">Loading...</div><div class="sidebar-user-role" id="sidebarRole"></div></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">Menu</div>
+        <a href="dashboard.html" class="nav-item" data-page="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</a>
+        <a href="transactions.html" class="nav-item" data-page="transactions.html"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Transactions</a>
+        <a href="listings.html" class="nav-item" data-page="listings.html"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Listings</a>
+        <a href="leaderboard.html" class="nav-item" data-page="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>Leaderboard</a>
+        <a href="tax-center.html" class="nav-item" data-page="tax-center.html"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>Tax Center</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="topbar-title">
+          <h1>Listings</h1>
+          <p>Manage your active and past listings.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" id="addListingBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add Listing
+          </button>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <input type="text" id="searchInput" placeholder="Search by address or agent...">
+          <select id="statusFilter">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="sold">Sold</option>
+          </select>
+        </div>
+
+        <!-- Grid -->
+        <div class="listings-grid" id="listingsGrid"></div>
+        <div id="listingsEmpty" class="empty-state" style="display:none;">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <h3>No listings found</h3>
+          <p>Add your first listing to get started.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-overlay" id="listingModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Listing</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="listingForm">
+          <div class="form-group">
+            <label for="lstAddress">Address</label>
+            <input type="text" id="lstAddress" required placeholder="123 Main St, City, ST 12345">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lstPrice">Price</label>
+              <input type="number" id="lstPrice" required placeholder="500000" min="0">
+            </div>
+            <div class="form-group">
+              <label for="lstAgent">Agent</label>
+              <input type="text" id="lstAgent" required placeholder="Agent name">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lstBeds">Beds</label>
+              <input type="number" id="lstBeds" min="0" placeholder="3">
+            </div>
+            <div class="form-group">
+              <label for="lstBaths">Baths</label>
+              <input type="number" id="lstBaths" min="0" step="0.5" placeholder="2">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lstSqft">Sq Ft</label>
+              <input type="number" id="lstSqft" min="0" placeholder="1800">
+            </div>
+            <div class="form-group">
+              <label for="lstStatus">Status</label>
+              <select id="lstStatus">
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="sold">Sold</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="lstDate">Listing Date</label>
+            <input type="date" id="lstDate">
+          </div>
+          <div class="form-group">
+            <label for="lstDescription">Description</label>
+            <textarea id="lstDescription" rows="3" placeholder="Property description..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save Listing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-overlay" id="detailOverlay"></div>
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <h3 id="detailTitle">Listing Detail</h3>
+      <button class="modal-close" id="detailClose">&times;</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+    <div class="detail-actions" id="detailActions"></div>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/listings.js"></script>
+</body>
+</html>
