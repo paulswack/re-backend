@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-title="My Profile — RE Back Office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile — RE Back Office</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        <div><div class="sidebar-logo-text">RE Back Office</div><div class="sidebar-logo-sub">Real Estate Tools</div></div>
+      </div>
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="sidebarAvatar">--</div>
+        <div><div class="sidebar-user-name" id="sidebarName">Loading...</div><div class="sidebar-user-role" id="sidebarRole"></div></div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">Menu</div>
+        <a href="dashboard.html" class="nav-item" data-page="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</a>
+        <a href="transactions.html" class="nav-item" data-page="transactions.html"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Transactions</a>
+        <a href="listings.html" class="nav-item" data-page="listings.html"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Listings</a>
+        <a href="leaderboard.html" class="nav-item" data-page="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>Leaderboard</a>
+        <a href="tax-center.html" class="nav-item" data-page="tax-center.html"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>Tax Center</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="topbar-title">
+          <h1>My Profile</h1>
+          <p>Manage your personal information</p>
+        </div>
+        <div class="topbar-actions"></div>
+      </div>
+
+      <div class="page-body" id="pageBody">
+        <div style="max-width:720px;">
+
+          <!-- Profile header card -->
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:32px 28px;display:flex;align-items:center;gap:20px;">
+              <div id="profileAvatar" class="agent-avatar a" style="width:72px;height:72px;border-radius:16px;font-size:1.5rem;font-weight:800;"></div>
+              <div>
+                <div id="profileName" style="font-size:1.2rem;font-weight:800;color:var(--gray-900);"></div>
+                <div id="profileRole" style="font-size:.85rem;color:var(--gray-500);margin-top:2px;"></div>
+                <div id="profileUsername" style="font-size:.78rem;color:var(--gray-400);margin-top:2px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile form card -->
+          <div class="card">
+            <div style="padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Profile Details</h3>
+              <p style="font-size:.78rem;color:var(--gray-400);margin-top:2px;">Update your personal info below</p>
+            </div>
+            <div style="padding:20px 24px;">
+              <form id="profileForm">
+                <div class="form-group">
+                  <label for="pDisplayName">Display Name</label>
+                  <input type="text" id="pDisplayName" required>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="pPhone">Phone</label>
+                    <input type="tel" id="pPhone" placeholder="(555) 123-4567">
+                  </div>
+                  <div class="form-group">
+                    <label for="pEmail">Email</label>
+                    <input type="email" id="pEmail" placeholder="you@example.com">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="pLicense">License #</label>
+                    <input type="text" id="pLicense" placeholder="RE-12345">
+                  </div>
+                  <div class="form-group">
+                    <label for="pYears">Years of Experience</label>
+                    <input type="number" id="pYears" min="0" max="60" placeholder="0">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="pSpecialties">Specialties <span style="font-weight:400;color:var(--gray-400);">(comma-separated)</span></label>
+                  <input type="text" id="pSpecialties" placeholder="Luxury homes, First-time buyers, Commercial">
+                </div>
+                <div class="form-group">
+                  <label for="pBio">Bio</label>
+                  <textarea id="pBio" rows="4" placeholder="Tell clients about yourself..."></textarea>
+                </div>
+              </form>
+            </div>
+            <div style="padding:16px 24px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;">
+              <button class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

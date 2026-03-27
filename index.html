@@ -401,20 +401,38 @@
 
   <!-- Pricing -->
   <section class="pricing" id="pricing">
-    <h2>Simple Pricing</h2>
-    <p>One plan. Everything included. No surprises.</p>
-    <div class="pricing-card">
-      <div class="pricing-amount">$49<span>/month</span></div>
-      <div class="pricing-label">Per agent, billed monthly</div>
-      <ul class="pricing-features">
-        <li>Unlimited transactions</li>
-        <li>Listing management</li>
-        <li>Team leaderboard</li>
-        <li>Tax tracking &amp; reports</li>
-        <li>Task management</li>
-        <li>Unlimited team members</li>
-      </ul>
-      <button class="pricing-cta" onclick="document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
+    <h2>Choose Your Plan</h2>
+    <p>Everything included in both plans. Pick what fits your business.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;margin:0 auto">
+      <!-- Solo Agent -->
+      <div class="pricing-card">
+        <div class="pricing-amount">$49<span>/month</span></div>
+        <div class="pricing-label">Solo Agent</div>
+        <ul class="pricing-features">
+          <li>Unlimited transactions</li>
+          <li>Listing management</li>
+          <li>Full tax center &amp; mileage</li>
+          <li>Leaderboard</li>
+          <li>Agent profile &amp; goals</li>
+          <li>Receipt uploads</li>
+        </ul>
+        <button class="pricing-cta" onclick="selectPlan('solo');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Solo — $49/mo</button>
+      </div>
+      <!-- Team -->
+      <div class="pricing-card" style="border:2px solid rgba(255,255,255,.3);position:relative">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:.72rem;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap">Most Popular</div>
+        <div class="pricing-amount">$79<span>/month</span></div>
+        <div class="pricing-label">Team Lead</div>
+        <ul class="pricing-features">
+          <li>Everything in Solo</li>
+          <li>Unlimited team members</li>
+          <li>Team leaderboard &amp; rankings</li>
+          <li>Team goals tracking</li>
+          <li>Manage agents &amp; roles</li>
+          <li>Team announcements</li>
+        </ul>
+        <button class="pricing-cta" onclick="selectPlan('team');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Team — $79/mo</button>
+      </div>
     </div>
   </section>
 
@@ -422,6 +440,7 @@
   <section class="login-section" id="login">
     <h2>Sign In</h2>
     <p>Access your back office dashboard.</p>
+    <div id="planBanner" style="display:none;max-width:400px;margin:0 auto 16px;padding:12px 20px;border-radius:10px;background:rgba(99,102,241,.08);color:var(--indigo);font-size:.92rem;font-weight:700;text-align:center"></div>
     <div class="login-card">
       <form id="loginForm">
         <div class="form-group">
@@ -436,7 +455,7 @@
         <div class="login-error" id="loginError">Invalid username or password.</div>
       </form>
       <div class="demo-hint">
-        Demo credentials: <code>admin</code> / <code>admin123</code>
+        Demo: <code>admin</code> / <code>admin123</code> (Team Lead)
       </div>
     </div>
   </section>
@@ -456,6 +475,16 @@
         return;
       }
 
+      var selectedPlan = null;
+      window.selectPlan = function (mode) {
+        selectedPlan = mode;
+        var banner = document.getElementById('planBanner');
+        if (banner) {
+          banner.style.display = 'block';
+          banner.textContent = mode === 'team' ? '👥 Team Plan — $79/mo' : '🏠 Solo Agent — $49/mo';
+        }
+      };
+
       var form = document.getElementById('loginForm');
       var errorEl = document.getElementById('loginError');
 
@@ -467,6 +496,9 @@
         var password = document.getElementById('password').value;
 
         if (Auth.login(username, password)) {
+          if (selectedPlan) {
+            localStorage.setItem('reb_plan_mode', selectedPlan);
+          }
           window.location.href = 'dashboard.html';
         } else {
           errorEl.style.display = 'block';

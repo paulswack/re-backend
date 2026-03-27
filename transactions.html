@@ -6,41 +6,223 @@
   <title>Transactions — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .detail-panel {
-      position: fixed; top: 0; right: 0; bottom: 0; width: 520px;
-      background: var(--white); box-shadow: -8px 0 30px rgba(0,0,0,.08);
-      z-index: 200; transform: translateX(100%); transition: transform .25s ease;
-      display: flex; flex-direction: column; overflow-y: auto;
+    /* ---- Transaction Page Styles ---- */
+
+    /* Stat cards row */
+    .txn-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
     }
-    .detail-panel.open { transform: translateX(0); }
-    .detail-overlay {
-      position: fixed; inset: 0; background: rgba(15,23,42,.3);
-      z-index: 199; opacity: 0; pointer-events: none; transition: opacity .2s;
+    @media (max-width: 1100px) { .txn-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 680px) { .txn-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .txn-stats-grid { grid-template-columns: 1fr; } }
+
+    /* List row column layout */
+    .txn-row-address { flex: 2; min-width: 0; }
+    .txn-row-address-text {
+      font-weight: 600; color: var(--gray-800);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .detail-overlay.open { opacity: 1; pointer-events: auto; }
-    .detail-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 24px; border-bottom: 1px solid var(--gray-100);
+    .txn-row-price { width: 120px; font-weight: 700; color: var(--gray-900); text-align: right; flex-shrink: 0; }
+    .txn-row-agent { width: 180px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .txn-row-agent-name { font-size: .85rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .txn-row-status { width: 100px; flex-shrink: 0; text-align: center; }
+    .txn-row-date { width: 120px; font-size: .82rem; color: var(--gray-400); text-align: right; flex-shrink: 0; }
+
+    /* List header */
+    .list-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 20px;
+      font-size: .7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--gray-400);
+      border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
-    .detail-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--gray-900); }
-    .detail-body { padding: 20px 24px; flex: 1; }
-    .detail-field { margin-bottom: 16px; }
-    .detail-field-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-400); margin-bottom: 4px; }
-    .detail-field-value { font-size: .9rem; color: var(--gray-800); }
-    .detail-actions { padding: 16px 24px; border-top: 1px solid var(--gray-100); display: flex; gap: 8px; }
-    .detail-notes { margin-top: 20px; padding: 16px; background: var(--gray-50); border-radius: 10px; }
-    .detail-notes h4 { font-size: .82rem; font-weight: 700; color: var(--gray-700); margin-bottom: 8px; }
-    .detail-notes p { font-size: .85rem; color: var(--gray-600); line-height: 1.5; }
-    .detail-tasks { margin-top: 20px; }
-    .detail-tasks h4 { font-size: .82rem; font-weight: 700; color: var(--gray-700); margin-bottom: 8px; }
-    .detail-task-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 0; border-bottom: 1px solid var(--gray-50); font-size: .85rem;
+
+    /* ---- Detail View ---- */
+    .detail-back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .88rem; font-weight: 600; color: var(--gray-500);
+      background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 20px;
+      transition: color .15s;
     }
-    .detail-task-item input[type="checkbox"] { accent-color: var(--indigo); }
-    .detail-task-done { text-decoration: line-through; color: var(--gray-400); }
-    @media (max-width: 768px) {
-      .detail-panel { width: 100%; }
+    .detail-back-btn:hover { color: var(--indigo); }
+    .detail-back-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    .detail-header-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .detail-header-accent { height: 4px; background: var(--indigo); }
+    .detail-header-body { padding: 24px 28px 20px; }
+    .detail-header-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+    }
+    .detail-header-address {
+      font-size: 1.35rem; font-weight: 800; color: var(--gray-900); letter-spacing: -.3px;
+    }
+    .detail-header-price {
+      font-size: 1.2rem; font-weight: 700; color: var(--indigo); margin-top: 4px;
+    }
+    .detail-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .detail-blocks-row {
+      display: flex; gap: 0; background: var(--gray-50); border-radius: 12px;
+      overflow: hidden; flex-wrap: wrap;
+    }
+    .detail-block {
+      flex: 1; min-width: 140px; padding: 14px 20px;
+      border-right: 1px solid var(--gray-100);
+    }
+    .detail-block:last-child { border-right: none; }
+    .detail-block-label {
+      font-size: .68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--gray-400); margin-bottom: 4px;
+    }
+    .detail-block-value { font-size: .92rem; font-weight: 600; color: var(--gray-800); }
+
+    /* Parties card */
+    .parties-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+    .parties-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .95rem; font-weight: 700; color: var(--gray-800);
+    }
+    .parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .party-section { padding: 20px 24px; }
+    .party-section:first-child { border-right: 1px solid var(--gray-100); }
+    .party-label {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--gray-400); margin-bottom: 12px;
+    }
+    .party-field { margin-bottom: 10px; }
+    .party-field-label { font-size: .72rem; color: var(--gray-400); margin-bottom: 2px; }
+    .party-field-value { font-size: .88rem; color: var(--gray-800); font-weight: 500; }
+    .party-empty {
+      font-size: .85rem; color: var(--gray-400); font-style: italic; margin-bottom: 12px;
+    }
+    .party-add-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .82rem; font-weight: 600; color: var(--indigo);
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+    .party-add-btn:hover { text-decoration: underline; }
+    .party-edit-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .78rem; font-weight: 600; color: var(--gray-400);
+      background: none; border: none; cursor: pointer; padding: 0; margin-top: 4px;
+    }
+    .party-edit-btn:hover { color: var(--indigo); }
+
+    /* Two-column detail layout */
+    .detail-columns {
+      display: grid; grid-template-columns: 1fr 400px; gap: 24px;
+    }
+    @media (max-width: 960px) {
+      .detail-columns { grid-template-columns: 1fr; }
+      .parties-grid { grid-template-columns: 1fr; }
+      .party-section:first-child { border-right: none; border-bottom: 1px solid var(--gray-100); }
+    }
+
+    /* Activity / Notes */
+    .notes-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .notes-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .92rem; font-weight: 700; color: var(--gray-800);
+    }
+    .note-input-area { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); }
+    .note-input-area textarea {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: .88rem; font-family: inherit;
+      resize: vertical; min-height: 60px; color: var(--gray-800);
+      transition: border-color .15s;
+    }
+    .note-input-area textarea:focus {
+      border-color: var(--indigo); outline: none;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    .note-input-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+    .note-item {
+      padding: 14px 20px; border-bottom: 1px solid var(--gray-50);
+    }
+    .note-item:last-child { border-bottom: none; }
+    .note-meta {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    }
+    .note-author { font-size: .82rem; font-weight: 600; color: var(--gray-700); }
+    .note-time { font-size: .72rem; color: var(--gray-400); }
+    .note-text { font-size: .88rem; color: var(--gray-600); line-height: 1.5; }
+
+    /* Right column cards */
+    .side-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .side-card-header {
+      padding: 12px 16px;
+      font-size: .85rem; font-weight: 700; color: #fff;
+    }
+    .side-card-header.amber { background: var(--amber); }
+    .side-card-header.emerald { background: var(--emerald); }
+    .side-card-body { padding: 16px; }
+    .side-card-body .form-group { margin-bottom: 10px; }
+    .side-card-body .form-group label {
+      display: block; font-size: .78rem; font-weight: 600;
+      color: var(--gray-600); margin-bottom: 3px;
+    }
+    .side-card-body .form-group input,
+    .side-card-body .form-group select,
+    .side-card-body .form-group textarea {
+      width: 100%; padding: 7px 12px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: .85rem; color: var(--gray-800);
+      background: var(--white); transition: border-color .15s;
+    }
+    .side-card-body .form-group input:focus,
+    .side-card-body .form-group select:focus {
+      border-color: var(--indigo); outline: none;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    .side-card-body .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Task / appointment items in right column */
+    .side-list-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; border-bottom: 1px solid var(--gray-50);
+      font-size: .85rem;
+    }
+    .side-list-item:last-child { border-bottom: none; }
+    .side-list-item input[type="checkbox"] { accent-color: var(--indigo); flex-shrink: 0; }
+    .side-list-done { text-decoration: line-through; color: var(--gray-400); }
+    .side-list-title { flex: 1; color: var(--gray-700); }
+    .side-list-meta { font-size: .72rem; color: var(--gray-400); flex-shrink: 0; }
+    .side-list-header {
+      padding: 10px 16px; font-size: .78rem; font-weight: 700;
+      color: var(--gray-500); border-bottom: 1px solid var(--gray-100);
+      background: var(--gray-50);
+    }
+    .side-list-empty {
+      padding: 16px; font-size: .82rem; color: var(--gray-400);
+      text-align: center; font-style: italic;
     }
   </style>
 </head>
@@ -75,74 +257,36 @@
           <h1>Transactions</h1>
           <p>Manage your deals from contract to close.</p>
         </div>
-        <div class="topbar-actions">
-          <button class="btn btn-primary btn-sm" id="addTxnBtn">
-            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            Add Transaction
-          </button>
-        </div>
+        <div class="topbar-actions"></div>
       </div>
 
-      <div class="page-body">
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-          <input type="text" id="searchInput" placeholder="Search by address or agent...">
-          <select id="statusFilter">
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-
-        <!-- Table -->
-        <div class="card">
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Address</th>
-                  <th>Agent</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Close Date</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="txnTableBody"></tbody>
-            </table>
-          </div>
-          <div id="txnEmpty" class="empty-state" style="display:none;">
-            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
-            <h3>No transactions found</h3>
-            <p>Add your first transaction to get started.</p>
-          </div>
-        </div>
+      <div class="page-body" id="pageBody">
+        <!-- Content rendered by JS -->
       </div>
     </main>
   </div>
 
-  <!-- Add/Edit Modal -->
+  <!-- Add/Edit Transaction Modal -->
   <div class="modal-overlay" id="txnModal">
-    <div class="modal">
+    <div class="modal" style="max-width:600px;">
       <div class="modal-header">
         <h3 id="modalTitle">Add Transaction</h3>
-        <button class="modal-close" id="modalClose">&times;</button>
+        <button class="modal-close" data-action="modal-close">&times;</button>
       </div>
       <div class="modal-body">
         <form id="txnForm">
           <div class="form-group">
-            <label for="txnAddress">Address</label>
+            <label for="txnAddress">Address *</label>
             <input type="text" id="txnAddress" required placeholder="123 Main St, City, ST 12345">
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="txnPrice">Price</label>
+              <label for="txnPrice">Price *</label>
               <input type="number" id="txnPrice" required placeholder="500000" min="0">
             </div>
             <div class="form-group">
-              <label for="txnAgent">Agent</label>
-              <input type="text" id="txnAgent" required placeholder="Agent name">
+              <label for="txnAgent">Agent *</label>
+              <select id="txnAgent"><option value="">Select agent...</option></select>
             </div>
           </div>
           <div class="form-row">
@@ -161,26 +305,79 @@
           </div>
           <div class="form-group">
             <label for="txnNotes">Notes</label>
-            <textarea id="txnNotes" rows="3" placeholder="Additional details..."></textarea>
+            <textarea id="txnNotes" rows="2" placeholder="Additional details..."></textarea>
+          </div>
+          <div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--gray-100);">
+            <div style="font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:10px;">Buyer Information</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txnBuyerName">Buyer Name</label>
+                <input type="text" id="txnBuyerName" placeholder="Full name">
+              </div>
+              <div class="form-group">
+                <label for="txnBuyerPhone">Buyer Phone</label>
+                <input type="tel" id="txnBuyerPhone" placeholder="(555) 555-5555">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="txnBuyerEmail">Buyer Email</label>
+              <input type="email" id="txnBuyerEmail" placeholder="buyer@email.com">
+            </div>
+          </div>
+          <div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--gray-100);">
+            <div style="font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:10px;">Seller Information</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txnSellerName">Seller Name</label>
+                <input type="text" id="txnSellerName" placeholder="Full name">
+              </div>
+              <div class="form-group">
+                <label for="txnSellerPhone">Seller Phone</label>
+                <input type="tel" id="txnSellerPhone" placeholder="(555) 555-5555">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="txnSellerEmail">Seller Email</label>
+              <input type="email" id="txnSellerEmail" placeholder="seller@email.com">
+            </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" id="modalCancel">Cancel</button>
-        <button class="btn btn-primary" id="modalSave">Save Transaction</button>
+        <button class="btn btn-outline" data-action="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" data-action="modal-save">Save Transaction</button>
       </div>
     </div>
   </div>
 
-  <!-- Detail Panel -->
-  <div class="detail-overlay" id="detailOverlay"></div>
-  <div class="detail-panel" id="detailPanel">
-    <div class="detail-header">
-      <h3 id="detailTitle">Transaction Detail</h3>
-      <button class="modal-close" id="detailClose">&times;</button>
+  <!-- Party Edit Modal (buyer/seller from detail view) -->
+  <div class="modal-overlay" id="partyModal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 id="partyModalTitle">Edit Buyer</h3>
+        <button class="modal-close" data-action="party-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="partyForm">
+          <div class="form-group">
+            <label for="partyName">Name</label>
+            <input type="text" id="partyName" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label for="partyPhone">Phone</label>
+            <input type="tel" id="partyPhone" placeholder="(555) 555-5555">
+          </div>
+          <div class="form-group">
+            <label for="partyEmail">Email</label>
+            <input type="email" id="partyEmail" placeholder="email@example.com">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" data-action="party-modal-close">Cancel</button>
+        <button class="btn btn-primary" data-action="party-modal-save">Save</button>
+      </div>
     </div>
-    <div class="detail-body" id="detailBody"></div>
-    <div class="detail-actions" id="detailActions"></div>
   </div>
 
   <script src="js/theme.js"></script>

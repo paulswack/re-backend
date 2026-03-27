@@ -9,11 +9,13 @@
     .tab-bar {
       display: flex; gap: 0; margin-bottom: 24px;
       border-bottom: 2px solid var(--gray-100);
+      overflow-x: auto;
     }
     .tab-btn {
       padding: 10px 20px; font-size: .88rem; font-weight: 600;
       color: var(--gray-400); background: none; border: none;
       cursor: pointer; position: relative; transition: color .15s;
+      white-space: nowrap;
     }
     .tab-btn:hover { color: var(--gray-600); }
     .tab-btn.active { color: var(--indigo); }
@@ -55,6 +57,103 @@
       margin-top: 8px; margin-bottom: 4px;
     }
     .summary-bar div { height: 100%; }
+
+    /* Bar chart CSS */
+    .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding: 0 8px; }
+    .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .bar-pair { display: flex; gap: 3px; align-items: flex-end; width: 100%; justify-content: center; }
+    .bar-col { width: 18px; border-radius: 4px 4px 0 0; min-height: 2px; transition: height .3s; }
+    .bar-label { font-size: .65rem; color: var(--gray-400); font-weight: 600; text-align: center; }
+    .bar-chart-legend { display: flex; gap: 16px; justify-content: center; margin-top: 12px; }
+    .bar-chart-legend span { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--gray-500); font-weight: 500; }
+    .bar-chart-legend span::before { content: ''; width: 10px; height: 10px; border-radius: 3px; }
+    .bar-chart-legend .leg-income::before { background: var(--indigo); }
+    .bar-chart-legend .leg-expense::before { background: #F43F5E; }
+
+    /* Donut chart CSS */
+    .donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .donut-chart { width: 140px; height: 140px; border-radius: 50%; position: relative; flex-shrink: 0; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80px; height: 80px; border-radius: 50%; background: var(--white); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-center-val { font-size: .95rem; font-weight: 800; color: var(--gray-900); }
+    .donut-center-lbl { font-size: .6rem; color: var(--gray-400); font-weight: 600; text-transform: uppercase; }
+    .donut-legend { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+    .donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: .8rem; }
+    .donut-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .donut-legend-name { flex: 1; color: var(--gray-600); font-weight: 500; }
+    .donut-legend-val { font-weight: 700; color: var(--gray-800); }
+
+    /* Quick stats row */
+    .quick-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; }
+    .quick-stat { flex: 1; min-width: 160px; background: var(--white); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-sm); }
+    .quick-stat-label { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-400); }
+    .quick-stat-value { font-size: 1.1rem; font-weight: 800; color: var(--gray-900); margin-top: 4px; }
+
+    /* Filter bar */
+    .tax-filter-bar {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      margin-bottom: 16px;
+    }
+    .tax-filter-bar select, .tax-filter-bar input {
+      padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-size: .82rem; background: var(--white); color: var(--gray-700);
+    }
+    .tax-filter-bar select:focus, .tax-filter-bar input:focus {
+      border-color: var(--indigo); outline: none;
+    }
+
+    /* Mileage trip row */
+    .trip-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px; border-bottom: 1px solid var(--gray-50);
+    }
+    .trip-row:last-child { border-bottom: none; }
+
+    /* Checkbox for bulk select */
+    .bulk-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--indigo); flex-shrink: 0; }
+    .bulk-bar {
+      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+      background: var(--indigo); color: white; border-radius: 10px;
+      margin-bottom: 12px; font-size: .85rem; font-weight: 600;
+    }
+    .bulk-bar button { background: rgba(255,255,255,.2); border: none; color: white; padding: 5px 14px; border-radius: 6px; font-size: .8rem; font-weight: 600; cursor: pointer; }
+    .bulk-bar button:hover { background: rgba(255,255,255,.3); }
+
+    /* Commission rate selector */
+    .rate-selector { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .rate-selector label { font-size: .82rem; font-weight: 600; color: var(--gray-600); }
+    .rate-selector select, .rate-selector input {
+      padding: 6px 10px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-size: .82rem; background: var(--white);
+    }
+
+    /* Schedule C preview */
+    .sched-c-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-50); font-size: .88rem; }
+    .sched-c-row:last-child { border-bottom: none; }
+    .sched-c-row.total { font-weight: 800; border-top: 2px solid var(--gray-200); padding-top: 12px; margin-top: 4px; }
+    .sched-c-label { color: var(--gray-600); }
+    .sched-c-value { font-weight: 700; color: var(--gray-900); }
+
+    /* Quarterly summary boxes */
+    .quarterly-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+    .quarter-card { background: var(--white); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); text-align: center; }
+    .quarter-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-400); }
+    .quarter-amount { font-size: 1.3rem; font-weight: 800; color: var(--indigo); margin-top: 6px; }
+    .quarter-sub { font-size: .72rem; color: var(--gray-400); margin-top: 2px; }
+
+    /* Monthly mileage summary */
+    .mileage-month-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
+    .mileage-month-card { background: var(--white); border-radius: 10px; padding: 14px; box-shadow: var(--shadow-sm); text-align: center; }
+    .mileage-month-name { font-size: .72rem; font-weight: 700; color: var(--gray-400); text-transform: uppercase; }
+    .mileage-month-miles { font-size: 1.1rem; font-weight: 800; color: var(--gray-900); margin-top: 4px; }
+    .mileage-month-ded { font-size: .75rem; color: var(--indigo); font-weight: 600; }
+
+    /* Print styles */
+    @media print {
+      .sidebar, .topbar, .tab-bar, .btn, .tax-filter-bar, .bulk-bar, .rate-selector { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+      .tab-content { display: block !important; }
+      .card { box-shadow: none !important; border: 1px solid #ddd; }
+    }
   </style>
 </head>
 <body>
@@ -86,94 +185,218 @@
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
           <h1>Tax Center</h1>
-          <p>Track income and expenses for tax purposes.</p>
+          <p>Comprehensive tax hub for income, expenses, mileage, and reporting.</p>
         </div>
-        <div class="topbar-actions">
-          <button class="btn btn-primary btn-sm" id="addExpenseBtn">
-            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            Add Entry
-          </button>
-        </div>
+        <div class="topbar-actions"></div>
       </div>
 
       <div class="page-body">
-        <!-- Summary Stats -->
+        <!-- Stats -->
         <div class="stats-grid" id="taxStats"></div>
 
         <!-- Tabs -->
         <div class="tab-bar">
-          <button class="tab-btn active" data-tab="income">Income</button>
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="income">Income</button>
           <button class="tab-btn" data-tab="expenses">Expenses</button>
-          <button class="tab-btn" data-tab="all">All Entries</button>
+          <button class="tab-btn" data-tab="mileage">Mileage</button>
+          <button class="tab-btn" data-tab="reports">Reports</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="tab-overview">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div class="card" style="grid-column:1/2;">
+              <div style="padding:20px 24px 12px;">
+                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Income vs Expenses (Last 6 Months)</h3>
+              </div>
+              <div style="padding:0 24px 20px;">
+                <div id="overviewBarChart" class="bar-chart"></div>
+                <div class="bar-chart-legend">
+                  <span class="leg-income">Income</span>
+                  <span class="leg-expense">Expenses</span>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="grid-column:2/3;">
+              <div style="padding:20px 24px 12px;">
+                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Top Expense Categories</h3>
+              </div>
+              <div style="padding:0 24px 20px;" id="overviewDonut"></div>
+            </div>
+          </div>
+          <div class="quick-stats" id="overviewQuickStats"></div>
         </div>
 
         <!-- Income Tab -->
-        <div class="tab-content active" id="tab-income">
+        <div class="tab-content" id="tab-income">
+          <!-- Hidden rate selectors (keep for JS compatibility, use defaults) -->
+          <div style="display:none">
+            <select id="commRateSelect"><option value="0.03" selected>3%</option></select>
+            <input type="number" id="commRateCustom" value="3" style="display:none">
+            <span id="commRateCustomPct"></span>
+            <select id="agentSplitSelect"><option value="1.00" selected>100%</option></select>
+            <input type="number" id="agentSplitCustom" value="100" style="display:none">
+            <span id="agentSplitCustomPct"></span>
+          </div>
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Commission Income from Closings</h3>
+                <p style="font-size:.78rem;color:var(--gray-400);">Auto-calculated from closed transactions.</p>
+              </div>
+              <div id="incomeTotalBadge" style="font-size:1.1rem;font-weight:800;color:var(--emerald);"></div>
+            </div>
+            <div id="commissionList"></div>
+          </div>
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Manual Income Entries</h3>
+                <p style="font-size:.78rem;color:var(--gray-400);">Referral fees, bonuses, and other income.</p>
+              </div>
+              <button class="btn btn-primary btn-sm" data-action="add-income">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Add Income
+              </button>
+            </div>
+            <div id="manualIncomeList"></div>
+          </div>
           <div class="card">
             <div style="padding:20px 24px 12px;">
-              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Commission Income</h3>
-              <p style="font-size:.78rem;color:var(--gray-400);">Income from closed transactions (auto-calculated at 3% commission).</p>
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Income by Month</h3>
             </div>
-            <div id="incomeList"></div>
+            <div style="padding:0 24px 20px;" id="incomeByMonth"></div>
           </div>
         </div>
 
         <!-- Expenses Tab -->
         <div class="tab-content" id="tab-expenses">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <div class="tax-filter-bar" id="expenseFilters" style="margin-bottom:0;">
+              <select id="filterCategory"><option value="">All Categories</option></select>
+              <input type="date" id="filterDateFrom" title="From date">
+              <input type="date" id="filterDateTo" title="To date">
+              <select id="filterSort">
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="amount-desc">Highest Amount</option>
+                <option value="amount-asc">Lowest Amount</option>
+                <option value="category">By Category</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" data-action="add-expense">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              Add Expense
+            </button>
+          </div>
+
+          <div id="bulkBar" style="display:none;"></div>
+
           <div class="card" style="margin-bottom:20px;">
             <div style="padding:20px 24px 12px;">
-              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Expense Breakdown</h3>
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Category Breakdown</h3>
             </div>
             <div style="padding:0 24px 20px;">
               <div class="summary-bar" id="expenseBar"></div>
               <div class="category-grid" id="categoryGrid"></div>
             </div>
           </div>
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Monthly Expense Trend</h3>
+            </div>
+            <div style="padding:0 24px 20px;">
+              <div id="expenseTrendChart" class="bar-chart" style="height:140px;"></div>
+            </div>
+          </div>
           <div class="card">
-            <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="padding:20px 24px 12px;">
               <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">All Expenses</h3>
             </div>
             <div id="expenseList"></div>
           </div>
         </div>
 
-        <!-- All Entries Tab -->
-        <div class="tab-content" id="tab-all">
+        <!-- Mileage Tab -->
+        <div class="tab-content" id="tab-mileage">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="badge" style="background:#EEF2FF;color:#6366F1;font-size:.82rem;padding:6px 14px;">IRS Rate: $0.67/mile (2026)</span>
+            </div>
+            <button class="btn btn-primary btn-sm" data-action="add-mileage">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              Log Trip
+            </button>
+          </div>
+          <div class="stats-grid" id="mileageStats"></div>
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Trip Log</h3>
+            </div>
+            <div id="tripList"></div>
+          </div>
           <div class="card">
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="allEntriesBody"></tbody>
-              </table>
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Monthly Mileage Summary</h3>
             </div>
-            <div id="allEmpty" class="empty-state" style="display:none;">
-              <h3>No entries yet</h3>
-              <p>Add income or expenses to start tracking.</p>
+            <div style="padding:0 24px 20px;" id="mileageMonthly"></div>
+          </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div class="tab-content" id="tab-reports">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <label style="font-size:.82rem;font-weight:600;color:var(--gray-600);">Tax Year:</label>
+              <select id="reportYear" style="padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:var(--white);"></select>
             </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-outline btn-sm" data-action="print-report">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                Print
+              </button>
+              <button class="btn btn-outline btn-sm" data-action="export-report">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Export
+              </button>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Schedule C Preview (Simplified)</h3>
+              <p style="font-size:.75rem;color:var(--gray-400);">This is an estimate for tax planning purposes only. Consult your CPA.</p>
+            </div>
+            <div style="padding:0 24px 20px;" id="scheduleCPreview"></div>
+          </div>
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Quarterly Estimated Tax Payments</h3>
+              <p style="font-size:.75rem;color:var(--gray-400);">Based on 25% estimated tax rate on net profit.</p>
+            </div>
+            <div style="padding:0 24px 20px;" id="quarterlyEstimates"></div>
+          </div>
+          <div class="card">
+            <div style="padding:20px 24px 12px;">
+              <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Category-by-Category Breakdown</h3>
+            </div>
+            <div style="padding:0 24px 20px;" id="reportCategoryBreakdown"></div>
           </div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- Add Entry Modal -->
+  <!-- Add/Edit Entry Modal -->
   <div class="modal-overlay" id="entryModal">
     <div class="modal">
       <div class="modal-header">
         <h3 id="modalTitle">Add Entry</h3>
-        <button class="modal-close" id="modalClose">&times;</button>
+        <button class="modal-close" data-action="close-modal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="entryForm">
+          <input type="hidden" id="entryId">
           <div class="form-row">
             <div class="form-group">
               <label for="entryType">Type</label>
@@ -184,39 +407,121 @@
             </div>
             <div class="form-group">
               <label for="entryCategory">Category</label>
-              <select id="entryCategory">
-                <option value="Marketing">Marketing</option>
-                <option value="Office">Office Supplies</option>
-                <option value="Travel">Travel / Mileage</option>
-                <option value="Technology">Technology / Software</option>
-                <option value="Education">Education / CE</option>
-                <option value="Insurance">Insurance</option>
-                <option value="Dues">Dues &amp; Memberships</option>
-                <option value="Commission">Commission</option>
-                <option value="Referral Fee">Referral Fee</option>
-                <option value="Other">Other</option>
-              </select>
+              <select id="entryCategory"></select>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="entryAmount">Amount</label>
-              <input type="number" id="entryAmount" required placeholder="500" min="0" step="0.01">
+              <input type="number" id="entryAmount" required placeholder="500.00" min="0" step="0.01">
             </div>
             <div class="form-group">
               <label for="entryDate">Date</label>
               <input type="date" id="entryDate" required>
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="entryDescription">Description</label>
+              <input type="text" id="entryDescription" placeholder="e.g. Facebook ad spend for March">
+            </div>
+            <div class="form-group">
+              <label for="entryVendor">Vendor / Payee</label>
+              <input type="text" id="entryVendor" placeholder="e.g. Meta, Keller Williams">
+            </div>
+          </div>
           <div class="form-group">
-            <label for="entryDescription">Description</label>
-            <input type="text" id="entryDescription" placeholder="e.g. Facebook ad spend for March">
+            <label for="entryNotes">Receipt Notes</label>
+            <textarea id="entryNotes" rows="2" placeholder="Receipt details, reference number, etc." style="width:100%;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;resize:vertical;font-family:inherit;"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Receipt / Document</label>
+            <div id="receiptUploadArea" style="border:2px dashed var(--gray-200);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--gray-50)" onclick="document.getElementById('receiptFile').click()">
+              <input type="file" id="receiptFile" accept="image/*,.pdf" style="display:none">
+              <div id="receiptPreview" style="display:none;margin-bottom:10px"></div>
+              <div id="receiptPrompt">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="var(--gray-300)" style="display:block;margin:0 auto 8px"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                <div style="font-size:.85rem;font-weight:600;color:var(--gray-600)">Upload Receipt</div>
+                <div style="font-size:.75rem;color:var(--gray-400);margin-top:2px">Click to browse — JPG, PNG, or PDF</div>
+              </div>
+            </div>
+            <input type="hidden" id="receiptData" value="">
+            <input type="hidden" id="receiptName" value="">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+              <input type="checkbox" id="entryRecurring" style="width:16px;height:16px;accent-color:var(--indigo);">
+              <label for="entryRecurring" style="margin:0;font-size:.82rem;">Recurring</label>
+            </div>
+            <div class="form-group" id="recurFreqGroup" style="display:none;">
+              <label for="entryRecurFreq">Frequency</label>
+              <select id="entryRecurFreq">
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
           </div>
         </form>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" id="modalCancel">Cancel</button>
-        <button class="btn btn-primary" id="modalSave">Save Entry</button>
+        <button class="btn btn-outline" data-action="close-modal">Cancel</button>
+        <button class="btn btn-primary" data-action="save-entry">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mileage Modal -->
+  <div class="modal-overlay" id="mileageModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="mileageModalTitle">Log Trip</h3>
+        <button class="modal-close" data-action="close-mileage-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="mileageForm">
+          <input type="hidden" id="mileageId">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mileageDate">Date</label>
+              <input type="date" id="mileageDate" required>
+            </div>
+            <div class="form-group">
+              <label for="mileagePurpose">Purpose</label>
+              <select id="mileagePurpose">
+                <option value="Showing">Showing</option>
+                <option value="Listing Appointment">Listing Appointment</option>
+                <option value="Client Meeting">Client Meeting</option>
+                <option value="Open House">Open House</option>
+                <option value="Office">Office</option>
+                <option value="Inspection">Inspection</option>
+                <option value="Closing">Closing</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mileageFrom">Start Location</label>
+              <input type="text" id="mileageFrom" placeholder="e.g. Home office">
+            </div>
+            <div class="form-group">
+              <label for="mileageTo">End Location</label>
+              <input type="text" id="mileageTo" placeholder="e.g. 123 Main St">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="mileageMiles">Miles</label>
+            <input type="number" id="mileageMiles" required placeholder="12.5" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="mileageNotes">Notes</label>
+            <input type="text" id="mileageNotes" placeholder="Optional notes">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" data-action="close-mileage-modal">Cancel</button>
+        <button class="btn btn-primary" data-action="save-mileage">Save Trip</button>
       </div>
     </div>
   </div>

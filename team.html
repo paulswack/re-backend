@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-title="Dashboard — RE Back Office">
+<html lang="en" data-title="Team Members — RE Back Office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — RE Back Office</title>
+  <title>Team Members — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,19 +34,87 @@
       <div class="topbar">
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
-          <h1>Dashboard</h1>
-          <p>Welcome back! Here's your overview.</p>
+          <h1>Team Members</h1>
+          <p>Manage your team roster and roles</p>
         </div>
-        <div class="topbar-actions"></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary btn-sm" id="addMemberBtn">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Add Member
+          </button>
+        </div>
       </div>
 
-      <div class="page-body"></div>
+      <div class="page-body" id="pageBody">
+        <!-- Stats injected by JS -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- Members table -->
+        <div class="card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="membersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </main>
+  </div>
+
+  <!-- Add / Edit Member Modal -->
+  <div class="modal-overlay" id="memberModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Member</h3>
+        <button class="modal-close" data-action="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="memberForm">
+          <input type="hidden" id="editUsername">
+          <div class="form-group">
+            <label for="mDisplayName">Display Name</label>
+            <input type="text" id="mDisplayName" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mUsername">Username</label>
+              <input type="text" id="mUsername" required>
+            </div>
+            <div class="form-group">
+              <label for="mPassword">Password</label>
+              <input type="text" id="mPassword" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="mRole">Role</label>
+            <select id="mRole">
+              <option value="Administrator">Administrator</option>
+              <option value="Team Lead">Team Lead</option>
+              <option value="Senior Agent">Senior Agent</option>
+              <option value="Buyer's Agent">Buyer's Agent</option>
+              <option value="Listing Specialist">Listing Specialist</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" data-action="closeModal">Cancel</button>
+        <button class="btn btn-primary" data-action="saveMember">Save</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/theme.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/dashboard.js"></script>
+  <script src="js/team.js"></script>
 </body>
 </html>
