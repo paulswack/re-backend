@@ -119,7 +119,9 @@
 
   // ---- Main Render Dispatcher ----
   function render() {
-    if (viewMode === 'detail' && selectedTxnId) {
+    if (viewMode === 'form') {
+      renderForm();
+    } else if (viewMode === 'detail' && selectedTxnId) {
       renderDetail();
     } else {
       renderList();
@@ -127,22 +129,137 @@
   }
 
   // ============================================================
+  //  FORM VIEW (full page add/edit)
+  // ============================================================
+  function renderForm() {
+    var isEdit = !!editingId;
+    var t = isEdit ? Data.getTransactions().find(function (x) { return x.id === editingId; }) : null;
+    var parties = getParties();
+    var txnParties = isEdit ? (parties[editingId] || { buyer: {}, seller: {}, contacts: {} }) : { buyer: {}, seller: {}, contacts: {} };
+    var buyer = txnParties.buyer || {};
+    var seller = txnParties.seller || {};
+    var contacts = txnParties.contacts || {};
+
+    var html = '';
+    html += '<button class="detail-back-btn" data-action="form-cancel"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (isEdit ? 'Back to Escrow' : 'Back to Escrows') + '</button>';
+
+    html += '<div style="max-width:800px">';
+    html += '<h2 style="font-size:1.3rem;font-weight:800;color:var(--gray-900);margin-bottom:24px">' + (isEdit ? 'Edit Escrow' : 'New Escrow') + '</h2>';
+
+    // Property Info
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:var(--indigo-light);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--indigo)"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Property Information</span></div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(t ? t.address : '') + '" placeholder="123 Main St, City, ST 12345" style="font-size:1rem;padding:12px 16px"></div>';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
+    html += '<div class="form-group"><label>Price *</label><input type="number" id="fPrice" value="' + (t ? t.price : '') + '" placeholder="500000" min="0" style="font-size:1rem;padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px"><option value="active"' + (t && t.status === 'active' ? ' selected' : '') + '>Active</option><option value="pending"' + (t && t.status === 'pending' ? ' selected' : '') + '>Pending</option><option value="closed"' + (t && t.status === 'closed' ? ' selected' : '') + '>Closed</option></select></div>';
+    html += '<div class="form-group"><label>Close Date</label><input type="date" id="fCloseDate" value="' + (t ? t.closeDate || '' : '') + '" style="padding:12px 16px"></div>';
+    html += '</div>';
+    html += '<div class="form-row">';
+    html += '<div class="form-group"><label>Agent *</label><select id="fAgent" style="padding:12px 16px"></select></div>';
+    html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    // Buyer Info
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:var(--indigo-light);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--indigo)"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Buyer</span></div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
+    html += '<div class="form-group"><label>Name</label><input type="text" id="fBuyerName" value="' + escapeHtml(buyer.name || '') + '" placeholder="Full name"></div>';
+    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fBuyerPhone" value="' + escapeHtml(buyer.phone || '') + '" placeholder="(555) 555-5555"></div>';
+    html += '<div class="form-group"><label>Email</label><input type="email" id="fBuyerEmail" value="' + escapeHtml(buyer.email || '') + '" placeholder="buyer@email.com"></div>';
+    html += '</div>';
+    html += '<div style="border-top:1px solid var(--gray-100);margin-top:8px;padding-top:14px">';
+    html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);margin-bottom:8px">SPOUSE / CO-BUYER</div>';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr">';
+    html += '<div class="form-group"><label>Name</label><input type="text" id="fBuyerSpouseName" value="' + escapeHtml(buyer.spouse ? buyer.spouse.name || '' : '') + '" placeholder="Name"></div>';
+    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fBuyerSpousePhone" value="' + escapeHtml(buyer.spouse ? buyer.spouse.phone || '' : '') + '" placeholder="Phone"></div>';
+    html += '<div class="form-group"><label>Email</label><input type="email" id="fBuyerSpouseEmail" value="' + escapeHtml(buyer.spouse ? buyer.spouse.email || '' : '') + '" placeholder="Email"></div>';
+    html += '<div class="form-group"><label>Relationship</label><select id="fBuyerSpouseRel"><option value="">—</option><option value="Spouse"' + (buyer.spouse && buyer.spouse.relationship === 'Spouse' ? ' selected' : '') + '>Spouse</option><option value="Partner"' + (buyer.spouse && buyer.spouse.relationship === 'Partner' ? ' selected' : '') + '>Partner</option><option value="Co-Buyer"' + (buyer.spouse && buyer.spouse.relationship === 'Co-Buyer' ? ' selected' : '') + '>Co-Buyer</option><option value="Parent"' + (buyer.spouse && buyer.spouse.relationship === 'Parent' ? ' selected' : '') + '>Parent</option><option value="Other"' + (buyer.spouse && buyer.spouse.relationship === 'Other' ? ' selected' : '') + '>Other</option></select></div>';
+    html += '</div></div>';
+    html += '</div></div>';
+
+    // Seller Info
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:#BE185D">Seller</span></div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
+    html += '<div class="form-group"><label>Name</label><input type="text" id="fSellerName" value="' + escapeHtml(seller.name || '') + '" placeholder="Full name"></div>';
+    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fSellerPhone" value="' + escapeHtml(seller.phone || '') + '" placeholder="(555) 555-5555"></div>';
+    html += '<div class="form-group"><label>Email</label><input type="email" id="fSellerEmail" value="' + escapeHtml(seller.email || '') + '" placeholder="seller@email.com"></div>';
+    html += '</div>';
+    html += '<div style="border-top:1px solid var(--gray-100);margin-top:8px;padding-top:14px">';
+    html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);margin-bottom:8px">SPOUSE / CO-SELLER</div>';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr">';
+    html += '<div class="form-group"><label>Name</label><input type="text" id="fSellerSpouseName" value="' + escapeHtml(seller.spouse ? seller.spouse.name || '' : '') + '" placeholder="Name"></div>';
+    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fSellerSpousePhone" value="' + escapeHtml(seller.spouse ? seller.spouse.phone || '' : '') + '" placeholder="Phone"></div>';
+    html += '<div class="form-group"><label>Email</label><input type="email" id="fSellerSpouseEmail" value="' + escapeHtml(seller.spouse ? seller.spouse.email || '' : '') + '" placeholder="Email"></div>';
+    html += '<div class="form-group"><label>Relationship</label><select id="fSellerSpouseRel"><option value="">—</option><option value="Spouse"' + (seller.spouse && seller.spouse.relationship === 'Spouse' ? ' selected' : '') + '>Spouse</option><option value="Partner"' + (seller.spouse && seller.spouse.relationship === 'Partner' ? ' selected' : '') + '>Partner</option><option value="Co-Seller"' + (seller.spouse && seller.spouse.relationship === 'Co-Seller' ? ' selected' : '') + '>Co-Seller</option><option value="Parent"' + (seller.spouse && seller.spouse.relationship === 'Parent' ? ' selected' : '') + '>Parent</option><option value="Other"' + (seller.spouse && seller.spouse.relationship === 'Other' ? ' selected' : '') + '>Other</option></select></div>';
+    html += '</div></div>';
+    html += '</div></div>';
+
+    // Transaction Contacts
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:var(--emerald-light);border-bottom:1px solid rgba(16,185,129,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--emerald)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--emerald)">Transaction Contacts</span></div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div class="form-row"><div class="form-group"><label>Escrow Company</label><input type="text" id="fEscrowCompany" value="' + escapeHtml(contacts.escrow ? contacts.escrow.company || '' : '') + '" placeholder="Company name"></div>';
+    html += '<div class="form-group"><label>Escrow Contact</label><input type="text" id="fEscrowContact" value="' + escapeHtml(contacts.escrow ? contacts.escrow.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Title Company</label><input type="text" id="fTitleCompany" value="' + escapeHtml(contacts.title ? contacts.title.company || '' : '') + '" placeholder="Company name"></div>';
+    html += '<div class="form-group"><label>Title Contact</label><input type="text" id="fTitleContact" value="' + escapeHtml(contacts.title ? contacts.title.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Lender</label><input type="text" id="fLender" value="' + escapeHtml(contacts.lender ? contacts.lender.company || '' : '') + '" placeholder="Company name"></div>';
+    html += '<div class="form-group"><label>Loan Officer</label><input type="text" id="fLenderContact" value="' + escapeHtml(contacts.lender ? contacts.lender.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Other Agent</label><input type="text" id="fOtherAgent" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.name || '' : '') + '" placeholder="Agent name"></div>';
+    html += '<div class="form-group"><label>Other Agent Contact</label><input type="text" id="fOtherAgentContact" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
+    html += '</div></div>';
+
+    // Save / Cancel buttons
+    html += '<div style="display:flex;gap:12px;margin-bottom:40px">';
+    html += '<button class="btn btn-primary btn-lg" data-action="form-save" style="padding:14px 32px;font-size:.95rem">' + (isEdit ? 'Save Changes' : 'Create Escrow') + '</button>';
+    html += '<button class="btn btn-outline btn-lg" data-action="form-cancel" style="padding:14px 32px;font-size:.95rem">Cancel</button>';
+    html += '</div>';
+
+    html += '</div>'; // max-width wrapper
+
+    pageBody.innerHTML = html;
+    populateAgentSelect(document.getElementById('fAgent'), t ? t.agent || '' : '');
+  }
+
+  // ============================================================
   //  LIST VIEW
   // ============================================================
   function renderList() {
-    var txns = Data.getTransactions();
+    var allTxns = Data.getTransactions();
+    // Exclude closed transactions — those live in the Closed section
+    var txns = allTxns.filter(function (t) { return t.status !== 'closed'; });
+
+    // Agent-level access control: non-privileged users only see their own transactions
+    var session = Auth.getSession();
+    var isLead = Auth.isPrivileged() || (typeof getDataAgentName === "function" && getDataAgentName() === null);
+    if (!isLead) {
+      txns = txns.filter(function (t) { return t.agent === (typeof getDataAgentName === 'function' && getDataAgentName() ? getDataAgentName() : session.displayName); });
+    }
+
     var query = '';
     var statusVal = '';
     var agentVal = '';
 
-    // Build stats
+    // Build stats (only non-closed)
     var total = txns.length;
     var active = txns.filter(function (t) { return t.status === 'active'; }).length;
     var pending = txns.filter(function (t) { return t.status === 'pending'; }).length;
-    var closed = txns.filter(function (t) { return t.status === 'closed'; }).length;
     var volume = txns.reduce(function (sum, t) { return sum + (parseFloat(t.price) || 0); }, 0);
 
-    // Unique agents for filter
+    // Unique agents for filter (only for Team Lead)
     var agentSet = {};
     txns.forEach(function (t) { if (t.agent) agentSet[t.agent] = true; });
     var agents = Object.keys(agentSet).sort();
@@ -151,10 +268,10 @@
 
     // Page Header
     html += '<div class="page-header">' +
-      '<div><h2>All Transactions</h2></div>' +
+      '<div><h2>All Current Escrows</h2></div>' +
       '<button class="btn btn-primary btn-sm" data-action="add-txn">' +
         '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
-        'Add Transaction' +
+        'Add Escrow' +
       '</button>' +
     '</div>';
 
@@ -163,23 +280,21 @@
     html += statCard('Total', total, 'indigo', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>');
     html += statCard('Active', active, 'indigo', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>');
     html += statCard('Pending', pending, 'amber', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>');
-    html += statCard('Closed', closed, 'emerald', '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>');
     html += statCard('Total Volume', Data.formatCurrency(volume), 'violet', '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>');
     html += '</div>';
 
     // Filter Bar
     html += '<div class="filter-bar">' +
-      '<input type="text" id="searchInput" placeholder="Search by address or agent...">' +
+      '<input type="text" id="searchInput" placeholder="Search by address' + (isLead ? ' or agent' : '') + '...">' +
       '<select id="statusFilter">' +
         '<option value="">All Statuses</option>' +
         '<option value="active">Active</option>' +
         '<option value="pending">Pending</option>' +
-        '<option value="closed">Closed</option>' +
       '</select>' +
-      '<select id="agentFilter">' +
+      (isLead ? '<select id="agentFilter">' +
         '<option value="">All Agents</option>' +
         agents.map(function (a) { return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>'; }).join('') +
-      '</select>' +
+      '</select>' : '') +
     '</div>';
 
     // List rows
@@ -207,7 +322,9 @@
     // Attach filter listeners
     document.getElementById('searchInput').addEventListener('input', renderListRows);
     document.getElementById('statusFilter').addEventListener('change', renderListRows);
-    document.getElementById('agentFilter').addEventListener('change', renderListRows);
+    if (document.getElementById('agentFilter')) {
+      document.getElementById('agentFilter').addEventListener('change', renderListRows);
+    }
   }
 
   function statCard(label, value, colorClass, svgPath) {
@@ -218,7 +335,17 @@
   }
 
   function renderListRows() {
-    var txns = Data.getTransactions();
+    var allTxns = Data.getTransactions();
+    // Exclude closed transactions
+    var txns = allTxns.filter(function (t) { return t.status !== 'closed'; });
+
+    // Agent-level access control: non-privileged users only see their own transactions
+    var session = Auth.getSession();
+    var isLead = Auth.isPrivileged() || (typeof getDataAgentName === "function" && getDataAgentName() === null);
+    if (!isLead) {
+      txns = txns.filter(function (t) { return t.agent === (typeof getDataAgentName === 'function' && getDataAgentName() ? getDataAgentName() : session.displayName); });
+    }
+
     var searchEl = document.getElementById('searchInput');
     var statusEl = document.getElementById('statusFilter');
     var agentEl = document.getElementById('agentFilter');
@@ -326,8 +453,12 @@
     // Back button
     html += '<button class="detail-back-btn" data-action="back-to-list">' +
       '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      'Back to Transactions' +
+      'Back to Escrows' +
     '</button>';
+
+    // Inline-editable input style
+    var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 8px;font-family:inherit;transition:all .15s;width:100%;';
+    var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
 
     // Header Card
     html += '<div class="detail-header-card">';
@@ -335,34 +466,36 @@
     html += '<div class="detail-header-body">';
 
     html += '<div class="detail-header-top">';
-    html += '<div>' +
-      '<div class="detail-header-address">' + escapeHtml(t.address) + '</div>' +
-      '<div class="detail-header-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
+    html += '<div style="flex:1;min-width:0">' +
+      '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(t.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
+      '<input type="number" class="ie-field" data-field="price" value="' + (t.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:2px;' + inpStyle + '" ' + inpFocus + '>' +
     '</div>';
     html += '<div class="detail-header-actions">' +
-      '<span style="margin-right:4px;">' + Data.statusBadge(t.status) + '</span>' +
-      '<button class="btn btn-outline btn-sm" data-action="edit-txn" data-id="' + t.id + '">Edit</button>' +
-      '<button class="btn btn-danger btn-sm" data-action="delete-txn" data-id="' + t.id + '">Delete</button>' +
       '<button class="btn btn-outline btn-sm" data-action="share-client" data-id="' + t.id + '" style="color:var(--indigo);border-color:var(--indigo);">Share with Client</button>' +
     '</div>';
     html += '</div>';
 
-    // Detail blocks row
+    // Detail blocks row — editable
     html += '<div class="detail-blocks-row">';
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Agent</div>' +
-      '<div class="detail-block-value" style="display:flex;align-items:center;gap:6px;">' +
-        '<div class="agent-avatar ' + agentClass(t.agent) + '" style="width:24px;height:24px;font-size:.55rem;">' + getInitials(t.agent) + '</div>' +
-        escapeHtml(t.agent || '—') +
-      '</div>' +
+      '<select class="ie-field" data-field="agent" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
+        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
+        users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === t.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') +
+      '</select>' +
     '</div>';
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
-      '<div class="detail-block-value">' + Data.statusBadge(t.status) + '</div>' +
+      '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
+        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
+        '<option value="active"' + (t.status === 'active' ? ' selected' : '') + '>Active</option>' +
+        '<option value="pending"' + (t.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
+        '<option value="closed"' + (t.status === 'closed' ? ' selected' : '') + '>Closed</option>' +
+      '</select>' +
     '</div>';
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Close Date</div>' +
-      '<div class="detail-block-value">' + Data.formatDate(t.closeDate) + '</div>' +
+      '<input type="date" class="ie-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
     '</div>';
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Days to Closing</div>' +
@@ -382,42 +515,86 @@
     html += '<div class="parties-card-header">Buyer &amp; Seller Information</div>';
     html += '<div class="parties-grid">';
 
-    // Buyer
-    html += '<div class="party-section">';
-    html += '<div class="party-label">Buyer</div>';
-    if (buyer.name || buyer.phone || buyer.email) {
-      if (buyer.name) html += '<div class="party-field"><div class="party-field-label">Name</div><div class="party-field-value">' + escapeHtml(buyer.name) + '</div></div>';
-      if (buyer.phone) html += '<div class="party-field"><div class="party-field-label">Phone</div><div class="party-field-value">' + escapeHtml(buyer.phone) + '</div></div>';
-      if (buyer.email) html += '<div class="party-field"><div class="party-field-label">Email</div><div class="party-field-value">' + escapeHtml(buyer.email) + '</div></div>';
-      html += '<button class="party-edit-btn" data-action="edit-party" data-party="buyer">Edit Buyer</button>';
-    } else {
-      html += '<div class="party-empty">No buyer info added yet.</div>';
-      html += '<button class="party-add-btn" data-action="edit-party" data-party="buyer">+ Add Buyer</button>';
+    // Helper for party inline fields
+    function partyFields(type, data, color, bgColor) {
+      var sp = data.spouse || {};
+      var h = '';
+      h += '<div class="party-section">';
+      h += '<div class="party-label" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:' + color + '"></span>' + (type === 'buyer' ? 'Buyer' : 'Seller') + '</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">';
+      h += '<input type="text" class="ie-party" data-party="' + type + '" data-pfield="name" value="' + escapeHtml(data.name || '') + '" placeholder="Name" style="font-size:.92rem;font-weight:700;color:var(--gray-900);' + inpStyle + '" ' + inpFocus + '>';
+      h += '<div style="display:flex;gap:6px">';
+      h += '<input type="tel" class="ie-party" data-party="' + type + '" data-pfield="phone" value="' + escapeHtml(data.phone || '') + '" placeholder="Phone" style="font-size:.82rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>';
+      h += '<input type="email" class="ie-party" data-party="' + type + '" data-pfield="email" value="' + escapeHtml(data.email || '') + '" placeholder="Email" style="font-size:.82rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>';
+      h += '</div>';
+      h += '</div>';
+      // Spouse/Family
+      h += '<div style="padding-top:8px;border-top:1px dashed var(--gray-100)">';
+      h += '<div style="font-size:.68rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Spouse / Family</div>';
+      h += '<div style="display:flex;gap:6px;margin-bottom:4px">';
+      h += '<input type="text" class="ie-party" data-party="' + type + '" data-pfield="spouse.name" value="' + escapeHtml(sp.name || '') + '" placeholder="Name" style="font-size:.85rem;flex:1;' + inpStyle + '" ' + inpFocus + '>';
+      h += '<select class="ie-party" data-party="' + type + '" data-pfield="spouse.relationship" style="font-size:.82rem;' + inpStyle + 'width:auto;min-width:90px;" ' + inpFocus + '>';
+      h += '<option value=""' + (!sp.relationship ? ' selected' : '') + '>Relation</option>';
+      ['Spouse','Partner','Co-Buyer','Co-Seller','Parent','Child','Other'].forEach(function(r) {
+        h += '<option value="' + r + '"' + (sp.relationship === r ? ' selected' : '') + '>' + r + '</option>';
+      });
+      h += '</select>';
+      h += '</div>';
+      h += '<div style="display:flex;gap:6px">';
+      h += '<input type="tel" class="ie-party" data-party="' + type + '" data-pfield="spouse.phone" value="' + escapeHtml(sp.phone || '') + '" placeholder="Phone" style="font-size:.82rem;flex:1;' + inpStyle + '" ' + inpFocus + '>';
+      h += '<input type="email" class="ie-party" data-party="' + type + '" data-pfield="spouse.email" value="' + escapeHtml(sp.email || '') + '" placeholder="Email" style="font-size:.82rem;flex:1;' + inpStyle + '" ' + inpFocus + '>';
+      h += '</div>';
+      h += '</div>';
+      h += '</div>';
+      return h;
     }
-    html += '</div>';
 
-    // Seller
-    html += '<div class="party-section">';
-    html += '<div class="party-label">Seller</div>';
-    if (seller.name || seller.phone || seller.email) {
-      if (seller.name) html += '<div class="party-field"><div class="party-field-label">Name</div><div class="party-field-value">' + escapeHtml(seller.name) + '</div></div>';
-      if (seller.phone) html += '<div class="party-field"><div class="party-field-label">Phone</div><div class="party-field-value">' + escapeHtml(seller.phone) + '</div></div>';
-      if (seller.email) html += '<div class="party-field"><div class="party-field-label">Email</div><div class="party-field-value">' + escapeHtml(seller.email) + '</div></div>';
-      html += '<button class="party-edit-btn" data-action="edit-party" data-party="seller">Edit Seller</button>';
-    } else {
-      html += '<div class="party-empty">No seller info added yet.</div>';
-      html += '<button class="party-add-btn" data-action="edit-party" data-party="seller">+ Add Seller</button>';
-    }
-    html += '</div>';
+    html += partyFields('buyer', buyer, 'var(--indigo)', 'var(--indigo-light)');
+    html += partyFields('seller', seller, '#EC4899', '#FDF2F8');
 
     html += '</div>'; // parties-grid
     html += '</div>'; // parties-card
 
-    // Two-column layout
-    html += '<div class="detail-columns">';
+    // Transaction Contacts Card
+    var txnContacts = txnParties.contacts || {};
+    var hasContacts = (txnContacts.escrow && (txnContacts.escrow.company || txnContacts.escrow.contact)) ||
+                      (txnContacts.title && (txnContacts.title.company || txnContacts.title.contact)) ||
+                      (txnContacts.lender && (txnContacts.lender.company || txnContacts.lender.contact)) ||
+                      (txnContacts.otherAgent && (txnContacts.otherAgent.name || txnContacts.otherAgent.contact));
 
-    // LEFT: Notes
-    html += '<div>';
+    html += '<div class="parties-card">';
+    html += '<div class="parties-card-header">Transaction Contacts</div>';
+    if (hasContacts) {
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0">';
+      var contactItems = [
+        { label: 'Escrow', icon: '🏦', data: txnContacts.escrow, color: 'var(--indigo)' },
+        { label: 'Title Company', icon: '📋', data: txnContacts.title, color: 'var(--violet)' },
+        { label: 'Lender', icon: '🏛️', data: txnContacts.lender, color: 'var(--emerald)' },
+        { label: 'Other Agent', icon: '🤝', data: txnContacts.otherAgent, color: 'var(--amber)' }
+      ];
+      contactItems.forEach(function (item, idx) {
+        var d = item.data || {};
+        var hasData = d.company || d.name || d.contact;
+        html += '<div style="padding:16px 20px;' + (idx < 2 ? 'border-bottom:1px solid var(--gray-100);' : '') + (idx % 2 === 0 ? 'border-right:1px solid var(--gray-100);' : '') + '">';
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+        html += '<span style="font-size:1rem">' + item.icon + '</span>';
+        html += '<span style="font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">' + item.label + '</span>';
+        html += '</div>';
+        if (hasData) {
+          html += '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">' + escapeHtml(d.company || d.name || '—') + '</div>';
+          if (d.contact) html += '<div style="font-size:.78rem;color:var(--gray-400);margin-top:3px">' + escapeHtml(d.contact) + '</div>';
+        } else {
+          html += '<div style="font-size:.82rem;color:var(--gray-300);font-style:italic">Not added</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div style="padding:20px;text-align:center;color:var(--gray-400);font-size:.85rem">No transaction contacts added. Click Edit to add escrow, title, lender, and other agent info.</div>';
+    }
+    html += '</div>';
+
+    // Notes (full width)
     html += '<div class="notes-card">';
     html += '<div class="notes-card-header">Activity &amp; Notes</div>';
     html += '<div class="note-input-area">' +
@@ -439,94 +616,78 @@
         '</div>';
       });
     }
-    html += '</div>'; // notes-card
-    html += '</div>'; // left col
-
-    // RIGHT: Tasks + Appointments
-    html += '<div>';
-
-    // Add Task Card
-    html += '<div class="side-card">';
-    html += '<div class="side-card-header amber">Add Task</div>';
-    html += '<div class="side-card-body">';
-    html += '<div class="form-group"><label for="taskTitle">Title</label><input type="text" id="taskTitle" placeholder="Task title..."></div>';
-    html += '<div class="form-row">';
-    html += '<div class="form-group"><label for="taskPriority">Priority</label><select id="taskPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>';
-    html += '<div class="form-group"><label for="taskDue">Due Date</label><input type="date" id="taskDue"></div>';
-    html += '</div>';
-    html += '<div class="form-group"><label for="taskAssignee">Assignee</label><select id="taskAssignee"><option value="">Unassigned</option>' + userOptions + '</select></div>';
-    html += '<button class="btn btn-primary btn-sm" data-action="add-task" style="width:100%;">Add Task</button>';
-    html += '</div></div>';
-
-    // Add Appointment Card
-    html += '<div class="side-card">';
-    html += '<div class="side-card-header emerald">Add Appointment</div>';
-    html += '<div class="side-card-body">';
-    html += '<div class="form-group"><label for="apptTitle">Title</label><input type="text" id="apptTitle" placeholder="Appointment title..."></div>';
-    html += '<div class="form-row">';
-    html += '<div class="form-group"><label for="apptDate">Date</label><input type="date" id="apptDate"></div>';
-    html += '<div class="form-group"><label for="apptTime">Time</label><input type="time" id="apptTime"></div>';
-    html += '</div>';
-    html += '<div class="form-row">';
-    html += '<div class="form-group"><label for="apptCategory">Category</label><select id="apptCategory"><option value="showing">Showing</option><option value="inspection">Inspection</option><option value="appraisal">Appraisal</option><option value="closing">Closing</option><option value="meeting">Meeting</option><option value="other">Other</option></select></div>';
-    html += '<div class="form-group"><label for="apptLocation">Location</label><input type="text" id="apptLocation" placeholder="Location..."></div>';
-    html += '</div>';
-    html += '<button class="btn btn-primary btn-sm" data-action="add-appointment" style="width:100%;">Add to Calendar</button>';
-    html += '</div></div>';
-
-    // Pending Tasks List
-    html += '<div class="side-card">';
-    html += '<div class="side-list-header">Pending Tasks (' + pendingTasks.length + ')</div>';
-    if (pendingTasks.length === 0) {
-      html += '<div class="side-list-empty">No pending tasks.</div>';
-    } else {
-      pendingTasks.forEach(function (task) {
-        html += '<div class="side-list-item">' +
-          '<input type="checkbox" data-action="toggle-task" data-task-id="' + task.id + '">' +
-          '<span class="side-list-title">' + escapeHtml(task.title) + '</span>' +
-          Data.priorityBadge(task.priority) +
-          (task.dueDate ? '<span class="side-list-meta">' + Data.formatDate(task.dueDate) + '</span>' : '') +
-        '</div>';
-      });
-    }
-    if (doneTasks.length > 0) {
-      html += '<div class="side-list-header" style="font-size:.72rem;color:var(--gray-400);">Completed (' + doneTasks.length + ')</div>';
-      doneTasks.forEach(function (task) {
-        html += '<div class="side-list-item">' +
-          '<input type="checkbox" checked data-action="toggle-task" data-task-id="' + task.id + '">' +
-          '<span class="side-list-title side-list-done">' + escapeHtml(task.title) + '</span>' +
-        '</div>';
-      });
-    }
     html += '</div>';
 
-    // Upcoming Appointments List
-    html += '<div class="side-card">';
-    html += '<div class="side-list-header">Upcoming Appointments (' + upcomingAppts.length + ')</div>';
-    if (upcomingAppts.length === 0) {
-      html += '<div class="side-list-empty">No upcoming appointments.</div>';
-    } else {
-      upcomingAppts.forEach(function (ev) {
-        var catColors = {
-          showing: 'var(--indigo)', inspection: 'var(--amber)', appraisal: 'var(--violet)',
-          closing: 'var(--emerald)', meeting: 'var(--rose)', other: 'var(--gray-500)'
-        };
-        var dotColor = catColors[ev.category] || 'var(--gray-400)';
-        html += '<div class="side-list-item">' +
-          '<span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;"></span>' +
-          '<span class="side-list-title">' + escapeHtml(ev.title) + '</span>' +
-          '<span class="side-list-meta">' + Data.formatDate(ev.date) +
-            (ev.startTime ? ' ' + formatTime(ev.startTime) : '') +
-          '</span>' +
-        '</div>';
-      });
-    }
-    html += '</div>';
-
-    html += '</div>'; // right col
-    html += '</div>'; // detail-columns
+    // Delete at bottom
+    html += '<div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gray-100);margin-bottom:40px">' +
+      '<button class="btn btn-outline btn-sm" data-action="delete-txn" data-id="' + t.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete This Transaction</button>' +
+    '</div>';
 
     pageBody.innerHTML = html;
+
+    // Auto-save inline editable transaction fields
+    var ieFields = pageBody.querySelectorAll('.ie-field');
+    ieFields.forEach(function (field) {
+      var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
+      field.addEventListener(eventType, function () {
+        var fieldName = this.getAttribute('data-field');
+        var val = this.value;
+        if (fieldName === 'price') val = parseFloat(val) || 0;
+
+        // Check if status is changing to 'closed'
+        if (fieldName === 'status' && val === 'closed') {
+          var currentTxn = Data.getTransactions().find(function (x) { return x.id === selectedTxnId; });
+          if (currentTxn && currentTxn.status !== 'closed') {
+            // Set close date to today if not already set
+            var updates = { status: 'closed' };
+            if (!currentTxn.closeDate) {
+              updates.closeDate = new Date().toISOString().split('T')[0];
+            }
+            Data.updateTransaction(selectedTxnId, updates);
+            showToast('Deal closed! Moved to Closed section.');
+            setTimeout(function () {
+              viewMode = 'list';
+              selectedTxnId = null;
+              render();
+            }, 800);
+            return;
+          }
+        }
+
+        var update = {};
+        update[fieldName] = val;
+        Data.updateTransaction(selectedTxnId, update);
+        showToast('Saved');
+        renderDetail();
+      });
+    });
+
+    // Auto-save inline editable party fields
+    var iePartyFields = pageBody.querySelectorAll('.ie-party');
+    iePartyFields.forEach(function (field) {
+      var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
+      field.addEventListener(eventType, function () {
+        var partyType = this.getAttribute('data-party');
+        var pfield = this.getAttribute('data-pfield');
+        var val = this.value.trim();
+
+        var allParties = getParties();
+        if (!allParties[selectedTxnId]) allParties[selectedTxnId] = { buyer: {}, seller: {}, contacts: {} };
+        var party = allParties[selectedTxnId][partyType] || {};
+
+        if (pfield.indexOf('spouse.') === 0) {
+          var spField = pfield.split('.')[1];
+          if (!party.spouse) party.spouse = {};
+          party.spouse[spField] = val;
+        } else {
+          party[pfield] = val;
+        }
+
+        allParties[selectedTxnId][partyType] = party;
+        saveParties(allParties);
+        showToast('Saved');
+      });
+    });
   }
 
   // ============================================================
@@ -542,10 +703,8 @@
 
       case 'add-txn':
         editingId = null;
-        modalTitle.textContent = 'Add Transaction';
-        txnForm.reset();
-        populateAgentSelect(document.getElementById('txnAgent'), '');
-        openModal(txnModal);
+        viewMode = 'form';
+        render();
         break;
 
       case 'open-detail':
@@ -561,11 +720,13 @@
         break;
 
       case 'edit-txn':
-        openEditModal(target.getAttribute('data-id'));
+        editingId = target.getAttribute('data-id');
+        viewMode = 'form';
+        render();
         break;
 
       case 'delete-txn':
-        if (confirm('Delete this transaction? This cannot be undone.')) {
+        if (confirm('Delete this escrow? This cannot be undone.')) {
           var delId = target.getAttribute('data-id');
           Data.deleteTransaction(delId);
           // Clean up parties and notes
@@ -582,8 +743,91 @@
         }
         break;
 
+      case 'form-cancel':
+        if (editingId) {
+          viewMode = 'detail';
+          selectedTxnId = editingId;
+          editingId = null;
+        } else {
+          viewMode = 'list';
+        }
+        render();
+        break;
+
+      case 'form-save':
+        var fAddr = (document.getElementById('fAddress') || {}).value.trim();
+        var fPrice = (document.getElementById('fPrice') || {}).value;
+        var fAgent = (document.getElementById('fAgent') || {}).value;
+        if (!fAddr || !fPrice || !fAgent) { showToast('Please fill in address, price, and agent.', 'error'); break; }
+
+        var fData = {
+          address: fAddr,
+          price: parseFloat(fPrice),
+          agent: fAgent,
+          status: (document.getElementById('fStatus') || {}).value || 'active',
+          closeDate: (document.getElementById('fCloseDate') || {}).value || '',
+          notes: (document.getElementById('fNotes') || {}).value.trim()
+        };
+
+        var fTxnId;
+        if (editingId) {
+          Data.updateTransaction(editingId, fData);
+          fTxnId = editingId;
+          showToast('Escrow updated.');
+        } else {
+          var fResult = Data.addTransaction(fData);
+          fTxnId = fResult.id;
+          showToast('Escrow created.');
+        }
+
+        // Save parties
+        var fParties = getParties();
+        if (!fParties[fTxnId]) fParties[fTxnId] = { buyer: {}, seller: {}, contacts: {} };
+
+        var fBuyerSpName = (document.getElementById('fBuyerSpouseName') || {}).value.trim();
+        var fBuyerSpouse = fBuyerSpName ? {
+          name: fBuyerSpName,
+          phone: (document.getElementById('fBuyerSpousePhone') || {}).value.trim(),
+          email: (document.getElementById('fBuyerSpouseEmail') || {}).value.trim(),
+          relationship: (document.getElementById('fBuyerSpouseRel') || {}).value || 'Spouse'
+        } : null;
+
+        var fSellerSpName = (document.getElementById('fSellerSpouseName') || {}).value.trim();
+        var fSellerSpouse = fSellerSpName ? {
+          name: fSellerSpName,
+          phone: (document.getElementById('fSellerSpousePhone') || {}).value.trim(),
+          email: (document.getElementById('fSellerSpouseEmail') || {}).value.trim(),
+          relationship: (document.getElementById('fSellerSpouseRel') || {}).value || 'Spouse'
+        } : null;
+
+        fParties[fTxnId].buyer = {
+          name: (document.getElementById('fBuyerName') || {}).value.trim(),
+          phone: (document.getElementById('fBuyerPhone') || {}).value.trim(),
+          email: (document.getElementById('fBuyerEmail') || {}).value.trim(),
+          spouse: fBuyerSpouse
+        };
+        fParties[fTxnId].seller = {
+          name: (document.getElementById('fSellerName') || {}).value.trim(),
+          phone: (document.getElementById('fSellerPhone') || {}).value.trim(),
+          email: (document.getElementById('fSellerEmail') || {}).value.trim(),
+          spouse: fSellerSpouse
+        };
+        fParties[fTxnId].contacts = {
+          escrow: { company: (document.getElementById('fEscrowCompany') || {}).value.trim(), contact: (document.getElementById('fEscrowContact') || {}).value.trim() },
+          title: { company: (document.getElementById('fTitleCompany') || {}).value.trim(), contact: (document.getElementById('fTitleContact') || {}).value.trim() },
+          lender: { company: (document.getElementById('fLender') || {}).value.trim(), contact: (document.getElementById('fLenderContact') || {}).value.trim() },
+          otherAgent: { name: (document.getElementById('fOtherAgent') || {}).value.trim(), contact: (document.getElementById('fOtherAgentContact') || {}).value.trim() }
+        };
+        saveParties(fParties);
+
+        viewMode = 'detail';
+        selectedTxnId = fTxnId;
+        editingId = null;
+        render();
+        break;
+
       case 'share-client':
-        showToast('Client portal sharing coming soon.', 'info');
+        openShareClientModal(target.getAttribute('data-id'));
         break;
 
       case 'edit-party':
@@ -665,7 +909,7 @@
     if (el === txnModal) {
       txnForm.reset();
       editingId = null;
-      modalTitle.textContent = 'Add Transaction';
+      modalTitle.textContent = 'Add Escrow';
     }
     if (el === partyModal) {
       document.getElementById('partyForm').reset();
@@ -679,7 +923,7 @@
     if (!t) return;
 
     editingId = id;
-    modalTitle.textContent = 'Edit Transaction';
+    modalTitle.textContent = 'Edit Escrow';
 
     document.getElementById('txnAddress').value = t.address || '';
     document.getElementById('txnPrice').value = t.price || '';
@@ -700,6 +944,17 @@
     document.getElementById('txnSellerName').value = seller.name || '';
     document.getElementById('txnSellerPhone').value = seller.phone || '';
     document.getElementById('txnSellerEmail').value = seller.email || '';
+
+    // Transaction contacts
+    var contacts = txnParties.contacts || {};
+    document.getElementById('txnEscrowCompany').value = (contacts.escrow && contacts.escrow.company) || '';
+    document.getElementById('txnEscrowContact').value = (contacts.escrow && contacts.escrow.contact) || '';
+    document.getElementById('txnTitleCompany').value = (contacts.title && contacts.title.company) || '';
+    document.getElementById('txnTitleContact').value = (contacts.title && contacts.title.contact) || '';
+    document.getElementById('txnLender').value = (contacts.lender && contacts.lender.company) || '';
+    document.getElementById('txnLenderContact').value = (contacts.lender && contacts.lender.contact) || '';
+    document.getElementById('txnOtherAgent').value = (contacts.otherAgent && contacts.otherAgent.name) || '';
+    document.getElementById('txnOtherAgentContact').value = (contacts.otherAgent && contacts.otherAgent.contact) || '';
 
     openModal(txnModal);
   }
@@ -730,11 +985,11 @@
     if (editingId) {
       Data.updateTransaction(editingId, data);
       txnId = editingId;
-      showToast('Transaction updated successfully.');
+      showToast('Escrow updated successfully.');
     } else {
       var result = Data.addTransaction(data);
       txnId = result.id;
-      showToast('Transaction added successfully.');
+      showToast('Escrow added successfully.');
     }
 
     // Save buyer/seller parties
@@ -745,13 +1000,35 @@
     var sellerPhone = document.getElementById('txnSellerPhone').value.trim();
     var sellerEmail = document.getElementById('txnSellerEmail').value.trim();
 
-    if (buyerName || buyerPhone || buyerEmail || sellerName || sellerPhone || sellerEmail) {
-      var parties = getParties();
-      if (!parties[txnId]) parties[txnId] = { buyer: {}, seller: {} };
-      parties[txnId].buyer = { name: buyerName, phone: buyerPhone, email: buyerEmail };
-      parties[txnId].seller = { name: sellerName, phone: sellerPhone, email: sellerEmail };
-      saveParties(parties);
-    }
+    var parties = getParties();
+    if (!parties[txnId]) parties[txnId] = { buyer: {}, seller: {}, contacts: {} };
+
+    // Preserve existing spouse data
+    var existingBuyer = (parties[txnId].buyer || {});
+    var existingSeller = (parties[txnId].seller || {});
+    parties[txnId].buyer = { name: buyerName, phone: buyerPhone, email: buyerEmail, spouse: existingBuyer.spouse || null };
+    parties[txnId].seller = { name: sellerName, phone: sellerPhone, email: sellerEmail, spouse: existingSeller.spouse || null };
+
+    // Save transaction contacts
+    parties[txnId].contacts = {
+      escrow: {
+        company: (document.getElementById('txnEscrowCompany') || {}).value.trim(),
+        contact: (document.getElementById('txnEscrowContact') || {}).value.trim()
+      },
+      title: {
+        company: (document.getElementById('txnTitleCompany') || {}).value.trim(),
+        contact: (document.getElementById('txnTitleContact') || {}).value.trim()
+      },
+      lender: {
+        company: (document.getElementById('txnLender') || {}).value.trim(),
+        contact: (document.getElementById('txnLenderContact') || {}).value.trim()
+      },
+      otherAgent: {
+        name: (document.getElementById('txnOtherAgent') || {}).value.trim(),
+        contact: (document.getElementById('txnOtherAgentContact') || {}).value.trim()
+      }
+    };
+    saveParties(parties);
 
     closeModal(txnModal);
 
@@ -766,7 +1043,29 @@
   //  PARTY MODAL
   // ============================================================
   function openPartyModal(type) {
-    partyModalTitle.textContent = 'Edit ' + (type === 'buyer' ? 'Buyer' : 'Seller');
+    var isBuyer = type === 'buyer';
+    partyModalTitle.textContent = isBuyer ? 'Buyer Information' : 'Seller Information';
+
+    // Style the banner
+    var banner = document.getElementById('partyBanner');
+    var bannerIcon = document.getElementById('partyBannerIcon');
+    var bannerTitle = document.getElementById('partyBannerTitle');
+    var bannerSub = document.getElementById('partyBannerSub');
+    if (isBuyer) {
+      banner.style.background = 'var(--indigo-light)';
+      bannerIcon.style.background = 'var(--indigo)'; bannerIcon.style.color = '#fff';
+      bannerTitle.style.color = 'var(--indigo)';
+      bannerTitle.textContent = 'Buyer Details';
+      bannerSub.style.color = 'var(--indigo)';
+      bannerSub.textContent = 'Primary buyer and any co-buyers or family members on this transaction.';
+    } else {
+      banner.style.background = '#FDF2F8';
+      bannerIcon.style.background = '#EC4899'; bannerIcon.style.color = '#fff';
+      bannerTitle.style.color = '#BE185D';
+      bannerTitle.textContent = 'Seller Details';
+      bannerSub.style.color = '#BE185D';
+      bannerSub.textContent = 'Primary seller and any co-sellers or family members on this transaction.';
+    }
 
     var parties = getParties();
     var txnParties = parties[selectedTxnId] || { buyer: {}, seller: {} };
@@ -775,6 +1074,10 @@
     document.getElementById('partyName').value = data.name || '';
     document.getElementById('partyPhone').value = data.phone || '';
     document.getElementById('partyEmail').value = data.email || '';
+    document.getElementById('partySpouseName').value = (data.spouse && data.spouse.name) || '';
+    document.getElementById('partySpousePhone').value = (data.spouse && data.spouse.phone) || '';
+    document.getElementById('partySpouseEmail').value = (data.spouse && data.spouse.email) || '';
+    document.getElementById('partySpouseRelation').value = (data.spouse && data.spouse.relationship) || '';
 
     openModal(partyModal);
   }
@@ -783,10 +1086,22 @@
     var name = document.getElementById('partyName').value.trim();
     var phone = document.getElementById('partyPhone').value.trim();
     var email = document.getElementById('partyEmail').value.trim();
+    var spouseName = document.getElementById('partySpouseName').value.trim();
+    var spousePhone = document.getElementById('partySpousePhone').value.trim();
+    var spouseEmail = document.getElementById('partySpouseEmail').value.trim();
+    var spouseRelation = document.getElementById('partySpouseRelation').value;
 
     var parties = getParties();
     if (!parties[selectedTxnId]) parties[selectedTxnId] = { buyer: {}, seller: {} };
-    parties[selectedTxnId][editingPartyType] = { name: name, phone: phone, email: email };
+
+    var partyData = { name: name, phone: phone, email: email };
+    if (spouseName || spousePhone || spouseEmail) {
+      partyData.spouse = { name: spouseName, phone: spousePhone, email: spouseEmail, relationship: spouseRelation || 'Spouse' };
+    } else {
+      partyData.spouse = null;
+    }
+
+    parties[selectedTxnId][editingPartyType] = partyData;
     saveParties(parties);
 
     showToast((editingPartyType === 'buyer' ? 'Buyer' : 'Seller') + ' info updated.');
@@ -889,6 +1204,175 @@
     showToast('Appointment added to calendar.');
     renderDetail();
   }
+
+  // ============================================================
+  //  SHARE WITH CLIENT — Portal Link
+  // ============================================================
+  function getPortalLinks() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'portal_links') || '[]'); } catch (e) { return []; }
+  }
+
+  function savePortalLinks(links) {
+    localStorage.setItem(PREFIX + 'portal_links', JSON.stringify(links));
+  }
+
+  function generateToken() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var token = '';
+    for (var i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  }
+
+  function openShareClientModal(txnId) {
+    var txns = Data.getTransactions();
+    var t = txns.find(function (x) { return x.id === txnId; });
+    if (!t) return;
+
+    var parties = getParties();
+    var txnParties = parties[txnId] || { buyer: {}, seller: {} };
+    var buyer = txnParties.buyer || {};
+    var seller = txnParties.seller || {};
+
+    // Check for existing portal link for this txn
+    var links = getPortalLinks();
+    var existingLink = links.find(function (l) { return l.txnId === txnId; });
+    var token;
+
+    if (existingLink) {
+      token = existingLink.token;
+    } else {
+      // Generate new token and store
+      token = generateToken();
+      var session = Auth.getSession();
+      links.push({
+        token: token,
+        txnId: txnId,
+        clientType: buyer.name ? 'buyer' : (seller.name ? 'seller' : 'buyer'),
+        clientName: buyer.name || seller.name || '',
+        createdAt: new Date().toISOString(),
+        createdBy: session ? session.displayName : 'Unknown'
+      });
+      savePortalLinks(links);
+    }
+
+    // Build URL
+    var baseUrl = window.location.href.split('/').slice(0, -1).join('/');
+    var portalUrl = baseUrl + '/client-portal.html?token=' + token;
+
+    // Build email body
+    var emailSubject = 'Your Transaction Portal — ' + (t.address || 'Real Estate Transaction');
+    var emailBody = 'Hi,\n\nYou can view your transaction details and progress at the link below:\n\n' +
+      portalUrl + '\n\n' +
+      'Transaction: ' + (t.address || '') + '\n' +
+      'Price: ' + Data.formatCurrencyFull(t.price) + '\n\n' +
+      'This link gives you read-only access to your transaction status, timeline, tasks, and upcoming appointments.\n\n' +
+      'If you have any questions, please don\'t hesitate to reach out.\n\n' +
+      'Best regards,\n' + (t.agent || 'Your Agent');
+
+    var encodedSubject = encodeURIComponent(emailSubject);
+    var encodedBody = encodeURIComponent(emailBody);
+
+    // Build modal HTML
+    var modalHtml = '<div class="modal-overlay open" id="shareClientModal">' +
+      '<div class="modal" style="max-width:560px;">' +
+        '<div class="modal-header">' +
+          '<h3>Share Portal Link</h3>' +
+          '<button class="modal-close" data-action="close-share-modal">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div style="margin-bottom:16px;">' +
+            '<div style="font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:6px;">Portal URL</div>' +
+            '<div style="display:flex;gap:8px;">' +
+              '<input type="text" id="sharePortalUrl" value="' + escapeHtml(portalUrl) + '" readonly style="flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;color:var(--gray-700);background:var(--gray-50);">' +
+              '<button class="btn btn-primary btn-sm" data-action="copy-portal-link" style="white-space:nowrap;">Copy Link</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size:.78rem;color:var(--gray-400);margin-bottom:20px;">This link provides read-only access to the transaction progress, timeline, and upcoming appointments.</div>';
+
+    // Email buttons
+    var hasEmailButtons = false;
+    if (buyer.email || seller.email) {
+      modalHtml += '<div style="border-top:1px solid var(--gray-100);padding-top:16px;">' +
+        '<div style="font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:10px;">Send via Email</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+
+      if (buyer.email) {
+        modalHtml += '<a href="mailto:' + escapeHtml(buyer.email) + '?subject=' + encodedSubject + '&body=' + encodedBody + '" class="btn btn-outline btn-sm" style="text-decoration:none;">' +
+          '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>' +
+          'Send to Buyer (' + escapeHtml(buyer.name || buyer.email) + ')</a>';
+        hasEmailButtons = true;
+      }
+
+      if (seller.email) {
+        modalHtml += '<a href="mailto:' + escapeHtml(seller.email) + '?subject=' + encodedSubject + '&body=' + encodedBody + '" class="btn btn-outline btn-sm" style="text-decoration:none;">' +
+          '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>' +
+          'Send to Seller (' + escapeHtml(seller.name || seller.email) + ')</a>';
+        hasEmailButtons = true;
+      }
+
+      modalHtml += '</div></div>';
+    }
+
+    if (!hasEmailButtons) {
+      modalHtml += '<div style="border-top:1px solid var(--gray-100);padding-top:16px;font-size:.82rem;color:var(--gray-400);font-style:italic;">' +
+        'Add buyer or seller email addresses to enable email sharing.' +
+      '</div>';
+    }
+
+    modalHtml += '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-outline" data-action="close-share-modal">Close</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    // Insert modal into DOM
+    var existing = document.getElementById('shareClientModal');
+    if (existing) existing.remove();
+
+    var container = document.createElement('div');
+    container.innerHTML = modalHtml;
+    document.body.appendChild(container.firstElementChild);
+
+    // Overlay click to close
+    var modal = document.getElementById('shareClientModal');
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.remove();
+    });
+  }
+
+  // Handle share modal actions via delegation
+  document.addEventListener('click', function (e) {
+    var target = e.target.closest('[data-action]');
+    if (!target) return;
+    var action = target.getAttribute('data-action');
+
+    if (action === 'close-share-modal') {
+      var modal = document.getElementById('shareClientModal');
+      if (modal) modal.remove();
+    }
+
+    if (action === 'copy-portal-link') {
+      var urlInput = document.getElementById('sharePortalUrl');
+      if (urlInput) {
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999);
+        try {
+          navigator.clipboard.writeText(urlInput.value).then(function () {
+            showToast('Portal link copied to clipboard!');
+          }).catch(function () {
+            document.execCommand('copy');
+            showToast('Portal link copied to clipboard!');
+          });
+        } catch (err) {
+          document.execCommand('copy');
+          showToast('Portal link copied to clipboard!');
+        }
+      }
+    }
+  });
 
   // ============================================================
   //  INIT

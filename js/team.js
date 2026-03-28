@@ -104,6 +104,23 @@
     document.getElementById('mPassword').value = editUser ? editUser.password : '';
     document.getElementById('mRole').value = editUser ? editUser.role : 'Senior Agent';
 
+    // Populate assigned-to dropdown with non-assistant users
+    var assignSelect = document.getElementById('mAssignedTo');
+    var users = getUsers();
+    assignSelect.innerHTML = '<option value="">— Select Agent —</option>' +
+      users.filter(function (u) { return u.role !== 'Assistant'; }).map(function (u) {
+        var sel = editUser && editUser.assignedTo === u.username ? ' selected' : '';
+        return '<option value="' + u.username + '"' + sel + '>' + u.displayName + ' (' + u.role + ')</option>';
+      }).join('');
+
+    // Show/hide assigned-to based on role
+    var roleSelect = document.getElementById('mRole');
+    var assignGroup = document.getElementById('assignedToGroup');
+    assignGroup.style.display = roleSelect.value === 'Assistant' ? 'block' : 'none';
+    roleSelect.onchange = function () {
+      assignGroup.style.display = this.value === 'Assistant' ? 'block' : 'none';
+    };
+
     // Disable username change on edit
     document.getElementById('mUsername').disabled = !!editUser;
 
@@ -122,9 +139,15 @@
     var username = document.getElementById('mUsername').value.trim();
     var password = document.getElementById('mPassword').value.trim();
     var role = document.getElementById('mRole').value;
+    var assignedTo = role === 'Assistant' ? document.getElementById('mAssignedTo').value : '';
 
     if (!displayName || !username || !password) {
       showToast('Please fill in all fields', 'error');
+      return;
+    }
+
+    if (role === 'Assistant' && !assignedTo) {
+      showToast('Please select who this assistant is assigned to', 'error');
       return;
     }
 
@@ -137,6 +160,7 @@
       users[idx].displayName = displayName;
       users[idx].password = password;
       users[idx].role = role;
+      users[idx].assignedTo = assignedTo;
 
       // Update session if editing self
       var session = Auth.getSession();
@@ -156,7 +180,7 @@
         showToast('Username already taken', 'error');
         return;
       }
-      users.push({ username: username, password: password, displayName: displayName, role: role });
+      users.push({ username: username, password: password, displayName: displayName, role: role, assignedTo: assignedTo });
       saveUsers(users);
       showToast('Member added');
     }

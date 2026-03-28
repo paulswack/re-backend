@@ -1,35 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" data-title="Listings — RE Back Office">
+<html lang="en" data-title="Closed Deals — RE Back Office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Listings — RE Back Office</title>
+  <title>Closed Deals — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* ---- Listing Page Styles ---- */
+    /* ---- Closed Deals Page Styles ---- */
 
-    /* Stat cards row */
-    .lst-stats-grid {
+    /* Stat cards row — emerald trophy case theme */
+    .closed-stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 24px;
     }
-    @media (max-width: 900px) { .lst-stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .lst-stats-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .closed-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .closed-stats-grid { grid-template-columns: 1fr; } }
+
+    .closed-stat-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-left: 4px solid #10B981;
+    }
+    .closed-stat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      background: #ECFDF5;
+    }
+    .closed-stat-icon svg { width: 22px; height: 22px; fill: #10B981; }
+    .closed-stat-value { font-size: 1.3rem; font-weight: 800; color: var(--gray-900); }
+    .closed-stat-label { font-size: .75rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .3px; }
 
     /* List row column layout */
-    .lst-row-address { flex: 2; min-width: 0; }
-    .lst-row-address-text {
+    .cld-row-address { flex: 2; min-width: 0; }
+    .cld-row-address-text {
       font-weight: 600; color: var(--gray-800);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .lst-row-price { width: 120px; font-weight: 700; color: var(--gray-900); text-align: right; flex-shrink: 0; }
-    .lst-row-specs { width: 160px; font-size: .82rem; color: var(--gray-500); flex-shrink: 0; }
-    .lst-row-agent { width: 180px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .lst-row-agent-name { font-size: .85rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lst-row-status { width: 100px; flex-shrink: 0; text-align: center; }
-    .lst-row-date { width: 120px; font-size: .82rem; color: var(--gray-400); text-align: right; flex-shrink: 0; }
+    .cld-row-agent { width: 180px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .cld-row-agent-name { font-size: .85rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cld-row-price { width: 120px; font-weight: 700; color: var(--gray-900); text-align: right; flex-shrink: 0; }
+    .cld-row-date { width: 120px; font-size: .82rem; color: var(--gray-400); text-align: right; flex-shrink: 0; }
+    .cld-row-commission {
+      width: 120px; font-size: .88rem; font-weight: 700;
+      color: #10B981; text-align: right; flex-shrink: 0;
+    }
 
     /* List header */
     .list-header {
@@ -49,7 +71,7 @@
       background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 20px;
       transition: color .15s;
     }
-    .detail-back-btn:hover { color: var(--indigo); }
+    .detail-back-btn:hover { color: #10B981; }
     .detail-back-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
     .detail-header-card {
@@ -59,17 +81,11 @@
       overflow: hidden;
       margin-bottom: 24px;
     }
-    .detail-header-accent { height: 4px; background: var(--indigo); }
+    .detail-header-accent { height: 4px; background: #10B981; }
     .detail-header-body { padding: 24px 28px 20px; }
     .detail-header-top {
       display: flex; align-items: flex-start; justify-content: space-between;
       flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
-    }
-    .detail-header-address {
-      font-size: 1.35rem; font-weight: 800; color: var(--gray-900); letter-spacing: -.3px;
-    }
-    .detail-header-price {
-      font-size: 1.2rem; font-weight: 700; color: var(--indigo); margin-top: 4px;
     }
 
     .detail-blocks-row {
@@ -87,20 +103,25 @@
     }
     .detail-block-value { font-size: .92rem; font-weight: 600; color: var(--gray-800); }
 
-    /* Description card */
-    .desc-card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
+    /* Commission highlight */
+    .commission-highlight {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      border-radius: 12px;
+      padding: 20px 24px;
       margin-bottom: 24px;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1.5px solid #A7F3D0;
     }
-    .desc-card-header {
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--gray-100);
-      font-size: .92rem; font-weight: 700; color: var(--gray-800);
+    .commission-highlight-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: #10B981; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
     }
-    .desc-card-body { padding: 20px 24px; }
+    .commission-highlight-icon svg { width: 24px; height: 24px; fill: #fff; }
+    .commission-highlight-label { font-size: .78rem; font-weight: 600; color: #065F46; text-transform: uppercase; letter-spacing: .3px; }
+    .commission-highlight-value { font-size: 1.4rem; font-weight: 800; color: #065F46; }
 
     /* Notes card */
     .notes-card {
@@ -113,18 +134,6 @@
       border-bottom: 1px solid var(--gray-100);
       font-size: .92rem; font-weight: 700; color: var(--gray-800);
     }
-    .note-input-area { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); }
-    .note-input-area textarea {
-      width: 100%; padding: 10px 14px; border: 1.5px solid var(--gray-200);
-      border-radius: 8px; font-size: .88rem; font-family: inherit;
-      resize: vertical; min-height: 60px; color: var(--gray-800);
-      transition: border-color .15s;
-    }
-    .note-input-area textarea:focus {
-      border-color: var(--indigo); outline: none;
-      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
-    }
-    .note-input-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
     .note-item {
       padding: 14px 20px; border-bottom: 1px solid var(--gray-50);
     }
@@ -136,8 +145,30 @@
     .note-time { font-size: .72rem; color: var(--gray-400); }
     .note-text { font-size: .88rem; color: var(--gray-600); line-height: 1.5; }
 
+    /* Parties card */
+    .parties-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+    .parties-card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .95rem; font-weight: 700; color: var(--gray-800);
+    }
+    .parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .party-section { padding: 20px 24px; }
+    .party-section:first-child { border-right: 1px solid var(--gray-100); }
+    .party-label {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--gray-400); margin-bottom: 12px;
+    }
+
     @media (max-width: 768px) {
-      .lst-row-specs { display: none; }
+      .cld-row-commission { display: none; }
+      .parties-grid { grid-template-columns: 1fr; }
+      .party-section:first-child { border-right: none; border-bottom: 1px solid var(--gray-100); }
     }
   </style>
 </head>
@@ -170,8 +201,8 @@
       <div class="topbar">
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
-          <h1>Listings</h1>
-          <p>Manage your active and past listings.</p>
+          <h1>Closed Deals</h1>
+          <p>Your team's wins — every closed transaction and commission earned.</p>
         </div>
         <div class="topbar-actions"></div>
       </div>
@@ -185,6 +216,6 @@
   <script src="js/theme.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/data.js"></script>
-  <script src="js/listings.js"></script>
+  <script src="js/closed.js"></script>
 </body>
 </html>

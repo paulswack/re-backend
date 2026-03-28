@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Transactions — RE Back Office</title>
+  <title>Current Escrows — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
     /* ---- Transaction Page Styles ---- */
@@ -11,12 +11,12 @@
     /* Stat cards row */
     .txn-stats-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       margin-bottom: 24px;
     }
-    @media (max-width: 1100px) { .txn-stats-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 680px) { .txn-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .txn-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .txn-stats-grid { grid-template-columns: 1fr; } }
     @media (max-width: 480px) { .txn-stats-grid { grid-template-columns: 1fr; } }
 
     /* List row column layout */
@@ -240,9 +240,10 @@
       <nav class="sidebar-nav">
         <div class="sidebar-nav-label">Menu</div>
         <a href="dashboard.html" class="nav-item" data-page="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</a>
-        <a href="transactions.html" class="nav-item" data-page="transactions.html"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Transactions</a>
-        <a href="listings.html" class="nav-item" data-page="listings.html"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Listings</a>
         <a href="leaderboard.html" class="nav-item" data-page="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>Leaderboard</a>
+        <a href="listings.html" class="nav-item" data-page="listings.html"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Listings</a>
+        <a href="transactions.html" class="nav-item" data-page="transactions.html"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Current Escrows</a>
+        <a href="closed.html" class="nav-item" data-page="closed.html"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>Closed</a>
         <a href="tax-center.html" class="nav-item" data-page="tax-center.html"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>Tax Center</a>
       </nav>
       <div class="sidebar-footer">
@@ -254,8 +255,8 @@
       <div class="topbar">
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
-          <h1>Transactions</h1>
-          <p>Manage your deals from contract to close.</p>
+          <h1>Current Escrows</h1>
+          <p>Manage your active escrows.</p>
         </div>
         <div class="topbar-actions"></div>
       </div>
@@ -270,7 +271,7 @@
   <div class="modal-overlay" id="txnModal">
     <div class="modal" style="max-width:600px;">
       <div class="modal-header">
-        <h3 id="modalTitle">Add Transaction</h3>
+        <h3 id="modalTitle">Add Escrow</h3>
         <button class="modal-close" data-action="modal-close">&times;</button>
       </div>
       <div class="modal-body">
@@ -341,35 +342,125 @@
               <input type="email" id="txnSellerEmail" placeholder="seller@email.com">
             </div>
           </div>
+          <div style="margin-top:8px;padding-top:14px;border-top:1px solid var(--gray-100);">
+            <div style="font-size:.82rem;font-weight:700;color:var(--gray-600);margin-bottom:10px;">Transaction Contacts</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txnEscrowCompany">Escrow Company</label>
+                <input type="text" id="txnEscrowCompany" placeholder="Company name">
+              </div>
+              <div class="form-group">
+                <label for="txnEscrowContact">Escrow Contact</label>
+                <input type="text" id="txnEscrowContact" placeholder="Name · Phone · Email">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txnTitleCompany">Title Company</label>
+                <input type="text" id="txnTitleCompany" placeholder="Company name">
+              </div>
+              <div class="form-group">
+                <label for="txnTitleContact">Title Contact</label>
+                <input type="text" id="txnTitleContact" placeholder="Name · Phone · Email">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txnLender">Lender</label>
+                <input type="text" id="txnLender" placeholder="Company name">
+              </div>
+              <div class="form-group">
+                <label for="txnLenderContact">Loan Officer</label>
+                <input type="text" id="txnLenderContact" placeholder="Name · Phone · Email">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="txnOtherAgent">Other Agent</label>
+                <input type="text" id="txnOtherAgent" placeholder="Agent name">
+              </div>
+              <div class="form-group">
+                <label for="txnOtherAgentContact">Other Agent Contact</label>
+                <input type="text" id="txnOtherAgentContact" placeholder="Phone · Email">
+              </div>
+            </div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" data-action="modal-cancel">Cancel</button>
-        <button class="btn btn-primary" data-action="modal-save">Save Transaction</button>
+        <button class="btn btn-primary" data-action="modal-save">Save Escrow</button>
       </div>
     </div>
   </div>
 
   <!-- Party Edit Modal (buyer/seller from detail view) -->
   <div class="modal-overlay" id="partyModal">
-    <div class="modal" style="max-width:420px;">
+    <div class="modal" style="max-width:520px;">
       <div class="modal-header">
         <h3 id="partyModalTitle">Edit Buyer</h3>
         <button class="modal-close" data-action="party-modal-close">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- Info banner -->
+        <div id="partyBanner" style="padding:14px 16px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:10px">
+          <div id="partyBannerIcon" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div>
+            <div id="partyBannerTitle" style="font-size:.88rem;font-weight:700"></div>
+            <div id="partyBannerSub" style="font-size:.75rem;opacity:.7"></div>
+          </div>
+        </div>
+
         <form id="partyForm">
+          <!-- Primary contact -->
+          <div style="font-size:.78rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Primary Contact</div>
           <div class="form-group">
-            <label for="partyName">Name</label>
-            <input type="text" id="partyName" placeholder="Full name">
+            <label for="partyName">Full Name</label>
+            <input type="text" id="partyName" placeholder="e.g., John Smith">
           </div>
-          <div class="form-group">
-            <label for="partyPhone">Phone</label>
-            <input type="tel" id="partyPhone" placeholder="(555) 555-5555">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="partyPhone">Phone</label>
+              <input type="tel" id="partyPhone" placeholder="(555) 555-5555">
+            </div>
+            <div class="form-group">
+              <label for="partyEmail">Email</label>
+              <input type="email" id="partyEmail" placeholder="john@email.com">
+            </div>
           </div>
-          <div class="form-group">
-            <label for="partyEmail">Email</label>
-            <input type="email" id="partyEmail" placeholder="email@example.com">
+
+          <!-- Spouse / Family -->
+          <div style="border-top:1px solid var(--gray-100);margin-top:16px;padding-top:16px">
+            <div style="font-size:.78rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Spouse / Family Member</div>
+            <div class="form-group">
+              <label for="partySpouseName">Name</label>
+              <input type="text" id="partySpouseName" placeholder="e.g., Jane Smith">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="partySpousePhone">Phone</label>
+                <input type="tel" id="partySpousePhone" placeholder="(555) 555-5555">
+              </div>
+              <div class="form-group">
+                <label for="partySpouseEmail">Email</label>
+                <input type="email" id="partySpouseEmail" placeholder="jane@email.com">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="partySpouseRelation">Relationship</label>
+              <select id="partySpouseRelation">
+                <option value="">— None —</option>
+                <option value="Spouse">Spouse</option>
+                <option value="Partner">Partner</option>
+                <option value="Co-Buyer">Co-Buyer</option>
+                <option value="Co-Seller">Co-Seller</option>
+                <option value="Parent">Parent</option>
+                <option value="Child">Child</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
         </form>
       </div>

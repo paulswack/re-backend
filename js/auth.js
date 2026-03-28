@@ -121,6 +121,22 @@
       var session = Auth.getSession();
       if (!session) return false;
       return session.role === 'Team Lead';
+    },
+
+    isAssistant: function () {
+      var session = Auth.getSession();
+      if (!session) return false;
+      return session.role === 'Assistant';
+    },
+
+    getAssignedAgent: function () {
+      // Returns the user object this assistant is assigned to
+      var session = Auth.getSession();
+      if (!session || session.role !== 'Assistant') return null;
+      var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+      var me = users.find(function (u) { return u.username === session.username; });
+      if (!me || !me.assignedTo) return null;
+      return users.find(function (u) { return u.username === me.assignedTo; }) || null;
     }
   };
 
@@ -306,13 +322,45 @@
     });
   }
 
-  // Auto-run solo mode check on DOMContentLoaded
+  // Hide tax center for assistants
+  function applyAssistantMode() {
+    if (!Auth.isAssistant()) return;
+    var navItems = document.querySelectorAll('.nav-item[data-page]');
+    navItems.forEach(function (item) {
+      var href = item.getAttribute('data-page') || item.getAttribute('href');
+      if (href === 'tax-center.html') {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  // Auto-run on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function () {
     applySoloMode();
+    applyAssistantMode();
   });
+
+  // ---- Helper: get the display name to filter data by ----
+  // For assistants, returns their assigned agent's displayName
+  // For Team Lead, returns null (sees all)
+  // For regular agents, returns their own displayName
+  function getDataAgentName() {
+    var session = Auth.getSession();
+    if (!session) return null;
+    if (Auth.isPrivileged()) return null; // sees all
+    if (Auth.isAssistant()) {
+      var assigned = Auth.getAssignedAgent();
+      if (!assigned) return session.displayName;
+      // If assigned to Team Lead, assistant sees all data
+      if (assigned.role === 'Team Lead') return null;
+      return assigned.displayName;
+    }
+    return session.displayName;
+  }
 
   // ---- Expose globals ----
   window.Auth = Auth;
+  window.getDataAgentName = getDataAgentName;
   window.getInitials = getInitials;
   window.agentClass = agentClass;
   window.showToast = showToast;

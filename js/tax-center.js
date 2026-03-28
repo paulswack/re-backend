@@ -14,7 +14,20 @@
     Auth.logout();
   });
 
+  // Assistants cannot access Tax Center
+  if (Auth.isAssistant()) {
+    document.querySelector('.page-body').innerHTML =
+      '<div style="padding:80px 40px;text-align:center">' +
+        '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="display:block;margin:0 auto 12px"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>' +
+        '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-600);margin-bottom:6px">Access Restricted</h3>' +
+        '<p style="font-size:.88rem;color:var(--gray-400)">Tax information is private to each agent. Contact your agent for any tax-related questions.</p>' +
+        '<a href="dashboard.html" class="btn btn-outline btn-sm" style="margin-top:16px">Back to Dashboard</a>' +
+      '</div>';
+    return;
+  }
+
   var PREFIX = 'reb_';
+  var selectedTaxAgent = 'all';
   var IRS_MILEAGE_RATE = 0.67; // 2026 rate
   var EST_TAX_RATE = 0.25;
 
@@ -567,6 +580,7 @@
         showToast('Entry updated.');
       }
     } else {
+      var taxSession = Auth.getSession();
       var entry = {
         id: generateId(),
         type: type,
@@ -580,6 +594,7 @@
         recurFreq: recurring ? recurFreq : null,
         receiptData: receiptData || null,
         receiptName: receiptFileName || null,
+        username: taxSession ? taxSession.username : 'admin',
         createdAt: new Date().toISOString()
       };
       entries.push(entry);
@@ -620,6 +635,7 @@
         showToast('Trip updated.');
       }
     } else {
+      var mileSession = Auth.getSession();
       var trip = {
         id: generateId(),
         date: date,
@@ -628,6 +644,7 @@
         to: to,
         miles: parseFloat(miles),
         notes: notes,
+        username: mileSession ? mileSession.username : 'admin',
         createdAt: new Date().toISOString()
       };
       trips.push(trip);
@@ -675,6 +692,27 @@
     var trips = getMileageTrips();
     var txns = Data.getTransactions();
     var closedTxns = txns.filter(function (t) { return t.status === 'closed'; });
+
+    // Agent-level access control
+    var taxSession = Auth.getSession();
+    var isLead = Auth.isPrivileged();
+
+    if (isLead && selectedTaxAgent && selectedTaxAgent !== 'all') {
+      // Team Lead filtering by selected agent
+      var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+      var selectedUser = users.find(function (u) { return u.username === selectedTaxAgent; });
+      if (selectedUser) {
+        entries = entries.filter(function (e) { return e.username === selectedTaxAgent || (!e.username && selectedTaxAgent === 'admin'); });
+        trips = trips.filter(function (t) { return t.username === selectedTaxAgent || (!t.username && selectedTaxAgent === 'admin'); });
+        closedTxns = closedTxns.filter(function (t) { return t.agent === selectedUser.displayName; });
+      }
+    } else if (!isLead) {
+      // Regular agent only sees their own data
+      entries = entries.filter(function (e) { return e.username === taxSession.username || (!e.username && taxSession.username === 'admin'); });
+      trips = trips.filter(function (t) { return t.username === taxSession.username || (!t.username && taxSession.username === 'admin'); });
+      closedTxns = closedTxns.filter(function (t) { return t.agent === taxSession.displayName; });
+    }
+
     var commRate = settings.commissionRate;
     var agentSplit = settings.agentSplit;
 
@@ -701,6 +739,25 @@
     var netProfit = totalIncome - totalDeductions;
     var estTax = Math.max(0, netProfit * EST_TAX_RATE);
     var ytdSavingsNeeded = estTax;
+
+    // ========== AGENT FILTER (Team Lead only) ==========
+    var agentFilterEl = document.getElementById('taxAgentFilter');
+    if (agentFilterEl) agentFilterEl.remove();
+    if (isLead) {
+      var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+      var filterHtml = '<div id="taxAgentFilter" style="margin-bottom:16px;display:flex;align-items:center;gap:12px">' +
+        '<span style="font-size:.85rem;font-weight:600;color:var(--gray-600)">Viewing:</span>' +
+        '<select id="taxAgentSelect" style="padding:8px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;font-weight:600;color:var(--gray-800);background:#fff;cursor:pointer">' +
+          '<option value="all"' + (selectedTaxAgent === 'all' ? ' selected' : '') + '>All Agents</option>' +
+          users.map(function (u) { return '<option value="' + u.username + '"' + (selectedTaxAgent === u.username ? ' selected' : '') + '>' + u.displayName + '</option>'; }).join('') +
+        '</select>' +
+      '</div>';
+      document.getElementById('taxStats').insertAdjacentHTML('beforebegin', filterHtml);
+      document.getElementById('taxAgentSelect').addEventListener('change', function () {
+        selectedTaxAgent = this.value;
+        render();
+      });
+    }
 
     // ========== STATS ==========
     document.getElementById('taxStats').innerHTML =

@@ -34,11 +34,24 @@
   var openTasks = tasks.filter(function (t) { return t.status !== 'done'; });
   var overdueTasks = openTasks.filter(function (t) { return t.dueDate && new Date(t.dueDate) < new Date(); });
 
-  // Tax
+  // Tax — filtered by agent for non-privileged users
+  var isLead = Auth.isPrivileged();
   var taxEntries = []; try { taxEntries = JSON.parse(localStorage.getItem('reb_tax_entries') || '[]'); } catch(e) {}
-  var expenses = taxEntries.filter(function (e) { return e.type === 'expense'; });
+  var myTaxEntries = taxEntries;
+  var myClosedTxnsForTax = closedTxns;
+  if (!isLead) {
+    myTaxEntries = taxEntries.filter(function (e) { return e.username === session.username || (!e.username && session.username === 'admin'); });
+    myClosedTxnsForTax = closedTxns.filter(function (t) { return t.agent === session.displayName; });
+  }
+  var expenses = myTaxEntries.filter(function (e) { return e.type === 'expense'; });
   var totalExpenses = expenses.reduce(function (s, e) { return s + (e.amount || 0); }, 0);
-  var commissionIncome = closedTxns.reduce(function (s, t) { return s + ((t.price || 0) * 0.03); }, 0);
+  var commissionIncome = myClosedTxnsForTax.reduce(function (s, t) { return s + ((t.price || 0) * 0.03); }, 0);
+
+  // Dashboard widgets show team-wide data for everyone
+  var myClosedTxns = closedTxns;
+  var myActiveTxns = activeTxns;
+  var myPendingTxns = pendingTxns;
+  var myActiveListings = activeListings;
 
   // Agent Goals (per-agent, team = sum of all)
   var allAgentGoals = JSON.parse(localStorage.getItem('reb_agent_goals') || '{}');
@@ -103,14 +116,40 @@
 
     // Stat Cards
     '<div class="stats-grid" style="margin-bottom:24px">' +
-      statCard('indigo', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>', stats.totalTxns, 'Total Transactions') +
-      statCard('emerald', '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>', Data.formatCurrency(stats.totalVolume), 'Closed Volume') +
+      statCard('emerald', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>', closedTxns.length, 'Total Closed') +
+      statCard('indigo', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>', activeTxns.length + pendingTxns.length, 'Current Escrows') +
       statCard('amber', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>', stats.activeListings, 'Active Listings') +
-      statCard('violet', '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>', Data.formatCurrency(stats.avgDeal), 'Avg Deal Size') +
     '</div>' +
 
     // 3-Column Widget Layout
-    '<div style="display:grid;grid-template-columns:1fr 1fr 340px;gap:20px;align-items:start">' +
+    // Tax Snapshot (full width — agents only, hidden for Team Lead)
+    (!isLead ? '<div style="background:linear-gradient(135deg,#F5F3FF 0%,#EEF2FF 50%,#ECFDF5 100%);border-radius:var(--radius-lg);padding:20px 28px;margin-bottom:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">' +
+      '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">' +
+        '<div style="width:40px;height:40px;border-radius:10px;background:var(--indigo);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>' +
+        '<div><div style="font-size:.88rem;font-weight:700;color:var(--gray-900)">Tax Snapshot</div><div style="font-size:.7rem;color:var(--gray-400)">Year to date</div></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:0;flex:1;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04)">' +
+        '<div style="flex:1;padding:14px 20px;text-align:center;border-right:1px solid var(--gray-50)">' +
+          '<div style="font-size:1.1rem;font-weight:800;color:var(--emerald)">' + Data.formatCurrencyFull(commissionIncome) + '</div>' +
+          '<div style="font-size:.68rem;font-weight:600;color:var(--gray-400);margin-top:2px">Income</div>' +
+        '</div>' +
+        '<div style="flex:1;padding:14px 20px;text-align:center;border-right:1px solid var(--gray-50)">' +
+          '<div style="font-size:1.1rem;font-weight:800;color:var(--rose)">' + Data.formatCurrencyFull(totalExpenses) + '</div>' +
+          '<div style="font-size:.68rem;font-weight:600;color:var(--gray-400);margin-top:2px">Expenses</div>' +
+        '</div>' +
+        '<div style="flex:1;padding:14px 20px;text-align:center;border-right:1px solid var(--gray-50)">' +
+          '<div style="font-size:1.1rem;font-weight:800;color:' + (commissionIncome - totalExpenses >= 0 ? 'var(--indigo)' : 'var(--rose)') + '">' + Data.formatCurrencyFull(commissionIncome - totalExpenses) + '</div>' +
+          '<div style="font-size:.68rem;font-weight:600;color:var(--gray-400);margin-top:2px">Net Profit</div>' +
+        '</div>' +
+        '<div style="flex:1;padding:14px 20px;text-align:center">' +
+          '<div style="font-size:1.1rem;font-weight:800;color:var(--amber)">' + Data.formatCurrencyFull(Math.max(0, (commissionIncome - totalExpenses) * 0.25)) + '</div>' +
+          '<div style="font-size:.68rem;font-weight:600;color:var(--gray-400);margin-top:2px">Est. Tax</div>' +
+        '</div>' +
+      '</div>' +
+      '<a href="tax-center.html" class="btn btn-outline btn-sm" style="font-size:.75rem;flex-shrink:0;border-color:var(--indigo);color:var(--indigo)">View Details</a>' +
+    '</div>' : '') +
+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start">' +
 
       // ===== COLUMN 1 =====
       '<div style="display:flex;flex-direction:column;gap:20px">' +
@@ -128,18 +167,18 @@
 
         // Recent Closed
         widget('Recent Closed', 'emerald', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>',
-          (closedTxns.length === 0
+          (myClosedTxns.length === 0
             ? '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No closed deals yet.</div>'
-            : closedTxns.slice(0, 4).map(function (t) {
+            : myClosedTxns.slice(0, 4).map(function (t) {
                 return listRow(t.agent, t.address.split(',')[0], t.agent, Data.formatCurrencyFull(t.price), Data.formatDate(t.closeDate));
               }).join('')),
           null, '<a href="transactions.html" class="btn btn-outline btn-sm" style="font-size:.72rem">View All</a>') +
 
         // Active Deals
-        widget('Active Deals (' + (activeTxns.length + pendingTxns.length) + ')', 'indigo', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>',
-          (activeTxns.concat(pendingTxns).length === 0
+        widget('Active Deals (' + (myActiveTxns.length + myPendingTxns.length) + ')', 'indigo', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>',
+          (myActiveTxns.concat(myPendingTxns).length === 0
             ? '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No active deals.</div>'
-            : activeTxns.concat(pendingTxns).slice(0, 4).map(function (t) {
+            : myActiveTxns.concat(myPendingTxns).slice(0, 4).map(function (t) {
                 return '<a href="transactions.html" class="list-row" style="text-decoration:none;padding:10px 20px">' +
                   '<div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">' + t.address.split(',')[0] + '</div>' +
                   '<div style="font-size:.72rem;color:var(--gray-400)">' + t.agent + '</div></div>' +
@@ -151,12 +190,12 @@
       '<div style="display:flex;flex-direction:column;gap:20px">' +
 
         // Leaderboard Widget
-        widget('Top Agents', 'amber', '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>',
+        widget('Top 5 Agents', 'amber', '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>',
           '<div style="padding:16px 20px">' +
             (function () {
               var maxVol = agentStats.length > 0 ? agentStats[0].volume : 1;
               var medals = ['&#127942;', '&#129352;', '&#129353;'];
-              return agentStats.map(function (a, i) {
+              return agentStats.slice(0, 5).map(function (a, i) {
                 var pct = maxVol > 0 ? Math.round((a.volume / maxVol) * 100) : 0;
                 var barColors = ['var(--amber)', 'var(--gray-400)', '#CD7F32', 'var(--indigo)', 'var(--violet)'];
                 return '<div style="margin-bottom:16px">' +
@@ -180,9 +219,9 @@
 
         // Listings
         widget('Active Listings', 'amber', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>',
-          (activeListings.length === 0
+          (myActiveListings.length === 0
             ? '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No active listings.</div>'
-            : activeListings.slice(0, 4).map(function (l) {
+            : myActiveListings.slice(0, 4).map(function (l) {
                 return '<div class="list-row" style="padding:10px 20px">' +
                   '<div style="width:44px;height:32px;border-radius:6px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gray-300)"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>' +
                   '<div style="flex:1;min-width:0"><div style="font-size:.82rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + l.address.split(',')[0] + '</div>' +
@@ -192,15 +231,6 @@
               }).join('')),
           null, '<a href="listings.html" class="btn btn-outline btn-sm" style="font-size:.72rem">View All</a>') +
 
-        // Tax Snapshot
-        widget('Tax Snapshot', 'violet', '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>',
-          '<div style="padding:16px 20px">' +
-            taxRow('Commission Income', Data.formatCurrencyFull(commissionIncome), 'var(--emerald)') +
-            taxRow('Total Expenses', Data.formatCurrencyFull(totalExpenses), 'var(--rose)') +
-            taxRow('Net Profit', Data.formatCurrencyFull(commissionIncome - totalExpenses), commissionIncome - totalExpenses >= 0 ? 'var(--indigo)' : 'var(--rose)') +
-            taxRow('Est. Tax (25%)', Data.formatCurrencyFull(Math.max(0, (commissionIncome - totalExpenses) * 0.25)), 'var(--amber)') +
-          '</div>',
-          null, '<a href="tax-center.html" class="btn btn-outline btn-sm" style="font-size:.72rem">Tax Center</a>') +
       '</div>' +
 
       // ===== COLUMN 3 =====
