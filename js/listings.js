@@ -10,6 +10,7 @@
   populateSidebarUser();
   setActiveNav();
   initSidebarToggle();
+  applyPageColor('listings');
 
   document.getElementById('logoutBtn').addEventListener('click', function () {
     Auth.logout();

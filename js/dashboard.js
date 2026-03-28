@@ -10,6 +10,7 @@
   populateSidebarUser();
   setActiveNav();
   initSidebarToggle();
+  applyPageColor('dashboard');
   document.getElementById('logoutBtn').addEventListener('click', function () { Auth.logout(); });
 
   var session = Auth.getSession();

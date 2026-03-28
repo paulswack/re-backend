@@ -9,6 +9,7 @@
   populateSidebarUser();
   setActiveNav();
   initSidebarToggle();
+  applyPageColor('taxCenter');
 
   document.getElementById('logoutBtn').addEventListener('click', function () {
     Auth.logout();

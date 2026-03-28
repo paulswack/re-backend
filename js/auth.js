@@ -541,8 +541,24 @@
   window.initSidebarToggle = initSidebarToggle;
   window.initSettingsDropdown = initSettingsDropdown;
   window.isSoloMode = isSoloMode;
+  // ---- Apply page-specific accent color ----
+  function applyPageColor(pageKey) {
+    var color = getAdminSetting('theme.pageColors.' + pageKey, null);
+    if (!color) return;
+    var root = document.documentElement;
+    root.style.setProperty('--page-accent', color);
+    // Generate a light version
+    var r = parseInt(color.substring(1, 3), 16);
+    var g = parseInt(color.substring(3, 5), 16);
+    var b = parseInt(color.substring(5, 7), 16);
+    var mix = function (c) { return Math.round(c * 0.08 + 255 * 0.92); };
+    var toHex = function (n) { var h = Math.min(255, n).toString(16); return h.length === 1 ? '0' + h : h; };
+    root.style.setProperty('--page-accent-light', '#' + toHex(mix(r)) + toHex(mix(g)) + toHex(mix(b)));
+  }
+
   window.getAdminSettings = getAdminSettings;
   window.getAdminSetting = getAdminSetting;
   window.applyTheme = applyTheme;
+  window.applyPageColor = applyPageColor;
 
 })();

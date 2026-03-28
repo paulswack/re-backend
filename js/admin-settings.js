@@ -60,7 +60,15 @@
       sidebarActiveBg: '#EEF2FF',
       headerGradientStart: '#6366F1',
       headerGradientEnd: '#8B5CF6',
-      bodyBg: '#F8FAFC'
+      bodyBg: '#F8FAFC',
+      pageColors: {
+        dashboard: '#6366F1',
+        leaderboard: '#1E293B',
+        listings: '#6366F1',
+        escrows: '#3B82F6',
+        closed: '#10B981',
+        taxCenter: '#8B5CF6'
+      }
     },
     general: {
       teamName: 'RE Back Office',
@@ -458,6 +466,31 @@
         p.name + '</button>';
     });
     h += '</div></div>';
+
+    // Page Accent Colors
+    var pc = (t.pageColors || DEFAULTS.theme.pageColors || {});
+    var pageColorItems = [
+      { key: 'dashboard', label: 'Dashboard', desc: 'Stat icons, widget accents' },
+      { key: 'leaderboard', label: 'Leaderboard', desc: 'Stat icons, ranking accents' },
+      { key: 'listings', label: 'Listings', desc: 'Stat icons, list accents' },
+      { key: 'escrows', label: 'Current Escrows', desc: 'Stat icons, detail accents' },
+      { key: 'closed', label: 'Closed', desc: 'Stat icons, commission accents' },
+      { key: 'taxCenter', label: 'Tax Center', desc: 'Tab accents, chart colors' }
+    ];
+
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Page Accent Colors</div>';
+    h += '<div class="as-card-subtitle">Set a unique accent color for each page\'s stat cards and highlights</div>';
+    pageColorItems.forEach(function (p) {
+      var val = pc[p.key] || '#6366F1';
+      h += '<div class="as-list-item" style="padding:10px 0">' +
+        '<input type="color" class="as-color-input" value="' + val + '" data-action="update-page-color" data-page-key="' + p.key + '">' +
+        '<div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">' + p.label + '</div>' +
+        '<div style="font-size:.72rem;color:var(--gray-400)">' + p.desc + '</div></div>' +
+        '<span style="font-size:.78rem;font-family:monospace;color:var(--gray-500);background:var(--gray-50);padding:3px 8px;border-radius:4px">' + val + '</span>' +
+      '</div>';
+    });
+    h += '</div>';
 
     // Reset
     h += '<div class="as-card" style="display:flex;align-items:center;justify-content:space-between">';
@@ -1127,6 +1160,16 @@
       if (hexEl) hexEl.textContent = el.value;
       // Live apply
       if (typeof applyTheme === 'function') applyTheme();
+      return;
+    }
+
+    if (action === 'update-page-color') {
+      var pageKey = el.getAttribute('data-page-key');
+      if (!settings.theme) settings.theme = JSON.parse(JSON.stringify(DEFAULTS.theme));
+      if (!settings.theme.pageColors) settings.theme.pageColors = JSON.parse(JSON.stringify(DEFAULTS.theme.pageColors));
+      settings.theme.pageColors[pageKey] = el.value;
+      saveSettings(settings);
+      showToast('Page color updated');
       return;
     }
 
