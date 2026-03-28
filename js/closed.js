@@ -18,6 +18,7 @@
   // ---- State ----
   var viewMode = 'list'; // 'list' or 'detail'
   var selectedTxnId = null;
+  var currentRange = 'year';
   var COMMISSION_RATE = getAdminSetting('general.defaultCommissionRate', 0.03);
 
   // ---- DOM refs ----
@@ -74,12 +75,31 @@
     }
   }
 
+  // ---- Filter by time range ----
+  function filterByRange(txns) {
+    if (currentRange === 'all') return txns;
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = now.getMonth();
+    var quarter = Math.floor(month / 3);
+
+    return txns.filter(function (t) {
+      if (!t.closeDate) return false;
+      var d = new Date(t.closeDate);
+      if (isNaN(d.getTime())) return false;
+      if (currentRange === 'year') return d.getFullYear() === year;
+      if (currentRange === 'quarter') return d.getFullYear() === year && Math.floor(d.getMonth() / 3) === quarter;
+      if (currentRange === 'month') return d.getFullYear() === year && d.getMonth() === month;
+      return true;
+    });
+  }
+
   // ============================================================
   //  LIST VIEW
   // ============================================================
   function renderList() {
     var allTxns = Data.getTransactions();
-    var closedTxns = allTxns.filter(function (t) { return t.status === 'closed'; });
+    var closedTxns = filterByRange(allTxns.filter(function (t) { return t.status === 'closed'; }));
 
     // Agent-level access control: non-privileged users only see their own closed deals
     var session = Auth.getSession();
@@ -105,6 +125,14 @@
     html += '<div class="page-header">' +
       '<div><h2>Closed Deals</h2></div>' +
     '</div>';
+
+    // Time Filter
+    html += '<div class="lb-time-filter">';
+    ['all', 'year', 'quarter', 'month'].forEach(function (range) {
+      var labels = { all: 'All Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
+      html += '<button class="lb-filter-btn' + (currentRange === range ? ' active' : '') + '" data-action="time-filter" data-range="' + range + '">' + labels[range] + '</button>';
+    });
+    html += '</div>';
 
     // Stat Cards — emerald trophy case theme
     html += '<div class="closed-stats-grid">';
@@ -165,7 +193,7 @@
 
   function renderListRows() {
     var allTxns = Data.getTransactions();
-    var closedTxns = allTxns.filter(function (t) { return t.status === 'closed'; });
+    var closedTxns = filterByRange(allTxns.filter(function (t) { return t.status === 'closed'; }));
 
     // Agent-level access control: non-privileged users only see their own closed deals
     var session = Auth.getSession();
@@ -393,6 +421,11 @@
     var action = target.getAttribute('data-action');
 
     switch (action) {
+      case 'time-filter':
+        currentRange = target.getAttribute('data-range');
+        render();
+        break;
+
       case 'open-detail':
         selectedTxnId = target.getAttribute('data-id');
         viewMode = 'detail';
