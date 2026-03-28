@@ -933,6 +933,192 @@ tr:hover { background: var(--gray-50); }
 }
 
 /* ============================================================
+   LEADERBOARD
+   ============================================================ */
+
+.lb-time-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.lb-filter-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 600;
+  border: 1.5px solid var(--gray-200);
+  background: var(--white);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.lb-filter-btn:hover { border-color: var(--gray-300); background: var(--gray-50); }
+.lb-filter-btn.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+
+.lb-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.lb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.lb-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.lb-card-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lb-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.lb-card-sub {
+  font-size: .78rem;
+  color: var(--gray-400);
+  margin-top: 1px;
+}
+
+.lb-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--indigo-light);
+  color: var(--indigo);
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+/* Leaderboard rows */
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--gray-50);
+  transition: background .1s;
+}
+
+.lb-row:last-child { border-bottom: none; }
+.lb-row:hover { background: var(--gray-50); }
+
+.lb-rank-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: var(--gray-50);
+  color: var(--gray-500);
+}
+
+.lb-rank-badge.gold {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: var(--navy);
+}
+
+.lb-rank-badge.silver {
+  background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+  color: var(--navy);
+}
+
+.lb-rank-badge.bronze {
+  background: linear-gradient(135deg, #CD7F32, #A0522D);
+  color: #fff;
+}
+
+.lb-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lb-row-name {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.lb-row-sub {
+  font-size: .78rem;
+  color: var(--gray-400);
+  margin-top: 1px;
+}
+
+.lb-progress-wrap {
+  height: 6px;
+  background: var(--gray-100);
+  border-radius: 99px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.lb-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--indigo), var(--violet));
+  transition: width .6s ease;
+}
+
+.lb-row-value {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.lb-row-value-num {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* Leaderboard table */
+.lb-agent-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lb-agent-name {
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+@media (max-width: 1024px) {
+  .lb-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .lb-stats-grid { grid-template-columns: 1fr 1fr; }
+  .lb-row { padding: 12px 16px; gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  .lb-stats-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
    ADMIN SETTINGS
    ============================================================ */
 
