@@ -103,10 +103,10 @@
 
     // Stats
     html += '<div class="lb-stats-grid">';
-    html += lbStatCard('Agents', agents.length, 'indigo', '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>');
-    html += lbStatCard('Total Closed', totalClosed, 'emerald', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>');
-    html += lbStatCard('Total Volume', Data.formatCurrency(totalVolume), 'amber', '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>');
-    html += lbStatCard('Active / Pending', totalActive, 'violet', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>');
+    html += lbStatCard('Active Agents', agents.length, 'green', '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>');
+    html += lbStatCard('Total Closed', totalClosed, 'navy', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>');
+    html += lbStatCard('Total Volume', Data.formatCurrency(totalVolume), 'gold', '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>');
+    html += lbStatCard('Active / Pending', totalActive, 'blue', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>');
     html += '</div>';
 
     if (agents.length === 0) {
@@ -155,7 +155,7 @@
     html += '<div class="lb-card-header"><div><div class="lb-card-title">Full Performance Breakdown</div><div class="lb-card-sub">Complete agent rankings</div></div></div>';
     html += '<div class="table-wrapper"><table>';
     html += '<thead><tr>';
-    html += '<th>Rank</th><th>Agent</th><th>Closed</th><th>Volume</th><th>Avg Deal</th><th>Active</th><th>Pending</th><th>Listings</th>';
+    html += '<th>Rank</th><th>Agent</th><th>Closed</th><th>Pending</th><th>Active</th><th>Listings</th><th>Volume (Closed)</th><th>Avg. Deal Size</th>';
     html += '</tr></thead><tbody>';
 
     agents.forEach(function (a, i) {
@@ -164,12 +164,12 @@
       html += '<tr>';
       html += '<td><div class="lb-rank-badge ' + rankClass + '">' + (i + 1) + '</div></td>';
       html += '<td><div class="lb-agent-cell"><div class="agent-avatar ' + cls + '" style="width:34px;height:34px;font-size:.7rem">' + getInitials(a.name) + '</div><div class="lb-agent-name">' + a.name + '</div></div></td>';
-      html += '<td><span style="color:var(--emerald);font-weight:700">' + a.closedCount + '</span></td>';
-      html += '<td><span style="font-weight:700;font-size:.95rem">' + Data.formatCurrency(a.volume) + '</span></td>';
-      html += '<td style="color:var(--gray-500)">' + Data.formatCurrency(a.avgDeal) + '</td>';
-      html += '<td><span class="badge badge-active">' + a.activeCount + '</span></td>';
-      html += '<td><span class="badge badge-pending">' + a.pendingCount + '</span></td>';
+      html += '<td style="font-weight:700;color:var(--emerald)">' + a.closedCount + '</td>';
+      html += '<td style="color:var(--amber)">' + a.pendingCount + '</td>';
+      html += '<td style="color:#3B82F6">' + a.activeCount + '</td>';
       html += '<td>' + a.listingsCount + '</td>';
+      html += '<td style="font-weight:700">' + Data.formatCurrency(a.volume) + '</td>';
+      html += '<td style="color:var(--gray-400)">' + (a.closedCount > 0 ? Data.formatCurrency(a.avgDeal) : '—') + '</td>';
       html += '</tr>';
     });
 
