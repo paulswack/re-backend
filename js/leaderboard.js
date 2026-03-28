@@ -15,7 +15,7 @@
   });
 
   var pageBody = document.getElementById('pageBody');
-  var currentRange = 'all';
+  var currentRange = 'year';
 
   // ---- Filter transactions by date range ----
   function filterByRange(txns) {
