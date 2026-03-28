@@ -124,7 +124,7 @@
       var pct = maxVol > 0 ? Math.round((a.volume / maxVol) * 100) : 0;
       s += '<div style="margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">' +
-          '<div class="agent-avatar ' + agentClass(a.name) + '" style="width:32px;height:32px;font-size:.7rem;border-radius:8px">' + getInitials(a.name) + '</div>' +
+          '<div class="agent-avatar ' + agentClass(a.name) + '" style="width:32px;height:32px;font-size:.7rem;">' + getInitials(a.name) + '</div>' +
           '<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:.85rem;font-weight:700;color:var(--gray-900)">' + a.name + '</span>' + (i < 3 ? '<span style="font-size:.85rem">' + medals[i] + '</span>' : '') + '</div>' +
           '<div style="font-size:.7rem;color:var(--gray-400)">' + a.closings + ' closed · ' + a.active + ' in escrow</div></div>' +
           '<div style="text-align:right"><div style="font-size:.95rem;font-weight:800;color:var(--gray-900)">' + Data.formatCurrency(a.volume) + '</div></div></div>' +
@@ -501,7 +501,7 @@
 
   function agentRow(t) {
     return '<div class="list-row" style="padding:10px 20px">' +
-      '<div class="agent-avatar ' + agentClass(t.agent) + '" style="width:30px;height:30px;font-size:.65rem;border-radius:8px">' + getInitials(t.agent) + '</div>' +
+      '<div class="agent-avatar ' + agentClass(t.agent) + '" style="width:30px;height:30px;font-size:.65rem;">' + getInitials(t.agent) + '</div>' +
       '<div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + t.address.split(',')[0] + '</div>' +
       '<div style="font-size:.7rem;color:var(--gray-400)">' + t.agent + '</div></div>' +
       '<div style="text-align:right"><div style="font-size:.88rem;font-weight:700;color:var(--gray-900)">' + Data.formatCurrencyFull(t.price) + '</div>' +
