@@ -271,6 +271,10 @@
     html += '<div class="form-group"><label>Loan Officer</label><input type="text" id="fLenderContact" value="' + escapeHtml(contacts.lender ? contacts.lender.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
     html += '<div class="form-row"><div class="form-group"><label>Other Agent</label><input type="text" id="fOtherAgent" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.name || '' : '') + '" placeholder="Agent name"></div>';
     html += '<div class="form-group"><label>Other Agent Contact</label><input type="text" id="fOtherAgentContact" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Transaction Coordinator</label><input type="text" id="fTC" value="' + escapeHtml(contacts.tc ? contacts.tc.name || '' : '') + '" placeholder="Name"></div>';
+    html += '<div class="form-group"><label>TC Contact</label><input type="text" id="fTCContact" value="' + escapeHtml(contacts.tc ? contacts.tc.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Assistant</label><input type="text" id="fAssistant" value="' + escapeHtml(contacts.assistant ? contacts.assistant.name || '' : '') + '" placeholder="Name"></div>';
+    html += '<div class="form-group"><label>Assistant Contact</label><input type="text" id="fAssistantContact" value="' + escapeHtml(contacts.assistant ? contacts.assistant.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
     html += '</div></div>';
 
     // Save / Cancel buttons
@@ -616,7 +620,9 @@
     var hasContacts = (txnContacts.escrow && (txnContacts.escrow.company || txnContacts.escrow.contact)) ||
                       (txnContacts.title && (txnContacts.title.company || txnContacts.title.contact)) ||
                       (txnContacts.lender && (txnContacts.lender.company || txnContacts.lender.contact)) ||
-                      (txnContacts.otherAgent && (txnContacts.otherAgent.name || txnContacts.otherAgent.contact));
+                      (txnContacts.otherAgent && (txnContacts.otherAgent.name || txnContacts.otherAgent.contact)) ||
+                      (txnContacts.tc && (txnContacts.tc.name || txnContacts.tc.contact)) ||
+                      (txnContacts.assistant && (txnContacts.assistant.name || txnContacts.assistant.contact));
 
     html += '<div class="parties-card">';
     html += '<div class="parties-card-header">Transaction Contacts</div>';
@@ -626,12 +632,16 @@
         { label: 'Escrow', icon: '🏦', data: txnContacts.escrow, color: 'var(--indigo)' },
         { label: 'Title Company', icon: '📋', data: txnContacts.title, color: 'var(--violet)' },
         { label: 'Lender', icon: '🏛️', data: txnContacts.lender, color: 'var(--emerald)' },
-        { label: 'Other Agent', icon: '🤝', data: txnContacts.otherAgent, color: 'var(--amber)' }
+        { label: 'Other Agent', icon: '🤝', data: txnContacts.otherAgent, color: 'var(--amber)' },
+        { label: 'Transaction Coordinator', icon: '📂', data: txnContacts.tc, color: 'var(--indigo)' },
+        { label: 'Assistant', icon: '👤', data: txnContacts.assistant, color: 'var(--gray-500)' }
       ];
       contactItems.forEach(function (item, idx) {
         var d = item.data || {};
         var hasData = d.company || d.name || d.contact;
-        html += '<div style="padding:16px 20px;' + (idx < 2 ? 'border-bottom:1px solid var(--gray-100);' : '') + (idx % 2 === 0 ? 'border-right:1px solid var(--gray-100);' : '') + '">';
+        var totalItems = contactItems.length;
+        var isLastRow = idx >= totalItems - 2;
+        html += '<div style="padding:16px 20px;' + (!isLastRow ? 'border-bottom:1px solid var(--gray-100);' : '') + (idx % 2 === 0 ? 'border-right:1px solid var(--gray-100);' : '') + '">';
         html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
         html += '<span style="font-size:1rem">' + item.icon + '</span>';
         html += '<span style="font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">' + item.label + '</span>';
@@ -952,7 +962,9 @@
           escrow: { company: (document.getElementById('fEscrowCompany') || {}).value.trim(), contact: (document.getElementById('fEscrowContact') || {}).value.trim() },
           title: { company: (document.getElementById('fTitleCompany') || {}).value.trim(), contact: (document.getElementById('fTitleContact') || {}).value.trim() },
           lender: { company: (document.getElementById('fLender') || {}).value.trim(), contact: (document.getElementById('fLenderContact') || {}).value.trim() },
-          otherAgent: { name: (document.getElementById('fOtherAgent') || {}).value.trim(), contact: (document.getElementById('fOtherAgentContact') || {}).value.trim() }
+          otherAgent: { name: (document.getElementById('fOtherAgent') || {}).value.trim(), contact: (document.getElementById('fOtherAgentContact') || {}).value.trim() },
+          tc: { name: (document.getElementById('fTC') || {}).value.trim(), contact: (document.getElementById('fTCContact') || {}).value.trim() },
+          assistant: { name: (document.getElementById('fAssistant') || {}).value.trim(), contact: (document.getElementById('fAssistantContact') || {}).value.trim() }
         };
         saveParties(fParties);
 
