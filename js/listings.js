@@ -116,6 +116,34 @@
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
+  function migratePartyData(data) {
+    if (!data) return { sellers: [], contacts: {} };
+    if (data.seller && !data.sellers) {
+      data.sellers = [];
+      if (data.seller.name || data.seller.phone || data.seller.email) {
+        data.sellers.push({ name: data.seller.name || '', phone: data.seller.phone || '', email: data.seller.email || '', relationship: 'Primary' });
+      }
+      if (data.seller.spouse && data.seller.spouse.name) {
+        data.sellers.push({ name: data.seller.spouse.name, phone: data.seller.spouse.phone || '', email: data.seller.spouse.email || '', relationship: data.seller.spouse.relationship || 'Spouse' });
+      }
+      delete data.seller;
+    }
+    if (!data.sellers) data.sellers = [];
+    if (data.contacts) {
+      ['escrow','title','lender','otherAgent','tc','assistant'].forEach(function(key) {
+        var c = data.contacts[key];
+        if (c && c.contact !== undefined && c.phone === undefined) {
+          c.phone = '';
+          c.email = '';
+          if (!c.name) c.name = c.contact || '';
+          delete c.contact;
+        }
+      });
+    }
+    if (!data.contacts) data.contacts = {};
+    return data;
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     var div = document.createElement('div');
@@ -209,29 +237,34 @@
 
     // Load listing parties
     var lstParties = getParties();
-    var lstP = l ? (lstParties[l.id] || { seller: {}, contacts: {} }) : { seller: {}, contacts: {} };
-    var seller = lstP.seller || {};
-    var contacts = lstP.contacts || {};
+    var rawLstP = l ? (lstParties[l.id] || {}) : {};
+    var lstP = migratePartyData(rawLstP);
+    var sellers = lstP.sellers.length ? lstP.sellers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
+    var contacts = lstP.contacts;
 
     // Seller Info
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
-    html += '<div style="padding:14px 20px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1);display:flex;align-items:center;gap:10px">';
+    html += '<div style="padding:14px 20px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1);display:flex;align-items:center;gap:10px;justify-content:space-between">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-    html += '<span style="font-size:.92rem;font-weight:700;color:#BE185D">Seller / Owner</span></div>';
-    html += '<div style="padding:20px 24px">';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Name</label><input type="text" id="fSellerName" value="' + escapeHtml(seller.name || '') + '" placeholder="Full name"></div>';
-    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fSellerPhone" value="' + escapeHtml(seller.phone || '') + '" placeholder="(555) 555-5555"></div>';
-    html += '<div class="form-group"><label>Email</label><input type="email" id="fSellerEmail" value="' + escapeHtml(seller.email || '') + '" placeholder="seller@email.com"></div>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:#BE185D">Seller / Owner(s)</span></div>';
+    html += '<button type="button" class="btn btn-outline btn-sm" data-action="add-person" data-ptype="seller" style="color:#BE185D;border-color:#EC4899;padding:4px 12px;font-size:.78rem">+ Add Seller</button>';
     html += '</div>';
-    html += '<div style="border-top:1px solid var(--gray-100);margin-top:8px;padding-top:14px">';
-    html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);margin-bottom:8px">SPOUSE / CO-OWNER</div>';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Name</label><input type="text" id="fSellerSpouseName" value="' + escapeHtml(seller.spouse ? seller.spouse.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fSellerSpousePhone" value="' + escapeHtml(seller.spouse ? seller.spouse.phone || '' : '') + '" placeholder="Phone"></div>';
-    html += '<div class="form-group"><label>Email</label><input type="email" id="fSellerSpouseEmail" value="' + escapeHtml(seller.spouse ? seller.spouse.email || '' : '') + '" placeholder="Email"></div>';
-    html += '<div class="form-group"><label>Relationship</label><select id="fSellerSpouseRel"><option value="">—</option><option value="Spouse"' + (seller.spouse && seller.spouse.relationship === 'Spouse' ? ' selected' : '') + '>Spouse</option><option value="Partner"' + (seller.spouse && seller.spouse.relationship === 'Partner' ? ' selected' : '') + '>Partner</option><option value="Co-Owner"' + (seller.spouse && seller.spouse.relationship === 'Co-Owner' ? ' selected' : '') + '>Co-Owner</option><option value="Other"' + (seller.spouse && seller.spouse.relationship === 'Other' ? ' selected' : '') + '>Other</option></select></div>';
-    html += '</div></div>';
+    html += '<div style="padding:20px 24px" id="sellersContainer">';
+    sellers.forEach(function (s, idx) {
+      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin-top:12px;padding-top:12px"></div>';
+      html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr' + (idx > 0 ? ' auto' : '') + '">';
+      html += '<div class="form-group"><label>Name</label><input type="text" class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Full name"></div>';
+      html += '<div class="form-group"><label>Phone</label><input type="tel" class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="(555) 555-5555"></div>';
+      html += '<div class="form-group"><label>Email</label><input type="email" class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="seller@email.com"></div>';
+      html += '<div class="form-group"><label>Relationship</label><select class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="relationship">';
+      ['Primary','Spouse','Co-Seller','Parent','Other'].forEach(function (r) {
+        html += '<option value="' + r + '"' + ((s.relationship || 'Primary') === r ? ' selected' : '') + '>' + r + '</option>';
+      });
+      html += '</select></div>';
+      if (idx > 0) html += '<div class="form-group" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-outline btn-sm" data-action="remove-person" data-ptype="seller" data-idx="' + idx + '" style="color:var(--rose);border-color:var(--gray-200);padding:8px 10px" title="Remove">&times;</button></div>';
+      html += '</div>';
+    });
     html += '</div></div>';
 
     // Listing Contacts
@@ -240,16 +273,22 @@
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--emerald)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>';
     html += '<span style="font-size:.92rem;font-weight:700;color:var(--emerald)">Listing Contacts</span></div>';
     html += '<div style="padding:20px 24px">';
-    html += '<div class="form-row"><div class="form-group"><label>Escrow Company</label><input type="text" id="fEscrowCompany" value="' + escapeHtml(contacts.escrow ? contacts.escrow.company || '' : '') + '" placeholder="Company name"></div>';
-    html += '<div class="form-group"><label>Escrow Contact</label><input type="text" id="fEscrowContact" value="' + escapeHtml(contacts.escrow ? contacts.escrow.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Title Company</label><input type="text" id="fTitleCompany" value="' + escapeHtml(contacts.title ? contacts.title.company || '' : '') + '" placeholder="Company name"></div>';
-    html += '<div class="form-group"><label>Title Contact</label><input type="text" id="fTitleContact" value="' + escapeHtml(contacts.title ? contacts.title.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Other Agent</label><input type="text" id="fOtherAgent" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.name || '' : '') + '" placeholder="Agent name"></div>';
-    html += '<div class="form-group"><label>Other Agent Contact</label><input type="text" id="fOtherAgentContact" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Transaction Coordinator</label><input type="text" id="fTC" value="' + escapeHtml(contacts.tc ? contacts.tc.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>TC Contact</label><input type="text" id="fTCContact" value="' + escapeHtml(contacts.tc ? contacts.tc.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Assistant</label><input type="text" id="fAssistant" value="' + escapeHtml(contacts.assistant ? contacts.assistant.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>Assistant Contact</label><input type="text" id="fAssistantContact" value="' + escapeHtml(contacts.assistant ? contacts.assistant.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
+    var _lstContactTypes = [
+      { key: 'escrow', label: 'Escrow Company', namePlaceholder: 'Company / contact name' },
+      { key: 'title', label: 'Title Company', namePlaceholder: 'Company / contact name' },
+      { key: 'otherAgent', label: 'Other Agent', namePlaceholder: 'Agent name' },
+      { key: 'tc', label: 'Transaction Coordinator', namePlaceholder: 'Name' },
+      { key: 'assistant', label: 'Assistant', namePlaceholder: 'Name' }
+    ];
+    _lstContactTypes.forEach(function (ct) {
+      var c = contacts[ct.key] || {};
+      html += '<div style="margin-bottom:16px">';
+      html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">' + ct.label + '</div>';
+      html += '<div class="form-group" style="margin-bottom:6px"><input type="text" class="contact-field" data-ctype="' + ct.key + '" data-cfield="name" value="' + escapeHtml(c.name || c.company || '') + '" placeholder="' + ct.namePlaceholder + '"></div>';
+      html += '<div class="form-row"><div class="form-group"><input type="tel" class="contact-field" data-ctype="' + ct.key + '" data-cfield="phone" value="' + escapeHtml(c.phone || '') + '" placeholder="Phone"></div>';
+      html += '<div class="form-group"><input type="email" class="contact-field" data-ctype="' + ct.key + '" data-cfield="email" value="' + escapeHtml(c.email || '') + '" placeholder="Email"></div></div>';
+      html += '</div>';
+    });
     html += '</div></div>';
 
     // Description Card
@@ -786,6 +825,43 @@
         }
         break;
 
+      case 'add-person':
+        var apType = target.getAttribute('data-ptype');
+        var lstContainer = document.getElementById('sellersContainer');
+        if (lstContainer) {
+          var existingFields = document.querySelectorAll('.party-field[data-ptype="' + apType + '"]');
+          var maxIdx = -1;
+          existingFields.forEach(function (f) { var i = parseInt(f.getAttribute('data-idx')); if (i > maxIdx) maxIdx = i; });
+          var newIdx = maxIdx + 1;
+          var relOptions = ['Primary','Spouse','Co-Seller','Parent','Other'];
+          var newHtml = '<div style="border-top:1px solid var(--gray-100);margin-top:12px;padding-top:12px"></div>';
+          newHtml += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr auto">';
+          newHtml += '<div class="form-group"><label>Name</label><input type="text" class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="name" value="" placeholder="Full name"></div>';
+          newHtml += '<div class="form-group"><label>Phone</label><input type="tel" class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="phone" value="" placeholder="(555) 555-5555"></div>';
+          newHtml += '<div class="form-group"><label>Email</label><input type="email" class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="email" value="" placeholder="email@example.com"></div>';
+          newHtml += '<div class="form-group"><label>Relationship</label><select class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="relationship">';
+          relOptions.forEach(function (r) { newHtml += '<option value="' + r + '"' + (r === 'Spouse' ? ' selected' : '') + '>' + r + '</option>'; });
+          newHtml += '</select></div>';
+          newHtml += '<div class="form-group" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-outline btn-sm" data-action="remove-person" data-ptype="' + apType + '" data-idx="' + newIdx + '" style="color:var(--rose);border-color:var(--gray-200);padding:8px 10px" title="Remove">&times;</button></div>';
+          newHtml += '</div>';
+          lstContainer.insertAdjacentHTML('beforeend', newHtml);
+        }
+        break;
+
+      case 'remove-person':
+        var rpIdx = target.getAttribute('data-idx');
+        var rpType = target.getAttribute('data-ptype');
+        var rpFields = document.querySelectorAll('.party-field[data-ptype="' + rpType + '"][data-idx="' + rpIdx + '"]');
+        if (rpFields.length > 0) {
+          var rpRow = rpFields[0].closest('.form-row');
+          if (rpRow) {
+            var rpSep = rpRow.previousElementSibling;
+            if (rpSep && rpSep.style.borderTop) rpSep.remove();
+            rpRow.remove();
+          }
+        }
+        break;
+
       case 'form-cancel':
         if (editingId) {
           viewMode = 'detail';
@@ -827,31 +903,40 @@
           showToast('Listing created.');
         }
 
-        // Save listing parties
+        // Save listing parties (sellers as array, contacts with split fields)
         var fLstParties = getParties();
-        if (!fLstParties[fListingId]) fLstParties[fListingId] = { seller: {}, contacts: {} };
+        if (!fLstParties[fListingId]) fLstParties[fListingId] = { sellers: [], contacts: {} };
 
-        var fSellerSpName = (document.getElementById('fSellerSpouseName') || {}).value.trim();
-        var fSellerSpouse = fSellerSpName ? {
-          name: fSellerSpName,
-          phone: (document.getElementById('fSellerSpousePhone') || {}).value.trim(),
-          email: (document.getElementById('fSellerSpouseEmail') || {}).value.trim(),
-          relationship: (document.getElementById('fSellerSpouseRel') || {}).value || 'Spouse'
-        } : null;
+        // Collect sellers array
+        var fSellers = [];
+        var fSellerFields = document.querySelectorAll('.party-field[data-ptype="seller"]');
+        var fSellerMap = {};
+        fSellerFields.forEach(function (f) {
+          var idx = f.getAttribute('data-idx');
+          if (!fSellerMap[idx]) fSellerMap[idx] = {};
+          fSellerMap[idx][f.getAttribute('data-pfield')] = f.value.trim();
+        });
+        Object.keys(fSellerMap).sort(function (a, b) { return parseInt(a) - parseInt(b); }).forEach(function (idx) {
+          var entry = fSellerMap[idx];
+          if (entry.name || entry.phone || entry.email) {
+            fSellers.push({ name: entry.name || '', phone: entry.phone || '', email: entry.email || '', relationship: entry.relationship || 'Primary' });
+          }
+        });
 
-        fLstParties[fListingId].seller = {
-          name: (document.getElementById('fSellerName') || {}).value.trim(),
-          phone: (document.getElementById('fSellerPhone') || {}).value.trim(),
-          email: (document.getElementById('fSellerEmail') || {}).value.trim(),
-          spouse: fSellerSpouse
-        };
-        fLstParties[fListingId].contacts = {
-          escrow: { company: (document.getElementById('fEscrowCompany') || {}).value.trim(), contact: (document.getElementById('fEscrowContact') || {}).value.trim() },
-          title: { company: (document.getElementById('fTitleCompany') || {}).value.trim(), contact: (document.getElementById('fTitleContact') || {}).value.trim() },
-          otherAgent: { name: (document.getElementById('fOtherAgent') || {}).value.trim(), contact: (document.getElementById('fOtherAgentContact') || {}).value.trim() },
-          tc: { name: (document.getElementById('fTC') || {}).value.trim(), contact: (document.getElementById('fTCContact') || {}).value.trim() },
-          assistant: { name: (document.getElementById('fAssistant') || {}).value.trim(), contact: (document.getElementById('fAssistantContact') || {}).value.trim() }
-        };
+        // Collect contacts with split fields
+        var fContacts = {};
+        var contactFields = document.querySelectorAll('.contact-field');
+        contactFields.forEach(function (f) {
+          var ctype = f.getAttribute('data-ctype');
+          var cfield = f.getAttribute('data-cfield');
+          if (!fContacts[ctype]) fContacts[ctype] = {};
+          fContacts[ctype][cfield] = f.value.trim();
+        });
+
+        fLstParties[fListingId].sellers = fSellers;
+        fLstParties[fListingId].contacts = fContacts;
+        // Clean up old format keys
+        delete fLstParties[fListingId].seller;
         saveParties(fLstParties);
 
         viewMode = 'detail';

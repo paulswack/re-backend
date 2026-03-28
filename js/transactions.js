@@ -110,6 +110,45 @@
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
+  function migratePartyData(data) {
+    if (!data) return { buyers: [], sellers: [], contacts: {} };
+    if (data.buyer && !data.buyers) {
+      data.buyers = [];
+      if (data.buyer.name || data.buyer.phone || data.buyer.email) {
+        data.buyers.push({ name: data.buyer.name || '', phone: data.buyer.phone || '', email: data.buyer.email || '', relationship: 'Primary' });
+      }
+      if (data.buyer.spouse && data.buyer.spouse.name) {
+        data.buyers.push({ name: data.buyer.spouse.name, phone: data.buyer.spouse.phone || '', email: data.buyer.spouse.email || '', relationship: data.buyer.spouse.relationship || 'Spouse' });
+      }
+      delete data.buyer;
+    }
+    if (data.seller && !data.sellers) {
+      data.sellers = [];
+      if (data.seller.name || data.seller.phone || data.seller.email) {
+        data.sellers.push({ name: data.seller.name || '', phone: data.seller.phone || '', email: data.seller.email || '', relationship: 'Primary' });
+      }
+      if (data.seller.spouse && data.seller.spouse.name) {
+        data.sellers.push({ name: data.seller.spouse.name, phone: data.seller.spouse.phone || '', email: data.seller.spouse.email || '', relationship: data.seller.spouse.relationship || 'Spouse' });
+      }
+      delete data.seller;
+    }
+    if (!data.buyers) data.buyers = [];
+    if (!data.sellers) data.sellers = [];
+    if (data.contacts) {
+      ['escrow','title','lender','otherAgent','tc','assistant'].forEach(function(key) {
+        var c = data.contacts[key];
+        if (c && c.contact !== undefined && c.phone === undefined) {
+          c.phone = '';
+          c.email = '';
+          if (!c.name) c.name = c.contact || '';
+          delete c.contact;
+        }
+      });
+    }
+    if (!data.contacts) data.contacts = {};
+    return data;
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     var div = document.createElement('div');
@@ -180,11 +219,12 @@
   function renderForm() {
     var isEdit = !!editingId;
     var t = isEdit ? Data.getTransactions().find(function (x) { return x.id === editingId; }) : null;
-    var parties = getParties();
-    var txnParties = isEdit ? (parties[editingId] || { buyer: {}, seller: {}, contacts: {} }) : { buyer: {}, seller: {}, contacts: {} };
-    var buyer = txnParties.buyer || {};
-    var seller = txnParties.seller || {};
-    var contacts = txnParties.contacts || {};
+    var allParties = getParties();
+    var rawParty = allParties[isEdit ? editingId : '__new'] || {};
+    var party = migratePartyData(rawParty);
+    var buyers = party.buyers.length ? party.buyers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
+    var sellers = party.sellers.length ? party.sellers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
+    var contacts = party.contacts;
 
     var html = '';
     html += '<button class="detail-back-btn" data-action="form-cancel"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (isEdit ? 'Back to Escrow' : 'Back to Escrows') + '</button>';
@@ -217,44 +257,52 @@
 
     // Buyer Info
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
-    html += '<div style="padding:14px 20px;background:var(--indigo-light);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:10px">';
+    html += '<div style="padding:14px 20px;background:var(--indigo-light);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:10px;justify-content:space-between">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--indigo)"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-    html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Buyer</span></div>';
-    html += '<div style="padding:20px 24px">';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Name</label><input type="text" id="fBuyerName" value="' + escapeHtml(buyer.name || '') + '" placeholder="Full name"></div>';
-    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fBuyerPhone" value="' + escapeHtml(buyer.phone || '') + '" placeholder="(555) 555-5555"></div>';
-    html += '<div class="form-group"><label>Email</label><input type="email" id="fBuyerEmail" value="' + escapeHtml(buyer.email || '') + '" placeholder="buyer@email.com"></div>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Buyer(s)</span></div>';
+    html += '<button type="button" class="btn btn-outline btn-sm" data-action="add-person" data-ptype="buyer" style="color:var(--indigo);border-color:var(--indigo);padding:4px 12px;font-size:.78rem">+ Add Buyer</button>';
     html += '</div>';
-    html += '<div style="border-top:1px solid var(--gray-100);margin-top:8px;padding-top:14px">';
-    html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);margin-bottom:8px">SPOUSE / CO-BUYER</div>';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Name</label><input type="text" id="fBuyerSpouseName" value="' + escapeHtml(buyer.spouse ? buyer.spouse.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fBuyerSpousePhone" value="' + escapeHtml(buyer.spouse ? buyer.spouse.phone || '' : '') + '" placeholder="Phone"></div>';
-    html += '<div class="form-group"><label>Email</label><input type="email" id="fBuyerSpouseEmail" value="' + escapeHtml(buyer.spouse ? buyer.spouse.email || '' : '') + '" placeholder="Email"></div>';
-    html += '<div class="form-group"><label>Relationship</label><select id="fBuyerSpouseRel"><option value="">—</option><option value="Spouse"' + (buyer.spouse && buyer.spouse.relationship === 'Spouse' ? ' selected' : '') + '>Spouse</option><option value="Partner"' + (buyer.spouse && buyer.spouse.relationship === 'Partner' ? ' selected' : '') + '>Partner</option><option value="Co-Buyer"' + (buyer.spouse && buyer.spouse.relationship === 'Co-Buyer' ? ' selected' : '') + '>Co-Buyer</option><option value="Parent"' + (buyer.spouse && buyer.spouse.relationship === 'Parent' ? ' selected' : '') + '>Parent</option><option value="Other"' + (buyer.spouse && buyer.spouse.relationship === 'Other' ? ' selected' : '') + '>Other</option></select></div>';
-    html += '</div></div>';
+    html += '<div style="padding:20px 24px" id="buyersContainer">';
+    buyers.forEach(function (b, idx) {
+      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin-top:12px;padding-top:12px"></div>';
+      html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr' + (idx > 0 ? ' auto' : '') + '">';
+      html += '<div class="form-group"><label>Name</label><input type="text" class="party-field" data-ptype="buyer" data-idx="' + idx + '" data-pfield="name" value="' + escapeHtml(b.name || '') + '" placeholder="Full name"></div>';
+      html += '<div class="form-group"><label>Phone</label><input type="tel" class="party-field" data-ptype="buyer" data-idx="' + idx + '" data-pfield="phone" value="' + escapeHtml(b.phone || '') + '" placeholder="(555) 555-5555"></div>';
+      html += '<div class="form-group"><label>Email</label><input type="email" class="party-field" data-ptype="buyer" data-idx="' + idx + '" data-pfield="email" value="' + escapeHtml(b.email || '') + '" placeholder="buyer@email.com"></div>';
+      html += '<div class="form-group"><label>Relationship</label><select class="party-field" data-ptype="buyer" data-idx="' + idx + '" data-pfield="relationship">';
+      ['Primary','Spouse','Co-Buyer','Parent','Other'].forEach(function (r) {
+        html += '<option value="' + r + '"' + ((b.relationship || 'Primary') === r ? ' selected' : '') + '>' + r + '</option>';
+      });
+      html += '</select></div>';
+      if (idx > 0) html += '<div class="form-group" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-outline btn-sm" data-action="remove-person" data-ptype="buyer" data-idx="' + idx + '" style="color:var(--rose);border-color:var(--gray-200);padding:8px 10px" title="Remove">&times;</button></div>';
+      html += '</div>';
+    });
     html += '</div></div>';
 
     // Seller Info
     html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
-    html += '<div style="padding:14px 20px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1);display:flex;align-items:center;gap:10px">';
+    html += '<div style="padding:14px 20px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1);display:flex;align-items:center;gap:10px;justify-content:space-between">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-    html += '<span style="font-size:.92rem;font-weight:700;color:#BE185D">Seller</span></div>';
-    html += '<div style="padding:20px 24px">';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Name</label><input type="text" id="fSellerName" value="' + escapeHtml(seller.name || '') + '" placeholder="Full name"></div>';
-    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fSellerPhone" value="' + escapeHtml(seller.phone || '') + '" placeholder="(555) 555-5555"></div>';
-    html += '<div class="form-group"><label>Email</label><input type="email" id="fSellerEmail" value="' + escapeHtml(seller.email || '') + '" placeholder="seller@email.com"></div>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:#BE185D">Seller(s)</span></div>';
+    html += '<button type="button" class="btn btn-outline btn-sm" data-action="add-person" data-ptype="seller" style="color:#BE185D;border-color:#EC4899;padding:4px 12px;font-size:.78rem">+ Add Seller</button>';
     html += '</div>';
-    html += '<div style="border-top:1px solid var(--gray-100);margin-top:8px;padding-top:14px">';
-    html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);margin-bottom:8px">SPOUSE / CO-SELLER</div>';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Name</label><input type="text" id="fSellerSpouseName" value="' + escapeHtml(seller.spouse ? seller.spouse.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>Phone</label><input type="tel" id="fSellerSpousePhone" value="' + escapeHtml(seller.spouse ? seller.spouse.phone || '' : '') + '" placeholder="Phone"></div>';
-    html += '<div class="form-group"><label>Email</label><input type="email" id="fSellerSpouseEmail" value="' + escapeHtml(seller.spouse ? seller.spouse.email || '' : '') + '" placeholder="Email"></div>';
-    html += '<div class="form-group"><label>Relationship</label><select id="fSellerSpouseRel"><option value="">—</option><option value="Spouse"' + (seller.spouse && seller.spouse.relationship === 'Spouse' ? ' selected' : '') + '>Spouse</option><option value="Partner"' + (seller.spouse && seller.spouse.relationship === 'Partner' ? ' selected' : '') + '>Partner</option><option value="Co-Seller"' + (seller.spouse && seller.spouse.relationship === 'Co-Seller' ? ' selected' : '') + '>Co-Seller</option><option value="Parent"' + (seller.spouse && seller.spouse.relationship === 'Parent' ? ' selected' : '') + '>Parent</option><option value="Other"' + (seller.spouse && seller.spouse.relationship === 'Other' ? ' selected' : '') + '>Other</option></select></div>';
-    html += '</div></div>';
+    html += '<div style="padding:20px 24px" id="sellersContainer">';
+    sellers.forEach(function (s, idx) {
+      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin-top:12px;padding-top:12px"></div>';
+      html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr' + (idx > 0 ? ' auto' : '') + '">';
+      html += '<div class="form-group"><label>Name</label><input type="text" class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Full name"></div>';
+      html += '<div class="form-group"><label>Phone</label><input type="tel" class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="(555) 555-5555"></div>';
+      html += '<div class="form-group"><label>Email</label><input type="email" class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="seller@email.com"></div>';
+      html += '<div class="form-group"><label>Relationship</label><select class="party-field" data-ptype="seller" data-idx="' + idx + '" data-pfield="relationship">';
+      ['Primary','Spouse','Co-Seller','Parent','Other'].forEach(function (r) {
+        html += '<option value="' + r + '"' + ((s.relationship || 'Primary') === r ? ' selected' : '') + '>' + r + '</option>';
+      });
+      html += '</select></div>';
+      if (idx > 0) html += '<div class="form-group" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-outline btn-sm" data-action="remove-person" data-ptype="seller" data-idx="' + idx + '" style="color:var(--rose);border-color:var(--gray-200);padding:8px 10px" title="Remove">&times;</button></div>';
+      html += '</div>';
+    });
     html += '</div></div>';
 
     // Transaction Contacts
@@ -263,18 +311,23 @@
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--emerald)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>';
     html += '<span style="font-size:.92rem;font-weight:700;color:var(--emerald)">Transaction Contacts</span></div>';
     html += '<div style="padding:20px 24px">';
-    html += '<div class="form-row"><div class="form-group"><label>Escrow Company</label><input type="text" id="fEscrowCompany" value="' + escapeHtml(contacts.escrow ? contacts.escrow.company || '' : '') + '" placeholder="Company name"></div>';
-    html += '<div class="form-group"><label>Escrow Contact</label><input type="text" id="fEscrowContact" value="' + escapeHtml(contacts.escrow ? contacts.escrow.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Title Company</label><input type="text" id="fTitleCompany" value="' + escapeHtml(contacts.title ? contacts.title.company || '' : '') + '" placeholder="Company name"></div>';
-    html += '<div class="form-group"><label>Title Contact</label><input type="text" id="fTitleContact" value="' + escapeHtml(contacts.title ? contacts.title.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Lender</label><input type="text" id="fLender" value="' + escapeHtml(contacts.lender ? contacts.lender.company || '' : '') + '" placeholder="Company name"></div>';
-    html += '<div class="form-group"><label>Loan Officer</label><input type="text" id="fLenderContact" value="' + escapeHtml(contacts.lender ? contacts.lender.contact || '' : '') + '" placeholder="Name · Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Other Agent</label><input type="text" id="fOtherAgent" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.name || '' : '') + '" placeholder="Agent name"></div>';
-    html += '<div class="form-group"><label>Other Agent Contact</label><input type="text" id="fOtherAgentContact" value="' + escapeHtml(contacts.otherAgent ? contacts.otherAgent.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Transaction Coordinator</label><input type="text" id="fTC" value="' + escapeHtml(contacts.tc ? contacts.tc.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>TC Contact</label><input type="text" id="fTCContact" value="' + escapeHtml(contacts.tc ? contacts.tc.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
-    html += '<div class="form-row"><div class="form-group"><label>Assistant</label><input type="text" id="fAssistant" value="' + escapeHtml(contacts.assistant ? contacts.assistant.name || '' : '') + '" placeholder="Name"></div>';
-    html += '<div class="form-group"><label>Assistant Contact</label><input type="text" id="fAssistantContact" value="' + escapeHtml(contacts.assistant ? contacts.assistant.contact || '' : '') + '" placeholder="Phone · Email"></div></div>';
+    var _contactTypes = [
+      { key: 'escrow', label: 'Escrow Company', namePlaceholder: 'Company / contact name' },
+      { key: 'title', label: 'Title Company', namePlaceholder: 'Company / contact name' },
+      { key: 'lender', label: 'Lender', namePlaceholder: 'Company / loan officer name' },
+      { key: 'otherAgent', label: 'Other Agent', namePlaceholder: 'Agent name' },
+      { key: 'tc', label: 'Transaction Coordinator', namePlaceholder: 'Name' },
+      { key: 'assistant', label: 'Assistant', namePlaceholder: 'Name' }
+    ];
+    _contactTypes.forEach(function (ct) {
+      var c = contacts[ct.key] || {};
+      html += '<div style="margin-bottom:16px">';
+      html += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">' + ct.label + '</div>';
+      html += '<div class="form-group" style="margin-bottom:6px"><input type="text" class="contact-field" data-ctype="' + ct.key + '" data-cfield="name" value="' + escapeHtml(c.name || c.company || '') + '" placeholder="' + ct.namePlaceholder + '"></div>';
+      html += '<div class="form-row"><div class="form-group"><input type="tel" class="contact-field" data-ctype="' + ct.key + '" data-cfield="phone" value="' + escapeHtml(c.phone || '') + '" placeholder="Phone"></div>';
+      html += '<div class="form-group"><input type="email" class="contact-field" data-ctype="' + ct.key + '" data-cfield="email" value="' + escapeHtml(c.email || '') + '" placeholder="Email"></div></div>';
+      html += '</div>';
+    });
     html += '</div></div>';
 
     // Save / Cancel buttons
@@ -464,9 +517,9 @@
     }
 
     var parties = getParties();
-    var txnParties = parties[selectedTxnId] || { buyer: {}, seller: {} };
-    var buyer = txnParties.buyer || {};
-    var seller = txnParties.seller || {};
+    var txnParties = parties[selectedTxnId] || {};
+    var party = migratePartyData(txnParties);
+    parties[selectedTxnId] = party;
 
     var allNotes = getNotes();
     var txnNotes = allNotes[selectedTxnId] || [];
@@ -575,54 +628,44 @@
     html += '<div class="parties-card-header">Buyer &amp; Seller Information</div>';
     html += '<div class="parties-grid">';
 
-    // Helper for party inline fields
-    function partyFields(type, data, color, bgColor) {
-      var sp = data.spouse || {};
+    // Helper for party inline fields (array-based)
+    function partyFieldsArray(type, persons, color) {
       var h = '';
       h += '<div class="party-section">';
-      h += '<div class="party-label" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:' + color + '"></span>' + (type === 'buyer' ? 'Buyer' : 'Seller') + '</div>';
-      h += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px">';
-      h += '<input type="text" class="ie-party" data-party="' + type + '" data-pfield="name" value="' + escapeHtml(data.name || '') + '" placeholder="Name" style="font-size:.92rem;font-weight:700;color:var(--gray-900);' + inpStyle + '" ' + inpFocus + '>';
-      h += '<div style="display:flex;gap:6px">';
-      h += '<input type="tel" class="ie-party" data-party="' + type + '" data-pfield="phone" value="' + escapeHtml(data.phone || '') + '" placeholder="Phone" style="font-size:.82rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>';
-      h += '<input type="email" class="ie-party" data-party="' + type + '" data-pfield="email" value="' + escapeHtml(data.email || '') + '" placeholder="Email" style="font-size:.82rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>';
-      h += '</div>';
-      h += '</div>';
-      // Spouse/Family
-      h += '<div style="padding-top:8px;border-top:1px dashed var(--gray-100)">';
-      h += '<div style="font-size:.68rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Spouse / Family</div>';
-      h += '<div style="display:flex;gap:6px;margin-bottom:4px">';
-      h += '<input type="text" class="ie-party" data-party="' + type + '" data-pfield="spouse.name" value="' + escapeHtml(sp.name || '') + '" placeholder="Name" style="font-size:.85rem;flex:1;' + inpStyle + '" ' + inpFocus + '>';
-      h += '<select class="ie-party" data-party="' + type + '" data-pfield="spouse.relationship" style="font-size:.82rem;' + inpStyle + 'width:auto;min-width:90px;" ' + inpFocus + '>';
-      h += '<option value=""' + (!sp.relationship ? ' selected' : '') + '>Relation</option>';
-      ['Spouse','Partner','Co-Buyer','Co-Seller','Parent','Child','Other'].forEach(function(r) {
-        h += '<option value="' + r + '"' + (sp.relationship === r ? ' selected' : '') + '>' + r + '</option>';
+      h += '<div class="party-label" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:' + color + '"></span>' + (type === 'buyer' ? 'Buyer(s)' : 'Seller(s)') + '</div>';
+      persons.forEach(function (person, idx) {
+        if (idx > 0) h += '<div style="border-top:1px dashed var(--gray-100);margin:8px 0"></div>';
+        h += '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px">';
+        h += '<div style="display:flex;gap:6px;align-items:center">';
+        h += '<input type="text" class="ie-party" data-party="' + type + '" data-idx="' + idx + '" data-pfield="name" value="' + escapeHtml(person.name || '') + '" placeholder="Name" style="font-size:.92rem;font-weight:700;color:var(--gray-900);flex:1;' + inpStyle + '" ' + inpFocus + '>';
+        h += '<span style="font-size:.68rem;color:var(--gray-400);white-space:nowrap">' + escapeHtml(person.relationship || 'Primary') + '</span>';
+        h += '</div>';
+        h += '<div style="display:flex;gap:6px">';
+        h += '<input type="tel" class="ie-party" data-party="' + type + '" data-idx="' + idx + '" data-pfield="phone" value="' + escapeHtml(person.phone || '') + '" placeholder="Phone" style="font-size:.82rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>';
+        h += '<input type="email" class="ie-party" data-party="' + type + '" data-idx="' + idx + '" data-pfield="email" value="' + escapeHtml(person.email || '') + '" placeholder="Email" style="font-size:.82rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>';
+        h += '</div>';
+        h += '</div>';
       });
-      h += '</select>';
-      h += '</div>';
-      h += '<div style="display:flex;gap:6px">';
-      h += '<input type="tel" class="ie-party" data-party="' + type + '" data-pfield="spouse.phone" value="' + escapeHtml(sp.phone || '') + '" placeholder="Phone" style="font-size:.82rem;flex:1;' + inpStyle + '" ' + inpFocus + '>';
-      h += '<input type="email" class="ie-party" data-party="' + type + '" data-pfield="spouse.email" value="' + escapeHtml(sp.email || '') + '" placeholder="Email" style="font-size:.82rem;flex:1;' + inpStyle + '" ' + inpFocus + '>';
-      h += '</div>';
-      h += '</div>';
+      if (persons.length === 0) {
+        h += '<div style="font-size:.82rem;color:var(--gray-300);font-style:italic">Not added</div>';
+      }
       h += '</div>';
       return h;
     }
 
-    html += partyFields('buyer', buyer, 'var(--indigo)', 'var(--indigo-light)');
-    html += partyFields('seller', seller, '#EC4899', '#FDF2F8');
+    html += partyFieldsArray('buyer', party.buyers, 'var(--indigo)');
+    html += partyFieldsArray('seller', party.sellers, '#EC4899');
 
     html += '</div>'; // parties-grid
     html += '</div>'; // parties-card
 
     // Transaction Contacts Card
-    var txnContacts = txnParties.contacts || {};
-    var hasContacts = (txnContacts.escrow && (txnContacts.escrow.company || txnContacts.escrow.contact)) ||
-                      (txnContacts.title && (txnContacts.title.company || txnContacts.title.contact)) ||
-                      (txnContacts.lender && (txnContacts.lender.company || txnContacts.lender.contact)) ||
-                      (txnContacts.otherAgent && (txnContacts.otherAgent.name || txnContacts.otherAgent.contact)) ||
-                      (txnContacts.tc && (txnContacts.tc.name || txnContacts.tc.contact)) ||
-                      (txnContacts.assistant && (txnContacts.assistant.name || txnContacts.assistant.contact));
+    var txnContacts = party.contacts || {};
+    var hasContacts = false;
+    ['escrow','title','lender','otherAgent','tc','assistant'].forEach(function (k) {
+      var c = txnContacts[k];
+      if (c && (c.company || c.name || c.phone || c.email)) hasContacts = true;
+    });
 
     html += '<div class="parties-card">';
     html += '<div class="parties-card-header">Transaction Contacts</div>';
@@ -638,7 +681,7 @@
       ];
       contactItems.forEach(function (item, idx) {
         var d = item.data || {};
-        var hasData = d.company || d.name || d.contact;
+        var hasData = d.company || d.name || d.phone || d.email;
         var totalItems = contactItems.length;
         var isLastRow = idx >= totalItems - 2;
         html += '<div style="padding:16px 20px;' + (!isLastRow ? 'border-bottom:1px solid var(--gray-100);' : '') + (idx % 2 === 0 ? 'border-right:1px solid var(--gray-100);' : '') + '">';
@@ -647,8 +690,9 @@
         html += '<span style="font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">' + item.label + '</span>';
         html += '</div>';
         if (hasData) {
-          html += '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">' + escapeHtml(d.company || d.name || '—') + '</div>';
-          if (d.contact) html += '<div style="font-size:.78rem;color:var(--gray-400);margin-top:3px">' + escapeHtml(d.contact) + '</div>';
+          html += '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">' + escapeHtml(d.name || d.company || '—') + '</div>';
+          if (d.phone) html += '<div style="font-size:.78rem;color:var(--gray-500);margin-top:3px">' + escapeHtml(d.phone) + '</div>';
+          if (d.email) html += '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">' + escapeHtml(d.email) + '</div>';
         } else {
           html += '<div style="font-size:.82rem;color:var(--gray-300);font-style:italic">Not added</div>';
         }
@@ -807,28 +851,25 @@
       });
     });
 
-    // Auto-save inline editable party fields
+    // Auto-save inline editable party fields (array-based)
     var iePartyFields = pageBody.querySelectorAll('.ie-party');
     iePartyFields.forEach(function (field) {
       var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
       field.addEventListener(eventType, function () {
         var partyType = this.getAttribute('data-party');
         var pfield = this.getAttribute('data-pfield');
+        var idx = parseInt(this.getAttribute('data-idx') || '0');
         var val = this.value.trim();
 
         var allParties = getParties();
-        if (!allParties[selectedTxnId]) allParties[selectedTxnId] = { buyer: {}, seller: {}, contacts: {} };
-        var party = allParties[selectedTxnId][partyType] || {};
+        if (!allParties[selectedTxnId]) allParties[selectedTxnId] = { buyers: [], sellers: [], contacts: {} };
+        var partyData = migratePartyData(allParties[selectedTxnId]);
+        var arr = partyType === 'buyer' ? partyData.buyers : partyData.sellers;
 
-        if (pfield.indexOf('spouse.') === 0) {
-          var spField = pfield.split('.')[1];
-          if (!party.spouse) party.spouse = {};
-          party.spouse[spField] = val;
-        } else {
-          party[pfield] = val;
-        }
+        while (arr.length <= idx) arr.push({ name: '', phone: '', email: '', relationship: 'Primary' });
+        arr[idx][pfield] = val;
 
-        allParties[selectedTxnId][partyType] = party;
+        allParties[selectedTxnId] = partyData;
         saveParties(allParties);
         showToast('Saved');
       });
@@ -888,6 +929,43 @@
         }
         break;
 
+      case 'add-person':
+        var apType = target.getAttribute('data-ptype');
+        var container = document.getElementById(apType === 'buyer' ? 'buyersContainer' : 'sellersContainer');
+        if (container) {
+          var existingFields = document.querySelectorAll('.party-field[data-ptype="' + apType + '"]');
+          var maxIdx = -1;
+          existingFields.forEach(function (f) { var i = parseInt(f.getAttribute('data-idx')); if (i > maxIdx) maxIdx = i; });
+          var newIdx = maxIdx + 1;
+          var relOptions = apType === 'buyer' ? ['Primary','Spouse','Co-Buyer','Parent','Other'] : ['Primary','Spouse','Co-Seller','Parent','Other'];
+          var newHtml = '<div style="border-top:1px solid var(--gray-100);margin-top:12px;padding-top:12px"></div>';
+          newHtml += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr 1fr auto">';
+          newHtml += '<div class="form-group"><label>Name</label><input type="text" class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="name" value="" placeholder="Full name"></div>';
+          newHtml += '<div class="form-group"><label>Phone</label><input type="tel" class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="phone" value="" placeholder="(555) 555-5555"></div>';
+          newHtml += '<div class="form-group"><label>Email</label><input type="email" class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="email" value="" placeholder="email@example.com"></div>';
+          newHtml += '<div class="form-group"><label>Relationship</label><select class="party-field" data-ptype="' + apType + '" data-idx="' + newIdx + '" data-pfield="relationship">';
+          relOptions.forEach(function (r) { newHtml += '<option value="' + r + '"' + (r === 'Spouse' ? ' selected' : '') + '>' + r + '</option>'; });
+          newHtml += '</select></div>';
+          newHtml += '<div class="form-group" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-outline btn-sm" data-action="remove-person" data-ptype="' + apType + '" data-idx="' + newIdx + '" style="color:var(--rose);border-color:var(--gray-200);padding:8px 10px" title="Remove">&times;</button></div>';
+          newHtml += '</div>';
+          container.insertAdjacentHTML('beforeend', newHtml);
+        }
+        break;
+
+      case 'remove-person':
+        var rpType = target.getAttribute('data-ptype');
+        var rpIdx = target.getAttribute('data-idx');
+        var rpFields = document.querySelectorAll('.party-field[data-ptype="' + rpType + '"][data-idx="' + rpIdx + '"]');
+        if (rpFields.length > 0) {
+          var rpRow = rpFields[0].closest('.form-row');
+          if (rpRow) {
+            var rpSep = rpRow.previousElementSibling;
+            if (rpSep && rpSep.style.borderTop) rpSep.remove();
+            rpRow.remove();
+          }
+        }
+        break;
+
       case 'form-cancel':
         if (editingId) {
           viewMode = 'detail';
@@ -926,46 +1004,58 @@
           showToast('Escrow created.');
         }
 
-        // Save parties
+        // Save parties (buyers/sellers as arrays, contacts with split fields)
         var fParties = getParties();
-        if (!fParties[fTxnId]) fParties[fTxnId] = { buyer: {}, seller: {}, contacts: {} };
+        if (!fParties[fTxnId]) fParties[fTxnId] = { buyers: [], sellers: [], contacts: {} };
 
-        var fBuyerSpName = (document.getElementById('fBuyerSpouseName') || {}).value.trim();
-        var fBuyerSpouse = fBuyerSpName ? {
-          name: fBuyerSpName,
-          phone: (document.getElementById('fBuyerSpousePhone') || {}).value.trim(),
-          email: (document.getElementById('fBuyerSpouseEmail') || {}).value.trim(),
-          relationship: (document.getElementById('fBuyerSpouseRel') || {}).value || 'Spouse'
-        } : null;
+        // Collect buyers array
+        var fBuyers = [];
+        var fBuyerFields = document.querySelectorAll('.party-field[data-ptype="buyer"]');
+        var fBuyerMap = {};
+        fBuyerFields.forEach(function (f) {
+          var idx = f.getAttribute('data-idx');
+          if (!fBuyerMap[idx]) fBuyerMap[idx] = {};
+          fBuyerMap[idx][f.getAttribute('data-pfield')] = f.value.trim();
+        });
+        Object.keys(fBuyerMap).sort(function (a, b) { return parseInt(a) - parseInt(b); }).forEach(function (idx) {
+          var entry = fBuyerMap[idx];
+          if (entry.name || entry.phone || entry.email) {
+            fBuyers.push({ name: entry.name || '', phone: entry.phone || '', email: entry.email || '', relationship: entry.relationship || 'Primary' });
+          }
+        });
 
-        var fSellerSpName = (document.getElementById('fSellerSpouseName') || {}).value.trim();
-        var fSellerSpouse = fSellerSpName ? {
-          name: fSellerSpName,
-          phone: (document.getElementById('fSellerSpousePhone') || {}).value.trim(),
-          email: (document.getElementById('fSellerSpouseEmail') || {}).value.trim(),
-          relationship: (document.getElementById('fSellerSpouseRel') || {}).value || 'Spouse'
-        } : null;
+        // Collect sellers array
+        var fSellers = [];
+        var fSellerFields = document.querySelectorAll('.party-field[data-ptype="seller"]');
+        var fSellerMap = {};
+        fSellerFields.forEach(function (f) {
+          var idx = f.getAttribute('data-idx');
+          if (!fSellerMap[idx]) fSellerMap[idx] = {};
+          fSellerMap[idx][f.getAttribute('data-pfield')] = f.value.trim();
+        });
+        Object.keys(fSellerMap).sort(function (a, b) { return parseInt(a) - parseInt(b); }).forEach(function (idx) {
+          var entry = fSellerMap[idx];
+          if (entry.name || entry.phone || entry.email) {
+            fSellers.push({ name: entry.name || '', phone: entry.phone || '', email: entry.email || '', relationship: entry.relationship || 'Primary' });
+          }
+        });
 
-        fParties[fTxnId].buyer = {
-          name: (document.getElementById('fBuyerName') || {}).value.trim(),
-          phone: (document.getElementById('fBuyerPhone') || {}).value.trim(),
-          email: (document.getElementById('fBuyerEmail') || {}).value.trim(),
-          spouse: fBuyerSpouse
-        };
-        fParties[fTxnId].seller = {
-          name: (document.getElementById('fSellerName') || {}).value.trim(),
-          phone: (document.getElementById('fSellerPhone') || {}).value.trim(),
-          email: (document.getElementById('fSellerEmail') || {}).value.trim(),
-          spouse: fSellerSpouse
-        };
-        fParties[fTxnId].contacts = {
-          escrow: { company: (document.getElementById('fEscrowCompany') || {}).value.trim(), contact: (document.getElementById('fEscrowContact') || {}).value.trim() },
-          title: { company: (document.getElementById('fTitleCompany') || {}).value.trim(), contact: (document.getElementById('fTitleContact') || {}).value.trim() },
-          lender: { company: (document.getElementById('fLender') || {}).value.trim(), contact: (document.getElementById('fLenderContact') || {}).value.trim() },
-          otherAgent: { name: (document.getElementById('fOtherAgent') || {}).value.trim(), contact: (document.getElementById('fOtherAgentContact') || {}).value.trim() },
-          tc: { name: (document.getElementById('fTC') || {}).value.trim(), contact: (document.getElementById('fTCContact') || {}).value.trim() },
-          assistant: { name: (document.getElementById('fAssistant') || {}).value.trim(), contact: (document.getElementById('fAssistantContact') || {}).value.trim() }
-        };
+        // Collect contacts with split fields
+        var fContacts = {};
+        var contactFields = document.querySelectorAll('.contact-field');
+        contactFields.forEach(function (f) {
+          var ctype = f.getAttribute('data-ctype');
+          var cfield = f.getAttribute('data-cfield');
+          if (!fContacts[ctype]) fContacts[ctype] = {};
+          fContacts[ctype][cfield] = f.value.trim();
+        });
+
+        fParties[fTxnId].buyers = fBuyers;
+        fParties[fTxnId].sellers = fSellers;
+        fParties[fTxnId].contacts = fContacts;
+        // Clean up old format keys if they exist
+        delete fParties[fTxnId].buyer;
+        delete fParties[fTxnId].seller;
         saveParties(fParties);
 
         viewMode = 'detail';
@@ -1089,29 +1179,29 @@
     document.getElementById('txnCloseDate').value = t.closeDate || '';
     document.getElementById('txnNotes').value = t.notes || '';
 
-    // Populate buyer/seller fields
+    // Populate buyer/seller fields (migrated format)
     var parties = getParties();
-    var txnParties = parties[id] || { buyer: {}, seller: {} };
-    var buyer = txnParties.buyer || {};
-    var seller = txnParties.seller || {};
+    var txnParties = migratePartyData(parties[id] || {});
+    var buyer = txnParties.buyers[0] || {};
+    var seller = txnParties.sellers[0] || {};
 
-    document.getElementById('txnBuyerName').value = buyer.name || '';
-    document.getElementById('txnBuyerPhone').value = buyer.phone || '';
-    document.getElementById('txnBuyerEmail').value = buyer.email || '';
-    document.getElementById('txnSellerName').value = seller.name || '';
-    document.getElementById('txnSellerPhone').value = seller.phone || '';
-    document.getElementById('txnSellerEmail').value = seller.email || '';
+    if (document.getElementById('txnBuyerName')) document.getElementById('txnBuyerName').value = buyer.name || '';
+    if (document.getElementById('txnBuyerPhone')) document.getElementById('txnBuyerPhone').value = buyer.phone || '';
+    if (document.getElementById('txnBuyerEmail')) document.getElementById('txnBuyerEmail').value = buyer.email || '';
+    if (document.getElementById('txnSellerName')) document.getElementById('txnSellerName').value = seller.name || '';
+    if (document.getElementById('txnSellerPhone')) document.getElementById('txnSellerPhone').value = seller.phone || '';
+    if (document.getElementById('txnSellerEmail')) document.getElementById('txnSellerEmail').value = seller.email || '';
 
-    // Transaction contacts
+    // Transaction contacts (migrated format)
     var contacts = txnParties.contacts || {};
-    document.getElementById('txnEscrowCompany').value = (contacts.escrow && contacts.escrow.company) || '';
-    document.getElementById('txnEscrowContact').value = (contacts.escrow && contacts.escrow.contact) || '';
-    document.getElementById('txnTitleCompany').value = (contacts.title && contacts.title.company) || '';
-    document.getElementById('txnTitleContact').value = (contacts.title && contacts.title.contact) || '';
-    document.getElementById('txnLender').value = (contacts.lender && contacts.lender.company) || '';
-    document.getElementById('txnLenderContact').value = (contacts.lender && contacts.lender.contact) || '';
-    document.getElementById('txnOtherAgent').value = (contacts.otherAgent && contacts.otherAgent.name) || '';
-    document.getElementById('txnOtherAgentContact').value = (contacts.otherAgent && contacts.otherAgent.contact) || '';
+    if (document.getElementById('txnEscrowCompany')) document.getElementById('txnEscrowCompany').value = (contacts.escrow && (contacts.escrow.name || contacts.escrow.company)) || '';
+    if (document.getElementById('txnEscrowContact')) document.getElementById('txnEscrowContact').value = (contacts.escrow && (contacts.escrow.phone || contacts.escrow.contact)) || '';
+    if (document.getElementById('txnTitleCompany')) document.getElementById('txnTitleCompany').value = (contacts.title && (contacts.title.name || contacts.title.company)) || '';
+    if (document.getElementById('txnTitleContact')) document.getElementById('txnTitleContact').value = (contacts.title && (contacts.title.phone || contacts.title.contact)) || '';
+    if (document.getElementById('txnLender')) document.getElementById('txnLender').value = (contacts.lender && (contacts.lender.name || contacts.lender.company)) || '';
+    if (document.getElementById('txnLenderContact')) document.getElementById('txnLenderContact').value = (contacts.lender && (contacts.lender.phone || contacts.lender.contact)) || '';
+    if (document.getElementById('txnOtherAgent')) document.getElementById('txnOtherAgent').value = (contacts.otherAgent && contacts.otherAgent.name) || '';
+    if (document.getElementById('txnOtherAgentContact')) document.getElementById('txnOtherAgentContact').value = (contacts.otherAgent && (contacts.otherAgent.phone || contacts.otherAgent.contact)) || '';
 
     openModal(txnModal);
   }
@@ -1149,42 +1239,67 @@
       showToast('Escrow added successfully.');
     }
 
-    // Save buyer/seller parties
-    var buyerName = document.getElementById('txnBuyerName').value.trim();
-    var buyerPhone = document.getElementById('txnBuyerPhone').value.trim();
-    var buyerEmail = document.getElementById('txnBuyerEmail').value.trim();
-    var sellerName = document.getElementById('txnSellerName').value.trim();
-    var sellerPhone = document.getElementById('txnSellerPhone').value.trim();
-    var sellerEmail = document.getElementById('txnSellerEmail').value.trim();
-
+    // Save buyer/seller parties (modal path — saves as new array format)
     var parties = getParties();
-    if (!parties[txnId]) parties[txnId] = { buyer: {}, seller: {}, contacts: {} };
+    var existingParty = migratePartyData(parties[txnId] || {});
 
-    // Preserve existing spouse data
-    var existingBuyer = (parties[txnId].buyer || {});
-    var existingSeller = (parties[txnId].seller || {});
-    parties[txnId].buyer = { name: buyerName, phone: buyerPhone, email: buyerEmail, spouse: existingBuyer.spouse || null };
-    parties[txnId].seller = { name: sellerName, phone: sellerPhone, email: sellerEmail, spouse: existingSeller.spouse || null };
-
-    // Save transaction contacts
-    parties[txnId].contacts = {
-      escrow: {
-        company: (document.getElementById('txnEscrowCompany') || {}).value.trim(),
-        contact: (document.getElementById('txnEscrowContact') || {}).value.trim()
-      },
-      title: {
-        company: (document.getElementById('txnTitleCompany') || {}).value.trim(),
-        contact: (document.getElementById('txnTitleContact') || {}).value.trim()
-      },
-      lender: {
-        company: (document.getElementById('txnLender') || {}).value.trim(),
-        contact: (document.getElementById('txnLenderContact') || {}).value.trim()
-      },
-      otherAgent: {
-        name: (document.getElementById('txnOtherAgent') || {}).value.trim(),
-        contact: (document.getElementById('txnOtherAgentContact') || {}).value.trim()
+    var buyerNameEl = document.getElementById('txnBuyerName');
+    var sellerNameEl = document.getElementById('txnSellerName');
+    if (buyerNameEl) {
+      var mbName = buyerNameEl.value.trim();
+      var mbPhone = (document.getElementById('txnBuyerPhone') || {}).value.trim();
+      var mbEmail = (document.getElementById('txnBuyerEmail') || {}).value.trim();
+      if (mbName || mbPhone || mbEmail) {
+        if (existingParty.buyers.length > 0) {
+          existingParty.buyers[0] = { name: mbName, phone: mbPhone, email: mbEmail, relationship: existingParty.buyers[0].relationship || 'Primary' };
+        } else {
+          existingParty.buyers = [{ name: mbName, phone: mbPhone, email: mbEmail, relationship: 'Primary' }];
+        }
       }
-    };
+    }
+    if (sellerNameEl) {
+      var msName = sellerNameEl.value.trim();
+      var msPhone = (document.getElementById('txnSellerPhone') || {}).value.trim();
+      var msEmail = (document.getElementById('txnSellerEmail') || {}).value.trim();
+      if (msName || msPhone || msEmail) {
+        if (existingParty.sellers.length > 0) {
+          existingParty.sellers[0] = { name: msName, phone: msPhone, email: msEmail, relationship: existingParty.sellers[0].relationship || 'Primary' };
+        } else {
+          existingParty.sellers = [{ name: msName, phone: msPhone, email: msEmail, relationship: 'Primary' }];
+        }
+      }
+    }
+
+    // Save transaction contacts (modal path)
+    var escCompEl = document.getElementById('txnEscrowCompany');
+    if (escCompEl) {
+      existingParty.contacts = {
+        escrow: {
+          name: (document.getElementById('txnEscrowCompany') || {}).value.trim(),
+          phone: (document.getElementById('txnEscrowContact') || {}).value.trim(),
+          email: ''
+        },
+        title: {
+          name: (document.getElementById('txnTitleCompany') || {}).value.trim(),
+          phone: (document.getElementById('txnTitleContact') || {}).value.trim(),
+          email: ''
+        },
+        lender: {
+          name: (document.getElementById('txnLender') || {}).value.trim(),
+          phone: (document.getElementById('txnLenderContact') || {}).value.trim(),
+          email: ''
+        },
+        otherAgent: {
+          name: (document.getElementById('txnOtherAgent') || {}).value.trim(),
+          phone: (document.getElementById('txnOtherAgentContact') || {}).value.trim(),
+          email: ''
+        }
+      };
+    }
+
+    parties[txnId] = existingParty;
+    delete parties[txnId].buyer;
+    delete parties[txnId].seller;
     saveParties(parties);
 
     closeModal(txnModal);
@@ -1225,16 +1340,18 @@
     }
 
     var parties = getParties();
-    var txnParties = parties[selectedTxnId] || { buyer: {}, seller: {} };
-    var data = txnParties[type] || {};
+    var txnP = migratePartyData(parties[selectedTxnId] || {});
+    var arr = type === 'buyer' ? txnP.buyers : txnP.sellers;
+    var data = arr[0] || {};
+    var data2 = arr[1] || {};
 
     document.getElementById('partyName').value = data.name || '';
     document.getElementById('partyPhone').value = data.phone || '';
     document.getElementById('partyEmail').value = data.email || '';
-    document.getElementById('partySpouseName').value = (data.spouse && data.spouse.name) || '';
-    document.getElementById('partySpousePhone').value = (data.spouse && data.spouse.phone) || '';
-    document.getElementById('partySpouseEmail').value = (data.spouse && data.spouse.email) || '';
-    document.getElementById('partySpouseRelation').value = (data.spouse && data.spouse.relationship) || '';
+    document.getElementById('partySpouseName').value = data2.name || '';
+    document.getElementById('partySpousePhone').value = data2.phone || '';
+    document.getElementById('partySpouseEmail').value = data2.email || '';
+    document.getElementById('partySpouseRelation').value = data2.relationship || '';
 
     openModal(partyModal);
   }
@@ -1249,16 +1366,30 @@
     var spouseRelation = document.getElementById('partySpouseRelation').value;
 
     var parties = getParties();
-    if (!parties[selectedTxnId]) parties[selectedTxnId] = { buyer: {}, seller: {} };
+    if (!parties[selectedTxnId]) parties[selectedTxnId] = { buyers: [], sellers: [], contacts: {} };
+    var partyData = migratePartyData(parties[selectedTxnId]);
 
-    var partyData = { name: name, phone: phone, email: email };
-    if (spouseName || spousePhone || spouseEmail) {
-      partyData.spouse = { name: spouseName, phone: spousePhone, email: spouseEmail, relationship: spouseRelation || 'Spouse' };
+    var arr = editingPartyType === 'buyer' ? partyData.buyers : partyData.sellers;
+    // Set primary (index 0)
+    var primary = { name: name, phone: phone, email: email, relationship: 'Primary' };
+    if (arr.length > 0) {
+      arr[0] = primary;
     } else {
-      partyData.spouse = null;
+      arr.push(primary);
+    }
+    // Set secondary (index 1) if provided
+    if (spouseName || spousePhone || spouseEmail) {
+      var secondary = { name: spouseName, phone: spousePhone, email: spouseEmail, relationship: spouseRelation || 'Spouse' };
+      if (arr.length > 1) {
+        arr[1] = secondary;
+      } else {
+        arr.push(secondary);
+      }
+    } else if (arr.length > 1) {
+      arr.splice(1, 1);
     }
 
-    parties[selectedTxnId][editingPartyType] = partyData;
+    parties[selectedTxnId] = partyData;
     saveParties(parties);
 
     showToast((editingPartyType === 'buyer' ? 'Buyer' : 'Seller') + ' info updated.');
@@ -1312,11 +1443,11 @@
 
     if (type === 'transaction') {
       var parties = getParties();
-      var p = parties[id] || { buyer: {}, seller: {} };
-      var buyer = p.buyer || {};
-      var seller = p.seller || {};
-      clientEmail = buyer.email || seller.email || '';
-      clientName = buyer.name || seller.name || '';
+      var p = migratePartyData(parties[id] || {});
+      var firstBuyer = p.buyers[0] || {};
+      var firstSeller = p.sellers[0] || {};
+      clientEmail = firstBuyer.email || firstSeller.email || '';
+      clientName = firstBuyer.name || firstSeller.name || '';
       var txn = Data.getTransactions().find(function (t) { return t.id === id; });
       address = txn ? txn.address : '';
     }
@@ -1502,9 +1633,9 @@
     if (!t) return;
 
     var parties = getParties();
-    var txnParties = parties[txnId] || { buyer: {}, seller: {} };
-    var buyer = txnParties.buyer || {};
-    var seller = txnParties.seller || {};
+    var txnP = migratePartyData(parties[txnId] || {});
+    var buyer = txnP.buyers[0] || {};
+    var seller = txnP.sellers[0] || {};
 
     // Check for existing portal link for this txn
     var links = getPortalLinks();

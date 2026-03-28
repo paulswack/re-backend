@@ -353,15 +353,34 @@
       return;
     }
 
-    // Load related data
+    // Load related data — migrate old buyer/seller format to arrays
     var parties = getParties();
-    var txnParties = parties[link.txnId] || { buyer: {}, seller: {} };
-    var buyer = txnParties.buyer || {};
-    var seller = txnParties.seller || {};
+    var txnParties = parties[link.txnId] || {};
+    // Inline migration: handle old {buyer:{},seller:{}} and new {buyers:[],sellers:[]} formats
+    var buyersArr = txnParties.buyers || [];
+    var sellersArr = txnParties.sellers || [];
+    if (!buyersArr.length && txnParties.buyer) {
+      if (txnParties.buyer.name || txnParties.buyer.phone || txnParties.buyer.email) {
+        buyersArr.push({ name: txnParties.buyer.name || '', phone: txnParties.buyer.phone || '', email: txnParties.buyer.email || '' });
+      }
+      if (txnParties.buyer.spouse && txnParties.buyer.spouse.name) {
+        buyersArr.push({ name: txnParties.buyer.spouse.name, phone: txnParties.buyer.spouse.phone || '', email: txnParties.buyer.spouse.email || '' });
+      }
+    }
+    if (!sellersArr.length && txnParties.seller) {
+      if (txnParties.seller.name || txnParties.seller.phone || txnParties.seller.email) {
+        sellersArr.push({ name: txnParties.seller.name || '', phone: txnParties.seller.phone || '', email: txnParties.seller.email || '' });
+      }
+      if (txnParties.seller.spouse && txnParties.seller.spouse.name) {
+        sellersArr.push({ name: txnParties.seller.spouse.name, phone: txnParties.seller.spouse.phone || '', email: txnParties.seller.spouse.email || '' });
+      }
+    }
+    var firstBuyer = buyersArr[0] || {};
+    var firstSeller = sellersArr[0] || {};
 
     // Determine client name — whoever we're working for
-    var clientName = link.clientName || buyer.name || seller.name || '';
-    var clientType = buyer.name ? 'Buyer' : (seller.name ? 'Seller' : '');
+    var clientName = link.clientName || firstBuyer.name || firstSeller.name || '';
+    var clientType = firstBuyer.name ? 'Buyer' : (firstSeller.name ? 'Seller' : '');
 
     var allUpdates = getTxnUpdates();
     var txnUpdates = (allUpdates[link.txnId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
