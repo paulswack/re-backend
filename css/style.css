@@ -38,14 +38,14 @@
 
 /* -- Reset -- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-family: var(--font); font-size: 16px; -webkit-font-smoothing: antialiased; }
+html { font-family: var(--font); font-size: 16px; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 body { background: var(--off-white); color: var(--gray-800); line-height: 1.5; overflow-x: hidden; }
 a { color: var(--indigo); text-decoration: none; }
 img { max-width: 100%; }
 input, select, textarea, button { font-family: inherit; }
 
 /* -- Layout -- */
-.app-layout { display: flex; min-height: 100vh; }
+.app-layout { display: flex; min-height: 100vh; overflow-x: hidden; width: 100%; }
 
 /* -- Sidebar (white, minimal) -- */
 .sidebar {
@@ -164,6 +164,9 @@ input, select, textarea, button { font-family: inherit; }
   flex: 1;
   margin-left: 240px;
   min-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -203,7 +206,7 @@ input, select, textarea, button { font-family: inherit; }
 .hamburger:hover { background: var(--gray-100); }
 
 /* -- Page Body -- */
-.page-body { padding: 24px 28px; flex: 1; }
+.page-body { padding: 24px 28px; flex: 1; min-width: 0; overflow-x: hidden; }
 
 /* -- Page Header -- */
 .page-header {
