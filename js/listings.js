@@ -517,7 +517,7 @@
     // Milestone selector
     html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100)">';
     html += '<div style="display:flex;gap:10px;align-items:start;flex-wrap:wrap">';
-    html += '<select id="updateMilestone" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700);background:var(--white)">';
+    html += '<select id="updateMilestone" style="flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700);background:var(--white)">';
     html += '<option value="">Select a milestone update...</option>';
     MILESTONES.forEach(function (m) {
       html += '<option value="' + m.key + '">' + m.icon + ' ' + m.label + '</option>';
