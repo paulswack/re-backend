@@ -58,7 +58,7 @@
     var avatarEl = document.getElementById('profileAvatar');
 
     avatarEl.className = 'agent-avatar ' + agentClass(displayName);
-    avatarEl.style.cssText = 'width:80px;height:80px;border-radius:16px;font-size:1.5rem;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;position:relative;overflow:hidden;';
+    avatarEl.style.cssText = 'width:100px;height:100px;border-radius:50%;font-size:2rem;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;position:relative;overflow:hidden;margin:0 auto 16px;';
     avatarEl.title = 'Click to change photo';
 
     if (profile.photo) {
