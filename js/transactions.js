@@ -408,6 +408,7 @@
     html += '<div class="card" id="txnListCard">';
     html += '<div class="list-header">' +
       '<div class="txn-row-address">Address</div>' +
+      '<div class="txn-row-specs">Beds / Baths / Sqft</div>' +
       '<div class="txn-row-agent">Agent</div>' +
       '<div class="txn-row-price">Price</div>' +
       '<div class="txn-row-status">Status</div>' +
@@ -487,12 +488,22 @@
 
     emptyEl.style.display = 'none';
 
+    var allListings = Data.getListings();
     listBody.innerHTML = filtered.map(function (t) {
       var cls = agentClass(t.agent);
+      // Look up matching listing for bed/bath/sqft
+      var matchLst = allListings.find(function (l) { return l.address === t.address; });
+      var specsText = [];
+      if (matchLst) {
+        if (matchLst.beds) specsText.push(matchLst.beds + ' bd');
+        if (matchLst.baths) specsText.push(matchLst.baths + ' ba');
+        if (matchLst.sqft) specsText.push(Number(matchLst.sqft).toLocaleString() + ' sqft');
+      }
       return '<div class="list-row" data-action="open-detail" data-id="' + t.id + '">' +
         '<div class="txn-row-address">' +
           '<div class="txn-row-address-text">' + escapeHtml(t.address) + '</div>' +
         '</div>' +
+        '<div class="txn-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
         '<div class="txn-row-agent">' +
           '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(t.agent) + '</div>' +
           '<div class="txn-row-agent-name">' + escapeHtml(t.agent || '—') + '</div>' +

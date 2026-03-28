@@ -568,7 +568,7 @@ tr:hover { background: var(--gray-50); }
     padding: 14px 16px;
   }
   .list-row > div:first-child { grid-column: 1 / -1; font-weight: 700; }
-  .lst-row-specs, .lst-row-date, .txn-row-date { display: none; }
+  .lst-row-specs, .lst-row-date, .txn-row-specs, .txn-row-date { display: none; }
   .lst-row-agent, .txn-row-agent { order: 2; }
   .lst-row-price, .txn-row-price { order: 1; font-weight: 700; }
   .lst-row-status, .txn-row-status { order: 3; }
