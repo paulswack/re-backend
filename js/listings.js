@@ -174,10 +174,7 @@
 
     html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(l ? l.address : '') + '" placeholder="123 Main St, City, ST 12345" style="font-size:1rem;padding:12px 16px"></div>';
 
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Price *</label><input type="number" id="fPrice" value="' + (l ? l.price : '') + '" placeholder="500000" min="0" style="font-size:1rem;padding:12px 16px"></div>';
-    html += '<div class="form-group"><label>Agent *</label><select id="fAgent" style="padding:12px 16px"></select></div>';
-    html += '</div>';
 
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
     html += '<div class="form-group"><label>Beds</label><input type="number" id="fBeds" value="' + (l ? l.beds || '' : '') + '" placeholder="3" min="0" style="padding:12px 16px"></div>';
@@ -191,6 +188,13 @@
       _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
     '</select></div>';
     html += '<div class="form-group"><label>Listing Date</label><input type="date" id="fDate" value="' + (l ? l.listingDate || '' : '') + '" style="padding:12px 16px"></div>';
+    html += '</div>';
+    var _lstLeadSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
+    html += '<div class="form-group"><label>Agent *</label><select id="fAgent" style="padding:12px 16px"></select></div>';
+    html += '<div class="form-group"><label>Lead Source</label><select id="fSource" style="padding:12px 16px"><option value="">Select source...</option>' +
+      _lstLeadSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l && l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
+    '</select></div>';
     html += '</div>';
 
     html += '</div></div>';
@@ -475,6 +479,17 @@
       '<input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
     '</div>';
 
+    // Source
+    var _lstDetailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
+    html += '<div class="detail-block">' +
+      '<div class="detail-block-label">Source</div>' +
+      '<select class="ie-field" data-field="source" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
+        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
+        '<option value=""' + (!l.source ? ' selected' : '') + '>—</option>' +
+        _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
+      '</select>' +
+    '</div>';
+
     html += '</div>'; // detail-blocks-row
 
     html += '</div>'; // detail-header-body
@@ -744,7 +759,8 @@
           sqft: (document.getElementById('fSqft') || {}).value ? parseInt(document.getElementById('fSqft').value) : null,
           status: (document.getElementById('fStatus') || {}).value || 'active',
           listingDate: (document.getElementById('fDate') || {}).value || '',
-          description: (document.getElementById('fDescription') || {}).value.trim()
+          description: (document.getElementById('fDescription') || {}).value.trim(),
+          source: (document.getElementById('fSource') || {}).value || ''
         };
 
         var fListingId;

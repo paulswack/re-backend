@@ -467,6 +467,12 @@
         'Manufactured'
       ]
     },
+    leadSources: [
+      'Zillow', 'Realtor.com', 'Referral', 'Sphere of Influence', 'Open House',
+      'Sign Call', 'Social Media', 'Google / SEO', 'Cold Call / Door Knock',
+      'Past Client', 'Builder / Developer', 'Relocation', 'FSBO',
+      'Expired Listing', 'Farming / Mailer', 'Other'
+    ],
     expenseCategories: [
       { key: 'Advertising & Marketing', color: '#6366F1' },
       { key: 'Auto & Mileage', color: '#3B82F6' },

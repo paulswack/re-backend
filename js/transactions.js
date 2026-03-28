@@ -205,10 +205,14 @@
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' + _txnStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t && t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
     html += '<div class="form-group"><label>Close Date</label><input type="date" id="fCloseDate" value="' + (t ? t.closeDate || '' : '') + '" style="padding:12px 16px"></div>';
     html += '</div>';
-    html += '<div class="form-row">';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Agent *</label><select id="fAgent" style="padding:12px 16px"></select></div>';
-    html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
+    var _leadSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Sphere of Influence','Open House','Sign Call','Social Media','Google / SEO','Past Client','Other']);
+    html += '<div class="form-group"><label>Lead Source</label><select id="fSource" style="padding:12px 16px"><option value="">Select source...</option>' +
+      _leadSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t && t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
+    '</select></div>';
     html += '</div>';
+    html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
     html += '</div></div>';
 
     // Buyer Info
@@ -548,9 +552,14 @@
       '<div class="detail-block-label">Days to Closing</div>' +
       '<div class="detail-block-value">' + dtcLabel + '</div>' +
     '</div>';
+    var _detailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
     html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Documents</div>' +
-      '<div class="detail-block-value">' + docCount + '</div>' +
+      '<div class="detail-block-label">Source</div>' +
+      '<select class="ie-field" data-field="source" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
+        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
+        '<option value=""' + (!t.source ? ' selected' : '') + '>—</option>' +
+        _detailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
+      '</select>' +
     '</div>';
     html += '</div>'; // detail-blocks-row
 
@@ -892,7 +901,8 @@
           agent: fAgent,
           status: (document.getElementById('fStatus') || {}).value || 'active',
           closeDate: (document.getElementById('fCloseDate') || {}).value || '',
-          notes: (document.getElementById('fNotes') || {}).value.trim()
+          notes: (document.getElementById('fNotes') || {}).value.trim(),
+          source: (document.getElementById('fSource') || {}).value || ''
         };
 
         var fTxnId;

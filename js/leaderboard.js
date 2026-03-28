@@ -176,6 +176,49 @@
     html += '</tbody></table></div>';
     html += '</div>';
 
+    // Deal Sources Breakdown
+    var allTxns = Data.getTransactions();
+    var allListings = Data.getListings();
+    var sourceCounts = {};
+    var sourceVolume = {};
+
+    allTxns.forEach(function (t) {
+      var src = t.source || 'Unknown';
+      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+      if (t.status === 'closed') {
+        sourceVolume[src] = (sourceVolume[src] || 0) + (parseFloat(t.price) || 0);
+      }
+    });
+    allListings.forEach(function (l) {
+      var src = l.source || 'Unknown';
+      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+    });
+
+    var sourceKeys = Object.keys(sourceCounts).sort(function (a, b) { return sourceCounts[b] - sourceCounts[a]; });
+    var totalSourceDeals = sourceKeys.reduce(function (s, k) { return s + sourceCounts[k]; }, 0);
+
+    if (sourceKeys.length > 0 && !(sourceKeys.length === 1 && sourceKeys[0] === 'Unknown')) {
+      html += '<div class="lb-card" style="margin-top:20px">';
+      html += '<div class="lb-card-header"><div><div class="lb-card-title">Where Our Deals Come From</div><div class="lb-card-sub">Lead source breakdown across all transactions and listings</div></div></div>';
+
+      sourceKeys.forEach(function (src) {
+        var count = sourceCounts[src];
+        var vol = sourceVolume[src] || 0;
+        var pct = totalSourceDeals > 0 ? Math.round((count / totalSourceDeals) * 100) : 0;
+        html += '<div class="lb-row">';
+        html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--indigo-light);color:var(--indigo);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;font-weight:700">' + pct + '%</div>';
+        html += '<div class="lb-row-info">';
+        html += '<div class="lb-row-name">' + src + '</div>';
+        html += '<div class="lb-row-sub">' + count + ' deal' + (count !== 1 ? 's' : '') + (vol > 0 ? ' &middot; ' + Data.formatCurrency(vol) + ' closed volume' : '') + '</div>';
+        html += '<div class="lb-progress-wrap"><div class="lb-progress-fill" style="width:' + Math.max(pct, 3) + '%"></div></div>';
+        html += '</div>';
+        html += '<div class="lb-row-value"><div class="lb-row-value-num">' + count + '</div></div>';
+        html += '</div>';
+      });
+
+      html += '</div>';
+    }
+
     pageBody.innerHTML = html;
     attachFilterListeners();
   }

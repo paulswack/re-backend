@@ -108,6 +108,24 @@
         listingDate: true
       }
     },
+    leadSources: [
+      'Zillow',
+      'Realtor.com',
+      'Referral',
+      'Sphere of Influence',
+      'Open House',
+      'Sign Call',
+      'Social Media',
+      'Google / SEO',
+      'Cold Call / Door Knock',
+      'Past Client',
+      'Builder / Developer',
+      'Relocation',
+      'FSBO',
+      'Expired Listing',
+      'Farming / Mailer',
+      'Other'
+    ],
     expenseCategories: [
       { key: 'Advertising & Marketing', color: '#6366F1' },
       { key: 'Auto & Mileage', color: '#3B82F6' },
@@ -206,6 +224,7 @@
     { key: 'general', label: 'General', icon: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/>' },
     { key: 'transactions', label: 'Transaction Settings', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>' },
     { key: 'listings', label: 'Listing Settings', icon: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>' },
+    { key: 'leadSources', label: 'Lead Sources', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' },
     { key: 'expenses', label: 'Expense Categories', icon: '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>' },
     { key: 'teamRoles', label: 'Team & Roles', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
     { key: 'leaderboard', label: 'Leaderboard Settings', icon: '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>' },
@@ -313,6 +332,7 @@
       case 'txn-statuses': return settings.transactions.statuses;
       case 'lst-statuses': return settings.listings.statuses;
       case 'property-types': return settings.listings.propertyTypes;
+      case 'lead-sources': return settings.leadSources;
       case 'expense-cats': return settings.expenseCategories;
       default: return null;
     }
@@ -323,6 +343,7 @@
       case 'txn-statuses': settings.transactions.statuses = arr; break;
       case 'lst-statuses': settings.listings.statuses = arr; break;
       case 'property-types': settings.listings.propertyTypes = arr; break;
+      case 'lead-sources': settings.leadSources = arr; break;
       case 'expense-cats': settings.expenseCategories = arr; break;
     }
   }
@@ -333,6 +354,7 @@
       case 'general': return renderGeneral();
       case 'transactions': return renderTransactions();
       case 'listings': return renderListings();
+      case 'leadSources': return renderLeadSources();
       case 'expenses': return renderExpenses();
       case 'teamRoles': return renderTeamRoles();
       case 'leaderboard': return renderLeaderboard();
@@ -569,6 +591,29 @@
       var checked = l.defaultFields[f.key] !== false;
       h += toggleRow(f.label, checked, 'toggle-lst-field', f.key);
     });
+    h += '</div>';
+
+    h += '</div>';
+    return h;
+  }
+
+  // ---- Expense Categories ----
+  // ---- Lead Sources ----
+  function renderLeadSources() {
+    var sources = settings.leadSources || [];
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Lead Sources</h2><p>Where your deals and listings come from. These appear as a dropdown on new escrows and listings.</p></div>';
+
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Sources (' + sources.length + ')</div>';
+    sources.forEach(function (s, i) {
+      h += '<div class="as-list-item" draggable="true" data-list="lead-sources" data-index="' + i + '">' +
+        dragHandle('lead-sources', i) +
+        '<input type="text" class="as-inline-input" value="' + escHtml(s) + '" data-action="update-lead-source" data-index="' + i + '">' +
+        '<button class="as-remove-btn" data-action="remove-lead-source" data-index="' + i + '" title="Remove">&times;</button>' +
+      '</div>';
+    });
+    h += '<button class="as-add-btn" data-action="add-lead-source"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Source</button>';
     h += '</div>';
 
     h += '</div>';
@@ -852,6 +897,21 @@
     }
 
     // ---- Expense categories ----
+    if (action === 'add-lead-source') {
+      if (!settings.leadSources) settings.leadSources = [];
+      settings.leadSources.push('New Source');
+      saveSettings(settings);
+      render();
+      return;
+    }
+    if (action === 'remove-lead-source') {
+      if (settings.leadSources.length <= 1) { showToast('Must have at least one source', 'error'); return; }
+      settings.leadSources.splice(index, 1);
+      saveSettings(settings);
+      render();
+      return;
+    }
+
     if (action === 'add-expense-cat') {
       settings.expenseCategories.push({ key: 'New Category', color: '#94A3B8' });
       saveSettings(settings);
@@ -1149,6 +1209,14 @@
       var val = el.value.trim();
       if (!val) { showToast('Type name cannot be empty', 'error'); render(); return; }
       settings.listings.propertyTypes[index] = val;
+      saveSettings(settings);
+      return;
+    }
+
+    if (action === 'update-lead-source') {
+      var val = el.value.trim();
+      if (!val) { showToast('Source name cannot be empty', 'error'); render(); return; }
+      settings.leadSources[index] = val;
       saveSettings(settings);
       return;
     }
