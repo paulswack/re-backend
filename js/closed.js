@@ -142,46 +142,74 @@
     html += closedStatCard('Commission (' + (COMMISSION_RATE * 100) + '%)', Data.formatCurrency(totalCommission), '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>');
     html += '</div>';
 
-    // Filter Bar
-    html += '<div class="filter-bar">' +
-      '<input type="text" id="searchInput" placeholder="Search by address' + (isLead ? ' or agent' : '') + '...">' +
-      (isLead ? '<select id="agentFilter">' +
-        '<option value="">All Agents</option>' +
-        agents.map(function (a) { return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>'; }).join('') +
-      '</select>' : '') +
-      '<input type="date" id="dateFrom" title="From date">' +
-      '<input type="date" id="dateTo" title="To date">' +
-    '</div>';
+    // Group by agent
+    var agentGroups = {};
+    closedTxns.forEach(function (t) {
+      var name = t.agent || 'Unassigned';
+      if (!agentGroups[name]) agentGroups[name] = [];
+      agentGroups[name].push(t);
+    });
 
-    // List rows
-    html += '<div class="card" id="cldListCard">';
-    html += '<div class="list-header">' +
-      '<div class="cld-row-address">Address</div>' +
-      '<div class="cld-row-agent">Agent</div>' +
-      '<div class="cld-row-price">Price</div>' +
-      '<div class="cld-row-date">Close Date</div>' +
-      '<div class="cld-row-commission">Commission</div>' +
-    '</div>';
-    html += '<div id="cldListBody"></div>';
-    html += '<div id="cldEmpty" class="empty-state" style="display:none;">' +
-      '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
-      '<h3>No closed deals yet</h3>' +
-      '<p>Close your first deal and it will appear here.</p>' +
-    '</div>';
-    html += '</div>';
+    // Sort agents by volume desc
+    var sortedAgents = Object.keys(agentGroups).sort(function (a, b) {
+      var volA = agentGroups[a].reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
+      var volB = agentGroups[b].reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
+      return volB - volA;
+    });
+
+    if (sortedAgents.length === 0) {
+      html += '<div class="card" style="padding:60px 24px;text-align:center">';
+      html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="margin-bottom:16px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+      html += '<h3 style="color:var(--gray-700);margin-bottom:4px">No closed deals yet</h3>';
+      html += '<p style="color:var(--gray-400);font-size:.88rem">Close your first deal and it will appear here.</p>';
+      html += '</div>';
+    } else {
+      sortedAgents.forEach(function (agentName) {
+        var deals = agentGroups[agentName];
+        var agentVolume = deals.reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
+        var agentCommission = agentVolume * COMMISSION_RATE;
+        var cls = agentClass(agentName);
+
+        // Sort deals by close date desc
+        deals.sort(function (a, b) { return (b.closeDate || '').localeCompare(a.closeDate || ''); });
+
+        html += '<div class="lb-card" style="margin-bottom:20px">';
+
+        // Agent header
+        html += '<div style="padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">';
+        html += '<div style="display:flex;align-items:center;gap:14px">';
+        html += '<div class="agent-avatar ' + cls + '" style="width:44px;height:44px;font-size:.85rem">' + getInitials(agentName) + '</div>';
+        html += '<div>';
+        html += '<div style="font-size:1.05rem;font-weight:700;color:var(--gray-900)">' + escapeHtml(agentName) + '</div>';
+        html += '<div style="font-size:.8rem;color:var(--gray-400);margin-top:1px">' + deals.length + ' closing' + (deals.length !== 1 ? 's' : '') + '</div>';
+        html += '</div></div>';
+
+        // Agent summary stats
+        html += '<div style="display:flex;gap:24px;flex-wrap:wrap">';
+        html += '<div style="text-align:right"><div style="font-size:.68rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">Volume</div><div style="font-size:1rem;font-weight:700;color:var(--gray-800)">' + Data.formatCurrency(agentVolume) + '</div></div>';
+        html += '<div style="text-align:right"><div style="font-size:.68rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">Commission</div><div style="font-size:1rem;font-weight:700;color:var(--emerald)">' + Data.formatCurrency(agentCommission) + '</div></div>';
+        html += '</div>';
+        html += '</div>';
+
+        // Deal rows
+        deals.forEach(function (t) {
+          html += '<div class="list-row" data-action="open-detail" data-id="' + t.id + '" style="padding:14px 24px">';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-size:.9rem;font-weight:600;color:var(--gray-800)">' + escapeHtml(t.address) + '</div>';
+          html += '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">' + Data.formatDate(t.closeDate) + (t.source ? ' &middot; ' + escapeHtml(t.source) : '') + '</div>';
+          html += '</div>';
+          html += '<div style="text-align:right;flex-shrink:0">';
+          html += '<div style="font-size:.95rem;font-weight:700;color:var(--gray-900)">' + Data.formatCurrencyFull(t.price) + '</div>';
+          html += '<div style="font-size:.78rem;color:var(--emerald);font-weight:600">' + formatCommission(t.price) + '</div>';
+          html += '</div>';
+          html += '</div>';
+        });
+
+        html += '</div>'; // lb-card
+      });
+    }
 
     pageBody.innerHTML = html;
-
-    // Render filtered list rows
-    renderListRows();
-
-    // Attach filter listeners
-    document.getElementById('searchInput').addEventListener('input', renderListRows);
-    if (document.getElementById('agentFilter')) {
-      document.getElementById('agentFilter').addEventListener('change', renderListRows);
-    }
-    document.getElementById('dateFrom').addEventListener('change', renderListRows);
-    document.getElementById('dateTo').addEventListener('change', renderListRows);
   }
 
   function closedStatCard(label, value, svgPath) {
@@ -189,75 +217,6 @@
       '<div class="closed-stat-icon"><svg viewBox="0 0 24 24">' + svgPath + '</svg></div>' +
       '<div><div class="closed-stat-value">' + value + '</div><div class="closed-stat-label">' + label + '</div></div>' +
     '</div>';
-  }
-
-  function renderListRows() {
-    var allTxns = Data.getTransactions();
-    var closedTxns = filterByRange(allTxns.filter(function (t) { return t.status === 'closed'; }));
-
-    // Agent-level access control: non-privileged users only see their own closed deals
-    var session = Auth.getSession();
-    var isLead = Auth.isPrivileged() || (typeof getDataAgentName === "function" && getDataAgentName() === null);
-    if (!isLead) {
-      closedTxns = closedTxns.filter(function (t) { return t.agent === (typeof getDataAgentName === 'function' && getDataAgentName() ? getDataAgentName() : session.displayName); });
-    }
-
-    var searchEl = document.getElementById('searchInput');
-    var agentEl = document.getElementById('agentFilter');
-    var dateFromEl = document.getElementById('dateFrom');
-    var dateToEl = document.getElementById('dateTo');
-    var listBody = document.getElementById('cldListBody');
-    var emptyEl = document.getElementById('cldEmpty');
-
-    if (!listBody) return;
-
-    var query = searchEl ? searchEl.value.toLowerCase() : '';
-    var agentVal = agentEl ? agentEl.value : '';
-    var dateFrom = dateFromEl ? dateFromEl.value : '';
-    var dateTo = dateToEl ? dateToEl.value : '';
-
-    var filtered = closedTxns.filter(function (t) {
-      var matchSearch = !query ||
-        (t.address && t.address.toLowerCase().indexOf(query) > -1) ||
-        (t.agent && t.agent.toLowerCase().indexOf(query) > -1);
-      var matchAgent = !agentVal || t.agent === agentVal;
-      var matchDateFrom = !dateFrom || (t.closeDate && t.closeDate >= dateFrom);
-      var matchDateTo = !dateTo || (t.closeDate && t.closeDate <= dateTo);
-      return matchSearch && matchAgent && matchDateFrom && matchDateTo;
-    });
-
-    // Sort by close date desc (most recent first)
-    filtered.sort(function (a, b) {
-      var da = a.closeDate || '';
-      var db = b.closeDate || '';
-      if (da > db) return -1;
-      if (da < db) return 1;
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-
-    if (filtered.length === 0) {
-      listBody.innerHTML = '';
-      emptyEl.style.display = 'block';
-      return;
-    }
-
-    emptyEl.style.display = 'none';
-
-    listBody.innerHTML = filtered.map(function (t) {
-      var cls = agentClass(t.agent);
-      return '<div class="list-row" data-action="open-detail" data-id="' + t.id + '">' +
-        '<div class="cld-row-address">' +
-          '<div class="cld-row-address-text">' + escapeHtml(t.address) + '</div>' +
-        '</div>' +
-        '<div class="cld-row-agent">' +
-          '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(t.agent) + '</div>' +
-          '<div class="cld-row-agent-name">' + escapeHtml(t.agent || '—') + '</div>' +
-        '</div>' +
-        '<div class="cld-row-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
-        '<div class="cld-row-date">' + Data.formatDate(t.closeDate) + '</div>' +
-        '<div class="cld-row-commission">' + formatCommission(t.price) + '</div>' +
-      '</div>';
-    }).join('');
   }
 
   // ============================================================
