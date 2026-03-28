@@ -84,9 +84,7 @@
   // ---- Formatting helpers ----
   function formatCurrency(n) {
     n = parseFloat(n) || 0;
-    if (n >= 1000000) return '$' + (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (n >= 1000)    return '$' + Math.round(n / 1000) + 'K';
-    return '$' + n;
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   }
 
   function formatCurrencyFull(n) {

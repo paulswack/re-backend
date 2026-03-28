@@ -29,31 +29,56 @@
   var PREFIX = 'reb_';
   var selectedTaxAgent = 'all';
   var IRS_MILEAGE_RATE = 0.67; // 2026 rate
-  var EST_TAX_RATE = 0.25;
+  var EST_TAX_RATE = getAdminSetting('general.estimatedTaxRate', 0.25);
 
-  // ---- Expense Categories (20+) ----
-  var EXPENSE_CATEGORIES = [
-    { key: 'Advertising & Marketing', icon: '\uD83D\uDCE3', color: '#6366F1' },
-    { key: 'Auto & Mileage', icon: '\uD83D\uDE97', color: '#3B82F6' },
-    { key: 'Client Gifts & Entertainment', icon: '\uD83C\uDF81', color: '#EC4899' },
-    { key: 'Commission Splits / Referral Fees', icon: '\uD83E\uDD1D', color: '#14B8A6' },
-    { key: 'Continuing Education & Training', icon: '\uD83C\uDF93', color: '#F43F5E' },
-    { key: 'Desk Fees / Office Rent', icon: '\uD83C\uDFE2', color: '#8B5CF6' },
-    { key: 'E&O Insurance', icon: '\uD83D\uDEE1\uFE0F', color: '#0EA5E9' },
-    { key: 'Health Insurance', icon: '\u2764\uFE0F', color: '#EF4444' },
-    { key: 'Home Office', icon: '\uD83C\uDFE0', color: '#F97316' },
-    { key: 'Legal & Professional Services', icon: '\u2696\uFE0F', color: '#64748B' },
-    { key: 'Licensing & Dues', icon: '\uD83C\uDFAB', color: '#D946EF' },
-    { key: 'Marketing Materials', icon: '\uD83D\uDCC7', color: '#A855F7' },
-    { key: 'Office Supplies & Equipment', icon: '\uD83D\uDDA8\uFE0F', color: '#10B981' },
-    { key: 'Phone & Internet', icon: '\uD83D\uDCF1', color: '#06B6D4' },
-    { key: 'Photography & Staging', icon: '\uD83D\uDCF7', color: '#F59E0B' },
-    { key: 'Postage & Shipping', icon: '\uD83D\uDCEE', color: '#78716C' },
-    { key: 'Professional Development', icon: '\uD83D\uDCDA', color: '#BE185D' },
-    { key: 'Software & Technology', icon: '\uD83D\uDCBB', color: '#7C3AED' },
-    { key: 'Travel & Lodging', icon: '\u2708\uFE0F', color: '#2563EB' },
-    { key: 'Other', icon: '\uD83D\uDCCB', color: '#94A3B8' }
-  ];
+  // ---- Expense Categories (from admin settings) ----
+  var DEFAULT_EXPENSE_ICONS = {
+    'Advertising & Marketing': '\uD83D\uDCE3',
+    'Auto & Mileage': '\uD83D\uDE97',
+    'Client Gifts & Entertainment': '\uD83C\uDF81',
+    'Commission Splits / Referral Fees': '\uD83E\uDD1D',
+    'Continuing Education & Training': '\uD83C\uDF93',
+    'Desk Fees / Office Rent': '\uD83C\uDFE2',
+    'E&O Insurance': '\uD83D\uDEE1\uFE0F',
+    'Health Insurance': '\u2764\uFE0F',
+    'Home Office': '\uD83C\uDFE0',
+    'Legal & Professional Services': '\u2696\uFE0F',
+    'Licensing & Dues': '\uD83C\uDFAB',
+    'Marketing Materials': '\uD83D\uDCC7',
+    'Office Supplies & Equipment': '\uD83D\uDDA8\uFE0F',
+    'Phone & Internet': '\uD83D\uDCF1',
+    'Photography & Staging': '\uD83D\uDCF7',
+    'Postage & Shipping': '\uD83D\uDCEE',
+    'Professional Development': '\uD83D\uDCDA',
+    'Software & Technology': '\uD83D\uDCBB',
+    'Travel & Lodging': '\u2708\uFE0F',
+    'Other': '\uD83D\uDCCB'
+  };
+  var adminExpenseCategories = getAdminSetting('expenseCategories', []);
+  var EXPENSE_CATEGORIES = (adminExpenseCategories.length > 0 ? adminExpenseCategories : [
+    { key: 'Advertising & Marketing', color: '#6366F1' },
+    { key: 'Auto & Mileage', color: '#3B82F6' },
+    { key: 'Client Gifts & Entertainment', color: '#EC4899' },
+    { key: 'Commission Splits / Referral Fees', color: '#14B8A6' },
+    { key: 'Continuing Education & Training', color: '#F43F5E' },
+    { key: 'Desk Fees / Office Rent', color: '#8B5CF6' },
+    { key: 'E&O Insurance', color: '#0EA5E9' },
+    { key: 'Health Insurance', color: '#EF4444' },
+    { key: 'Home Office', color: '#F97316' },
+    { key: 'Legal & Professional Services', color: '#64748B' },
+    { key: 'Licensing & Dues', color: '#D946EF' },
+    { key: 'Marketing Materials', color: '#A855F7' },
+    { key: 'Office Supplies & Equipment', color: '#10B981' },
+    { key: 'Phone & Internet', color: '#06B6D4' },
+    { key: 'Photography & Staging', color: '#F59E0B' },
+    { key: 'Postage & Shipping', color: '#78716C' },
+    { key: 'Professional Development', color: '#BE185D' },
+    { key: 'Software & Technology', color: '#7C3AED' },
+    { key: 'Travel & Lodging', color: '#2563EB' },
+    { key: 'Other', color: '#94A3B8' }
+  ]).map(function (c) {
+    return { key: c.key, icon: DEFAULT_EXPENSE_ICONS[c.key] || '\uD83D\uDCCB', color: c.color };
+  });
 
   var INCOME_CATEGORIES = [
     { key: 'Commission', color: '#065F46' },
@@ -90,7 +115,10 @@
     localStorage.setItem(PREFIX + 'mileage', JSON.stringify(trips));
   }
   function getSettings() {
-    return JSON.parse(localStorage.getItem(PREFIX + 'tax_settings') || '{"commissionRate":0.03,"agentSplit":0.70}');
+    var adminCommRate = getAdminSetting('general.defaultCommissionRate', 0.03);
+    var adminSplit = getAdminSetting('general.defaultAgentSplit', 0.70);
+    var defaults = '{"commissionRate":' + adminCommRate + ',"agentSplit":' + adminSplit + '}';
+    return JSON.parse(localStorage.getItem(PREFIX + 'tax_settings') || defaults);
   }
   function saveSettings(s) {
     localStorage.setItem(PREFIX + 'tax_settings', JSON.stringify(s));

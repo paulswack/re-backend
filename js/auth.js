@@ -362,6 +362,97 @@
     return session.displayName;
   }
 
+  // ---- Admin Settings Reader ----
+  // Reads from reb_admin_settings (saved by admin-settings.js)
+  // Merges with defaults so pages always have valid values
+  var ADMIN_DEFAULTS = {
+    general: {
+      teamName: 'RE Back Office',
+      defaultCommissionRate: 0.03,
+      defaultAgentSplit: 0.70,
+      estimatedTaxRate: 0.25,
+      fiscalYearStartMonth: 1
+    },
+    transactions: {
+      statuses: [
+        { key: 'active', label: 'Active', color: '#3B82F6' },
+        { key: 'pending', label: 'Pending', color: '#F59E0B' },
+        { key: 'closed', label: 'Closed', color: '#10B981' }
+      ]
+    },
+    listings: {
+      statuses: [
+        { key: 'active', label: 'Active', color: '#3B82F6' },
+        { key: 'new', label: 'New', color: '#8B5CF6' },
+        { key: 'pending', label: 'Pending', color: '#F59E0B' },
+        { key: 'sold', label: 'Sold', color: '#10B981' }
+      ],
+      propertyTypes: [
+        'Single Family',
+        'Condo / Townhome',
+        'Multi-Family',
+        'Land / Lot',
+        'Commercial',
+        'Manufactured'
+      ]
+    },
+    expenseCategories: [
+      { key: 'Advertising & Marketing', color: '#6366F1' },
+      { key: 'Auto & Mileage', color: '#3B82F6' },
+      { key: 'Client Gifts & Entertainment', color: '#EC4899' },
+      { key: 'Commission Splits / Referral Fees', color: '#14B8A6' },
+      { key: 'Continuing Education & Training', color: '#F43F5E' },
+      { key: 'Desk Fees / Office Rent', color: '#8B5CF6' },
+      { key: 'E&O Insurance', color: '#0EA5E9' },
+      { key: 'Health Insurance', color: '#EF4444' },
+      { key: 'Home Office', color: '#F97316' },
+      { key: 'Legal & Professional Services', color: '#64748B' },
+      { key: 'Licensing & Dues', color: '#D946EF' },
+      { key: 'Marketing Materials', color: '#A855F7' },
+      { key: 'Office Supplies & Equipment', color: '#10B981' },
+      { key: 'Phone & Internet', color: '#06B6D4' },
+      { key: 'Photography & Staging', color: '#F59E0B' },
+      { key: 'Postage & Shipping', color: '#78716C' },
+      { key: 'Professional Development', color: '#BE185D' },
+      { key: 'Software & Technology', color: '#7C3AED' },
+      { key: 'Travel & Lodging', color: '#2563EB' },
+      { key: 'Other', color: '#94A3B8' }
+    ]
+  };
+
+  function getAdminSettings() {
+    try {
+      var raw = localStorage.getItem(PREFIX + 'admin_settings');
+      if (!raw) return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+      var saved = JSON.parse(raw);
+      // Merge with defaults for any missing keys
+      var merged = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+      Object.keys(saved).forEach(function (k) {
+        if (typeof saved[k] === 'object' && !Array.isArray(saved[k]) && saved[k] !== null && merged[k] && typeof merged[k] === 'object' && !Array.isArray(merged[k])) {
+          Object.assign(merged[k], saved[k]);
+        } else {
+          merged[k] = saved[k];
+        }
+      });
+      return merged;
+    } catch(e) { return JSON.parse(JSON.stringify(ADMIN_DEFAULTS)); }
+  }
+
+  function getAdminSetting(key, fallback) {
+    var settings = getAdminSettings();
+    // Support dot notation: 'general.defaultCommissionRate'
+    var parts = key.split('.');
+    var val = settings;
+    for (var i = 0; i < parts.length; i++) {
+      if (val && typeof val === 'object' && parts[i] in val) {
+        val = val[parts[i]];
+      } else {
+        return fallback;
+      }
+    }
+    return val !== undefined && val !== null ? val : fallback;
+  }
+
   // ---- Expose globals ----
   window.Auth = Auth;
   window.getDataAgentName = getDataAgentName;
@@ -373,5 +464,7 @@
   window.initSidebarToggle = initSidebarToggle;
   window.initSettingsDropdown = initSettingsDropdown;
   window.isSoloMode = isSoloMode;
+  window.getAdminSettings = getAdminSettings;
+  window.getAdminSetting = getAdminSetting;
 
 })();

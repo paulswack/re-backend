@@ -18,7 +18,7 @@
   // ---- State ----
   var viewMode = 'list'; // 'list' or 'detail'
   var selectedTxnId = null;
-  var COMMISSION_RATE = 0.03;
+  var COMMISSION_RATE = getAdminSetting('general.defaultCommissionRate', 0.03);
 
   // ---- DOM refs ----
   var pageBody = document.getElementById('pageBody');
@@ -111,7 +111,7 @@
     html += closedStatCard('Total Closed', totalClosed, '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>');
     html += closedStatCard('Total Volume', Data.formatCurrency(totalVolume), '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>');
     html += closedStatCard('Avg Deal Size', Data.formatCurrency(avgDeal), '<path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>');
-    html += closedStatCard('Commission (3%)', Data.formatCurrency(totalCommission), '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>');
+    html += closedStatCard('Commission (' + (COMMISSION_RATE * 100) + '%)', Data.formatCurrency(totalCommission), '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>');
     html += '</div>';
 
     // Filter Bar
@@ -267,7 +267,7 @@
     html += '<div class="commission-highlight">' +
       '<div class="commission-highlight-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>' +
       '<div>' +
-        '<div class="commission-highlight-label">Commission Earned (3%)</div>' +
+        '<div class="commission-highlight-label">Commission Earned (' + (COMMISSION_RATE * 100) + '%)</div>' +
         '<div class="commission-highlight-value">' + Data.formatCurrencyFull(commission) + '</div>' +
       '</div>' +
     '</div>';
@@ -311,7 +311,7 @@
     '</div>';
 
     html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Commission (3%)</div>' +
+      '<div class="detail-block-label">Commission (' + (COMMISSION_RATE * 100) + '%)</div>' +
       '<div class="detail-block-value" style="color:#10B981;font-weight:700">' + Data.formatCurrencyFull(commission) + '</div>' +
     '</div>';
 

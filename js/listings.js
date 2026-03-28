@@ -119,11 +119,10 @@
     html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (l ? l.sqft || '' : '') + '" placeholder="1800" min="0" style="padding:12px 16px"></div>';
     html += '</div>';
 
+    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' +
-      '<option value="active"' + (l && l.status === 'active' ? ' selected' : '') + '>Active</option>' +
-      '<option value="pending"' + (l && l.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
-      '<option value="sold"' + (l && l.status === 'sold' ? ' selected' : '') + '>Sold</option>' +
+      _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
     '</select></div>';
     html += '<div class="form-group"><label>Listing Date</label><input type="date" id="fDate" value="' + (l ? l.listingDate || '' : '') + '" style="padding:12px 16px"></div>';
     html += '</div>';
@@ -199,9 +198,7 @@
       '<input type="text" id="searchInput" placeholder="Search by address' + (isLead ? ' or agent' : '') + '...">' +
       '<select id="statusFilter">' +
         '<option value="">All Statuses</option>' +
-        '<option value="active">Active</option>' +
-        '<option value="pending">Pending</option>' +
-        '<option value="sold">Sold</option>' +
+        getAdminSetting('listings.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]).map(function (s) { return '<option value="' + s.key + '">' + s.label + '</option>'; }).join('') +
       '</select>' +
       (isLead ? '<select id="agentFilter">' +
         '<option value="">All Agents</option>' +
@@ -392,13 +389,12 @@
     '</div>';
 
     // Status
+    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
       '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
         'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        '<option value="active"' + (l.status === 'active' ? ' selected' : '') + '>Active</option>' +
-        '<option value="pending"' + (l.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
-        '<option value="sold"' + (l.status === 'sold' ? ' selected' : '') + '>Sold</option>' +
+        _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
       '</select>' +
     '</div>';
 

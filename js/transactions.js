@@ -155,7 +155,8 @@
     html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(t ? t.address : '') + '" placeholder="123 Main St, City, ST 12345" style="font-size:1rem;padding:12px 16px"></div>';
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
     html += '<div class="form-group"><label>Price *</label><input type="number" id="fPrice" value="' + (t ? t.price : '') + '" placeholder="500000" min="0" style="font-size:1rem;padding:12px 16px"></div>';
-    html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px"><option value="active"' + (t && t.status === 'active' ? ' selected' : '') + '>Active</option><option value="pending"' + (t && t.status === 'pending' ? ' selected' : '') + '>Pending</option><option value="closed"' + (t && t.status === 'closed' ? ' selected' : '') + '>Closed</option></select></div>';
+    var _txnStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
+    html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' + _txnStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t && t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
     html += '<div class="form-group"><label>Close Date</label><input type="date" id="fCloseDate" value="' + (t ? t.closeDate || '' : '') + '" style="padding:12px 16px"></div>';
     html += '</div>';
     html += '<div class="form-row">';
@@ -288,8 +289,7 @@
       '<input type="text" id="searchInput" placeholder="Search by address' + (isLead ? ' or agent' : '') + '...">' +
       '<select id="statusFilter">' +
         '<option value="">All Statuses</option>' +
-        '<option value="active">Active</option>' +
-        '<option value="pending">Pending</option>' +
+        getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]).filter(function (s) { return s.key !== 'closed'; }).map(function (s) { return '<option value="' + s.key + '">' + s.label + '</option>'; }).join('') +
       '</select>' +
       (isLead ? '<select id="agentFilter">' +
         '<option value="">All Agents</option>' +
@@ -484,13 +484,12 @@
         users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === t.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') +
       '</select>' +
     '</div>';
+    var _txnDetailStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
       '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
         'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        '<option value="active"' + (t.status === 'active' ? ' selected' : '') + '>Active</option>' +
-        '<option value="pending"' + (t.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
-        '<option value="closed"' + (t.status === 'closed' ? ' selected' : '') + '>Closed</option>' +
+        _txnDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
       '</select>' +
     '</div>';
     html += '<div class="detail-block">' +

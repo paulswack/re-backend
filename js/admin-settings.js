@@ -207,6 +207,92 @@
 
     h += '</div>';
     body.innerHTML = h;
+    initDragAndDrop();
+    initLiveFormatting();
+  }
+
+  function initLiveFormatting() {
+    var volInput = document.getElementById('as-defVolume');
+    var volPreview = document.getElementById('as-volumePreview');
+    if (volInput && volPreview) {
+      volInput.addEventListener('input', function () {
+        var val = parseInt(this.value) || 0;
+        volPreview.textContent = Data.formatCurrency(val);
+      });
+    }
+  }
+
+  // ---- Drag and Drop ----
+  var dragState = { list: null, fromIndex: null };
+
+  function initDragAndDrop() {
+    var items = document.querySelectorAll('.as-list-item[draggable="true"]');
+    items.forEach(function (item) {
+      item.addEventListener('dragstart', function (e) {
+        dragState.list = this.getAttribute('data-list');
+        dragState.fromIndex = parseInt(this.getAttribute('data-index'));
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', '');
+      });
+
+      item.addEventListener('dragend', function () {
+        this.classList.remove('dragging');
+        document.querySelectorAll('.as-list-item.drag-over').forEach(function (el) {
+          el.classList.remove('drag-over');
+        });
+      });
+
+      item.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        var thisList = this.getAttribute('data-list');
+        if (thisList === dragState.list) {
+          document.querySelectorAll('.as-list-item.drag-over').forEach(function (el) { el.classList.remove('drag-over'); });
+          this.classList.add('drag-over');
+        }
+      });
+
+      item.addEventListener('dragleave', function () {
+        this.classList.remove('drag-over');
+      });
+
+      item.addEventListener('drop', function (e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+        var thisList = this.getAttribute('data-list');
+        var toIndex = parseInt(this.getAttribute('data-index'));
+        if (thisList !== dragState.list || toIndex === dragState.fromIndex) return;
+
+        // Find the array and move the item
+        var arr = getListArray(dragState.list);
+        if (!arr) return;
+        moveItem(arr, dragState.fromIndex, toIndex);
+        setListArray(dragState.list, arr);
+        saveSettings(settings);
+        showToast('Reordered');
+        render();
+      });
+    });
+  }
+
+  function getListArray(listKey) {
+    switch (listKey) {
+      case 'txn-statuses': return settings.transactions.statuses;
+      case 'lst-statuses': return settings.listings.statuses;
+      case 'property-types': return settings.listings.propertyTypes;
+      case 'expense-cats': return settings.expenseCategories;
+      default: return null;
+    }
+  }
+
+  function setListArray(listKey, arr) {
+    switch (listKey) {
+      case 'txn-statuses': settings.transactions.statuses = arr; break;
+      case 'lst-statuses': settings.listings.statuses = arr; break;
+      case 'property-types': settings.listings.propertyTypes = arr; break;
+      case 'expense-cats': settings.expenseCategories = arr; break;
+    }
   }
 
   function renderTabContent(tab) {
@@ -266,7 +352,8 @@
     h += '<div class="as-card-title">Transaction Statuses</div>';
     h += '<div class="as-card-subtitle">Manage available status options for transactions</div>';
     t.statuses.forEach(function (s, i) {
-      h += '<div class="as-list-item">' +
+      h += '<div class="as-list-item" draggable="true" data-list="txn-statuses" data-index="' + i + '">' +
+        dragHandle('txn-statuses', i) +
         '<input type="color" class="as-color-input" value="' + s.color + '" data-action="update-txn-status-color" data-index="' + i + '">' +
         '<input type="text" class="as-inline-input" value="' + escHtml(s.label) + '" data-action="update-txn-status-label" data-index="' + i + '">' +
         '<button class="as-remove-btn" data-action="remove-txn-status" data-index="' + i + '" title="Remove">&times;</button>' +
@@ -310,7 +397,8 @@
     h += '<div class="as-card">';
     h += '<div class="as-card-title">Listing Statuses</div>';
     l.statuses.forEach(function (s, i) {
-      h += '<div class="as-list-item">' +
+      h += '<div class="as-list-item" draggable="true" data-list="lst-statuses" data-index="' + i + '">' +
+        dragHandle('lst-statuses', i) +
         '<input type="color" class="as-color-input" value="' + s.color + '" data-action="update-lst-status-color" data-index="' + i + '">' +
         '<input type="text" class="as-inline-input" value="' + escHtml(s.label) + '" data-action="update-lst-status-label" data-index="' + i + '">' +
         '<button class="as-remove-btn" data-action="remove-lst-status" data-index="' + i + '" title="Remove">&times;</button>' +
@@ -322,7 +410,8 @@
     h += '<div class="as-card">';
     h += '<div class="as-card-title">Property Types</div>';
     l.propertyTypes.forEach(function (pt, i) {
-      h += '<div class="as-list-item">' +
+      h += '<div class="as-list-item" draggable="true" data-list="property-types" data-index="' + i + '">' +
+        dragHandle('property-types', i) +
         '<input type="text" class="as-inline-input" value="' + escHtml(pt) + '" data-action="update-property-type" data-index="' + i + '">' +
         '<button class="as-remove-btn" data-action="remove-property-type" data-index="' + i + '" title="Remove">&times;</button>' +
       '</div>';
@@ -359,7 +448,8 @@
     h += '<div class="as-card">';
     h += '<div class="as-card-title">Categories (' + cats.length + ')</div>';
     cats.forEach(function (c, i) {
-      h += '<div class="as-list-item">' +
+      h += '<div class="as-list-item" draggable="true" data-list="expense-cats" data-index="' + i + '">' +
+        dragHandle('expense-cats', i) +
         '<input type="color" class="as-color-input" value="' + c.color + '" data-action="update-expense-color" data-index="' + i + '">' +
         '<input type="text" class="as-inline-input" value="' + escHtml(c.key) + '" data-action="update-expense-name" data-index="' + i + '">' +
         '<button class="as-remove-btn" data-action="remove-expense-cat" data-index="' + i + '" title="Remove">&times;</button>' +
@@ -474,8 +564,8 @@
     h += '<div class="as-card">';
     h += '<div class="as-card-title">Default Goals for New Agents</div>';
     h += '<div class="form-row">';
-    h += '<div class="form-group"><label>Closings Goal</label><input type="number" id="as-defClosings" value="' + (g.defaultClosingsGoal || 8) + '" min="0" data-action="save-goals" data-field="defaultClosingsGoal"></div>';
-    h += '<div class="form-group"><label>Volume Goal ($)</label><input type="number" id="as-defVolume" value="' + (g.defaultVolumeGoal || 2000000) + '" min="0" step="100000" data-action="save-goals" data-field="defaultVolumeGoal"></div>';
+    h += '<div class="form-group"><label>Closings Goal</label><input type="number" id="as-defClosings" value="' + (g.defaultClosingsGoal || 8) + '" min="0" data-action="save-goals" data-field="defaultClosingsGoal"><div style="font-size:.72rem;color:var(--gray-400);margin-top:4px">Number of closings per year</div></div>';
+    h += '<div class="form-group"><label>Volume Goal</label><input type="number" id="as-defVolume" value="' + (g.defaultVolumeGoal || 2000000) + '" min="0" step="50000" data-action="save-goals" data-field="defaultVolumeGoal"><div id="as-volumePreview" style="font-size:.85rem;font-weight:700;color:var(--indigo);margin-top:6px">' + Data.formatCurrency(g.defaultVolumeGoal || 2000000) + '</div></div>';
     h += '</div>';
     h += '</div>';
 
@@ -531,6 +621,17 @@
         '<span class="as-switch-slider"></span>' +
       '</label>' +
     '</div>';
+  }
+
+  function dragHandle(listKey, index) {
+    return '<div class="as-drag-handle" draggable="false"><svg viewBox="0 0 24 24"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></div>';
+  }
+
+  function moveItem(arr, fromIndex, toIndex) {
+    if (toIndex < 0 || toIndex >= arr.length) return arr;
+    var item = arr.splice(fromIndex, 1)[0];
+    arr.splice(toIndex, 0, item);
+    return arr;
   }
 
   function escHtml(str) {
@@ -627,6 +728,28 @@
       saveSettings(settings);
       render();
       return;
+    }
+
+    // ---- Reorder actions ----
+    if (action === 'move-txn-status-up' || action === 'move-txn-status-down') {
+      var dir = action.indexOf('-up') > -1 ? -1 : 1;
+      moveItem(settings.transactions.statuses, index, index + dir);
+      saveSettings(settings); render(); return;
+    }
+    if (action === 'move-lst-status-up' || action === 'move-lst-status-down') {
+      var dir = action.indexOf('-up') > -1 ? -1 : 1;
+      moveItem(settings.listings.statuses, index, index + dir);
+      saveSettings(settings); render(); return;
+    }
+    if (action === 'move-property-type-up' || action === 'move-property-type-down') {
+      var dir = action.indexOf('-up') > -1 ? -1 : 1;
+      moveItem(settings.listings.propertyTypes, index, index + dir);
+      saveSettings(settings); render(); return;
+    }
+    if (action === 'move-expense-cat-up' || action === 'move-expense-cat-down') {
+      var dir = action.indexOf('-up') > -1 ? -1 : 1;
+      moveItem(settings.expenseCategories, index, index + dir);
+      saveSettings(settings); render(); return;
     }
 
     // ---- Roles ----
