@@ -38,6 +38,72 @@
     localStorage.setItem(PREFIX + 'listing_notes', JSON.stringify(data));
   }
 
+  // ---- Client Updates (milestone timeline for listing portal) ----
+  function getUpdates() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'lst_updates') || '{}'); } catch (e) { return {}; }
+  }
+
+  function saveUpdates(data) {
+    localStorage.setItem(PREFIX + 'lst_updates', JSON.stringify(data));
+  }
+
+  function addUpdate(lstId, type, title, detail, auto) {
+    var allUpdates = getUpdates();
+    if (!allUpdates[lstId]) allUpdates[lstId] = [];
+    var session = Auth.getSession();
+    allUpdates[lstId].push({
+      id: generateId(),
+      type: type,
+      title: title,
+      detail: detail || '',
+      auto: !!auto,
+      author: session ? session.displayName : 'System',
+      timestamp: new Date().toISOString()
+    });
+    saveUpdates(allUpdates);
+  }
+
+  // Listing milestone options
+  var MILESTONES = [
+    { key: 'listing_agreement',   label: 'Listing Agreement Signed',  icon: '📝' },
+    { key: 'pre_listing_prep',    label: 'Pre-Listing Prep Started',  icon: '🏠' },
+    { key: 'repairs_started',     label: 'Repairs / Touch-Ups Started', icon: '🔧' },
+    { key: 'repairs_complete',    label: 'Repairs Complete',           icon: '✅' },
+    { key: 'staging_scheduled',   label: 'Staging Scheduled',         icon: '🛋️' },
+    { key: 'staging_complete',    label: 'Staging Complete',          icon: '✨' },
+    { key: 'photos_scheduled',    label: 'Photography Scheduled',     icon: '📅' },
+    { key: 'photos_complete',     label: 'Photos & Video Complete',   icon: '📸' },
+    { key: 'sign_installed',      label: 'Sign Installed',            icon: '🪧' },
+    { key: 'mls_live',            label: 'Listed on MLS — Live!',     icon: '🚀' },
+    { key: 'open_house_scheduled', label: 'Open House Scheduled',     icon: '🏡' },
+    { key: 'showing_feedback',    label: 'Showing Feedback Received', icon: '💬' },
+    { key: 'offer_received',      label: 'Offer Received',           icon: '📩' },
+    { key: 'multiple_offers',     label: 'Multiple Offers Received',  icon: '🔥' },
+    { key: 'offer_accepted',      label: 'Offer Accepted!',          icon: '🎉' },
+    { key: 'price_adjustment',    label: 'Price Adjustment',          icon: '💲' },
+    { key: 'under_contract',      label: 'Under Contract',           icon: '📋' },
+    { key: 'sold',                label: 'Sold!',                     icon: '🔑' },
+    { key: 'custom',              label: 'Custom Update...',          icon: '✏️' }
+  ];
+
+  // Portal link helpers
+  function getPortalLinks() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'portal_links') || '[]'); } catch (e) { return []; }
+  }
+
+  function savePortalLinks(links) {
+    localStorage.setItem(PREFIX + 'portal_links', JSON.stringify(links));
+  }
+
+  function generateToken() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var token = '';
+    for (var i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  }
+
   function generateId() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
@@ -354,7 +420,12 @@
     html += '<div class="detail-header-top">';
     html += '<div style="flex:1;min-width:0">' +
       '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
-      '<input type="number" class="ie-field" data-field="price" value="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:2px;' + inpStyle + '" ' + inpFocus + '>' +
+      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:2px;' + inpStyle + '" ' +
+        'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
+        'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
+    '</div>';
+    html += '<div class="detail-header-actions">' +
+      '<button class="btn btn-outline btn-sm" data-action="share-client" data-id="' + l.id + '" style="color:var(--indigo);border-color:var(--indigo);">Share with Client</button>' +
     '</div>';
     html += '</div>';
 
@@ -433,6 +504,49 @@
       html += '</div>';
     }
 
+    // Client Updates (milestone timeline for portal)
+    var allUpdates = getUpdates();
+    var lstUpdates = (allUpdates[selectedListingId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+
+    html += '<div class="notes-card">';
+    html += '<div class="notes-card-header" style="display:flex;align-items:center;justify-content:space-between">' +
+      '<span>Client Updates</span>' +
+      '<span style="font-size:.7rem;color:var(--gray-400);font-weight:500">Visible on client portal</span>' +
+    '</div>';
+
+    // Milestone selector
+    html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100)">';
+    html += '<div style="display:flex;gap:10px;align-items:start;flex-wrap:wrap">';
+    html += '<select id="updateMilestone" style="flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700);background:var(--white)">';
+    html += '<option value="">Select a milestone update...</option>';
+    MILESTONES.forEach(function (m) {
+      html += '<option value="' + m.key + '">' + m.icon + ' ' + m.label + '</option>';
+    });
+    html += '</select>';
+    html += '<button class="btn btn-primary btn-sm" data-action="send-update" style="white-space:nowrap">Send Update</button>';
+    html += '</div>';
+    html += '<textarea id="updateDetail" placeholder="Add details for the client (optional)..." style="width:100%;margin-top:10px;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;min-height:60px;font-family:inherit;resize:vertical;display:none"></textarea>';
+    html += '</div>';
+
+    // Updates list
+    if (lstUpdates.length === 0) {
+      html += '<div style="padding:24px;text-align:center;font-size:.85rem;color:var(--gray-400);font-style:italic">No client updates yet. Send a milestone update to keep your seller informed.</div>';
+    } else {
+      lstUpdates.forEach(function (upd) {
+        var milestone = MILESTONES.find(function (m) { return m.key === upd.type; });
+        var icon = milestone ? milestone.icon : '📌';
+        html += '<div style="padding:14px 20px;border-bottom:1px solid var(--gray-50);display:flex;gap:12px;align-items:start">';
+        html += '<span style="font-size:1.2rem;flex-shrink:0;margin-top:1px">' + icon + '</span>';
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">' + escapeHtml(upd.title) + '</div>';
+        if (upd.detail) html += '<div style="font-size:.82rem;color:var(--gray-500);margin-top:3px;line-height:1.5">' + escapeHtml(upd.detail) + '</div>';
+        html += '<div style="font-size:.7rem;color:var(--gray-400);margin-top:4px">' + escapeHtml(upd.author) + ' &middot; ' + relativeTime(upd.timestamp) + (upd.auto ? ' &middot; Auto' : '') + '</div>';
+        html += '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+
     // Notes
     html += '<div class="notes-card">';
     html += '<div class="notes-card-header">Activity &amp; Notes</div>';
@@ -464,6 +578,21 @@
 
     pageBody.innerHTML = html;
 
+    // Show/hide detail textarea based on milestone selection
+    var milestoneSelect = document.getElementById('updateMilestone');
+    var updateDetailEl = document.getElementById('updateDetail');
+    if (milestoneSelect && updateDetailEl) {
+      milestoneSelect.addEventListener('change', function () {
+        updateDetailEl.style.display = this.value ? 'block' : 'none';
+        if (this.value === 'custom') {
+          updateDetailEl.placeholder = 'Describe the update for your client...';
+          updateDetailEl.focus();
+        } else {
+          updateDetailEl.placeholder = 'Add details for the client (optional)...';
+        }
+      });
+    }
+
     // Auto-save inline editable fields
     var ieFields = pageBody.querySelectorAll('.ie-field');
     ieFields.forEach(function (field) {
@@ -471,7 +600,11 @@
       field.addEventListener(eventType, function () {
         var fieldName = this.getAttribute('data-field');
         var val = this.value;
-        if (fieldName === 'price') val = parseFloat(val) || 0;
+        if (fieldName === 'price') {
+          val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
+          this.setAttribute('data-raw', val);
+          this.value = Data.formatCurrency(val);
+        }
         if (fieldName === 'beds') val = val ? parseInt(val) : null;
         if (fieldName === 'baths') val = val ? parseFloat(val) : null;
         if (fieldName === 'sqft') val = val ? parseInt(val) : null;
@@ -484,6 +617,8 @@
           // Status → Pending: auto-create a transaction from this listing
           if (val === 'pending' && oldStatus !== 'pending') {
             Data.updateListing(selectedListingId, { status: 'pending' });
+            addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
+            notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
             // Check if a transaction already exists for this address
             var existingTxn = Data.getTransactions().find(function (t) {
               return currentListing && t.address === currentListing.address;
@@ -519,6 +654,8 @@
                 });
               }
             }
+            addUpdate(selectedListingId, 'sold', 'Sold!', 'The property has officially sold. Congratulations!', true);
+            notifyClientEmail(selectedListingId, 'Sold!', 'The property has officially sold. Congratulations!');
             showToast('Listing sold! Moved to Closed.');
             renderDetail();
             return;
@@ -627,11 +764,224 @@
         render();
         break;
 
+      case 'send-update':
+        sendClientUpdate();
+        break;
+
+      case 'share-client':
+        openShareClientModal(target.getAttribute('data-id'));
+        break;
+
+      case 'copy-portal-link':
+        var urlInput = document.getElementById('sharePortalUrl');
+        if (urlInput) {
+          urlInput.select();
+          document.execCommand('copy');
+          showToast('Link copied!');
+        }
+        break;
+
+      case 'dismiss-email-prompt':
+        var emailModal = document.getElementById('emailPromptModal');
+        if (emailModal) emailModal.parentNode.removeChild(emailModal);
+        break;
+
+      case 'save-client-email':
+        var ceInput = document.getElementById('clientEmailInput');
+        if (ceInput && ceInput.value.trim()) {
+          var allLinks = getPortalLinks();
+          var thisLink = allLinks.find(function (lnk) { return lnk.lstId === selectedListingId; });
+          if (thisLink) {
+            thisLink.clientEmail = ceInput.value.trim();
+            savePortalLinks(allLinks);
+            showToast('Client email saved!');
+          }
+        }
+        break;
+
+      case 'modal-close':
+        var overlay = document.querySelector('.modal-overlay');
+        if (overlay) overlay.parentNode.removeChild(overlay);
+        break;
+
       case 'add-note':
         addNote();
         break;
     }
   });
+
+  // ============================================================
+  //  SEND CLIENT UPDATE
+  // ============================================================
+  function sendClientUpdate() {
+    var select = document.getElementById('updateMilestone');
+    var detailEl = document.getElementById('updateDetail');
+    if (!select || !select.value) {
+      showToast('Please select a milestone update.', 'error');
+      return;
+    }
+
+    var milestoneKey = select.value;
+    var milestone = MILESTONES.find(function (m) { return m.key === milestoneKey; });
+    var detail = detailEl ? detailEl.value.trim() : '';
+    var title;
+
+    if (milestoneKey === 'custom') {
+      if (!detail) {
+        showToast('Please add details for your custom update.', 'error');
+        return;
+      }
+      title = 'Update from Your Agent';
+      addUpdate(selectedListingId, 'custom', title, detail, false);
+    } else {
+      title = milestone ? milestone.label : milestoneKey;
+      addUpdate(selectedListingId, milestoneKey, title, detail, false);
+    }
+
+    showToast('Client update sent!');
+    notifyClientEmail(selectedListingId, title, detail);
+    renderDetail();
+  }
+
+  // ---- Auto-notify client via email ----
+  function notifyClientEmail(lstId, updateTitle, updateDetail) {
+    // Get client email from portal link
+    var links = getPortalLinks();
+    var link = links.find(function (l) { return l.lstId === lstId; });
+    var clientEmail = link ? (link.clientEmail || '') : '';
+    var clientName = link ? (link.clientName || '') : '';
+
+    if (!clientEmail) return;
+
+    var lst = Data.getListings().find(function (l) { return l.id === lstId; });
+    var address = lst ? lst.address : '';
+
+    var portalUrl = '';
+    if (link) {
+      var baseUrl = window.location.href.split('/').slice(0, -1).join('/');
+      portalUrl = baseUrl + '/client-portal.html?token=' + link.token;
+    }
+
+    var session = Auth.getSession();
+    var agentName = session ? session.displayName : 'Your Agent';
+    var firstName = clientName ? clientName.split(' ')[0] : '';
+    var greeting = firstName ? 'Hi ' + firstName + ',\n\n' : 'Hi,\n\n';
+
+    var subject = 'Update: ' + updateTitle + ' — ' + address;
+    var body = greeting +
+      'There\'s a new update on your listing at ' + address + ':\n\n' +
+      '📌 ' + updateTitle + '\n' +
+      (updateDetail ? updateDetail + '\n' : '') +
+      '\n' +
+      (portalUrl ? 'View your full listing portal here:\n' + portalUrl + '\n\n' : '') +
+      'If you have any questions, don\'t hesitate to reach out.\n\n' +
+      'Best regards,\n' + agentName;
+
+    showEmailPrompt(clientEmail, subject, body);
+  }
+
+  function showEmailPrompt(email, subject, body) {
+    var encodedSubject = encodeURIComponent(subject);
+    var encodedBody = encodeURIComponent(body);
+    var mailtoLink = 'mailto:' + encodeURIComponent(email) + '?subject=' + encodedSubject + '&body=' + encodedBody;
+
+    var promptHtml = '<div class="modal-overlay open" id="emailPromptModal">' +
+      '<div class="modal" style="max-width:480px">' +
+        '<div class="modal-header">' +
+          '<h3>Notify Client?</h3>' +
+          '<button class="modal-close" data-action="dismiss-email-prompt">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body" style="padding:24px">' +
+          '<p style="font-size:.88rem;color:var(--gray-600);margin-bottom:6px">Send an email notification to:</p>' +
+          '<p style="font-size:.95rem;font-weight:700;color:var(--gray-800);margin-bottom:20px">' + escapeHtml(email) + '</p>' +
+          '<div style="display:flex;gap:10px">' +
+            '<a href="' + mailtoLink + '" class="btn btn-primary btn-sm" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none" data-action="dismiss-email-prompt">' +
+              '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>' +
+              'Send Email' +
+            '</a>' +
+            '<button class="btn btn-outline btn-sm" data-action="dismiss-email-prompt">Skip</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    document.body.insertAdjacentHTML('beforeend', promptHtml);
+  }
+
+  // ============================================================
+  //  SHARE WITH CLIENT — Portal Link
+  // ============================================================
+  function openShareClientModal(lstId) {
+    var listings = Data.getListings();
+    var l = listings.find(function (x) { return x.id === lstId; });
+    if (!l) return;
+
+    var links = getPortalLinks();
+    var existingLink = links.find(function (lnk) { return lnk.lstId === lstId; });
+    var token;
+    var savedClientEmail = '';
+
+    if (existingLink) {
+      token = existingLink.token;
+      savedClientEmail = existingLink.clientEmail || '';
+    } else {
+      token = generateToken();
+      var session = Auth.getSession();
+      links.push({
+        token: token,
+        lstId: lstId,
+        type: 'listing',
+        clientName: '',
+        clientEmail: '',
+        createdAt: new Date().toISOString(),
+        createdBy: session ? session.displayName : 'Unknown'
+      });
+      savePortalLinks(links);
+    }
+
+    var baseUrl = window.location.href.split('/').slice(0, -1).join('/');
+    var portalUrl = baseUrl + '/client-portal.html?token=' + token;
+
+    var emailSubject = 'Your Listing Portal — ' + (l.address || 'Property Listing');
+    var emailBody = 'Hi,\\n\\nYou can view your listing details and progress at the link below:\\n\\n' +
+      portalUrl + '\\n\\n' +
+      'Listing: ' + (l.address || '') + '\\n' +
+      'Price: ' + Data.formatCurrencyFull(l.price) + '\\n\\n' +
+      'This link gives you access to your listing status, timeline updates, and progress.\\n\\n' +
+      'Best regards,\\n' + (l.agent || 'Your Agent');
+
+    var encodedSubject = encodeURIComponent(emailSubject);
+    var encodedBody = encodeURIComponent(emailBody.replace(/\\n/g, '\n'));
+
+    var modalHtml = '<div class="modal-overlay open" id="shareClientModal">' +
+      '<div class="modal" style="max-width:560px;">' +
+        '<div class="modal-header">' +
+          '<h3>Share with Client</h3>' +
+          '<button class="modal-close" data-action="modal-close">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body" style="padding:24px">' +
+          '<p style="font-size:.88rem;color:var(--gray-500);margin-bottom:16px">Send your client a link to view their listing progress, updates, and status in real-time.</p>' +
+          '<div style="margin-bottom:16px">' +
+            '<label style="font-size:.78rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Client Email (for update notifications)</label>' +
+            '<div style="display:flex;gap:8px">' +
+              '<input type="email" id="clientEmailInput" value="' + escapeHtml(savedClientEmail) + '" placeholder="client@email.com" style="flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700)">' +
+              '<button class="btn btn-outline btn-sm" data-action="save-client-email">Save</button>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;margin-bottom:16px">' +
+            '<input type="text" id="sharePortalUrl" value="' + escapeHtml(portalUrl) + '" readonly style="flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;color:var(--gray-700);background:var(--gray-50);">' +
+            '<button class="btn btn-primary btn-sm" data-action="copy-portal-link" style="white-space:nowrap;">Copy Link</button>' +
+          '</div>' +
+          '<a href="mailto:?subject=' + encodedSubject + '&body=' + encodedBody + '" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:6px;">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>' +
+            'Send via Email' +
+          '</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
 
   // ============================================================
   //  ADD NOTE

@@ -272,6 +272,68 @@
       ];
       saveCollection('tasks', sampleTasks);
     }
+
+    // Transaction Updates (client portal timeline)
+    if (!localStorage.getItem(PREFIX + 'txn_updates')) {
+      var sampleUpdates = {
+        'txn-003': [
+          { id: 'upd-001', type: 'offer_accepted', title: 'Offer Accepted', detail: 'Your offer has been accepted by the seller. Congratulations!', auto: false, author: 'Sarah Chen', timestamp: '2026-01-22T14:00:00Z' },
+          { id: 'upd-002', type: 'earnest_deposited', title: 'Earnest Money Deposited', detail: 'Earnest money has been received and deposited into escrow.', auto: true, author: 'Sarah Chen', timestamp: '2026-01-25T10:00:00Z' },
+          { id: 'upd-003', type: 'inspection_scheduled', title: 'Inspection Scheduled', detail: 'Home inspection is scheduled for February 5th at 10:00 AM.', auto: false, author: 'Sarah Chen', timestamp: '2026-01-28T09:00:00Z' },
+          { id: 'upd-004', type: 'inspection_complete', title: 'Inspection Complete', detail: 'Inspection completed. Overall the home is in great condition. Minor items noted — I will send you the full report.', auto: false, author: 'Sarah Chen', timestamp: '2026-02-05T15:00:00Z' },
+          { id: 'upd-005', type: 'appraisal_ordered', title: 'Appraisal Ordered', detail: 'The lender has ordered the appraisal. We should have results within 7-10 days.', auto: false, author: 'Sarah Chen', timestamp: '2026-02-10T11:00:00Z' },
+          { id: 'upd-006', type: 'appraisal_came_in', title: 'Appraisal Came In at Value', detail: 'Great news — the appraisal came in at the purchase price. We are clear to move forward!', auto: false, author: 'Sarah Chen', timestamp: '2026-02-20T14:00:00Z' }
+        ],
+        'txn-004': [
+          { id: 'upd-010', type: 'offer_accepted', title: 'Offer Accepted', detail: 'Seller accepted your offer. Next steps are earnest money and inspection scheduling.', auto: false, author: 'Marcus Rivera', timestamp: '2026-02-08T10:00:00Z' },
+          { id: 'upd-011', type: 'inspection_complete', title: 'Inspection Complete', detail: 'Inspection went well. A few repair requests have been submitted to the seller.', auto: false, author: 'Marcus Rivera', timestamp: '2026-02-18T16:00:00Z' },
+          { id: 'upd-012', type: 'appraisal_ordered', title: 'Appraisal Ordered', detail: 'Lender has ordered the appraisal. Waiting on results.', auto: true, author: 'Marcus Rivera', timestamp: '2026-02-25T09:00:00Z' }
+        ]
+      };
+      localStorage.setItem(PREFIX + 'txn_updates', JSON.stringify(sampleUpdates));
+    }
+
+    // Listing Updates (client portal timeline)
+    if (!localStorage.getItem(PREFIX + 'lst_updates')) {
+      var sampleLstUpdates = {
+        'lst-005': [
+          { id: 'lupd-001', type: 'listing_agreement', title: 'Listing Agreement Signed', detail: 'We\'re officially on board! Let\'s get your home ready for market.', auto: false, author: 'Jennifer Walsh', timestamp: '2026-03-18T10:00:00Z' },
+          { id: 'lupd-002', type: 'pre_listing_prep', title: 'Pre-Listing Prep Started', detail: 'We\'ve created a prep checklist — minor touch-ups and decluttering to maximize your home\'s appeal.', auto: false, author: 'Jennifer Walsh', timestamp: '2026-03-19T14:00:00Z' },
+          { id: 'lupd-003', type: 'photos_scheduled', title: 'Photography Scheduled', detail: 'Professional photography and drone shots are scheduled for March 24th at 2:00 PM.', auto: false, author: 'Jennifer Walsh', timestamp: '2026-03-21T09:00:00Z' },
+          { id: 'lupd-004', type: 'photos_complete', title: 'Photos & Video Complete', detail: 'Photos look amazing! 45 professional images and a walkthrough video are ready for the listing.', auto: false, author: 'Jennifer Walsh', timestamp: '2026-03-24T17:00:00Z' },
+          { id: 'lupd-005', type: 'sign_installed', title: 'Sign Installed', detail: 'For Sale sign is up in the yard.', auto: true, author: 'Jennifer Walsh', timestamp: '2026-03-25T11:00:00Z' },
+          { id: 'lupd-006', type: 'mls_live', title: 'Listed on MLS — Live!', detail: 'Your property is now live on the MLS and all major real estate websites. Let the showings begin!', auto: false, author: 'Jennifer Walsh', timestamp: '2026-03-26T08:00:00Z' }
+        ]
+      };
+      localStorage.setItem(PREFIX + 'lst_updates', JSON.stringify(sampleLstUpdates));
+    }
+
+    // Sample portal links for testing
+    if (!localStorage.getItem(PREFIX + 'portal_links')) {
+      var sampleLinks = [
+        { token: 'demo-portal-txn003', txnId: 'txn-003', clientName: 'David & Maria Thompson', createdAt: '2026-03-01T10:00:00Z', createdBy: 'Sarah Chen' },
+        { token: 'demo-portal-txn004', txnId: 'txn-004', clientName: 'Jason Park', createdAt: '2026-03-05T10:00:00Z', createdBy: 'Marcus Rivera' },
+        { token: 'demo-portal-lst005', lstId: 'lst-005', type: 'listing', clientName: 'Robert & Kim Nguyen', createdAt: '2026-03-18T10:00:00Z', createdBy: 'Jennifer Walsh' }
+      ];
+      localStorage.setItem(PREFIX + 'portal_links', JSON.stringify(sampleLinks));
+    }
+
+    // Sample parties for portal testing
+    if (!localStorage.getItem(PREFIX + 'txn_parties')) {
+      var sampleParties = {
+        'txn-003': {
+          buyer: { name: 'David Thompson', phone: '(512) 555-0142', email: 'david.t@email.com', spouse: { name: 'Maria Thompson', phone: '', email: 'maria.t@email.com', relationship: 'Spouse' } },
+          seller: { name: 'Robert & Lynn Adams' },
+          contacts: { escrow: { company: 'Heritage Title', contact: 'Amy Torres' }, title: { company: 'Heritage Title', contact: 'Amy Torres' }, lender: { company: 'Guild Mortgage', contact: 'Ben Harris' }, otherAgent: { name: 'Tom Fletcher', contact: '(512) 555-0199' } }
+        },
+        'txn-004': {
+          buyer: { name: 'Jason Park', phone: '(512) 555-0188', email: 'jpark@email.com' },
+          seller: { name: 'Michelle Warren' },
+          contacts: { escrow: { company: 'Stewart Title', contact: 'Carla Reyes' }, lender: { company: 'First National Bank', contact: 'Diana Liu' } }
+        }
+      };
+      localStorage.setItem(PREFIX + 'txn_parties', JSON.stringify(sampleParties));
+    }
   }
   seedData();
 

@@ -338,10 +338,81 @@
     });
   }
 
+  // ---- Apply theme colors from admin settings ----
+  function applyTheme() {
+    var theme = getAdminSetting('theme', null);
+    if (!theme) return;
+
+    var root = document.documentElement;
+
+    // Map theme keys → CSS variable names
+    var mapping = {
+      primary:       '--indigo',
+      primaryLight:  '--indigo-light',
+      primaryDark:   '--indigo-dark',
+      accent:        '--violet',
+      success:       '--emerald',
+      successLight:  '--emerald-light',
+      warning:       '--amber',
+      warningLight:  '--amber-light',
+      danger:        '--rose',
+      dangerLight:   '--rose-light',
+      bodyBg:        '--off-white'
+    };
+
+    Object.keys(mapping).forEach(function (themeKey) {
+      if (theme[themeKey]) {
+        var val = theme[themeKey];
+        // Fix invalid hex+alpha like "#6366F118" → convert to proper rgba
+        if (/^#[0-9A-Fa-f]{8}$/.test(val)) {
+          var hex6 = val.substring(0, 7);
+          var alphaHex = val.substring(7, 9);
+          var alpha = parseInt(alphaHex, 16) / 255;
+          var r = parseInt(hex6.substring(1, 3), 16);
+          var g = parseInt(hex6.substring(3, 5), 16);
+          var b = parseInt(hex6.substring(5, 7), 16);
+          val = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha.toFixed(2) + ')';
+        }
+        root.style.setProperty(mapping[themeKey], val);
+      }
+    });
+
+    // Sidebar — apply directly to avoid overriding --white (used by cards, modals, etc.)
+    var sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+      if (theme.sidebarBg) sidebar.style.background = theme.sidebarBg;
+      if (theme.sidebarText) {
+        var navItems = sidebar.querySelectorAll('.nav-item:not(.active)');
+        navItems.forEach(function (item) { item.style.color = theme.sidebarText; });
+      }
+      if (theme.sidebarActiveText) {
+        var activeItems = sidebar.querySelectorAll('.nav-item.active');
+        activeItems.forEach(function (item) { item.style.color = theme.sidebarActiveText; });
+      }
+      if (theme.sidebarActiveBg) {
+        var activeItems = sidebar.querySelectorAll('.nav-item.active');
+        activeItems.forEach(function (item) { item.style.background = theme.sidebarActiveBg; });
+      }
+    }
+
+    // Dashboard welcome banner gradient
+    var welcome = document.querySelector('.dash-welcome');
+    if (welcome && theme.headerGradientStart && theme.headerGradientEnd) {
+      welcome.style.background = 'linear-gradient(135deg, ' + theme.headerGradientStart + ' 0%, ' + theme.headerGradientEnd + ' 100%)';
+    }
+
+    // Body background
+    if (theme.bodyBg) {
+      document.body.style.background = theme.bodyBg;
+      root.style.setProperty('--off-white', theme.bodyBg);
+    }
+  }
+
   // Auto-run on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function () {
     applySoloMode();
     applyAssistantMode();
+    applyTheme();
   });
 
   // ---- Helper: get the display name to filter data by ----
@@ -466,5 +537,6 @@
   window.isSoloMode = isSoloMode;
   window.getAdminSettings = getAdminSettings;
   window.getAdminSetting = getAdminSetting;
+  window.applyTheme = applyTheme;
 
 })();

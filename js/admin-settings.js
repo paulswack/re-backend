@@ -5,6 +5,18 @@
 (function () {
   'use strict';
 
+  // Helper: generate a light tint of a hex color (mix with white at 10% opacity)
+  function hexToLight(hex) {
+    if (!hex || hex.length < 7) return hex;
+    var r = parseInt(hex.substring(1, 3), 16);
+    var g = parseInt(hex.substring(3, 5), 16);
+    var b = parseInt(hex.substring(5, 7), 16);
+    // Mix with white at ~10% opacity of the color
+    var mix = function (c) { return Math.round(c * 0.08 + 255 * 0.92); };
+    var toHex = function (n) { var h = Math.min(255, n).toString(16); return h.length === 1 ? '0' + h : h; };
+    return '#' + toHex(mix(r)) + toHex(mix(g)) + toHex(mix(b));
+  }
+
   Auth.requireAuth();
   populateSidebarUser();
   setActiveNav();
@@ -31,6 +43,25 @@
 
   // ---- Default Settings ----
   var DEFAULTS = {
+    theme: {
+      primary: '#6366F1',
+      primaryLight: '#EEF2FF',
+      primaryDark: '#4F46E5',
+      accent: '#8B5CF6',
+      success: '#10B981',
+      successLight: '#ECFDF5',
+      warning: '#F59E0B',
+      warningLight: '#FFFBEB',
+      danger: '#F43F5E',
+      dangerLight: '#FFF1F2',
+      sidebarBg: '#FFFFFF',
+      sidebarText: '#475569',
+      sidebarActiveText: '#6366F1',
+      sidebarActiveBg: '#EEF2FF',
+      headerGradientStart: '#6366F1',
+      headerGradientEnd: '#8B5CF6',
+      bodyBg: '#F8FAFC'
+    },
     general: {
       teamName: 'RE Back Office',
       defaultCommissionRate: 0.03,
@@ -171,6 +202,7 @@
 
   // ---- Tab definitions ----
   var TABS = [
+    { key: 'theme', label: 'Theme & Colors', icon: '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>' },
     { key: 'general', label: 'General', icon: '<path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/>' },
     { key: 'transactions', label: 'Transaction Settings', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>' },
     { key: 'listings', label: 'Listing Settings', icon: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>' },
@@ -297,6 +329,7 @@
 
   function renderTabContent(tab) {
     switch (tab) {
+      case 'theme': return renderTheme();
       case 'general': return renderGeneral();
       case 'transactions': return renderTransactions();
       case 'listings': return renderListings();
@@ -311,6 +344,109 @@
   }
 
   // ---- General ----
+  // ---- Theme & Colors ----
+  function renderTheme() {
+    var t = settings.theme || DEFAULTS.theme;
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Theme & Colors</h2><p>Customize the look and feel of the entire system</p></div>';
+
+    var colorGroups = [
+      {
+        title: 'Primary Colors',
+        subtitle: 'Main accent colors used throughout buttons, links, and highlights',
+        colors: [
+          { key: 'primary', label: 'Primary', desc: 'Buttons, active states, links' },
+          { key: 'primaryLight', label: 'Primary Light', desc: 'Hover backgrounds, badges' },
+          { key: 'primaryDark', label: 'Primary Dark', desc: 'Button hover, focus states' },
+          { key: 'accent', label: 'Accent', desc: 'Secondary highlights, gradients' }
+        ]
+      },
+      {
+        title: 'Status Colors',
+        subtitle: 'Colors for success, warning, and error states',
+        colors: [
+          { key: 'success', label: 'Success', desc: 'Closed deals, positive values' },
+          { key: 'successLight', label: 'Success Light', desc: 'Success backgrounds' },
+          { key: 'warning', label: 'Warning', desc: 'Pending, caution states' },
+          { key: 'warningLight', label: 'Warning Light', desc: 'Warning backgrounds' },
+          { key: 'danger', label: 'Danger', desc: 'Errors, delete, expenses' },
+          { key: 'dangerLight', label: 'Danger Light', desc: 'Danger backgrounds' }
+        ]
+      },
+      {
+        title: 'Sidebar',
+        subtitle: 'Sidebar navigation appearance',
+        colors: [
+          { key: 'sidebarBg', label: 'Background', desc: 'Sidebar background color' },
+          { key: 'sidebarText', label: 'Text', desc: 'Nav item text color' },
+          { key: 'sidebarActiveText', label: 'Active Text', desc: 'Active nav item color' },
+          { key: 'sidebarActiveBg', label: 'Active Background', desc: 'Active nav item bg' }
+        ]
+      },
+      {
+        title: 'Dashboard Banner',
+        subtitle: 'Welcome banner gradient colors',
+        colors: [
+          { key: 'headerGradientStart', label: 'Gradient Start', desc: 'Left side of banner' },
+          { key: 'headerGradientEnd', label: 'Gradient End', desc: 'Right side of banner' }
+        ]
+      },
+      {
+        title: 'Page Background',
+        subtitle: 'Main content area background',
+        colors: [
+          { key: 'bodyBg', label: 'Background', desc: 'Page background color' }
+        ]
+      }
+    ];
+
+    colorGroups.forEach(function (group) {
+      h += '<div class="as-card">';
+      h += '<div class="as-card-title">' + group.title + '</div>';
+      h += '<div class="as-card-subtitle">' + group.subtitle + '</div>';
+      group.colors.forEach(function (c) {
+        var val = t[c.key] || DEFAULTS.theme[c.key];
+        h += '<div class="as-list-item" style="padding:10px 0">' +
+          '<input type="color" class="as-color-input" value="' + val + '" data-action="update-theme-color" data-key="' + c.key + '">' +
+          '<div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">' + c.label + '</div>' +
+          '<div style="font-size:.72rem;color:var(--gray-400)">' + c.desc + '</div></div>' +
+          '<span style="font-size:.78rem;font-family:monospace;color:var(--gray-500);background:var(--gray-50);padding:3px 8px;border-radius:4px" id="theme-hex-' + c.key + '">' + val + '</span>' +
+        '</div>';
+      });
+      h += '</div>';
+    });
+
+    // Preset themes
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Quick Presets</div>';
+    h += '<div class="as-card-subtitle">Apply a preset color scheme with one click</div>';
+    h += '<div style="display:flex;gap:10px;flex-wrap:wrap">';
+    var presets = [
+      { name: 'Indigo (Default)', primary: '#6366F1', accent: '#8B5CF6', success: '#10B981', warning: '#F59E0B', danger: '#F43F5E' },
+      { name: 'Ocean Blue', primary: '#3B82F6', accent: '#0EA5E9', success: '#10B981', warning: '#F59E0B', danger: '#EF4444' },
+      { name: 'Emerald', primary: '#10B981', accent: '#14B8A6', success: '#22C55E', warning: '#F59E0B', danger: '#F43F5E' },
+      { name: 'Rose', primary: '#F43F5E', accent: '#EC4899', success: '#10B981', warning: '#F59E0B', danger: '#EF4444' },
+      { name: 'Navy Gold', primary: '#1E3A5F', accent: '#D4A843', success: '#10B981', warning: '#F59E0B', danger: '#EF4444' },
+      { name: 'Purple', primary: '#7C3AED', accent: '#A855F7', success: '#10B981', warning: '#F59E0B', danger: '#F43F5E' },
+      { name: 'Slate', primary: '#475569', accent: '#64748B', success: '#10B981', warning: '#F59E0B', danger: '#EF4444' }
+    ];
+    presets.forEach(function (p) {
+      h += '<button class="btn btn-outline btn-sm" data-action="apply-preset" data-preset=\'' + JSON.stringify(p) + '\' style="display:flex;align-items:center;gap:6px;padding:8px 14px">' +
+        '<span style="width:16px;height:16px;border-radius:4px;background:' + p.primary + ';flex-shrink:0"></span>' +
+        p.name + '</button>';
+    });
+    h += '</div></div>';
+
+    // Reset
+    h += '<div class="as-card" style="display:flex;align-items:center;justify-content:space-between">';
+    h += '<div><div style="font-size:.88rem;font-weight:600;color:var(--gray-700)">Reset to Defaults</div><div style="font-size:.75rem;color:var(--gray-400)">Restore all colors to the original indigo theme</div></div>';
+    h += '<button class="btn btn-outline btn-sm" data-action="reset-theme" style="color:var(--rose);border-color:var(--rose)">Reset Colors</button>';
+    h += '</div>';
+
+    h += '</div>';
+    return h;
+  }
+
   function renderGeneral() {
     var g = settings.general;
     var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -917,6 +1053,54 @@
     if (action === 'toggle-portal') {
       settings.clientPortal[key] = el.checked;
       saveSettings(settings);
+      return;
+    }
+
+    // Theme colors
+    if (action === 'update-theme-color') {
+      var colorKey = el.getAttribute('data-key');
+      if (!settings.theme) settings.theme = JSON.parse(JSON.stringify(DEFAULTS.theme));
+      settings.theme[colorKey] = el.value;
+      saveSettings(settings);
+      // Update hex display
+      var hexEl = document.getElementById('theme-hex-' + colorKey);
+      if (hexEl) hexEl.textContent = el.value;
+      // Live apply
+      if (typeof applyTheme === 'function') applyTheme();
+      return;
+    }
+
+    if (action === 'apply-preset') {
+      var preset = JSON.parse(el.getAttribute('data-preset'));
+      if (!settings.theme) settings.theme = JSON.parse(JSON.stringify(DEFAULTS.theme));
+      settings.theme.primary = preset.primary;
+      settings.theme.primaryDark = preset.primary;
+      settings.theme.accent = preset.accent;
+      settings.theme.success = preset.success;
+      settings.theme.warning = preset.warning;
+      settings.theme.danger = preset.danger;
+      // Derive light versions
+      settings.theme.primaryLight = hexToLight(preset.primary);
+      settings.theme.successLight = hexToLight(preset.success);
+      settings.theme.warningLight = hexToLight(preset.warning);
+      settings.theme.dangerLight = hexToLight(preset.danger);
+      settings.theme.sidebarActiveText = preset.primary;
+      settings.theme.sidebarActiveBg = hexToLight(preset.primary);
+      settings.theme.headerGradientStart = preset.primary;
+      settings.theme.headerGradientEnd = preset.accent;
+      saveSettings(settings);
+      if (typeof applyTheme === 'function') applyTheme();
+      showToast('Theme "' + preset.name + '" applied!');
+      render();
+      return;
+    }
+
+    if (action === 'reset-theme') {
+      settings.theme = JSON.parse(JSON.stringify(DEFAULTS.theme));
+      saveSettings(settings);
+      if (typeof applyTheme === 'function') applyTheme();
+      showToast('Colors reset to defaults');
+      render();
       return;
     }
 
