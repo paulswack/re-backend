@@ -362,10 +362,17 @@
         var found = users.find(function (x) { return x.username === uname; });
         dname = found ? found.displayName : uname;
       }
-      agentStats.push({ username: uname, displayName: dname, count: count, goal: ud.goal || 100 });
+      var aCalls = 0, aTexts = 0, aEmails = 0, aAppts = 0;
+      ud.contacts.forEach(function (c) {
+        if (c.type === 'call') aCalls++;
+        else if (c.type === 'text') aTexts++;
+        else if (c.type === 'email') aEmails++;
+        if (c.madeAppointment) aAppts++;
+      });
+      agentStats.push({ username: uname, displayName: dname, count: count, calls: aCalls, texts: aTexts, emails: aEmails, appts: aAppts, goal: ud.goal || 100 });
     }
 
-    // Sort agents by count descending
+    // Sort agents by count descending (ranking)
     agentStats.sort(function (a, b) { return b.count - a.count; });
 
     // My stats
@@ -391,22 +398,40 @@
     html += '<span class="b100-date-label" style="margin-left:auto;">' + formatDateLabel(selectedDate) + '</span>';
     html += '</div>';
 
-    // ---- Team Scoreboard (compact) ----
-    html += '<div class="b100-scoreboard" style="padding:16px 24px 14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">';
-    html += '<div style="flex-shrink:0;text-align:center"><div class="b100-team-number" style="font-size:2.5rem">' + teamTotal + '</div><div class="b100-team-label" style="font-size:.7rem">TEAM TOTAL</div></div>';
+    // ---- Team Scoreboard ----
+    html += '<div class="b100-scoreboard" style="padding:16px 24px 14px">';
+    html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">';
+    html += '<div style="flex-shrink:0"><div class="b100-team-number" style="font-size:2.2rem">' + teamTotal + '</div><div class="b100-team-label" style="font-size:.65rem">TEAM TOTAL</div></div>';
+    html += '<div style="flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:3px"><div style="height:100%;width:' + Math.min(teamTotal / (agentStats.length * 100) * 100, 100) + '%;background:rgba(255,255,255,.4);border-radius:3px"></div></div>';
+    html += '</div>';
+
     if (agentStats.length > 0) {
-      html += '<div style="flex:1;display:flex;gap:12px;flex-wrap:wrap">';
       for (var a = 0; a < agentStats.length; a++) {
         var ag = agentStats[a];
+        var rank = a + 1;
         var pct = Math.min(ag.count / ag.goal * 100, 100);
         var barColor = pct >= 100 ? '#10B981' : pct >= 50 ? '#3484D0' : '#F59E0B';
-        html += '<div class="b100-agent-card" style="min-width:80px;flex:1">';
-        html += '<div class="b100-agent-name">' + escapeHtml(ag.displayName.split(' ')[0]) + '</div>';
-        html += '<div class="b100-agent-count" style="font-size:1.1rem">' + ag.count + '</div>';
-        html += '<div class="b100-agent-bar"><div class="b100-agent-bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div>';
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;' + (a < agentStats.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,.08);' : '') + '">';
+        // Rank
+        html += '<div style="width:22px;height:22px;border-radius:50%;background:' + (rank === 1 ? 'rgba(255,215,0,.3)' : 'rgba(255,255,255,.1)') + ';display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:' + (rank === 1 ? '#FFD700' : 'rgba(255,255,255,.5)') + ';flex-shrink:0">' + rank + '</div>';
+        // Name + count
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="display:flex;align-items:center;justify-content:space-between">';
+        html += '<span style="font-size:.85rem;font-weight:600;color:#fff">' + escapeHtml(ag.displayName) + '</span>';
+        html += '<span style="font-size:1rem;font-weight:800;color:#fff">' + ag.count + '</span>';
+        html += '</div>';
+        // Type breakdown
+        html += '<div style="display:flex;gap:10px;margin-top:3px">';
+        html += '<span style="font-size:.68rem;color:rgba(255,255,255,.5)">📞 ' + ag.calls + '</span>';
+        html += '<span style="font-size:.68rem;color:rgba(255,255,255,.5)">💬 ' + ag.texts + '</span>';
+        html += '<span style="font-size:.68rem;color:rgba(255,255,255,.5)">📧 ' + ag.emails + '</span>';
+        if (ag.appts > 0) html += '<span style="font-size:.68rem;color:#E97B2A;font-weight:600">⭐ ' + ag.appts + ' appt' + (ag.appts !== 1 ? 's' : '') + '</span>';
+        html += '</div>';
+        // Progress bar
+        html += '<div style="height:3px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:4px"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width .3s"></div></div>';
+        html += '</div>';
         html += '</div>';
       }
-      html += '</div>';
     }
     html += '</div>';
 
