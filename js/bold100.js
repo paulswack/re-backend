@@ -434,6 +434,30 @@
     }
     html += '</div></div>';
 
+    // ---- Add Contact Form (above checkboxes) ----
+    if (showAddForm && isToday) {
+      html += '<div class="b100-form-card">';
+      html += '<div class="b100-form-title">Log a Contact</div>';
+      html += '<div class="b100-type-btns">';
+      var types = ['call', 'text', 'email'];
+      for (var ti = 0; ti < types.length; ti++) {
+        var tp = types[ti];
+        var info = CONTACT_TYPES[tp];
+        html += '<button class="b100-type-btn' + (selectedType === tp ? ' active' : '') + '" data-action="select-type" data-type="' + tp + '">';
+        html += '<span style="color:' + info.color + ';">' + info.icon.replace('width="20" height="20"', 'width="28" height="28"') + '</span>';
+        html += '<span class="b100-type-btn-label">' + escapeHtml(info.label) + '</span>';
+        html += '</button>';
+      }
+      html += '</div>';
+      html += '<div class="b100-form-row"><label>Contact Name</label><input type="text" id="b100Name" placeholder="Who did you contact?"></div>';
+      html += '<label class="b100-checkbox-row"><input type="checkbox" id="b100Appt"><span>Made an appointment</span></label>';
+      html += '<div class="b100-form-actions">';
+      html += '<button class="b100-log-btn" data-action="log-contact">Log Contact</button>';
+      html += '<button class="b100-cancel-btn" data-action="hide-form">Cancel</button>';
+      html += '</div>';
+      html += '</div>';
+    }
+
     // ---- 100 Checkbox Grid ----
     html += '<div class="lb-card" style="margin-bottom:20px;padding:16px 20px">';
     html += '<div style="display:grid;grid-template-columns:repeat(15,1fr);gap:5px">';
@@ -472,35 +496,6 @@
     html += '</div>';
     html += '</div>';
 
-    // ---- Add Contact Form ----
-    if (showAddForm && isToday) {
-      html += '<div class="b100-form-card">';
-      html += '<div class="b100-form-title">Log a Contact</div>';
-
-      html += '<div class="b100-type-btns">';
-      var types = ['call', 'text', 'email'];
-      for (var ti = 0; ti < types.length; ti++) {
-        var tp = types[ti];
-        var info = CONTACT_TYPES[tp];
-        html += '<button class="b100-type-btn' + (selectedType === tp ? ' active' : '') + '" data-action="select-type" data-type="' + tp + '">';
-        html += '<span style="color:' + info.color + ';">' + info.icon.replace('width="20" height="20"', 'width="28" height="28"') + '</span>';
-        html += '<span class="b100-type-btn-label">' + escapeHtml(info.label) + '</span>';
-        html += '</button>';
-      }
-      html += '</div>';
-
-      html += '<div class="b100-form-row"><label>Contact Name</label><input type="text" id="b100Name" placeholder="Who did you contact?"></div>';
-      html += '<div class="b100-form-row"><label>Notes (optional)</label><textarea id="b100Notes" placeholder="What did you discuss?"></textarea></div>';
-      html += '<label class="b100-checkbox-row"><input type="checkbox" id="b100Appt"><span>Made an appointment</span></label>';
-
-      html += '<div class="b100-form-actions">';
-      html += '<button class="b100-log-btn" data-action="log-contact">Log Contact</button>';
-      html += '<button class="b100-cancel-btn" data-action="hide-form">Cancel</button>';
-      html += '</div>';
-
-      html += '</div>';
-    }
-
     // ---- Contact Log ----
     var logContacts = myData.contacts.slice();
     // Sort newest first by timestamp
@@ -513,7 +508,9 @@
     html += '<div class="b100-log-count">' + logContacts.length + ' contact' + (logContacts.length !== 1 ? 's' : '') + ' logged</div>';
     html += '</div>';
 
-    html += '<div class="b100-log-list">';
+    html += '<div style="padding:0 20px 12px"><input type="text" id="b100Search" placeholder="Search contacts..." style="width:100%;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700)"></div>';
+
+    html += '<div class="b100-log-list" id="b100LogList">';
     if (logContacts.length === 0) {
       html += '<div class="b100-log-empty">';
       html += '<div class="b100-log-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" style="opacity:.3;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></div>';
@@ -553,6 +550,18 @@
     html += '</div>'; // log-list
 
     pageBody.innerHTML = html;
+
+    // Wire up contact search
+    var searchEl = document.getElementById('b100Search');
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        var q = this.value.toLowerCase();
+        var items = document.querySelectorAll('#b100LogList .b100-log-item');
+        items.forEach(function (item) {
+          item.style.display = item.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+        });
+      });
+    }
   }
 
   // ---- Event Delegation ----
