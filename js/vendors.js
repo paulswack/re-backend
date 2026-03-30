@@ -233,11 +233,11 @@
       ratingOptions += '<option value="' + i + '"' + sel + '>' + i + '</option>';
     }
 
-    var html = '<div class="modal-overlay" data-action="close-modal">';
-    html += '<div class="modal" style="max-width:540px;" onclick="event.stopPropagation();">';
+    var html = '<div class="modal-overlay open" id="vendorModalOverlay">';
+    html += '<div class="modal" style="max-width:540px;">';
     html += '<div class="modal-header">';
     html += '<h3 style="margin:0;">' + (isEdit ? 'Edit Vendor' : 'Add Vendor') + '</h3>';
-    html += '<button data-action="close-modal" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748B;">&times;</button>';
+    html += '<button class="modal-close" data-action="close-modal">&times;</button>';
     html += '</div>';
     html += '<div class="modal-body">';
 
@@ -369,6 +369,12 @@
       currentFilter = target.getAttribute('data-filter');
       render();
     }
+  });
+
+  // Close modal on overlay click
+  document.addEventListener('click', function (e) {
+    var overlay = document.getElementById('vendorModalOverlay');
+    if (overlay && e.target === overlay) closeModal();
   });
 
   // ---- Init ----
