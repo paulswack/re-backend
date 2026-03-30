@@ -54,20 +54,45 @@
       warningLight: '#FFFBEB',
       danger: '#F43F5E',
       dangerLight: '#FFF1F2',
-      sidebarBg: '#FFFFFF',
-      sidebarText: '#475569',
-      sidebarActiveText: '#6366F1',
-      sidebarActiveBg: '#EEF2FF',
-      headerGradientStart: '#6366F1',
-      headerGradientEnd: '#8B5CF6',
-      bodyBg: '#F8FAFC',
+      sidebarBg: '#002242',
+      sidebarText: 'rgba(255,255,255,0.6)',
+      sidebarActiveText: '#3484D0',
+      sidebarActiveBg: 'rgba(52,132,208,0.2)',
+      sidebarLogoBg: '#3484D0',
+      sidebarHover: 'rgba(255,255,255,0.08)',
+      topbarBg: '#FFFFFF',
+      topbarText: '#2D3444',
+      topbarBorder: '#F1F3F7',
+      headerGradientStart: '#002242',
+      headerGradientEnd: '#1a5494',
+      bodyBg: '#F8F9FC',
+      cardBg: '#FFFFFF',
+      cardBorder: '#E2E6EF',
+      textPrimary: '#2D3444',
+      textSecondary: '#5A6478',
+      textMuted: '#9BA5B7',
+      btnPrimaryBg: '#002242',
+      btnPrimaryText: '#FFFFFF',
+      btnOutlineBorder: '#E2E6EF',
+      statIconNavy: '#002242',
+      statIconGold: '#3484D0',
+      statIconGreen: '#1A7F4B',
+      statIconBlue: '#1E5FA8',
+      progressStart: '#35BA9C',
+      progressEnd: '#3484D0',
+      rankGold: '#FFD700',
+      rankSilver: '#C0C0C0',
+      rankBronze: '#CD7F32',
+      filterActiveBg: '#002242',
+      filterActiveText: '#FFFFFF',
+      filterBorder: '#E2E6EF',
       pageColors: {
-        dashboard: '#6366F1',
-        leaderboard: '#1E293B',
-        listings: '#6366F1',
-        escrows: '#3B82F6',
-        closed: '#10B981',
-        taxCenter: '#8B5CF6'
+        dashboard: '#002242',
+        leaderboard: '#002242',
+        listings: '#002242',
+        escrows: '#1E5FA8',
+        closed: '#1A7F4B',
+        taxCenter: '#1a5494'
       }
     },
     general: {
@@ -542,49 +567,110 @@
     var colorGroups = [
       {
         title: 'Primary Colors',
-        subtitle: 'Main accent colors used throughout buttons, links, and highlights',
+        subtitle: 'Main brand colors used across the entire system',
         colors: [
-          { key: 'primary', label: 'Primary', desc: 'Buttons, active states, links' },
-          { key: 'primaryLight', label: 'Primary Light', desc: 'Hover backgrounds, badges' },
-          { key: 'primaryDark', label: 'Primary Dark', desc: 'Button hover, focus states' },
-          { key: 'accent', label: 'Accent', desc: 'Secondary highlights, gradients' }
+          { key: 'primary', label: 'Primary', desc: 'Buttons, links, active states' },
+          { key: 'primaryLight', label: 'Primary Light', desc: 'Hover backgrounds, badge fills' },
+          { key: 'primaryDark', label: 'Primary Dark', desc: 'Button hover, pressed states' },
+          { key: 'accent', label: 'Accent', desc: 'Secondary highlights, gradients, icons' }
         ]
       },
       {
         title: 'Status Colors',
-        subtitle: 'Colors for success, warning, and error states',
+        subtitle: 'Colors for deal statuses, badges, and alerts',
         colors: [
-          { key: 'success', label: 'Success', desc: 'Closed deals, positive values' },
-          { key: 'successLight', label: 'Success Light', desc: 'Success backgrounds' },
-          { key: 'warning', label: 'Warning', desc: 'Pending, caution states' },
-          { key: 'warningLight', label: 'Warning Light', desc: 'Warning backgrounds' },
-          { key: 'danger', label: 'Danger', desc: 'Errors, delete, expenses' },
-          { key: 'dangerLight', label: 'Danger Light', desc: 'Danger backgrounds' }
+          { key: 'success', label: 'Success / Closed', desc: 'Closed deals, completed items, positive values' },
+          { key: 'successLight', label: 'Success Background', desc: 'Light background for success badges' },
+          { key: 'warning', label: 'Warning / Pending', desc: 'Pending deals, caution states, due soon' },
+          { key: 'warningLight', label: 'Warning Background', desc: 'Light background for warning badges' },
+          { key: 'danger', label: 'Danger / Error', desc: 'Delete buttons, overdue, expense totals' },
+          { key: 'dangerLight', label: 'Danger Background', desc: 'Light background for danger badges' }
         ]
       },
       {
         title: 'Sidebar',
-        subtitle: 'Sidebar navigation appearance',
+        subtitle: 'Left navigation panel appearance',
         colors: [
           { key: 'sidebarBg', label: 'Background', desc: 'Sidebar background color' },
-          { key: 'sidebarText', label: 'Text', desc: 'Nav item text color' },
-          { key: 'sidebarActiveText', label: 'Active Text', desc: 'Active nav item color' },
-          { key: 'sidebarActiveBg', label: 'Active Background', desc: 'Active nav item bg' }
+          { key: 'sidebarText', label: 'Nav Text', desc: 'Inactive nav item text color' },
+          { key: 'sidebarActiveText', label: 'Active Nav Text', desc: 'Currently active page text color' },
+          { key: 'sidebarActiveBg', label: 'Active Nav Background', desc: 'Currently active page highlight' },
+          { key: 'sidebarLogoBg', label: 'Logo Mark', desc: 'Logo icon background color' },
+          { key: 'sidebarHover', label: 'Hover', desc: 'Nav item hover background' }
+        ]
+      },
+      {
+        title: 'Topbar',
+        subtitle: 'Top header bar on every page',
+        colors: [
+          { key: 'topbarBg', label: 'Background', desc: 'Topbar background color' },
+          { key: 'topbarText', label: 'Title Text', desc: 'Page title color' },
+          { key: 'topbarBorder', label: 'Border', desc: 'Bottom border color' }
         ]
       },
       {
         title: 'Dashboard Banner',
-        subtitle: 'Welcome banner gradient colors',
+        subtitle: 'Welcome banner gradient on the dashboard',
         colors: [
-          { key: 'headerGradientStart', label: 'Gradient Start', desc: 'Left side of banner' },
-          { key: 'headerGradientEnd', label: 'Gradient End', desc: 'Right side of banner' }
+          { key: 'headerGradientStart', label: 'Gradient Start', desc: 'Left side of welcome banner' },
+          { key: 'headerGradientEnd', label: 'Gradient End', desc: 'Right side of welcome banner' }
         ]
       },
       {
-        title: 'Page Background',
-        subtitle: 'Main content area background',
+        title: 'Cards & Surfaces',
+        subtitle: 'Card backgrounds, borders, and shadows throughout',
         colors: [
-          { key: 'bodyBg', label: 'Background', desc: 'Page background color' }
+          { key: 'bodyBg', label: 'Page Background', desc: 'Main content area background' },
+          { key: 'cardBg', label: 'Card Background', desc: 'Stat cards, widget cards, list cards' },
+          { key: 'cardBorder', label: 'Card Border', desc: 'Border around cards and sections' }
+        ]
+      },
+      {
+        title: 'Text Colors',
+        subtitle: 'Typography colors across the system',
+        colors: [
+          { key: 'textPrimary', label: 'Primary Text', desc: 'Headings, names, values' },
+          { key: 'textSecondary', label: 'Secondary Text', desc: 'Descriptions, labels, meta text' },
+          { key: 'textMuted', label: 'Muted Text', desc: 'Timestamps, hints, placeholders' }
+        ]
+      },
+      {
+        title: 'Buttons',
+        subtitle: 'Primary and outline button colors',
+        colors: [
+          { key: 'btnPrimaryBg', label: 'Primary Button', desc: 'Main action button background' },
+          { key: 'btnPrimaryText', label: 'Primary Button Text', desc: 'Text on primary buttons' },
+          { key: 'btnOutlineBorder', label: 'Outline Button Border', desc: 'Border for secondary buttons' }
+        ]
+      },
+      {
+        title: 'Stat Card Icons',
+        subtitle: 'Icon circle colors on stat cards across pages',
+        colors: [
+          { key: 'statIconNavy', label: 'Navy Icon', desc: 'Default stat icon background' },
+          { key: 'statIconGold', label: 'Gold/Blue Icon', desc: 'Volume and money stat icons' },
+          { key: 'statIconGreen', label: 'Green Icon', desc: 'Success and agent stat icons' },
+          { key: 'statIconBlue', label: 'Blue Icon', desc: 'Info and active stat icons' }
+        ]
+      },
+      {
+        title: 'Leaderboard & Progress',
+        subtitle: 'Rankings, progress bars, and performance colors',
+        colors: [
+          { key: 'progressStart', label: 'Progress Bar Start', desc: 'Left side of progress bars' },
+          { key: 'progressEnd', label: 'Progress Bar End', desc: 'Right side of progress bars' },
+          { key: 'rankGold', label: 'Gold Rank', desc: '#1 rank badge color' },
+          { key: 'rankSilver', label: 'Silver Rank', desc: '#2 rank badge color' },
+          { key: 'rankBronze', label: 'Bronze Rank', desc: '#3 rank badge color' }
+        ]
+      },
+      {
+        title: 'Filter Buttons',
+        subtitle: 'Time filter and category filter buttons',
+        colors: [
+          { key: 'filterActiveBg', label: 'Active Filter', desc: 'Selected filter button background' },
+          { key: 'filterActiveText', label: 'Active Filter Text', desc: 'Selected filter button text' },
+          { key: 'filterBorder', label: 'Inactive Border', desc: 'Unselected filter button border' }
         ]
       }
     ];
