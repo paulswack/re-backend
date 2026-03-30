@@ -111,17 +111,6 @@
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
-  // ---- Checklist helpers ----
-  function getChecklistTemplates() {
-    try { return JSON.parse(localStorage.getItem(PREFIX + 'checklist_templates') || '[]'); } catch (e) { return []; }
-  }
-  function getDealChecklists() {
-    try { return JSON.parse(localStorage.getItem(PREFIX + 'deal_checklists') || '{}'); } catch (e) { return {}; }
-  }
-  function saveDealChecklists(data) {
-    localStorage.setItem(PREFIX + 'deal_checklists', JSON.stringify(data));
-  }
-
   function migratePartyData(data) {
     if (!data) return { buyers: [], sellers: [], contacts: {} };
     if (data.buyer && !data.buyers) {
@@ -279,13 +268,7 @@
       _leadSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t && t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
     '</select></div>';
     html += '</div>';
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
-    var _clTemplates = getChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
-    html += '<div class="form-group"><label>Checklist Template</label><select id="fChecklist" style="padding:12px 16px"><option value="">— None —</option>' +
-      _clTemplates.map(function (tpl) { return '<option value="' + tpl.id + '">' + escapeHtml(tpl.name) + ' (' + tpl.items.length + ' items)</option>'; }).join('') +
-    '</select></div>';
-    html += '</div>';
     // Checklist Template selector (escrow templates only)
     var _clTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
     if (_clTemplates.length > 0) {
@@ -814,45 +797,6 @@
     }
     html += '</div>';
 
-    // Checklist Card
-    var dealCls = getDealChecklists();
-    var dealCl = dealCls[selectedTxnId];
-    html += '<div class="notes-card">';
-    html += '<div class="notes-card-header" style="display:flex;align-items:center;justify-content:space-between">';
-    if (dealCl && dealCl.items) {
-      var clDone = dealCl.items.filter(function (i) { return i.completed; }).length;
-      var clTotal = dealCl.items.length;
-      var clPct = clTotal > 0 ? Math.round((clDone / clTotal) * 100) : 0;
-      html += '<span>Checklist — ' + escapeHtml(dealCl.templateName) + '</span>';
-      html += '<span style="font-size:.78rem;font-weight:600;color:var(--emerald)">' + clDone + '/' + clTotal + ' (' + clPct + '%)</span>';
-      html += '</div>';
-      html += '<div style="height:4px;background:var(--gray-100);"><div style="height:100%;width:' + clPct + '%;background:var(--emerald);border-radius:4px;transition:width .3s"></div></div>';
-      dealCl.items.forEach(function (item, idx) {
-        html += '<div style="padding:10px 20px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;gap:12px">';
-        html += '<input type="checkbox" data-action="toggle-checklist-item" data-item-idx="' + idx + '"' + (item.completed ? ' checked' : '') + ' style="width:18px;height:18px;cursor:pointer;accent-color:var(--emerald)">';
-        html += '<div style="flex:1;min-width:0">';
-        html += '<div style="font-size:.88rem;' + (item.completed ? 'color:var(--gray-400);text-decoration:line-through' : 'color:var(--gray-800)') + '">' + escapeHtml(item.label) + '</div>';
-        if (item.completed && item.completedBy) {
-          html += '<div style="font-size:.7rem;color:var(--gray-300);margin-top:1px">' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
-        }
-        html += '</div></div>';
-      });
-    } else {
-      html += '<span>Checklist</span></div>';
-      var availTpls = getChecklistTemplates().filter(function (t) { return t.category === 'escrow'; });
-      if (availTpls.length > 0) {
-        html += '<div style="padding:16px 20px;display:flex;gap:10px;align-items:center">';
-        html += '<select id="attachChecklist" style="flex:1;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem"><option value="">Select a checklist template...</option>';
-        availTpls.forEach(function (t) { html += '<option value="' + t.id + '">' + escapeHtml(t.name) + ' (' + t.items.length + ' items)</option>'; });
-        html += '</select>';
-        html += '<button class="btn btn-primary btn-sm" data-action="attach-checklist">Attach</button>';
-        html += '</div>';
-      } else {
-        html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist attached. Create templates in Team Customization.</div>';
-      }
-    }
-    html += '</div>';
-
     // Client Updates (milestone timeline for portal)
     var allUpdates = getUpdates();
     var txnUpdates = (allUpdates[selectedTxnId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
@@ -1153,19 +1097,6 @@
           showToast('Escrow created.');
         }
 
-        // Attach checklist if selected (new escrows only)
-        if (!editingId) {
-          var fClId = (document.getElementById('fChecklist') || {}).value;
-          if (fClId) {
-            var clTpl = getChecklistTemplates().find(function (ct) { return ct.id === fClId; });
-            if (clTpl) {
-              var dcls = getDealChecklists();
-              dcls[fTxnId] = { templateId: clTpl.id, templateName: clTpl.name, items: clTpl.items.map(function (it) { return { id: generateId(), label: it.label, completed: false, completedBy: null, completedAt: null }; }) };
-              saveDealChecklists(dcls);
-            }
-          }
-        }
-
         // Save parties (buyers/sellers as arrays, contacts with split fields)
         var fParties = getParties();
         if (!fParties[fTxnId]) fParties[fTxnId] = { buyers: [], sellers: [], contacts: {} };
@@ -1261,33 +1192,6 @@
 
       case 'send-update':
         sendClientUpdate();
-        break;
-
-      case 'toggle-checklist-item':
-        var clItemIdx = parseInt(target.getAttribute('data-item-idx'));
-        var cls2 = getDealChecklists();
-        var cl2 = cls2[selectedTxnId];
-        if (cl2 && cl2.items[clItemIdx] !== undefined) {
-          var session2 = Auth.getSession();
-          cl2.items[clItemIdx].completed = !cl2.items[clItemIdx].completed;
-          cl2.items[clItemIdx].completedBy = cl2.items[clItemIdx].completed ? (session2 ? session2.displayName : '') : null;
-          cl2.items[clItemIdx].completedAt = cl2.items[clItemIdx].completed ? new Date().toISOString() : null;
-          saveDealChecklists(cls2);
-          renderDetail();
-        }
-        break;
-
-      case 'attach-checklist':
-        var selTpl = document.getElementById('attachChecklist');
-        if (!selTpl || !selTpl.value) { showToast('Select a template first', 'error'); break; }
-        var aTpl = getChecklistTemplates().find(function (t) { return t.id === selTpl.value; });
-        if (aTpl) {
-          var aCls = getDealChecklists();
-          aCls[selectedTxnId] = { templateId: aTpl.id, templateName: aTpl.name, items: aTpl.items.map(function (it) { return { id: generateId(), label: it.label, completed: false, completedBy: null, completedAt: null }; }) };
-          saveDealChecklists(aCls);
-          showToast('Checklist attached!');
-          renderDetail();
-        }
         break;
 
       case 'dismiss-email-prompt':

@@ -132,11 +132,11 @@
 
     // Page header
     html += '<div class="page-header">';
-    html += '<div><h2>Meeting Notes</h2></div>';
+    html += '<div><h2>Monthly 1-on-1 Meetings</h2></div>';
     if (privileged) {
       html += '<button class="btn btn-primary btn-sm" data-action="add-note">' +
         '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
-        'Add Meeting Note</button>';
+        'Add Meeting</button>';
     }
     html += '</div>';
 
@@ -169,31 +169,59 @@
       html += '<div class="card" style="padding:60px 24px;text-align:center">';
       html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="margin-bottom:16px"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>';
       html += '<h3 style="color:var(--gray-700);margin-bottom:4px">No meeting notes yet</h3>';
-      html += '<p style="color:var(--gray-400);font-size:.88rem">' + (privileged ? 'Click "Add Meeting Note" to get started.' : 'Your team lead has not added any meeting notes yet.') + '</p>';
+      html += '<p style="color:var(--gray-400);font-size:.88rem">' + (privileged ? 'Click "Add Meeting" to schedule your first 1-on-1.' : 'Your team lead has not added any meeting notes yet.') + '</p>';
       html += '</div>';
     } else {
-      html += '<div class="card" id="notesListCard">';
-      visibleNotes.forEach(function (note) {
-        var cls = agentClass(note.agentName);
-        var actionCount = countActionItems(note.actionItems);
-        var preview = note.notes ? note.notes.substring(0, 120) : '';
-        if (note.notes && note.notes.length > 120) preview += '...';
+      // Group by agent
+      var agentGroups = {};
+      visibleNotes.forEach(function (n) {
+        var key = n.agentUsername || 'unknown';
+        if (!agentGroups[key]) agentGroups[key] = { name: n.agentName, notes: [] };
+        agentGroups[key].notes.push(n);
+      });
 
-        html += '<div class="list-row" data-action="open-detail" data-id="' + note.id + '" style="padding:18px 24px;gap:14px">';
-        html += '<div class="agent-avatar ' + cls + '" style="width:42px;height:42px;font-size:.8rem">' + getInitials(note.agentName) + '</div>';
-        html += '<div style="flex:1;min-width:0">';
-        html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:3px">';
-        html += '<span style="font-weight:700;color:var(--gray-800);font-size:.95rem">' + escapeHtml(note.agentName) + '</span>';
-        html += '<span style="font-size:.78rem;color:var(--gray-400)">' + Data.formatDate(note.date) + '</span>';
-        if (actionCount > 0) {
-          html += '<span style="font-size:.7rem;background:var(--indigo-light);color:var(--indigo);padding:2px 8px;border-radius:12px;font-weight:600">' + actionCount + ' action item' + (actionCount !== 1 ? 's' : '') + '</span>';
-        }
-        html += '</div>';
-        html += '<p style="color:var(--gray-500);font-size:.85rem;margin:0;line-height:1.5">' + escapeHtml(preview) + '</p>';
-        html += '</div>';
+      var sortedAgentKeys = Object.keys(agentGroups).sort(function (a, b) {
+        return agentGroups[b].notes.length - agentGroups[a].notes.length;
+      });
+
+      sortedAgentKeys.forEach(function (agentKey) {
+        var group = agentGroups[agentKey];
+        var cls = agentClass(group.name);
+        var agentActions = group.notes.reduce(function (s, n) { return s + countActionItems(n.actionItems); }, 0);
+
+        html += '<div class="lb-card" style="margin-bottom:20px">';
+
+        // Agent header
+        html += '<div style="padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:14px">';
+        html += '<div class="agent-avatar ' + cls + '" style="width:42px;height:42px;font-size:.8rem">' + getInitials(group.name) + '</div>';
+        html += '<div style="flex:1">';
+        html += '<div style="font-size:1rem;font-weight:700;color:var(--gray-900)">' + escapeHtml(group.name) + '</div>';
+        html += '<div style="font-size:.78rem;color:var(--gray-400)">' + group.notes.length + ' meeting' + (group.notes.length !== 1 ? 's' : '') + ' &middot; ' + agentActions + ' action item' + (agentActions !== 1 ? 's' : '') + '</div>';
+        html += '</div></div>';
+
+        // Notes rows
+        group.notes.forEach(function (note) {
+          var actionCount = countActionItems(note.actionItems);
+          var preview = note.notes ? note.notes.substring(0, 100) : '';
+          if (note.notes && note.notes.length > 100) preview += '...';
+
+          html += '<div class="list-row" data-action="open-detail" data-id="' + note.id + '" style="padding:14px 24px;gap:12px">';
+          html += '<div style="width:48px;text-align:center;flex-shrink:0">';
+          html += '<div style="font-size:.68rem;font-weight:700;color:var(--indigo);text-transform:uppercase">' + Data.formatDate(note.date).split(',')[0].split(' ')[0] + '</div>';
+          html += '<div style="font-size:1.1rem;font-weight:800;color:var(--gray-800);line-height:1">' + Data.formatDate(note.date).split(',')[0].split(' ')[1] + '</div>';
+          html += '</div>';
+          html += '<div style="flex:1;min-width:0">';
+          html += '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800);margin-bottom:2px">' + escapeHtml(preview) + '</div>';
+          if (actionCount > 0) {
+            html += '<span style="font-size:.7rem;background:var(--indigo-light);color:var(--indigo);padding:2px 8px;border-radius:12px;font-weight:600">' + actionCount + ' action item' + (actionCount !== 1 ? 's' : '') + '</span>';
+          }
+          html += '</div>';
+          html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="var(--gray-300)" style="flex-shrink:0"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
+          html += '</div>';
+        });
+
         html += '</div>';
       });
-      html += '</div>';
     }
 
     pageBody.innerHTML = html;
@@ -232,38 +260,46 @@
       'Back to Meeting Notes</button>';
 
     // Header card
-    html += '<div class="detail-header-card">';
-    html += '<div class="detail-header-accent"></div>';
-    html += '<div class="detail-header-body">';
-    html += '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
-    html += '<div class="agent-avatar ' + cls + '" style="width:56px;height:56px;font-size:1.1rem">' + getInitials(note.agentName) + '</div>';
+    html += '<div class="lb-card" style="margin-bottom:20px">';
+    html += '<div style="padding:24px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">';
+    html += '<div class="agent-avatar ' + cls + '" style="width:60px;height:60px;font-size:1.2rem">' + getInitials(note.agentName) + '</div>';
     html += '<div style="flex:1;min-width:0">';
-    html += '<div style="font-size:1.2rem;font-weight:800;color:var(--gray-900)">' + escapeHtml(note.agentName) + '</div>';
-    html += '<div style="font-size:.88rem;color:var(--gray-400);margin-top:2px">' + Data.formatDate(note.date) + ' &middot; Created by ' + escapeHtml(note.createdByName || 'Team Lead') + '</div>';
-    html += '</div>';
+    html += '<div style="font-size:1.25rem;font-weight:800;color:var(--gray-900)">' + escapeHtml(note.agentName) + '</div>';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-top:4px;flex-wrap:wrap">';
+    html += '<span style="font-size:.85rem;color:var(--gray-500)">' + Data.formatDate(note.date) + '</span>';
+    html += '<span style="font-size:.75rem;color:var(--gray-400)">by ' + escapeHtml(note.createdByName || 'Team Lead') + '</span>';
+    if (actionCount > 0) {
+      html += '<span style="font-size:.7rem;background:var(--indigo-light);color:var(--indigo);padding:3px 10px;border-radius:12px;font-weight:600">' + actionCount + ' action item' + (actionCount !== 1 ? 's' : '') + '</span>';
+    }
+    html += '</div></div>';
     if (privileged) {
       html += '<div style="display:flex;gap:8px">';
       html += '<button class="btn btn-outline btn-sm" data-action="edit-note" data-id="' + note.id + '">Edit</button>';
       html += '<button class="btn btn-outline btn-sm" data-action="delete-note" data-id="' + note.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete</button>';
       html += '</div>';
     }
-    html += '</div>';
     html += '</div></div>';
 
     // Notes card
-    html += '<div class="notes-card">';
-    html += '<div class="notes-card-header">Meeting Notes</div>';
-    html += '<div style="padding:20px 24px;font-size:.92rem;color:var(--gray-700);line-height:1.7;white-space:pre-wrap">' + escapeHtml(note.notes) + '</div>';
+    html += '<div class="lb-card" style="margin-bottom:20px">';
+    html += '<div style="padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="var(--emerald)"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>';
+    html += '<span style="font-size:.9rem;font-weight:700;color:var(--gray-800)">Discussion Notes</span>';
+    html += '</div>';
+    html += '<div style="padding:20px 28px;font-size:.92rem;color:var(--gray-700);line-height:1.75;white-space:pre-wrap">' + escapeHtml(note.notes) + '</div>';
     html += '</div>';
 
     // Action Items card
     if (note.actionItems && note.actionItems.trim()) {
-      html += '<div class="notes-card">';
-      html += '<div class="notes-card-header" style="display:flex;align-items:center;justify-content:space-between">';
-      html += '<span>Action Items</span>';
-      if (actionCount > 0) html += '<span style="font-size:.78rem;font-weight:600;color:var(--indigo)">' + actionCount + ' item' + (actionCount !== 1 ? 's' : '') + '</span>';
+      html += '<div class="lb-card" style="margin-bottom:20px">';
+      html += '<div style="padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">';
+      html += '<div style="display:flex;align-items:center;gap:10px">';
+      html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="var(--violet)"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>';
+      html += '<span style="font-size:.9rem;font-weight:700;color:var(--gray-800)">Action Items</span>';
       html += '</div>';
-      html += '<div style="padding:16px 24px">';
+      if (actionCount > 0) html += '<span style="font-size:.78rem;font-weight:600;color:var(--violet)">' + actionCount + ' item' + (actionCount !== 1 ? 's' : '') + '</span>';
+      html += '</div>';
+      html += '<div style="padding:20px 28px">';
       html += formatActionItems(note.actionItems);
       html += '</div>';
       html += '</div>';
