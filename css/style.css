@@ -313,14 +313,14 @@ input, select, textarea, button { font-family: inherit; }
   text-decoration: none;
 }
 
-.btn-primary { background: var(--indigo); color: #fff; }
-.btn-primary:hover { background: var(--indigo-dark); }
+.btn-primary { background: #E97B2A; color: #fff; }
+.btn-primary:hover { background: #D06A1F; }
 
-.btn-outline { background: var(--white); color: var(--gray-700); border: 1.5px solid var(--gray-200); }
-.btn-outline:hover { background: var(--gray-50); border-color: var(--gray-300); }
+.btn-outline { background: var(--white); color: #E97B2A; border: 1.5px solid #E97B2A; }
+.btn-outline:hover { background: #FDF3EC; border-color: #D06A1F; }
 
-.btn-gold { background: var(--indigo); color: #fff; }
-.btn-gold:hover { background: var(--indigo-dark); }
+.btn-gold { background: #E97B2A; color: #fff; }
+.btn-gold:hover { background: #D06A1F; }
 
 .btn-danger { background: var(--rose); color: #fff; }
 .btn-danger:hover { opacity: .9; }
