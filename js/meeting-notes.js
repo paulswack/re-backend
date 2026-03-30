@@ -1,5 +1,6 @@
 /* ============================================================
    RE Back Office — Meeting Notes Page
+   Full-page list, detail, and form views
    ============================================================ */
 
 (function () {
@@ -20,18 +21,19 @@
   var pageBody = document.getElementById('pageBody');
   var session = Auth.getSession();
   var privileged = Auth.isPrivileged();
+
+  // ---- State ----
+  var viewMode = 'list'; // 'list', 'detail', 'form'
+  var selectedNoteId = null;
+  var editingId = null;
   var filterAgent = 'all';
-  var expandedNoteId = null;
-  var editingNoteId = null;
 
   // ---- Helpers ----
   function escapeHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 
   function generateId() {
@@ -39,432 +41,418 @@
   }
 
   function getUsers() {
-    try {
-      return JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
-    } catch (e) {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]'); } catch (e) { return []; }
   }
 
   function getNotes() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch (e) {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; }
   }
 
   function saveNotes(notes) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
   }
 
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
   function countActionItems(text) {
     if (!text) return 0;
-    var lines = text.split('\n');
-    var count = 0;
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].trim().indexOf('-') === 0 && lines[i].trim().length > 1) {
-        count++;
-      }
-    }
-    return count;
+    return text.split('\n').filter(function (line) { return line.trim().indexOf('-') === 0 && line.trim().length > 1; }).length;
   }
 
   function formatActionItems(text) {
     if (!text) return '';
-    var lines = text.split('\n');
-    var html = '';
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i].trim();
-      if (!line) continue;
+    var h = '';
+    text.split('\n').forEach(function (line) {
+      line = line.trim();
+      if (!line) return;
       if (line.indexOf('-') === 0) {
-        var item = line.substring(1).trim();
-        html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0">' +
-          '<svg viewBox="0 0 24 24" width="16" height="16" fill="var(--gray-300)" style="flex-shrink:0;margin-top:2px"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="var(--gray-300)" stroke-width="2"/></svg>' +
-          '<span style="color:var(--gray-600);font-size:.88rem">' + escapeHtml(item) + '</span>' +
-          '</div>';
+        h += '<div style="display:flex;align-items:flex-start;gap:10px;padding:6px 0">' +
+          '<div style="width:20px;height:20px;border-radius:6px;border:2px solid var(--gray-300);flex-shrink:0;margin-top:1px"></div>' +
+          '<span style="color:var(--gray-700);font-size:.88rem;line-height:1.5">' + escapeHtml(line.substring(1).trim()) + '</span>' +
+        '</div>';
       } else {
-        html += '<div style="padding:4px 0;color:var(--gray-600);font-size:.88rem">' + escapeHtml(line) + '</div>';
+        h += '<div style="padding:4px 0;color:var(--gray-600);font-size:.88rem">' + escapeHtml(line) + '</div>';
       }
-    }
-    return html;
-  }
-
-  function todayStr() {
-    var d = new Date();
-    var mm = ('0' + (d.getMonth() + 1)).slice(-2);
-    var dd = ('0' + d.getDate()).slice(-2);
-    return d.getFullYear() + '-' + mm + '-' + dd;
+    });
+    return h;
   }
 
   // ---- Seed Data ----
   function seedData() {
     if (localStorage.getItem(STORAGE_KEY)) return;
-
     var seed = [
       {
-        id: 'mn-001',
-        agentUsername: 'agent1',
-        agentName: 'Marcus Rivera',
-        date: '2026-03-25',
+        id: 'mn-001', agentUsername: 'agent1', agentName: 'Marcus Rivera', date: '2026-03-25',
         notes: 'Discussed Q1 performance. Marcus closed 2 deals this quarter totaling $935K in volume. He exceeded his contact goal by 15%. We reviewed his pipeline and identified 3 strong leads that could close in Q2. Talked about improving follow-up cadence with warm leads from open houses.',
         actionItems: '- Follow up on 3 warm leads from the Balcones open house\n- Schedule 2 listing appointments by end of week\n- Complete advanced negotiation training module\n- Update CRM notes for all active prospects',
-        createdBy: 'admin',
-        createdByName: 'Jennifer Walsh',
-        createdAt: '2026-03-25T10:30:00Z'
+        createdBy: 'admin', createdByName: 'Jennifer Walsh', createdAt: '2026-03-25T10:30:00Z'
       },
       {
-        id: 'mn-002',
-        agentUsername: 'agent2',
-        agentName: 'Sarah Chen',
-        date: '2026-03-27',
+        id: 'mn-002', agentUsername: 'agent2', agentName: 'Sarah Chen', date: '2026-03-27',
         notes: 'Reviewed listing strategy for Q2. Sarah has 2 active listings and wants to add 3 more by end of April. We discussed pricing strategies for the South Austin market which has seen a 4% price increase this quarter. Also talked about leveraging her condo expertise for the downtown market.',
         actionItems: '- Prepare CMAs for 2 potential listing appointments\n- Schedule open house for 10204 Wommack Rd\n- Draft social media content plan for April\n- Connect with the relocation department for incoming buyer referrals',
-        createdBy: 'admin',
-        createdByName: 'Jennifer Walsh',
-        createdAt: '2026-03-27T14:00:00Z'
+        createdBy: 'admin', createdByName: 'Jennifer Walsh', createdAt: '2026-03-27T14:00:00Z'
       }
     ];
-
     saveNotes(seed);
   }
   seedData();
 
-  // ---- Render ----
+  // ---- Main Render ----
   function render() {
+    if (viewMode === 'form') { renderForm(); }
+    else if (viewMode === 'detail' && selectedNoteId) { renderDetail(); }
+    else { renderList(); }
+  }
+
+  // ============================================================
+  //  LIST VIEW
+  // ============================================================
+  function renderList() {
     var notes = getNotes();
     var users = getUsers();
 
-    // Filter notes based on role
+    // Access control
     var visibleNotes;
     if (privileged) {
-      if (filterAgent === 'all') {
-        visibleNotes = notes;
-      } else {
-        visibleNotes = notes.filter(function (n) { return n.agentUsername === filterAgent; });
-      }
+      visibleNotes = filterAgent === 'all' ? notes : notes.filter(function (n) { return n.agentUsername === filterAgent; });
     } else {
       visibleNotes = notes.filter(function (n) { return n.agentUsername === session.username; });
     }
+    visibleNotes.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
 
-    // Sort by date desc
-    visibleNotes.sort(function (a, b) {
-      if (a.date > b.date) return -1;
-      if (a.date < b.date) return 1;
-      return 0;
-    });
+    // Unique agents
+    var agentSet = {};
+    notes.forEach(function (n) { if (n.agentUsername) agentSet[n.agentUsername] = n.agentName; });
 
     var html = '';
 
-    // Filter bar
-    html += '<div class="filter-bar" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px">';
+    // Page header
+    html += '<div class="page-header">';
+    html += '<div><h2>Meeting Notes</h2></div>';
     if (privileged) {
-      html += '<select id="agentFilter" class="btn btn-outline" style="padding:8px 12px;font-size:.88rem;border-radius:8px;cursor:pointer">';
-      html += '<option value="all"' + (filterAgent === 'all' ? ' selected' : '') + '>All Agents</option>';
-      users.forEach(function (u) {
-        if (u.role === 'Team Lead') return;
-        html += '<option value="' + escapeHtml(u.username) + '"' + (filterAgent === u.username ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>';
-      });
-      html += '</select>';
-      html += '<div style="flex:1"></div>';
-      html += '<button class="btn btn-primary" data-action="add-note">' +
-        '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right:6px"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
+      html += '<button class="btn btn-primary btn-sm" data-action="add-note">' +
+        '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
         'Add Meeting Note</button>';
     }
     html += '</div>';
 
-    // Modal placeholder
-    html += '<div id="noteModal"></div>';
+    // Stat cards
+    var totalNotes = visibleNotes.length;
+    var totalActions = visibleNotes.reduce(function (s, n) { return s + countActionItems(n.actionItems); }, 0);
+    var uniqueAgentCount = Object.keys(agentSet).length;
+
+    html += '<div class="stats-grid" style="margin-bottom:20px">';
+    html += '<div class="stat-card"><div class="stat-icon navy"><svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div><div><div class="stat-value">' + totalNotes + '</div><div class="stat-label">Total Notes</div></div></div>';
+    html += '<div class="stat-card"><div class="stat-icon green"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div><div><div class="stat-value">' + uniqueAgentCount + '</div><div class="stat-label">Agents</div></div></div>';
+    html += '<div class="stat-card"><div class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></div><div><div class="stat-value">' + totalActions + '</div><div class="stat-label">Action Items</div></div></div>';
+    html += '</div>';
+
+    // Filter bar
+    if (privileged) {
+      html += '<div class="filter-bar">';
+      html += '<input type="text" id="searchInput" placeholder="Search notes...">';
+      html += '<select id="agentFilter">' +
+        '<option value="all">All Agents</option>';
+      users.forEach(function (u) {
+        if (u.role === 'Team Lead') return;
+        html += '<option value="' + escapeHtml(u.username) + '"' + (filterAgent === u.username ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>';
+      });
+      html += '</select></div>';
+    }
 
     // Notes list
     if (visibleNotes.length === 0) {
       html += '<div class="card" style="padding:60px 24px;text-align:center">';
       html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="margin-bottom:16px"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>';
       html += '<h3 style="color:var(--gray-700);margin-bottom:4px">No meeting notes yet</h3>';
-      html += '<p style="color:var(--gray-400);font-size:.88rem">' +
-        (privileged ? 'Click "Add Meeting Note" to create your first 1-on-1 note.' : 'Your team lead has not added any meeting notes yet.') +
-        '</p>';
+      html += '<p style="color:var(--gray-400);font-size:.88rem">' + (privileged ? 'Click "Add Meeting Note" to get started.' : 'Your team lead has not added any meeting notes yet.') + '</p>';
       html += '</div>';
     } else {
-      html += '<div id="notesList">';
+      html += '<div class="card" id="notesListCard">';
       visibleNotes.forEach(function (note) {
         var cls = agentClass(note.agentName);
         var actionCount = countActionItems(note.actionItems);
-        var isExpanded = expandedNoteId === note.id;
-        var preview = note.notes ? note.notes.substring(0, 150) : '';
-        if (note.notes && note.notes.length > 150) preview += '...';
+        var preview = note.notes ? note.notes.substring(0, 120) : '';
+        if (note.notes && note.notes.length > 120) preview += '...';
 
-        html += '<div class="lb-card" style="margin-bottom:16px;cursor:pointer" data-action="toggle-note" data-id="' + note.id + '">';
-        html += '<div style="display:flex;align-items:flex-start;gap:14px;padding:20px 24px">';
-
-        // Agent avatar
-        html += '<div class="agent-avatar ' + cls + '" style="width:42px;height:42px;font-size:.8rem;flex-shrink:0">' + getInitials(note.agentName) + '</div>';
-
-        // Content
+        html += '<div class="list-row" data-action="open-detail" data-id="' + note.id + '" style="padding:18px 24px;gap:14px">';
+        html += '<div class="agent-avatar ' + cls + '" style="width:42px;height:42px;font-size:.8rem">' + getInitials(note.agentName) + '</div>';
         html += '<div style="flex:1;min-width:0">';
-        html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">';
-        html += '<span style="font-weight:700;color:var(--gray-800);font-size:1rem">' + escapeHtml(note.agentName) + '</span>';
-        html += '<span style="font-size:.8rem;color:var(--gray-400)">' + Data.formatDate(note.date) + '</span>';
+        html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:3px">';
+        html += '<span style="font-weight:700;color:var(--gray-800);font-size:.95rem">' + escapeHtml(note.agentName) + '</span>';
+        html += '<span style="font-size:.78rem;color:var(--gray-400)">' + Data.formatDate(note.date) + '</span>';
         if (actionCount > 0) {
-          html += '<span style="font-size:.75rem;background:var(--indigo-light);color:var(--indigo);padding:2px 8px;border-radius:12px;font-weight:600">' + actionCount + ' action item' + (actionCount !== 1 ? 's' : '') + '</span>';
+          html += '<span style="font-size:.7rem;background:var(--indigo-light);color:var(--indigo);padding:2px 8px;border-radius:12px;font-weight:600">' + actionCount + ' action item' + (actionCount !== 1 ? 's' : '') + '</span>';
         }
         html += '</div>';
-
-        if (!isExpanded) {
-          html += '<p style="color:var(--gray-500);font-size:.88rem;margin:0;line-height:1.5">' + escapeHtml(preview) + '</p>';
-        } else {
-          // Full notes
-          html += '<div style="margin-top:8px">';
-          html += '<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:6px">Notes</div>';
-          html += '<p style="color:var(--gray-600);font-size:.88rem;margin:0;line-height:1.6;white-space:pre-wrap">' + escapeHtml(note.notes) + '</p>';
-          html += '</div>';
-
-          if (note.actionItems && note.actionItems.trim()) {
-            html += '<div style="margin-top:16px">';
-            html += '<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:6px">Action Items</div>';
-            html += '<div style="background:var(--gray-50);border-radius:10px;padding:12px 16px">';
-            html += formatActionItems(note.actionItems);
-            html += '</div>';
-            html += '</div>';
-          }
-
-          html += '<div style="margin-top:12px;font-size:.78rem;color:var(--gray-400)">Created by ' + escapeHtml(note.createdByName) + '</div>';
-
-          // Edit/Delete buttons (Team Lead only)
-          if (privileged) {
-            html += '<div style="display:flex;gap:8px;margin-top:12px">';
-            html += '<button class="btn btn-outline" style="font-size:.82rem;padding:6px 14px" data-action="edit-note" data-id="' + note.id + '">Edit</button>';
-            html += '<button class="btn btn-outline" style="font-size:.82rem;padding:6px 14px;color:var(--rose);border-color:var(--rose)" data-action="delete-note" data-id="' + note.id + '">Delete</button>';
-            html += '</div>';
-          }
-        }
-
-        html += '</div>'; // content
-        html += '</div>'; // flex row
-        html += '</div>'; // lb-card
+        html += '<p style="color:var(--gray-500);font-size:.85rem;margin:0;line-height:1.5">' + escapeHtml(preview) + '</p>';
+        html += '</div>';
+        html += '</div>';
       });
       html += '</div>';
     }
 
     pageBody.innerHTML = html;
 
-    // Attach filter listener
-    var agentFilter = document.getElementById('agentFilter');
-    if (agentFilter) {
-      agentFilter.addEventListener('change', function () {
-        filterAgent = this.value;
-        render();
+    // Filter listeners
+    var agentFilterEl = document.getElementById('agentFilter');
+    if (agentFilterEl) {
+      agentFilterEl.addEventListener('change', function () { filterAgent = this.value; render(); });
+    }
+    var searchEl = document.getElementById('searchInput');
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        var q = this.value.toLowerCase();
+        var rows = document.querySelectorAll('#notesListCard .list-row');
+        rows.forEach(function (row) { row.style.display = row.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none'; });
       });
     }
   }
 
-  // ---- Modal ----
-  function showModal(note) {
-    var isEdit = !!note;
+  // ============================================================
+  //  DETAIL VIEW
+  // ============================================================
+  function renderDetail() {
+    var notes = getNotes();
+    var note = notes.find(function (n) { return n.id === selectedNoteId; });
+    if (!note) { viewMode = 'list'; render(); return; }
+
+    var cls = agentClass(note.agentName);
+    var actionCount = countActionItems(note.actionItems);
+
+    var html = '';
+
+    // Back button
+    html += '<button class="detail-back-btn" data-action="back-to-list">' +
+      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+      'Back to Meeting Notes</button>';
+
+    // Header card
+    html += '<div class="detail-header-card">';
+    html += '<div class="detail-header-accent"></div>';
+    html += '<div class="detail-header-body">';
+    html += '<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
+    html += '<div class="agent-avatar ' + cls + '" style="width:56px;height:56px;font-size:1.1rem">' + getInitials(note.agentName) + '</div>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:1.2rem;font-weight:800;color:var(--gray-900)">' + escapeHtml(note.agentName) + '</div>';
+    html += '<div style="font-size:.88rem;color:var(--gray-400);margin-top:2px">' + Data.formatDate(note.date) + ' &middot; Created by ' + escapeHtml(note.createdByName || 'Team Lead') + '</div>';
+    html += '</div>';
+    if (privileged) {
+      html += '<div style="display:flex;gap:8px">';
+      html += '<button class="btn btn-outline btn-sm" data-action="edit-note" data-id="' + note.id + '">Edit</button>';
+      html += '<button class="btn btn-outline btn-sm" data-action="delete-note" data-id="' + note.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '</div></div>';
+
+    // Notes card
+    html += '<div class="notes-card">';
+    html += '<div class="notes-card-header">Meeting Notes</div>';
+    html += '<div style="padding:20px 24px;font-size:.92rem;color:var(--gray-700);line-height:1.7;white-space:pre-wrap">' + escapeHtml(note.notes) + '</div>';
+    html += '</div>';
+
+    // Action Items card
+    if (note.actionItems && note.actionItems.trim()) {
+      html += '<div class="notes-card">';
+      html += '<div class="notes-card-header" style="display:flex;align-items:center;justify-content:space-between">';
+      html += '<span>Action Items</span>';
+      if (actionCount > 0) html += '<span style="font-size:.78rem;font-weight:600;color:var(--indigo)">' + actionCount + ' item' + (actionCount !== 1 ? 's' : '') + '</span>';
+      html += '</div>';
+      html += '<div style="padding:16px 24px">';
+      html += formatActionItems(note.actionItems);
+      html += '</div>';
+      html += '</div>';
+    }
+
+    pageBody.innerHTML = html;
+  }
+
+  // ============================================================
+  //  FORM VIEW (full page)
+  // ============================================================
+  function renderForm() {
+    var isEdit = !!editingId;
+    var note = isEdit ? getNotes().find(function (n) { return n.id === editingId; }) : null;
     var users = getUsers();
     var agents = users.filter(function (u) { return u.role !== 'Team Lead'; });
 
-    var html = '<div class="modal-overlay open" id="meetingModal">';
-    html += '<div class="modal" style="max-width:600px">';
-    html += '<div class="modal-header">';
-    html += '<h2 style="margin:0;font-size:1.15rem">' + (isEdit ? 'Edit Meeting Note' : 'New Meeting Note') + '</h2>';
-    html += '<button class="modal-close" data-action="close-modal">&times;</button>';
-    html += '</div>';
-    html += '<div class="modal-body" style="padding:20px 24px">';
+    var html = '';
 
-    // Agent dropdown
-    html += '<div class="form-group" style="margin-bottom:16px">';
-    html += '<label style="display:block;font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:6px">Agent</label>';
-    html += '<select id="modalAgent" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;background:var(--white)">';
+    // Back button
+    html += '<button class="detail-back-btn" data-action="form-cancel">' +
+      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+      (isEdit ? 'Back to Note' : 'Back to Meeting Notes') + '</button>';
+
+    html += '<div style="max-width:720px">';
+    html += '<h2 style="font-size:1.3rem;font-weight:800;color:var(--gray-900);margin-bottom:24px">' + (isEdit ? 'Edit Meeting Note' : 'New Meeting Note') + '</h2>';
+
+    // Meeting Info Card
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:var(--indigo-light);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--indigo)"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Meeting Details</span></div>';
+    html += '<div style="padding:20px 24px">';
+
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
+    html += '<div class="form-group"><label>Agent *</label><select id="fAgent" style="padding:12px 16px">';
+    html += '<option value="">Select agent...</option>';
     agents.forEach(function (u) {
-      var selected = isEdit && note.agentUsername === u.username ? ' selected' : '';
-      html += '<option value="' + escapeHtml(u.username) + '"' + selected + '>' + escapeHtml(u.displayName) + '</option>';
+      var sel = note && note.agentUsername === u.username ? ' selected' : '';
+      html += '<option value="' + escapeHtml(u.username) + '"' + sel + '>' + escapeHtml(u.displayName) + '</option>';
     });
-    html += '</select>';
+    html += '</select></div>';
+    html += '<div class="form-group"><label>Date *</label><input type="date" id="fDate" value="' + (note ? note.date : todayStr()) + '" style="padding:12px 16px"></div>';
     html += '</div>';
 
-    // Date
-    html += '<div class="form-group" style="margin-bottom:16px">';
-    html += '<label style="display:block;font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:6px">Date</label>';
-    html += '<input type="date" id="modalDate" value="' + (isEdit ? note.date : todayStr()) + '" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;box-sizing:border-box">';
+    html += '</div></div>';
+
+    // Notes Card
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:var(--emerald-light);border-bottom:1px solid rgba(16,185,129,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--emerald)"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 2l5 5h-5V4zM6 20V4h6v6h6v10H6z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--emerald)">Meeting Notes</span></div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div class="form-group"><textarea id="fNotes" rows="8" placeholder="What did you discuss? Key takeaways, performance feedback, goals..." style="padding:12px 16px;font-size:.92rem;line-height:1.6">' + escapeHtml(note ? note.notes : '') + '</textarea></div>';
+    html += '</div></div>';
+
+    // Action Items Card
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:#F5F3FF;border-bottom:1px solid rgba(139,92,246,.1);display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--violet)"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--violet)">Action Items</span></div>';
+    html += '<div style="padding:20px 24px">';
+    html += '<div class="form-group"><textarea id="fActionItems" rows="5" placeholder="- Follow up with 3 leads by Friday\n- Schedule open house for Elm St listing\n- Complete training module" style="padding:12px 16px;font-size:.92rem;line-height:1.6">' + escapeHtml(note ? note.actionItems : '') + '</textarea></div>';
+    html += '<p style="font-size:.75rem;color:var(--gray-400);margin-top:4px">Start each item with a dash (-) for it to appear as a task</p>';
+    html += '</div></div>';
+
+    // Save / Cancel
+    html += '<div style="display:flex;gap:12px;margin-bottom:40px">';
+    html += '<button class="btn btn-primary btn-lg" data-action="form-save" style="padding:14px 32px;font-size:.95rem">' + (isEdit ? 'Save Changes' : 'Create Note') + '</button>';
+    html += '<button class="btn btn-outline btn-lg" data-action="form-cancel" style="padding:14px 32px;font-size:.95rem">Cancel</button>';
     html += '</div>';
 
-    // Notes
-    html += '<div class="form-group" style="margin-bottom:16px">';
-    html += '<label style="display:block;font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:6px">Notes</label>';
-    html += '<textarea id="modalNotes" rows="5" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;resize:vertical;font-family:inherit;box-sizing:border-box" placeholder="Meeting discussion points...">' + (isEdit ? escapeHtml(note.notes) : '') + '</textarea>';
     html += '</div>';
 
-    // Action Items
-    html += '<div class="form-group" style="margin-bottom:16px">';
-    html += '<label style="display:block;font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:6px">Action Items</label>';
-    html += '<textarea id="modalActionItems" rows="4" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;resize:vertical;font-family:inherit;box-sizing:border-box" placeholder="- Follow up on 3 leads\n- Schedule open house\n- Complete training module">' + (isEdit ? escapeHtml(note.actionItems) : '') + '</textarea>';
-    html += '</div>';
-
-    // Save button
-    html += '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">';
-    html += '<button class="btn btn-outline" data-action="close-modal">Cancel</button>';
-    html += '<button class="btn btn-primary" data-action="save-note" data-id="' + (isEdit ? note.id : '') + '">' + (isEdit ? 'Update Note' : 'Save Note') + '</button>';
-    html += '</div>';
-
-    html += '</div>'; // modal-body
-    html += '</div>'; // modal
-    html += '</div>'; // modal-overlay
-
-    var modalContainer = document.getElementById('noteModal');
-    if (modalContainer) {
-      modalContainer.innerHTML = html;
-    }
+    pageBody.innerHTML = html;
   }
 
-  function closeModal() {
-    var modalContainer = document.getElementById('noteModal');
-    if (modalContainer) {
-      modalContainer.innerHTML = '';
-    }
-    editingNoteId = null;
-  }
-
-  function saveNote(existingId) {
-    var agentSelect = document.getElementById('modalAgent');
-    var dateInput = document.getElementById('modalDate');
-    var notesInput = document.getElementById('modalNotes');
-    var actionItemsInput = document.getElementById('modalActionItems');
-
-    if (!agentSelect || !dateInput || !notesInput) return;
-
-    var agentUsername = agentSelect.value;
-    var date = dateInput.value;
-    var notesText = notesInput.value.trim();
-    var actionItems = actionItemsInput ? actionItemsInput.value.trim() : '';
-
-    if (!agentUsername) {
-      showToast('Please select an agent', 'error');
-      return;
-    }
-    if (!date) {
-      showToast('Please select a date', 'error');
-      return;
-    }
-    if (!notesText) {
-      showToast('Please enter meeting notes', 'error');
-      return;
-    }
-
-    // Look up agent display name
-    var users = getUsers();
-    var agentUser = users.find(function (u) { return u.username === agentUsername; });
-    var agentName = agentUser ? agentUser.displayName : agentUsername;
-
-    var notes = getNotes();
-
-    if (existingId) {
-      // Update
-      var idx = -1;
-      for (var i = 0; i < notes.length; i++) {
-        if (notes[i].id === existingId) { idx = i; break; }
-      }
-      if (idx === -1) {
-        showToast('Note not found', 'error');
-        return;
-      }
-      notes[idx].agentUsername = agentUsername;
-      notes[idx].agentName = agentName;
-      notes[idx].date = date;
-      notes[idx].notes = notesText;
-      notes[idx].actionItems = actionItems;
-      notes[idx].updatedAt = new Date().toISOString();
-      saveNotes(notes);
-      showToast('Meeting note updated');
-    } else {
-      // Create
-      var newNote = {
-        id: generateId(),
-        agentUsername: agentUsername,
-        agentName: agentName,
-        date: date,
-        notes: notesText,
-        actionItems: actionItems,
-        createdBy: session.username,
-        createdByName: session.displayName,
-        createdAt: new Date().toISOString()
-      };
-      notes.push(newNote);
-      saveNotes(notes);
-      showToast('Meeting note created');
-    }
-
-    closeModal();
-    expandedNoteId = null;
-    render();
-  }
-
-  // ---- Event delegation ----
+  // ============================================================
+  //  EVENT DELEGATION
+  // ============================================================
   document.addEventListener('click', function (e) {
-    var target = e.target;
-    var actionEl = target.closest('[data-action]');
-    if (!actionEl) return;
+    var target = e.target.closest('[data-action]');
+    if (!target) return;
+    var action = target.getAttribute('data-action');
 
-    var action = actionEl.getAttribute('data-action');
-    var noteId = actionEl.getAttribute('data-id');
+    switch (action) {
+      case 'add-note':
+        editingId = null;
+        viewMode = 'form';
+        render();
+        break;
 
-    if (action === 'add-note') {
-      e.stopPropagation();
-      showModal(null);
-      return;
-    }
+      case 'open-detail':
+        selectedNoteId = target.getAttribute('data-id');
+        viewMode = 'detail';
+        render();
+        break;
 
-    if (action === 'toggle-note') {
-      if (expandedNoteId === noteId) {
-        expandedNoteId = null;
-      } else {
-        expandedNoteId = noteId;
-      }
-      render();
-      return;
-    }
+      case 'back-to-list':
+        viewMode = 'list';
+        selectedNoteId = null;
+        render();
+        break;
 
-    if (action === 'edit-note') {
-      e.stopPropagation();
-      var notes = getNotes();
-      var note = notes.find(function (n) { return n.id === noteId; });
-      if (note) {
-        editingNoteId = noteId;
-        showModal(note);
-      }
-      return;
-    }
+      case 'edit-note':
+        editingId = target.getAttribute('data-id');
+        viewMode = 'form';
+        render();
+        break;
 
-    if (action === 'delete-note') {
-      e.stopPropagation();
-      if (!confirm('Are you sure you want to delete this meeting note?')) return;
-      var allNotes = getNotes();
-      var filtered = allNotes.filter(function (n) { return n.id !== noteId; });
-      saveNotes(filtered);
-      expandedNoteId = null;
-      showToast('Meeting note deleted');
-      render();
-      return;
-    }
+      case 'delete-note':
+        if (confirm('Delete this meeting note? This cannot be undone.')) {
+          var notes = getNotes();
+          var filtered = notes.filter(function (n) { return n.id !== target.getAttribute('data-id'); });
+          saveNotes(filtered);
+          showToast('Meeting note deleted.');
+          viewMode = 'list';
+          selectedNoteId = null;
+          render();
+        }
+        break;
 
-    if (action === 'save-note') {
-      e.stopPropagation();
-      var editId = actionEl.getAttribute('data-id');
-      saveNote(editId || null);
-      return;
-    }
+      case 'form-cancel':
+        if (editingId) {
+          viewMode = 'detail';
+          selectedNoteId = editingId;
+          editingId = null;
+        } else {
+          viewMode = 'list';
+        }
+        render();
+        break;
 
-    if (action === 'close-modal') {
-      closeModal();
-      return;
-    }
-  });
+      case 'form-save':
+        var fAgent = (document.getElementById('fAgent') || {}).value;
+        var fDate = (document.getElementById('fDate') || {}).value;
+        var fNotes = (document.getElementById('fNotes') || {}).value.trim();
+        var fActions = (document.getElementById('fActionItems') || {}).value.trim();
 
-  // Close modal on overlay click (outside the modal box)
-  document.addEventListener('click', function (e) {
-    var overlay = document.getElementById('meetingModal');
-    if (overlay && e.target === overlay) {
-      closeModal();
+        if (!fAgent) { showToast('Please select an agent.', 'error'); break; }
+        if (!fDate) { showToast('Please select a date.', 'error'); break; }
+        if (!fNotes) { showToast('Please enter meeting notes.', 'error'); break; }
+
+        var users = getUsers();
+        var agentUser = users.find(function (u) { return u.username === fAgent; });
+        var agentName = agentUser ? agentUser.displayName : fAgent;
+
+        var allNotes = getNotes();
+
+        if (editingId) {
+          var idx = allNotes.findIndex(function (n) { return n.id === editingId; });
+          if (idx !== -1) {
+            allNotes[idx].agentUsername = fAgent;
+            allNotes[idx].agentName = agentName;
+            allNotes[idx].date = fDate;
+            allNotes[idx].notes = fNotes;
+            allNotes[idx].actionItems = fActions;
+            saveNotes(allNotes);
+            showToast('Meeting note updated.');
+          }
+          viewMode = 'detail';
+          selectedNoteId = editingId;
+          editingId = null;
+        } else {
+          var newNote = {
+            id: generateId(),
+            agentUsername: fAgent,
+            agentName: agentName,
+            date: fDate,
+            notes: fNotes,
+            actionItems: fActions,
+            createdBy: session.username,
+            createdByName: session.displayName,
+            createdAt: new Date().toISOString()
+          };
+          allNotes.push(newNote);
+          saveNotes(allNotes);
+
+          // Fire notification
+          if (typeof addNotification === 'function') {
+            addNotification({ type: 'new_meeting_note', title: 'New meeting note', detail: 'Meeting with ' + session.displayName + ' on ' + fDate, linkPage: 'meeting-notes.html', linkId: newNote.id, targetUser: fAgent });
+          }
+
+          showToast('Meeting note created.');
+          viewMode = 'detail';
+          selectedNoteId = newNote.id;
+        }
+        render();
+        break;
     }
   });
 
