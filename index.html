@@ -3,13 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RE Back Office — Real Estate Tools</title>
+  <title>RE Back Office — Real Estate Back Office for Agents & Teams</title>
+  <meta name="description" content="RE Back Office gives your team one place to track every escrow, listing, closing, and commission — so nothing falls through the cracks.">
   <style>
     :root {
-      --indigo: #6366F1;
-      --indigo-dark: #4F46E5;
-      --violet: #8B5CF6;
-      --gray-50: #F8FAFC;
+      --navy: #002242;
+      --navy-light: #003366;
+      --blue: #3484D0;
+      --light: #E2F2FB;
+      --orange: #E97B2A;
+      --orange-hover: #D06A1E;
+      --offwhite: #F8F9FC;
+      --white: #FFFFFF;
       --gray-100: #F1F5F9;
       --gray-200: #E2E8F0;
       --gray-300: #CBD5E1;
@@ -21,58 +26,61 @@
       --gray-900: #0F172A;
       --emerald: #10B981;
       --rose: #F43F5E;
-      --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-family: var(--font); font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
-    body { background: #fff; color: var(--gray-800); line-height: 1.6; }
+    body { background: var(--white); color: var(--gray-800); line-height: 1.6; }
     a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; }
 
-    /* -- Fixed Nav -- */
+    /* ====== FIXED NAV ====== */
     .landing-nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 40px;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 0 40px; height: 64px;
+      background: rgba(0, 34, 66, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
     }
 
     .landing-nav-logo {
       display: flex; align-items: center; gap: 10px;
-      font-size: 1rem; font-weight: 800; color: #fff;
+      font-size: 1.05rem; font-weight: 800; color: var(--white);
+      letter-spacing: -.3px;
     }
 
     .landing-nav-logo-mark {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--blue), #5BA3E0);
       display: flex; align-items: center; justify-content: center;
     }
 
-    .landing-nav-logo-mark svg { width: 16px; height: 16px; fill: #fff; }
+    .landing-nav-logo-mark svg { width: 17px; height: 17px; fill: var(--white); }
 
-    .landing-nav-links { display: flex; align-items: center; gap: 28px; }
+    .landing-nav-links { display: flex; align-items: center; gap: 32px; }
 
     .landing-nav-links a {
-      font-size: .88rem; font-weight: 500; color: rgba(255,255,255,.7);
-      transition: color .15s;
+      font-size: .875rem; font-weight: 500; color: rgba(255,255,255,.65);
+      transition: color .2s;
     }
 
-    .landing-nav-links a:hover { color: #fff; }
+    .landing-nav-links a:hover { color: var(--white); }
 
     .landing-nav-links .nav-cta {
-      background: var(--indigo); color: #fff; padding: 8px 20px;
-      border-radius: 8px; font-weight: 600; font-size: .85rem;
-      transition: background .15s;
+      background: var(--orange); color: var(--white); padding: 9px 22px;
+      border-radius: 8px; font-weight: 700; font-size: .85rem;
+      transition: background .2s, transform .15s;
     }
 
-    .landing-nav-links .nav-cta:hover { background: var(--indigo-dark); }
+    .landing-nav-links .nav-cta:hover { background: var(--orange-hover); transform: translateY(-1px); }
 
-    /* -- Hero -- */
+    /* ====== HERO ====== */
     .hero {
       min-height: 100vh;
-      background: linear-gradient(135deg, var(--indigo), var(--violet), #6D28D9);
+      background: linear-gradient(160deg, #001529 0%, var(--navy) 40%, #003366 100%);
       display: flex; align-items: center; justify-content: center;
       text-align: center; padding: 120px 24px 80px;
       position: relative; overflow: hidden;
@@ -80,209 +88,521 @@
 
     .hero::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,.08), transparent 60%),
-                  radial-gradient(ellipse at 70% 50%, rgba(139,92,246,.2), transparent 60%);
+      background:
+        radial-gradient(ellipse at 20% 40%, rgba(52,132,208,.12), transparent 55%),
+        radial-gradient(ellipse at 80% 60%, rgba(52,132,208,.08), transparent 50%);
     }
 
-    .hero-content { position: relative; max-width: 680px; }
+    .hero::after {
+      content: ''; position: absolute; inset: 0; opacity: .03;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-content { position: relative; max-width: 720px; z-index: 1; }
 
     .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
-      padding: 6px 16px; border-radius: 99px;
-      font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.9);
-      margin-bottom: 24px; border: 1px solid rgba(255,255,255,.15);
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(52,132,208,.15); backdrop-filter: blur(8px);
+      padding: 8px 20px; border-radius: 99px;
+      font-size: .8rem; font-weight: 700; color: #7CB8E8;
+      margin-bottom: 28px; border: 1px solid rgba(52,132,208,.25);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    .hero-badge::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--blue); animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(1.3); }
     }
 
     .hero h1 {
-      font-size: 3.2rem; font-weight: 900; color: #fff;
-      line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 20px;
+      font-size: 3.5rem; font-weight: 900; color: var(--white);
+      line-height: 1.08; letter-spacing: -1.8px; margin-bottom: 20px;
     }
 
-    .hero p {
-      font-size: 1.15rem; color: rgba(255,255,255,.75);
-      max-width: 520px; margin: 0 auto 32px;
+    .hero-sub {
+      font-size: 1.2rem; color: rgba(255,255,255,.6);
+      max-width: 560px; margin: 0 auto 36px; line-height: 1.6;
     }
 
     .hero-stats {
-      display: flex; align-items: center; justify-content: center; gap: 12px;
-      flex-wrap: wrap; margin-bottom: 36px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 40px;
     }
 
     .hero-stat-pill {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15);
-      padding: 8px 18px; border-radius: 99px;
-      font-size: .82rem; font-weight: 600; color: #fff;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+      padding: 8px 20px; border-radius: 99px;
+      font-size: .82rem; font-weight: 700; color: rgba(255,255,255,.85);
       backdrop-filter: blur(8px);
     }
 
-    .hero-stat-pill strong { font-weight: 800; }
-
-    .hero-cta {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: #fff; color: var(--indigo); padding: 14px 32px;
-      border-radius: 12px; font-size: 1rem; font-weight: 700;
-      transition: transform .15s, box-shadow .15s;
-      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+    .hero-stat-pill .dot {
+      display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--blue); margin: 0 2px; vertical-align: middle;
     }
 
-    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.2); }
+    .hero-buttons { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
 
-    .hero-cta svg { width: 18px; height: 18px; fill: var(--indigo); }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--orange); color: var(--white); padding: 16px 36px;
+      border-radius: 12px; font-size: 1.05rem; font-weight: 700;
+      transition: transform .15s, box-shadow .15s, background .15s;
+      box-shadow: 0 4px 24px rgba(233,123,42,.3);
+      border: none; cursor: pointer;
+    }
 
-    /* -- Features -- */
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(233,123,42,.4); background: var(--orange-hover); }
+
+    .btn-primary svg { width: 18px; height: 18px; fill: var(--white); }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--white); padding: 15px 32px;
+      border-radius: 12px; font-size: 1.05rem; font-weight: 600;
+      border: 2px solid rgba(255,255,255,.2);
+      transition: border-color .2s, background .2s;
+      cursor: pointer;
+    }
+
+    .btn-outline:hover { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.05); }
+
+    .hero-trust {
+      margin-top: 48px; font-size: .82rem; color: rgba(255,255,255,.35);
+      font-weight: 500; letter-spacing: .3px;
+    }
+
+    /* ====== PROBLEM SECTION ====== */
+    .problems {
+      padding: 100px 24px;
+      background: var(--offwhite);
+    }
+
+    .problems-inner { max-width: 1080px; margin: 0 auto; text-align: center; }
+
+    .section-label {
+      display: inline-block; font-size: .75rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px; color: var(--blue);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 2.2rem; font-weight: 800; color: var(--navy);
+      letter-spacing: -.8px; margin-bottom: 16px; line-height: 1.2;
+    }
+
+    .section-subtitle {
+      font-size: 1.05rem; color: var(--gray-500); max-width: 540px;
+      margin: 0 auto 48px; line-height: 1.6;
+    }
+
+    .problems-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      text-align: left;
+    }
+
+    .problem-card {
+      background: var(--white); border-radius: 16px; padding: 32px;
+      border: 1px solid var(--gray-200);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .problem-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,34,66,.06); }
+
+    .problem-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; font-size: 1.5rem;
+      background: #FEF2F2; color: #EF4444;
+    }
+
+    .problem-card h3 {
+      font-size: 1.1rem; font-weight: 800; color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .problem-card p { font-size: .9rem; color: var(--gray-500); line-height: 1.6; }
+
+    /* ====== FEATURES GRID ====== */
     .features {
       padding: 100px 24px;
-      max-width: 1100px; margin: 0 auto;
-      text-align: center;
+      background: var(--white);
     }
 
-    .features h2 {
-      font-size: 2rem; font-weight: 800; color: var(--gray-900);
-      letter-spacing: -.5px; margin-bottom: 12px;
-    }
-
-    .features > p {
-      font-size: 1rem; color: var(--gray-400); margin-bottom: 48px;
-      max-width: 500px; margin-left: auto; margin-right: auto;
-    }
+    .features-inner { max-width: 1160px; margin: 0 auto; text-align: center; }
 
     .features-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px; text-align: left;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 20px; text-align: left;
     }
 
     .feature-card {
-      background: var(--gray-50); border-radius: 16px; padding: 28px;
-      border: 1px solid var(--gray-100); transition: transform .15s, box-shadow .15s;
+      background: var(--offwhite); border-radius: 14px; padding: 24px;
+      border: 1px solid var(--gray-200);
+      transition: transform .2s, box-shadow .2s, border-color .2s;
     }
 
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.06); }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(0,34,66,.06);
+      border-color: var(--blue);
+    }
 
     .feature-icon {
-      width: 48px; height: 48px; border-radius: 12px;
+      width: 44px; height: 44px; border-radius: 11px;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px; font-size: 1.25rem;
     }
 
-    .feature-icon svg { width: 24px; height: 24px; fill: currentColor; }
-    .feature-icon.indigo { background: #EEF2FF; color: var(--indigo); }
-    .feature-icon.emerald { background: #ECFDF5; color: var(--emerald); }
+    .feature-icon.blue { background: #E2F2FB; color: var(--blue); }
+    .feature-icon.green { background: #ECFDF5; color: #10B981; }
     .feature-icon.amber { background: #FFFBEB; color: #F59E0B; }
-    .feature-icon.violet { background: #F5F3FF; color: var(--violet); }
+    .feature-icon.purple { background: #F3E8FF; color: #8B5CF6; }
+    .feature-icon.rose { background: #FFF1F2; color: #F43F5E; }
+    .feature-icon.navy-icon { background: #E2F2FB; color: var(--navy); }
+    .feature-icon.orange-icon { background: #FFF7ED; color: var(--orange); }
+    .feature-icon.teal { background: #F0FDFA; color: #14B8A6; }
 
     .feature-card h3 {
-      font-size: 1.05rem; font-weight: 700; color: var(--gray-900);
-      margin-bottom: 6px;
+      font-size: .95rem; font-weight: 700; color: var(--navy);
+      margin-bottom: 4px;
     }
 
-    .feature-card p { font-size: .88rem; color: var(--gray-500); line-height: 1.5; }
+    .feature-card p { font-size: .82rem; color: var(--gray-500); line-height: 1.5; }
 
-    /* -- Pricing -- */
+    /* ====== HOW IT WORKS ====== */
+    .how-it-works {
+      padding: 100px 24px;
+      background: var(--offwhite);
+    }
+
+    .how-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 48px; }
+
+    .step { text-align: center; }
+
+    .step-number {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--navy), var(--navy-light));
+      color: var(--white); font-size: 1.3rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 4px 16px rgba(0,34,66,.15);
+    }
+
+    .step h3 {
+      font-size: 1.1rem; font-weight: 800; color: var(--navy);
+      margin-bottom: 8px;
+    }
+
+    .step p { font-size: .9rem; color: var(--gray-500); line-height: 1.6; }
+
+    /* ====== SOCIAL PROOF / STATS ====== */
+    .stats-section {
+      padding: 80px 24px;
+      background: linear-gradient(160deg, var(--navy) 0%, #003366 100%);
+      position: relative; overflow: hidden;
+    }
+
+    .stats-section::before {
+      content: ''; position: absolute; inset: 0; opacity: .03;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .stats-inner {
+      max-width: 960px; margin: 0 auto; position: relative; z-index: 1;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; text-align: center;
+    }
+
+    .stat-item h3 {
+      font-size: 2.8rem; font-weight: 900; color: var(--white);
+      letter-spacing: -1px; line-height: 1;
+    }
+
+    .stat-item p {
+      font-size: .88rem; color: rgba(255,255,255,.5);
+      margin-top: 6px; font-weight: 500;
+    }
+
+    /* ====== COMPARISON ====== */
+    .comparison {
+      padding: 100px 24px;
+      background: var(--white);
+    }
+
+    .comparison-inner { max-width: 780px; margin: 0 auto; text-align: center; }
+
+    .comparison-table {
+      width: 100%; border-collapse: collapse; margin-top: 48px;
+      text-align: left; background: var(--white);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,34,66,.06);
+      border: 1px solid var(--gray-200);
+    }
+
+    .comparison-table th {
+      padding: 16px 24px; font-size: .85rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    .comparison-table th:first-child { background: var(--gray-100); color: var(--gray-500); }
+    .comparison-table th:nth-child(2) { background: var(--navy); color: var(--white); text-align: center; }
+    .comparison-table th:nth-child(3) { background: var(--gray-100); color: var(--gray-500); text-align: center; }
+
+    .comparison-table td {
+      padding: 14px 24px; font-size: .9rem; color: var(--gray-600);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .comparison-table td:nth-child(2) { text-align: center; font-weight: 700; color: var(--emerald); }
+    .comparison-table td:nth-child(3) { text-align: center; color: var(--gray-400); font-style: italic; }
+
+    .comparison-table tr:hover td { background: rgba(52,132,208,.02); }
+
+    .check-yes {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #ECFDF5; color: var(--emerald);
+      font-weight: 900; font-size: .9rem;
+    }
+
+    /* ====== PRICING ====== */
     .pricing {
-      padding: 100px 24px; background: var(--gray-50);
+      padding: 100px 24px;
+      background: var(--offwhite);
       text-align: center;
     }
 
-    .pricing h2 {
-      font-size: 2rem; font-weight: 800; color: var(--gray-900);
-      letter-spacing: -.5px; margin-bottom: 12px;
+    .pricing-inner { max-width: 860px; margin: 0 auto; }
+
+    .pricing-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+      margin-top: 48px;
     }
 
-    .pricing > p { font-size: 1rem; color: var(--gray-400); margin-bottom: 40px; }
-
     .pricing-card {
-      background: #fff; border-radius: 20px; padding: 40px;
-      max-width: 380px; margin: 0 auto;
-      box-shadow: 0 8px 30px rgba(99,102,241,.1);
-      border: 2px solid var(--indigo);
+      background: var(--white); border-radius: 20px; padding: 40px 36px;
+      border: 2px solid var(--gray-200);
+      text-align: left; position: relative;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,34,66,.08); }
+
+    .pricing-card.popular {
+      border-color: var(--orange);
+      box-shadow: 0 8px 32px rgba(233,123,42,.1);
+    }
+
+    .popular-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--orange); color: var(--white);
+      font-size: .72rem; font-weight: 800; padding: 5px 18px;
+      border-radius: 99px; white-space: nowrap;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    .pricing-plan-name {
+      font-size: .88rem; font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;
     }
 
     .pricing-amount {
-      font-size: 3rem; font-weight: 900; color: var(--gray-900);
-      line-height: 1;
+      font-size: 3.2rem; font-weight: 900; color: var(--navy); line-height: 1;
     }
 
     .pricing-amount span { font-size: 1rem; font-weight: 500; color: var(--gray-400); }
 
-    .pricing-label {
-      font-size: .88rem; color: var(--gray-400); margin-top: 4px; margin-bottom: 24px;
+    .pricing-desc {
+      font-size: .88rem; color: var(--gray-400); margin-top: 4px; margin-bottom: 28px;
+      padding-bottom: 24px; border-bottom: 1px solid var(--gray-200);
     }
 
-    .pricing-features {
-      list-style: none; text-align: left; margin-bottom: 28px;
-    }
+    .pricing-features { list-style: none; margin-bottom: 28px; }
 
     .pricing-features li {
-      padding: 8px 0; font-size: .9rem; color: var(--gray-600);
+      padding: 7px 0; font-size: .88rem; color: var(--gray-600);
       display: flex; align-items: center; gap: 10px;
     }
 
     .pricing-features li::before {
       content: '';
-      width: 20px; height: 20px; border-radius: 50%;
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
       background: #ECFDF5;
-      flex-shrink: 0;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310B981'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
-      background-size: 14px; background-repeat: no-repeat; background-position: center;
+      background-size: 13px; background-repeat: no-repeat; background-position: center;
     }
 
     .pricing-cta {
       display: block; width: 100%;
-      background: var(--indigo); color: #fff; padding: 14px;
+      background: var(--orange); color: var(--white); padding: 14px;
       border-radius: 10px; font-size: 1rem; font-weight: 700;
-      border: none; cursor: pointer; transition: background .15s;
+      border: none; cursor: pointer;
+      transition: background .2s, transform .15s;
     }
 
-    .pricing-cta:hover { background: var(--indigo-dark); }
+    .pricing-cta:hover { background: var(--orange-hover); transform: translateY(-1px); }
 
-    /* -- Login Section -- */
+    .pricing-note {
+      margin-top: 28px; font-size: .88rem; color: var(--gray-400); font-weight: 500;
+    }
+
+    /* ====== FAQ ====== */
+    .faq {
+      padding: 100px 24px;
+      background: var(--white);
+    }
+
+    .faq-inner { max-width: 700px; margin: 0 auto; text-align: center; }
+
+    .faq-list { margin-top: 48px; text-align: left; }
+
+    .faq-item {
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .faq-question {
+      width: 100%; background: none; border: none;
+      padding: 20px 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--font);
+      font-size: 1rem; font-weight: 700; color: var(--navy);
+      text-align: left; gap: 16px;
+    }
+
+    .faq-question:hover { color: var(--blue); }
+
+    .faq-chevron {
+      width: 20px; height: 20px; flex-shrink: 0;
+      transition: transform .2s;
+    }
+
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+    .faq-answer {
+      max-height: 0; overflow: hidden;
+      transition: max-height .3s ease, padding .3s ease;
+    }
+
+    .faq-item.open .faq-answer { max-height: 200px; }
+
+    .faq-answer p {
+      padding-bottom: 20px;
+      font-size: .9rem; color: var(--gray-500); line-height: 1.7;
+    }
+
+    /* ====== FINAL CTA ====== */
+    .final-cta {
+      padding: 100px 24px;
+      background: linear-gradient(160deg, var(--navy) 0%, #003366 100%);
+      text-align: center; position: relative; overflow: hidden;
+    }
+
+    .final-cta::before {
+      content: ''; position: absolute; inset: 0; opacity: .03;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .final-cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+
+    .final-cta h2 {
+      font-size: 2.4rem; font-weight: 900; color: var(--white);
+      letter-spacing: -1px; margin-bottom: 16px; line-height: 1.15;
+    }
+
+    .final-cta p {
+      font-size: 1.1rem; color: rgba(255,255,255,.55);
+      margin-bottom: 36px; line-height: 1.6;
+    }
+
+    /* ====== FOOTER ====== */
+    .landing-footer {
+      padding: 40px 24px;
+      background: var(--navy);
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    .footer-inner {
+      max-width: 1080px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .footer-left {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .88rem; color: rgba(255,255,255,.4);
+    }
+
+    .footer-left .landing-nav-logo-mark {
+      width: 28px; height: 28px; border-radius: 7px;
+    }
+
+    .footer-left .landing-nav-logo-mark svg { width: 14px; height: 14px; }
+
+    .footer-links { display: flex; gap: 24px; }
+
+    .footer-links a {
+      font-size: .85rem; color: rgba(255,255,255,.4);
+      transition: color .2s;
+    }
+
+    .footer-links a:hover { color: rgba(255,255,255,.7); }
+
+    /* ====== LOGIN SECTION ====== */
     .login-section {
       padding: 100px 24px; max-width: 440px; margin: 0 auto;
       text-align: center;
     }
 
     .login-section h2 {
-      font-size: 1.8rem; font-weight: 800; color: var(--gray-900);
+      font-size: 1.8rem; font-weight: 800; color: var(--navy);
       margin-bottom: 8px;
     }
 
     .login-section > p { font-size: .9rem; color: var(--gray-400); margin-bottom: 32px; }
 
     .login-card {
-      background: #fff; border-radius: 16px; padding: 32px;
-      box-shadow: 0 4px 20px rgba(0,0,0,.06);
-      border: 1px solid var(--gray-100); text-align: left;
+      background: var(--white); border-radius: 16px; padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,34,66,.06);
+      border: 1px solid var(--gray-200); text-align: left;
     }
 
     .login-card .form-group { margin-bottom: 16px; }
 
     .login-card label {
-      display: block; font-size: .82rem; font-weight: 600;
+      display: block; font-size: .82rem; font-weight: 700;
       color: var(--gray-700); margin-bottom: 6px;
     }
 
     .login-card input {
-      width: 100%; padding: 10px 14px;
+      width: 100%; padding: 11px 14px;
       border: 1.5px solid var(--gray-200); border-radius: 8px;
-      font-size: .9rem; color: var(--gray-800); background: #fff;
+      font-size: .9rem; color: var(--gray-800); background: var(--white);
+      font-family: var(--font);
       transition: border-color .15s;
     }
 
     .login-card input:focus {
-      border-color: var(--indigo); outline: none;
-      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+      border-color: var(--blue); outline: none;
+      box-shadow: 0 0 0 3px rgba(52,132,208,.1);
     }
 
     .login-btn {
       display: block; width: 100%;
-      background: var(--indigo); color: #fff; padding: 12px;
+      background: var(--orange); color: var(--white); padding: 13px;
       border-radius: 8px; font-size: .95rem; font-weight: 700;
-      border: none; cursor: pointer; transition: background .15s;
+      border: none; cursor: pointer;
+      font-family: var(--font);
+      transition: background .15s;
       margin-top: 8px;
     }
 
-    .login-btn:hover { background: var(--indigo-dark); }
+    .login-btn:hover { background: var(--orange-hover); }
 
     .login-error {
       color: var(--rose); font-size: .82rem; font-weight: 600;
@@ -291,47 +611,63 @@
 
     .demo-hint {
       margin-top: 16px; padding: 12px;
-      background: var(--gray-50); border-radius: 8px;
+      background: var(--offwhite); border-radius: 8px;
       font-size: .78rem; color: var(--gray-500); text-align: center;
     }
 
     .demo-hint code {
-      background: var(--gray-100); padding: 2px 6px; border-radius: 4px;
-      font-family: monospace; font-size: .78rem; color: var(--indigo);
+      background: var(--gray-200); padding: 2px 6px; border-radius: 4px;
+      font-family: monospace; font-size: .78rem; color: var(--navy);
     }
 
-    /* -- Footer -- */
-    .landing-footer {
-      text-align: center; padding: 40px 24px;
-      border-top: 1px solid var(--gray-100);
-      font-size: .82rem; color: var(--gray-400);
-    }
-
-    /* -- Toast -- */
+    /* ====== TOAST ====== */
     .toast {
       position: fixed; bottom: 24px; right: 24px;
       padding: 12px 20px; border-radius: 10px;
-      font-size: .88rem; font-weight: 600; color: #fff;
+      font-size: .88rem; font-weight: 600; color: var(--white);
       background: var(--gray-900); z-index: 9999;
-      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,.1);
       animation: toastIn .3s ease;
     }
     .toast.success { background: var(--emerald); }
     .toast.error { background: var(--rose); }
     @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
     @media (max-width: 768px) {
-      .landing-nav { padding: 12px 20px; }
+      .landing-nav { padding: 0 20px; }
       .landing-nav-links a:not(.nav-cta) { display: none; }
-      .hero h1 { font-size: 2rem; }
-      .hero p { font-size: 1rem; }
+      .hero h1 { font-size: 2.2rem; letter-spacing: -1px; }
+      .hero-sub { font-size: 1rem; }
       .hero-stats { gap: 8px; }
+      .hero-buttons { flex-direction: column; }
+      .btn-primary, .btn-outline { width: 100%; justify-content: center; }
+      .problems-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps { grid-template-columns: 1fr; gap: 32px; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+      .stat-item h3 { font-size: 2rem; }
+      .comparison-table { font-size: .82rem; }
+      .comparison-table th, .comparison-table td { padding: 10px 12px; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin-left: auto; margin-right: auto; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .section-title { font-size: 1.7rem; }
+      .final-cta h2 { font-size: 1.8rem; }
+    }
+
+    @media (max-width: 480px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.9rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Nav -->
+  <!-- ====== NAV ====== -->
   <nav class="landing-nav">
     <div class="landing-nav-logo">
       <div class="landing-nav-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
@@ -339,108 +675,454 @@
     </div>
     <div class="landing-nav-links">
       <a href="#features">Features</a>
+      <a href="#why-us">Why Us</a>
       <a href="#pricing">Pricing</a>
       <a href="#login" class="nav-cta">Sign In</a>
     </div>
   </nav>
 
-  <!-- Hero -->
+  <!-- ====== HERO ====== -->
   <section class="hero" id="hero">
     <div class="hero-content">
-      <div class="hero-badge">Built for real estate professionals</div>
-      <h1>The Real Estate Agent's Back Office</h1>
-      <p>Track transactions, manage listings, monitor team performance, and stay on top of your taxes — all in one clean dashboard.</p>
+      <div class="hero-badge">The #1 Back Office Platform for Real Estate Teams</div>
+      <h1>Stop Losing Deals to Disorganization</h1>
+      <p class="hero-sub">RE Back Office gives your team one place to track every escrow, listing, closing, and commission &mdash; so nothing falls through the cracks.</p>
       <div class="hero-stats">
-        <div class="hero-stat-pill"><strong>38+</strong> Features</div>
-        <div class="hero-stat-pill"><strong>Real-time</strong> Analytics</div>
-        <div class="hero-stat-pill"><strong>Tax</strong> Tracking</div>
-        <div class="hero-stat-pill"><strong>Team</strong> Leaderboard</div>
+        <div class="hero-stat-pill">16+ Tools</div>
+        <div class="hero-stat-pill"><span class="dot"></span> Client Portal</div>
+        <div class="hero-stat-pill"><span class="dot"></span> Bold 100 Sprint</div>
+        <div class="hero-stat-pill"><span class="dot"></span> Tax Center</div>
       </div>
-      <a href="#login" class="hero-cta">
-        Get Started
+      <div class="hero-buttons">
+        <a href="#pricing" class="btn-primary">
+          Start Free Trial
+          <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+        </a>
+        <a href="#features" class="btn-outline">See It In Action</a>
+      </div>
+      <p class="hero-trust">Trusted by agents and teams across the country</p>
+    </div>
+  </section>
+
+  <!-- ====== PROBLEM SECTION ====== -->
+  <section class="problems" id="why-us">
+    <div class="problems-inner">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">Sound Familiar?</h2>
+      <p class="section-subtitle">Most agents and teams are running their business on a patchwork of spreadsheets, sticky notes, and memory. It costs you deals.</p>
+      <div class="problems-grid">
+        <div class="problem-card">
+          <div class="problem-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h3>Deals slip through the cracks</h3>
+          <p>No central place to track escrows, inspections, appraisals, and deadlines. You rely on memory and hope nothing gets missed.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon" style="background:#FFF7ED;color:#F59E0B;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>No visibility into team performance</h3>
+          <p>You don't know who's producing, who needs help, or where your deals are coming from. You're flying blind.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon" style="background:#F3E8FF;color:#8B5CF6;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Tax season is a nightmare</h3>
+          <p>Scrambling to find receipts, categorize expenses, and calculate estimated payments. Every quarter is a fire drill.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== FEATURES GRID ====== -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <div class="section-label">Platform</div>
+      <h2 class="section-title">Everything Your Back Office Needs</h2>
+      <p class="section-subtitle">16 purpose-built tools for real estate professionals. No bloat, no learning curve, no duct tape.</p>
+      <div class="features-grid">
+        <!-- 1. Dashboard -->
+        <div class="feature-card">
+          <div class="feature-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          </div>
+          <h3>Dashboard</h3>
+          <p>Real-time overview of your entire business at a glance</p>
+        </div>
+        <!-- 2. Leaderboard -->
+        <div class="feature-card">
+          <div class="feature-icon amber">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+          </div>
+          <h3>Leaderboard</h3>
+          <p>Agent rankings by closings, volume, and production</p>
+        </div>
+        <!-- 3. Listings -->
+        <div class="feature-card">
+          <div class="feature-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          </div>
+          <h3>Listings</h3>
+          <p>Track every listing from prep to sold in one place</p>
+        </div>
+        <!-- 4. Current Escrows -->
+        <div class="feature-card">
+          <div class="feature-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z"/></svg>
+          </div>
+          <h3>Current Escrows</h3>
+          <p>Manage active deals with checklists and milestones</p>
+        </div>
+        <!-- 5. Closed Deals -->
+        <div class="feature-card">
+          <div class="feature-icon navy-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+          </div>
+          <h3>Closed Deals</h3>
+          <p>Trophy case grouped by agent with commission tracking</p>
+        </div>
+        <!-- 6. Tax Center -->
+        <div class="feature-card">
+          <div class="feature-icon orange-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+          </div>
+          <h3>Tax Center</h3>
+          <p>Income, expenses, mileage, and quarterly estimates</p>
+        </div>
+        <!-- 7. Client Portal -->
+        <div class="feature-card">
+          <div class="feature-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <h3>Client Portal</h3>
+          <p>Branded portal your clients can check for updates</p>
+        </div>
+        <!-- 8. Monthly 1-on-1 -->
+        <div class="feature-card">
+          <div class="feature-icon teal">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+          </div>
+          <h3>Monthly 1-on-1</h3>
+          <p>Meeting notes with action item tracking for agents</p>
+        </div>
+        <!-- 9. Vendors -->
+        <div class="feature-card">
+          <div class="feature-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+          </div>
+          <h3>Vendors</h3>
+          <p>Your trusted vendor and service provider directory</p>
+        </div>
+        <!-- 10. Reviews -->
+        <div class="feature-card">
+          <div class="feature-icon amber">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <h3>Reviews</h3>
+          <p>Collect and showcase client testimonials</p>
+        </div>
+        <!-- 11. Marketing -->
+        <div class="feature-card">
+          <div class="feature-icon rose">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+          </div>
+          <h3>Marketing</h3>
+          <p>Weekly and monthly activity tracker with progress rings</p>
+        </div>
+        <!-- 12. Knowledge Base -->
+        <div class="feature-card">
+          <div class="feature-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+          </div>
+          <h3>Knowledge Base</h3>
+          <p>Training modules, SOPs, scripts, and resources</p>
+        </div>
+        <!-- 13. Recruiting -->
+        <div class="feature-card">
+          <div class="feature-icon navy-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <h3>Recruiting</h3>
+          <p>Agent recruitment pipeline and tracking board</p>
+        </div>
+        <!-- 14. Bold 100 -->
+        <div class="feature-card">
+          <div class="feature-icon orange-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.92 6-4.72 7.28L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95zM11 2.05C5.95 2.55 2 6.82 2 12c0 3.76 2.09 7.07 5.22 8.78L6 22h5v-5l-2.28 2.28C6.92 18 5 15.21 5 12c0-4.08 3.05-7.44 7-7.93V2.05z"/></svg>
+          </div>
+          <h3>Bold 100</h3>
+          <p>Gamified 100-contact daily sprint challenge</p>
+        </div>
+        <!-- 15. Checklist Templates -->
+        <div class="feature-card">
+          <div class="feature-icon teal">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+          </div>
+          <h3>Checklist Templates</h3>
+          <p>Never miss a step from contract to close</p>
+        </div>
+        <!-- 16. Team Customization -->
+        <div class="feature-card">
+          <div class="feature-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </div>
+          <h3>Team Customization</h3>
+          <p>Colors, categories, roles, and branding settings</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== HOW IT WORKS ====== -->
+  <section class="how-it-works">
+    <div class="how-inner">
+      <div class="section-label">Getting Started</div>
+      <h2 class="section-title">Up and Running in Minutes</h2>
+      <p class="section-subtitle">No consultants, no onboarding calls, no six-week implementation. Just sign up and go.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Sign up in 60 seconds</h3>
+          <p>Pick Solo or Team plan, create your account, and you're in. No credit card required to start.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Set up your team</h3>
+          <p>Add agents, customize your brand colors, create checklists, and configure your pipeline.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Run your business</h3>
+          <p>Track deals, monitor performance, hit your goals, and close more. Everything in one place.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== STATS ====== -->
+  <section class="stats-section">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <h3>500+</h3>
+        <p>Deals Tracked</p>
+      </div>
+      <div class="stat-item">
+        <h3>50+</h3>
+        <p>Teams</p>
+      </div>
+      <div class="stat-item">
+        <h3>99%</h3>
+        <p>Uptime</p>
+      </div>
+      <div class="stat-item">
+        <h3>$200M+</h3>
+        <p>Volume Managed</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== COMPARISON ====== -->
+  <section class="comparison">
+    <div class="comparison-inner">
+      <div class="section-label">Compare</div>
+      <h2 class="section-title">RE Back Office vs. Doing It Yourself</h2>
+      <p class="section-subtitle">See what you're actually gaining when you stop duct-taping your business together.</p>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>RE Back Office</th>
+            <th>DIY / Spreadsheets</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Escrow tracking</td>
+            <td><span class="check-yes">&#10003;</span></td>
+            <td>Spreadsheets</td>
+          </tr>
+          <tr>
+            <td>Client updates</td>
+            <td><span class="check-yes">&#10003;</span></td>
+            <td>Manual emails</td>
+          </tr>
+          <tr>
+            <td>Team leaderboard</td>
+            <td><span class="check-yes">&#10003;</span></td>
+            <td>No visibility</td>
+          </tr>
+          <tr>
+            <td>Tax tracking</td>
+            <td><span class="check-yes">&#10003;</span></td>
+            <td>Shoebox of receipts</td>
+          </tr>
+          <tr>
+            <td>Deal checklists</td>
+            <td><span class="check-yes">&#10003;</span></td>
+            <td>Memory</td>
+          </tr>
+          <tr>
+            <td>Marketing tracker</td>
+            <td><span class="check-yes">&#10003;</span></td>
+            <td>Hope for the best</td>
+          </tr>
+          <tr>
+            <td>Cost</td>
+            <td style="color:var(--navy);font-style:normal;font-weight:800;">$49-79/mo</td>
+            <td>Hours of lost productivity</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ====== PRICING ====== -->
+  <section class="pricing" id="pricing">
+    <div class="pricing-inner">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Simple, Transparent Pricing</h2>
+      <p class="section-subtitle">Pick the plan that fits your business. Upgrade or cancel anytime.</p>
+      <div class="pricing-grid">
+        <!-- Solo Agent -->
+        <div class="pricing-card">
+          <div class="pricing-plan-name">Solo Agent</div>
+          <div class="pricing-amount">$49<span>/mo</span></div>
+          <div class="pricing-desc">Everything you need to run your business</div>
+          <ul class="pricing-features">
+            <li>Full dashboard &amp; analytics</li>
+            <li>Unlimited transactions</li>
+            <li>Listing management</li>
+            <li>Tax center with mileage tracking</li>
+            <li>Checklist templates</li>
+            <li>Client portal</li>
+            <li>Marketing activity tracker</li>
+            <li>Knowledge base access</li>
+          </ul>
+          <button class="pricing-cta" onclick="selectPlan('solo');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
+        </div>
+        <!-- Team Lead -->
+        <div class="pricing-card popular">
+          <div class="popular-badge">Most Popular</div>
+          <div class="pricing-plan-name">Team Lead</div>
+          <div class="pricing-amount">$79<span>/mo</span></div>
+          <div class="pricing-desc">Built for team leaders and brokerages</div>
+          <ul class="pricing-features">
+            <li>Everything in Solo</li>
+            <li>Unlimited team members</li>
+            <li>Team leaderboard &amp; rankings</li>
+            <li>Agent goals &amp; performance tracking</li>
+            <li>Monthly 1-on-1 meeting notes</li>
+            <li>Team announcements</li>
+            <li>Recruiting pipeline</li>
+            <li>Bold 100 sprint challenge</li>
+            <li>Vendor directory</li>
+            <li>Role-based permissions</li>
+          </ul>
+          <button class="pricing-cta" onclick="selectPlan('team');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
+        </div>
+      </div>
+      <p class="pricing-note">14-day free trial. No credit card required.</p>
+    </div>
+  </section>
+
+  <!-- ====== FAQ ====== -->
+  <section class="faq">
+    <div class="faq-inner">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            What exactly is RE Back Office?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>RE Back Office is a complete back-office management platform built specifically for real estate agents and teams. It replaces your spreadsheets, sticky notes, and scattered tools with one clean dashboard that tracks escrows, listings, closings, commissions, taxes, marketing activity, and more.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Do I need to be tech-savvy?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Not at all. RE Back Office was designed by real estate professionals for real estate professionals. If you can use email and a smartphone, you can use this platform. Most agents are up and running within minutes.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Can my clients see their transaction progress?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes! The Client Portal feature lets you share a branded, read-only view of their deal progress. Clients can see checklists, milestones, and key dates without calling or texting you for updates.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            How many team members can I add?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>The Team Lead plan includes unlimited team members. Add as many agents as you need with no per-seat charges. Each agent gets their own profile, goals, and performance tracking.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Is my data secure?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Absolutely. Your data is encrypted in transit and at rest. We use industry-standard security practices including row-level security, so your team's data is completely isolated and protected.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Can I cancel anytime?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes, no contracts and no cancellation fees. You can cancel your subscription at any time from your account settings. Your data will remain available for 30 days after cancellation.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== FINAL CTA ====== -->
+  <section class="final-cta">
+    <div class="final-cta-inner">
+      <h2>Ready to Run Your Business Like a Pro?</h2>
+      <p>Join hundreds of agents who stopped losing deals to disorganization.</p>
+      <a href="#pricing" class="btn-primary" style="font-size:1.1rem;padding:18px 44px;">
+        Start Free Trial
         <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
       </a>
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="features" id="features">
-    <h2>Everything You Need</h2>
-    <p>Powerful tools designed specifically for real estate agents and teams.</p>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon indigo">
-          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
-        </div>
-        <h3>Transaction Tracking</h3>
-        <p>Monitor every deal from contract to close. Track status, agent assignments, notes, and key dates in one place.</p>
+  <!-- ====== FOOTER ====== -->
+  <footer class="landing-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="landing-nav-logo-mark"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>
+        RE Back Office &copy; 2026
       </div>
-      <div class="feature-card">
-        <div class="feature-icon emerald">
-          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-        </div>
-        <h3>Listing Management</h3>
-        <p>Keep all your active, pending, and sold listings organized. Beds, baths, price, photos, and agent details at a glance.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon amber">
-          <svg viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
-        </div>
-        <h3>Team Leaderboard</h3>
-        <p>See who is closing the most deals and generating the highest volume. Motivate your team with real-time rankings.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon violet">
-          <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-        </div>
-        <h3>Tax Center</h3>
-        <p>Track income and expenses by category. Always be prepared for tax season with organized financial records.</p>
+      <div class="footer-links">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#login">Sign In</a>
       </div>
     </div>
-  </section>
+  </footer>
 
-  <!-- Pricing -->
-  <section class="pricing" id="pricing">
-    <h2>Choose Your Plan</h2>
-    <p>Everything included in both plans. Pick what fits your business.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;margin:0 auto">
-      <!-- Solo Agent -->
-      <div class="pricing-card">
-        <div class="pricing-amount">$49<span>/month</span></div>
-        <div class="pricing-label">Solo Agent</div>
-        <ul class="pricing-features">
-          <li>Unlimited transactions</li>
-          <li>Listing management</li>
-          <li>Full tax center &amp; mileage</li>
-          <li>Leaderboard</li>
-          <li>Agent profile &amp; goals</li>
-          <li>Receipt uploads</li>
-        </ul>
-        <button class="pricing-cta" onclick="selectPlan('solo');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Solo — $49/mo</button>
-      </div>
-      <!-- Team -->
-      <div class="pricing-card" style="border:2px solid rgba(255,255,255,.3);position:relative">
-        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:.72rem;font-weight:700;padding:4px 16px;border-radius:99px;white-space:nowrap">Most Popular</div>
-        <div class="pricing-amount">$79<span>/month</span></div>
-        <div class="pricing-label">Team Lead</div>
-        <ul class="pricing-features">
-          <li>Everything in Solo</li>
-          <li>Unlimited team members</li>
-          <li>Team leaderboard &amp; rankings</li>
-          <li>Team goals tracking</li>
-          <li>Manage agents &amp; roles</li>
-          <li>Team announcements</li>
-        </ul>
-        <button class="pricing-cta" onclick="selectPlan('team');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Team — $79/mo</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Login -->
+  <!-- ====== LOGIN ====== -->
   <section class="login-section" id="login">
     <h2>Sign In</h2>
     <p>Access your back office dashboard.</p>
-    <div id="planBanner" style="display:none;max-width:400px;margin:0 auto 16px;padding:12px 20px;border-radius:10px;background:rgba(99,102,241,.08);color:var(--indigo);font-size:.92rem;font-weight:700;text-align:center"></div>
+    <div id="planBanner" style="display:none;max-width:400px;margin:0 auto 16px;padding:12px 20px;border-radius:10px;background:rgba(52,132,208,.08);color:var(--blue);font-size:.92rem;font-weight:700;text-align:center"></div>
     <div class="login-card">
       <form id="loginForm">
         <div class="form-group">
@@ -460,12 +1142,6 @@
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="landing-footer">
-    RE Back Office &copy; 2026. Built for real estate professionals.
-  </footer>
-
-  <script src="js/theme.js"></script>
   <script src="js/auth.js"></script>
   <script>
     (function () {
@@ -481,7 +1157,7 @@
         var banner = document.getElementById('planBanner');
         if (banner) {
           banner.style.display = 'block';
-          banner.textContent = mode === 'team' ? '👥 Team Plan — $79/mo' : '🏠 Solo Agent — $49/mo';
+          banner.textContent = mode === 'team' ? 'Team Plan — $79/mo' : 'Solo Agent — $49/mo';
         }
       };
 
@@ -505,6 +1181,21 @@
         }
       });
     })();
+
+    // FAQ toggle
+    function toggleFaq(btn) {
+      var item = btn.parentElement;
+      var wasOpen = item.classList.contains('open');
+      // Close all
+      var allItems = document.querySelectorAll('.faq-item');
+      for (var i = 0; i < allItems.length; i++) {
+        allItems[i].classList.remove('open');
+      }
+      // Toggle clicked
+      if (!wasOpen) {
+        item.classList.add('open');
+      }
+    }
   </script>
 </body>
 </html>
