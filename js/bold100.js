@@ -436,7 +436,7 @@
 
     // ---- 100 Checkbox Grid ----
     html += '<div class="lb-card" style="margin-bottom:20px;padding:16px 20px">';
-    html += '<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:420px;margin:0 auto">';
+    html += '<div style="display:grid;grid-template-columns:repeat(15,1fr);gap:5px">';
 
     var sortedContacts = myData.contacts.slice().sort(function (a, b) { return (a.timestamp || '').localeCompare(b.timestamp || ''); });
 
@@ -449,16 +449,16 @@
         var tooltipText = escapeHtml((contact.name || 'Contact') + ' (' + (contact.type || '') + ')');
         if (contact.madeAppointment) {
           html += '<div style="width:100%;aspect-ratio:1;border-radius:4px;background:#E97B2A;display:flex;align-items:center;justify-content:center;cursor:default" title="' + tooltipText + ' ⭐ APPOINTMENT">';
-          html += '<span style="font-size:.9rem">⭐</span>';
+          html += '<span style="font-size:1rem">⭐</span>';
           html += '</div>';
         } else {
           html += '<div style="width:100%;aspect-ratio:1;border-radius:4px;background:' + bgColor + ';display:flex;align-items:center;justify-content:center;cursor:default" title="' + tooltipText + '">';
-          html += '<span style="font-size:.65rem">' + typeIcons[contact.type] + '</span>';
+          html += '<span style="font-size:.75rem">' + typeIcons[contact.type] + '</span>';
           html += '</div>';
         }
       } else {
         html += '<div style="width:100%;aspect-ratio:1;border-radius:4px;background:var(--gray-100);border:1px dashed var(--gray-200);display:flex;align-items:center;justify-content:center">';
-        html += '<span style="font-size:.5rem;color:var(--gray-300)">' + (box + 1) + '</span>';
+        html += '<span style="font-size:.55rem;color:var(--gray-300)">' + (box + 1) + '</span>';
         html += '</div>';
       }
     }
