@@ -535,11 +535,7 @@ tr:hover { background: var(--gray-50); }
 
 /* -- Agent Avatars -- */
 .agent-avatar {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .75rem; font-weight: 700; color: #fff;
-  flex-shrink: 0;
+  display: none;
 }
 
 .agent-avatar.a { background: var(--indigo); }
