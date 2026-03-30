@@ -299,11 +299,18 @@
 
     note.actionItems.forEach(function (item, idx) {
       html += '<div style="padding:12px 24px;border-bottom:1px solid var(--gray-50);display:flex;align-items:flex-start;gap:12px">';
-      html += '<input type="checkbox" data-action="toggle-action" data-note-id="' + note.id + '" data-item-idx="' + idx + '"' + (item.completed ? ' checked' : '') + ' style="width:20px;height:20px;cursor:pointer;accent-color:var(--emerald);flex-shrink:0;margin-top:2px">';
+      // Checkbox — anyone can check, only Team Lead can uncheck
+      var canToggle = !item.completed || privileged;
+      html += '<input type="checkbox"' + (canToggle ? ' data-action="toggle-action" data-note-id="' + note.id + '" data-item-idx="' + idx + '"' : ' disabled') + (item.completed ? ' checked' : '') + ' style="width:20px;height:20px;' + (canToggle ? 'cursor:pointer' : 'cursor:default;opacity:.6') + ';accent-color:var(--emerald);flex-shrink:0;margin-top:2px">';
       html += '<div style="flex:1;min-width:0">';
       html += '<div style="font-size:.88rem;' + (item.completed ? 'color:var(--gray-400);text-decoration:line-through' : 'color:var(--gray-800)') + '">' + escapeHtml(item.label) + '</div>';
-      if (item.completed && item.completedBy) html += '<div style="font-size:.7rem;color:var(--gray-300);margin-top:2px">' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
-      html += '</div></div>';
+      if (item.completed && item.completedBy) html += '<div style="font-size:.7rem;color:var(--emerald);margin-top:2px">Completed by ' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
+      html += '</div>';
+      // Delete button — Team Lead only
+      if (privileged) {
+        html += '<button data-action="delete-action-item" data-note-id="' + note.id + '" data-item-idx="' + idx + '" style="background:none;border:none;color:var(--gray-300);cursor:pointer;font-size:1.1rem;padding:4px;flex-shrink:0" title="Remove item">&times;</button>';
+      }
+      html += '</div>';
     });
 
     // Add item
@@ -550,12 +557,31 @@
         if (n) {
           migrateActionItems(n);
           if (n.actionItems[iIdx]) {
+            // Agents can only check items ON, not uncheck — only Team Lead can uncheck
+            if (n.actionItems[iIdx].completed && !privileged) {
+              target.checked = true; // revert the visual uncheck
+              break;
+            }
             n.actionItems[iIdx].completed = !n.actionItems[iIdx].completed;
             n.actionItems[iIdx].completedBy = n.actionItems[iIdx].completed ? session.displayName : null;
             n.actionItems[iIdx].completedAt = n.actionItems[iIdx].completed ? new Date().toISOString() : null;
             saveNotes(allN);
             renderDetail();
           }
+        }
+        break;
+
+      case 'delete-action-item':
+        if (!privileged) break;
+        var dNoteId = target.getAttribute('data-note-id');
+        var dItemIdx = parseInt(target.getAttribute('data-item-idx'));
+        var dNotes = getNotes();
+        var dNote = dNotes.find(function (x) { return x.id === dNoteId; });
+        if (dNote) {
+          migrateActionItems(dNote);
+          dNote.actionItems.splice(dItemIdx, 1);
+          saveNotes(dNotes);
+          renderDetail();
         }
         break;
 
