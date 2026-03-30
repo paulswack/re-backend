@@ -391,22 +391,18 @@
     html += '<span class="b100-date-label" style="margin-left:auto;">' + formatDateLabel(selectedDate) + '</span>';
     html += '</div>';
 
-    // ---- Team Scoreboard ----
-    html += '<div class="b100-scoreboard">';
-    html += '<div class="b100-team-total">';
-    html += '<div class="b100-team-number">' + teamTotal + '</div>';
-    html += '<div class="b100-team-label">Team Total Contacts</div>';
-    html += '</div>';
-
+    // ---- Team Scoreboard (compact) ----
+    html += '<div class="b100-scoreboard" style="padding:16px 24px 14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">';
+    html += '<div style="flex-shrink:0;text-align:center"><div class="b100-team-number" style="font-size:2.5rem">' + teamTotal + '</div><div class="b100-team-label" style="font-size:.7rem">TEAM TOTAL</div></div>';
     if (agentStats.length > 0) {
-      html += '<div class="b100-agents-row">';
+      html += '<div style="flex:1;display:flex;gap:12px;flex-wrap:wrap">';
       for (var a = 0; a < agentStats.length; a++) {
         var ag = agentStats[a];
         var pct = Math.min(ag.count / ag.goal * 100, 100);
         var barColor = pct >= 100 ? '#10B981' : pct >= 50 ? '#3484D0' : '#F59E0B';
-        html += '<div class="b100-agent-card">';
+        html += '<div class="b100-agent-card" style="min-width:80px;flex:1">';
         html += '<div class="b100-agent-name">' + escapeHtml(ag.displayName.split(' ')[0]) + '</div>';
-        html += '<div class="b100-agent-count">' + ag.count + '</div>';
+        html += '<div class="b100-agent-count" style="font-size:1.1rem">' + ag.count + '</div>';
         html += '<div class="b100-agent-bar"><div class="b100-agent-bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div>';
         html += '</div>';
       }
@@ -422,57 +418,53 @@
       html += '</div>';
     }
 
-    // ---- My Progress ----
-    html += '<div class="b100-progress-grid">';
+    // ---- Count + Type Summary Row ----
+    html += '<div class="lb-card" style="margin-bottom:20px">';
+    html += '<div style="padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">';
+    html += '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">';
+    html += '<div style="font-size:1.5rem;font-weight:800;color:var(--gray-900)">' + myCount + '<span style="font-size:.85rem;font-weight:600;color:var(--gray-400)"> / 100</span></div>';
+    html += '<div style="display:flex;gap:14px">';
+    html += '<span style="font-size:.82rem;color:#3B82F6;font-weight:600">📞 ' + myCalls + '</span>';
+    html += '<span style="font-size:.82rem;color:#10B981;font-weight:600">💬 ' + myTexts + '</span>';
+    html += '<span style="font-size:.82rem;color:#F59E0B;font-weight:600">📧 ' + myEmails + '</span>';
+    html += '<span style="font-size:.82rem;color:#E97B2A;font-weight:600">⭐ ' + myAppts + ' appts</span>';
+    html += '</div></div>';
+    if (isToday) {
+      html += '<button class="btn btn-primary btn-sm" data-action="show-form" style="white-space:nowrap"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-right:4px"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Contact</button>';
+    }
+    html += '</div></div>';
 
-    // Ring
-    var ringPct = Math.min(myCount / 100, 1);
-    var radius = 72;
-    var circumference = 2 * Math.PI * radius;
-    var dashOffset = circumference * (1 - ringPct);
-    var ringColor = myCount >= 100 ? '#10B981' : myCount >= 50 ? '#3484D0' : myCount >= 25 ? '#F59E0B' : '#6366F1';
+    // ---- 100 Checkbox Grid ----
+    html += '<div class="lb-card" style="margin-bottom:20px;padding:20px 24px">';
+    html += '<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:6px">';
 
-    html += '<div class="b100-ring-wrap">';
-    html += '<svg class="b100-ring-svg" viewBox="0 0 180 180">';
-    html += '<circle class="b100-ring-track" cx="90" cy="90" r="' + radius + '"/>';
-    html += '<circle class="b100-ring-fill" cx="90" cy="90" r="' + radius + '" stroke="' + ringColor + '" stroke-dasharray="' + circumference + '" stroke-dashoffset="' + dashOffset + '"/>';
-    html += '</svg>';
-    html += '<div class="b100-ring-center">';
-    html += '<div class="b100-ring-count">' + myCount + '</div>';
-    html += '<div class="b100-ring-of">of 100</div>';
-    html += '</div>';
-    html += '</div>';
+    // Sort contacts by timestamp for filling order
+    var sortedContacts = myData.contacts.slice().sort(function (a, b) { return (a.timestamp || '').localeCompare(b.timestamp || ''); });
 
-    // Stats column
-    html += '<div class="b100-stats-col">';
-
-    html += '<div class="b100-stat-row">';
-    html += '<div class="b100-stat-icon" style="background:#EFF6FF;color:#3B82F6;">' + CONTACT_TYPES.call.icon + '</div>';
-    html += '<div class="b100-stat-info"><div class="b100-stat-num">' + myCalls + '</div><div class="b100-stat-label">Phone Calls</div></div>';
-    html += '</div>';
-
-    html += '<div class="b100-stat-row">';
-    html += '<div class="b100-stat-icon" style="background:#ECFDF5;color:#10B981;">' + CONTACT_TYPES.text.icon + '</div>';
-    html += '<div class="b100-stat-info"><div class="b100-stat-num">' + myTexts + '</div><div class="b100-stat-label">Text Messages</div></div>';
-    html += '</div>';
-
-    html += '<div class="b100-stat-row">';
-    html += '<div class="b100-stat-icon" style="background:#FFFBEB;color:#F59E0B;">' + CONTACT_TYPES.email.icon + '</div>';
-    html += '<div class="b100-stat-info"><div class="b100-stat-num">' + myEmails + '</div><div class="b100-stat-label">Email Responses</div></div>';
-    html += '</div>';
-
-    html += '<div class="b100-stat-row b100-stat-appt">';
-    html += '<div class="b100-stat-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg></div>';
-    html += '<div class="b100-stat-info"><div class="b100-stat-num">' + myAppts + '</div><div class="b100-stat-label">Appointments Made</div></div>';
-    html += '</div>';
-
-    // Add Contact button
-    if (isToday && !showAddForm) {
-      html += '<button class="b100-add-btn" data-action="show-form"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Add Contact</button>';
+    for (var box = 0; box < 100; box++) {
+      var contact = sortedContacts[box] || null;
+      if (contact) {
+        var typeColors = { call: '#3B82F6', text: '#10B981', email: '#F59E0B' };
+        var typeIcons = { call: '📞', text: '💬', email: '📧' };
+        var bgColor = typeColors[contact.type] || '#3B82F6';
+        var iconChar = typeIcons[contact.type] || '✓';
+        var apptBorder = contact.madeAppointment ? ';box-shadow:0 0 0 2px #E97B2A' : '';
+        var tooltipText = escapeHtml((contact.name || 'Contact') + ' (' + (contact.type || '') + ')');
+        html += '<div style="width:100%;aspect-ratio:1;border-radius:6px;background:' + bgColor + ';display:flex;align-items:center;justify-content:center;font-size:.75rem;cursor:default;position:relative' + apptBorder + '" title="' + tooltipText + '">';
+        html += '<span style="font-size:.85rem">' + iconChar + '</span>';
+        html += '</div>';
+      } else {
+        html += '<div style="width:100%;aspect-ratio:1;border-radius:6px;background:var(--gray-100);border:1.5px dashed var(--gray-200);display:flex;align-items:center;justify-content:center">';
+        html += '<span style="font-size:.65rem;color:var(--gray-300);font-weight:700">' + (box + 1) + '</span>';
+        html += '</div>';
+      }
     }
 
-    html += '</div>'; // stats-col
-    html += '</div>'; // progress-grid
+    html += '</div>';
+    html += '<div style="display:flex;gap:16px;margin-top:12px;font-size:.72rem;color:var(--gray-400)">';
+    html += '<span>📞 Phone Call</span><span>💬 Text</span><span>📧 Email</span><span style="color:#E97B2A">⭐ = Appointment</span>';
+    html += '</div>';
+    html += '</div>';
 
     // ---- Add Contact Form ----
     if (showAddForm && isToday) {
