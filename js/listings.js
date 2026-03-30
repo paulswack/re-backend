@@ -152,6 +152,21 @@
     return div.innerHTML;
   }
 
+  // ---- Checklist helpers ----
+  function loadChecklistTemplates() {
+    var stored = localStorage.getItem(PREFIX + 'checklist_templates');
+    if (!stored) return [];
+    try { return JSON.parse(stored); } catch (e) { return []; }
+  }
+
+  function getDealChecklists() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'deal_checklists') || '{}'); } catch (e) { return {}; }
+  }
+
+  function saveDealChecklists(data) {
+    localStorage.setItem(PREFIX + 'deal_checklists', JSON.stringify(data));
+  }
+
   function relativeTime(isoStr) {
     if (!isoStr) return '';
     var d = new Date(isoStr);
@@ -299,6 +314,18 @@
     html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Description</span></div>';
     html += '<div style="padding:20px 24px">';
     html += '<div class="form-group"><textarea id="fDescription" rows="4" placeholder="Property description..." style="padding:12px 16px">' + escapeHtml(l ? l.description || '' : '') + '</textarea></div>';
+    // Checklist Template selector (listing templates only)
+    var _clTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'listing'; });
+    if (_clTemplates.length > 0) {
+      var existingChecklist = isEdit ? getDealChecklists()[editingId] : null;
+      html += '<div class="form-group"><label>Checklist Template</label><select id="fChecklistTemplate" style="padding:12px 16px">';
+      html += '<option value="">&mdash; None &mdash;</option>';
+      _clTemplates.forEach(function (tpl) {
+        var sel = existingChecklist && existingChecklist.templateId === tpl.id ? ' selected' : '';
+        html += '<option value="' + escapeHtml(tpl.id) + '"' + sel + '>' + escapeHtml(tpl.name) + ' (' + tpl.items.length + ' items)</option>';
+      });
+      html += '</select></div>';
+    }
     html += '</div></div>';
 
     // Save / Cancel buttons
@@ -611,6 +638,60 @@
       html += '</div>';
       html += '</div>';
     }
+
+    // Checklist Card
+    var dealChecklists = getDealChecklists();
+    var lstChecklist = dealChecklists[selectedListingId];
+    html += '<div class="parties-card">';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between">';
+    html += '<span>Checklist</span>';
+    if (lstChecklist && lstChecklist.items.length > 0) {
+      var clDone = lstChecklist.items.filter(function (i) { return i.completed; }).length;
+      var clTotal = lstChecklist.items.length;
+      html += '<span style="font-size:.75rem;font-weight:700;color:var(--emerald);background:var(--emerald-light);padding:2px 10px;border-radius:20px">' + clDone + '/' + clTotal + '</span>';
+    }
+    html += '</div>';
+    if (lstChecklist && lstChecklist.items.length > 0) {
+      var clDoneCount = lstChecklist.items.filter(function (i) { return i.completed; }).length;
+      var clTotalCount = lstChecklist.items.length;
+      var clPct = Math.round((clDoneCount / clTotalCount) * 100);
+      html += '<div style="padding:12px 20px 0 20px">';
+      html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
+      html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
+      html += '</div></div>';
+      html += '<div style="padding:12px 20px">';
+      lstChecklist.items.forEach(function (item, idx) {
+        html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '" style="margin-top:3px;cursor:pointer;width:16px;height:16px;accent-color:var(--emerald)">';
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(item.label) + '</div>';
+        if (item.completed && item.completedBy) {
+          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      var listingTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'listing'; });
+      if (listingTemplates.length > 0) {
+        html += '<div style="padding:20px;text-align:center">';
+        html += '<div style="font-size:.85rem;color:var(--gray-400);margin-bottom:12px">No checklist attached</div>';
+        html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px">';
+        html += '<select id="attachChecklistSelect" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem">';
+        html += '<option value="">Select a template...</option>';
+        listingTemplates.forEach(function (tpl) {
+          html += '<option value="' + escapeHtml(tpl.id) + '">' + escapeHtml(tpl.name) + '</option>';
+        });
+        html += '</select>';
+        html += '<button class="btn btn-primary btn-sm" data-action="attach-checklist">Attach</button>';
+        html += '</div>';
+        html += '</div>';
+      } else {
+        html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist attached. Create templates in Admin Settings.</div>';
+      }
+    }
+    html += '</div>';
 
     // Client Updates (milestone timeline for portal)
     var allUpdates = getUpdates();
@@ -940,6 +1021,30 @@
         delete fLstParties[fListingId].seller;
         saveParties(fLstParties);
 
+        // Clone checklist template if selected
+        var fClTplId = (document.getElementById('fChecklistTemplate') || {}).value;
+        if (fClTplId) {
+          var allTemplates = loadChecklistTemplates();
+          var selectedTpl = allTemplates.find(function (t) { return t.id === fClTplId; });
+          if (selectedTpl) {
+            var dealChecklists = getDealChecklists();
+            dealChecklists[fListingId] = {
+              templateId: selectedTpl.id,
+              templateName: selectedTpl.name,
+              items: selectedTpl.items.map(function (item) {
+                return {
+                  id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9),
+                  label: item.label,
+                  completed: false,
+                  completedBy: null,
+                  completedAt: null
+                };
+              })
+            };
+            saveDealChecklists(dealChecklists);
+          }
+        }
+
         viewMode = 'detail';
         selectedListingId = fListingId;
         editingId = null;
@@ -989,6 +1094,57 @@
       case 'add-note':
         addNote();
         break;
+
+      case 'attach-checklist':
+        var attachSelect = document.getElementById('attachChecklistSelect');
+        if (!attachSelect || !attachSelect.value) { showToast('Please select a template.', 'error'); break; }
+        var attachTplId = attachSelect.value;
+        var attachTemplates = loadChecklistTemplates();
+        var attachTpl = attachTemplates.find(function (t) { return t.id === attachTplId; });
+        if (attachTpl && selectedListingId) {
+          var dcls = getDealChecklists();
+          dcls[selectedListingId] = {
+            templateId: attachTpl.id,
+            templateName: attachTpl.name,
+            items: attachTpl.items.map(function (item) {
+              return {
+                id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9),
+                label: item.label,
+                completed: false,
+                completedBy: null,
+                completedAt: null
+              };
+            })
+          };
+          saveDealChecklists(dcls);
+          showToast('Checklist attached.');
+          renderDetail();
+        }
+        break;
+    }
+  });
+
+  // Checklist item toggle
+  document.addEventListener('change', function (e) {
+    var clTarget = e.target.closest('[data-action="toggle-checklist-item"]');
+    if (clTarget && selectedListingId) {
+      var itemIdx = parseInt(clTarget.getAttribute('data-item-idx'));
+      var dcls = getDealChecklists();
+      var cl = dcls[selectedListingId];
+      if (cl && cl.items[itemIdx]) {
+        var session = Auth.getSession();
+        if (clTarget.checked) {
+          cl.items[itemIdx].completed = true;
+          cl.items[itemIdx].completedBy = session ? session.displayName : 'Unknown';
+          cl.items[itemIdx].completedAt = new Date().toISOString();
+        } else {
+          cl.items[itemIdx].completed = false;
+          cl.items[itemIdx].completedBy = null;
+          cl.items[itemIdx].completedAt = null;
+        }
+        saveDealChecklists(dcls);
+        renderDetail();
+      }
     }
   });
 

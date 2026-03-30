@@ -226,6 +226,149 @@
     localStorage.setItem(PREFIX + 'announcements', JSON.stringify(anns));
   }
 
+  // ---- Checklist Templates ----
+  var DEFAULT_CHECKLIST_TEMPLATES = [
+    {
+      id: 'tpl-buyer-closing',
+      name: 'Buyer Closing Checklist',
+      category: 'escrow',
+      items: [
+        { id: 'i1', label: 'Earnest money deposited' },
+        { id: 'i2', label: 'Home inspection scheduled' },
+        { id: 'i3', label: 'Home inspection complete' },
+        { id: 'i4', label: 'Repair negotiations' },
+        { id: 'i5', label: 'Appraisal ordered' },
+        { id: 'i6', label: 'Appraisal complete' },
+        { id: 'i7', label: 'Loan approved' },
+        { id: 'i8', label: 'Clear to close' },
+        { id: 'i9', label: 'Final walkthrough' },
+        { id: 'i10', label: 'Closing day' }
+      ]
+    },
+    {
+      id: 'tpl-seller-closing',
+      name: 'Seller Closing Checklist',
+      category: 'escrow',
+      items: [
+        { id: 'i11', label: 'Listing agreement signed' },
+        { id: 'i12', label: 'Disclosure documents prepared' },
+        { id: 'i13', label: 'Accept offer' },
+        { id: 'i14', label: 'Inspection access scheduled' },
+        { id: 'i15', label: 'Repair negotiations' },
+        { id: 'i16', label: 'Appraisal access' },
+        { id: 'i17', label: 'Review closing statement' },
+        { id: 'i18', label: 'Closing day' }
+      ]
+    },
+    {
+      id: 'tpl-new-listing',
+      name: 'New Listing Checklist',
+      category: 'listing',
+      items: [
+        { id: 'i19', label: 'Listing agreement signed' },
+        { id: 'i20', label: 'Pre-listing prep complete' },
+        { id: 'i21', label: 'Professional photos scheduled' },
+        { id: 'i22', label: 'Photos received & approved' },
+        { id: 'i23', label: 'Sign installed' },
+        { id: 'i24', label: 'MLS listing live' },
+        { id: 'i25', label: 'Lockbox placed' },
+        { id: 'i26', label: 'Open house scheduled' },
+        { id: 'i27', label: 'Marketing materials distributed' }
+      ]
+    }
+  ];
+
+  function loadChecklistTemplates() {
+    var stored = localStorage.getItem(PREFIX + 'checklist_templates');
+    if (!stored) {
+      saveChecklistTemplates(DEFAULT_CHECKLIST_TEMPLATES);
+      return DEFAULT_CHECKLIST_TEMPLATES.slice();
+    }
+    try { return JSON.parse(stored); } catch (e) { return []; }
+  }
+
+  function saveChecklistTemplates(templates) {
+    localStorage.setItem(PREFIX + 'checklist_templates', JSON.stringify(templates));
+  }
+
+  var expandedTemplateId = null;
+
+  function renderChecklists() {
+    var templates = loadChecklistTemplates();
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Checklist Templates</h2><p>Create reusable checklists for escrows and listings</p></div>';
+
+    h += '<div style="margin-bottom:16px;display:flex;justify-content:flex-end">';
+    h += '<button class="btn btn-primary btn-sm" data-action="add-checklist-template"><svg viewBox="0 0 24 24" width="16" height="16" style="fill:currentColor;margin-right:4px"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Template</button>';
+    h += '</div>';
+
+    if (templates.length === 0) {
+      h += '<div class="as-card"><div class="as-empty">No checklist templates yet.</div></div>';
+    } else {
+      templates.forEach(function (tpl, tplIdx) {
+        var isExpanded = expandedTemplateId === tpl.id;
+        var catLabel = tpl.category === 'escrow' ? 'Escrow' : 'Listing';
+        var catColor = tpl.category === 'escrow' ? 'var(--indigo)' : 'var(--emerald)';
+        var catBg = tpl.category === 'escrow' ? 'var(--indigo-light)' : 'var(--emerald-light)';
+
+        h += '<div class="as-card" style="margin-bottom:12px;overflow:hidden">';
+
+        // Header row (clickable to expand)
+        h += '<div style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:2px 0" data-action="toggle-checklist-expand" data-tpl-id="' + tpl.id + '">';
+        h += '<svg viewBox="0 0 24 24" width="18" height="18" fill="var(--gray-400)" style="flex-shrink:0;transition:transform .2s;transform:rotate(' + (isExpanded ? '90' : '0') + 'deg)"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>';
+        h += '<div style="flex:1;min-width:0">';
+        h += '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">' + escHtml(tpl.name) + '</div>';
+        h += '<div style="font-size:.75rem;color:var(--gray-400);margin-top:2px">' + tpl.items.length + ' item' + (tpl.items.length !== 1 ? 's' : '') + '</div>';
+        h += '</div>';
+        h += '<span style="font-size:.7rem;font-weight:600;color:' + catColor + ';background:' + catBg + ';padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px">' + catLabel + '</span>';
+        h += '</div>';
+
+        // Expanded content
+        if (isExpanded) {
+          h += '<div style="border-top:1px solid var(--gray-100);margin-top:12px;padding-top:16px">';
+
+          // Name + Category row
+          h += '<div class="form-row" style="grid-template-columns:1fr auto;margin-bottom:16px">';
+          h += '<div class="form-group"><label>Template Name</label><input type="text" value="' + escHtml(tpl.name) + '" data-action="update-checklist-name" data-tpl-idx="' + tplIdx + '" style="padding:8px 12px"></div>';
+          h += '<div class="form-group"><label>Category</label><select data-action="update-checklist-category" data-tpl-idx="' + tplIdx + '" style="padding:8px 12px">' +
+            '<option value="escrow"' + (tpl.category === 'escrow' ? ' selected' : '') + '>Escrow</option>' +
+            '<option value="listing"' + (tpl.category === 'listing' ? ' selected' : '') + '>Listing</option>' +
+          '</select></div>';
+          h += '</div>';
+
+          // Items list
+          h += '<div style="margin-bottom:12px">';
+          h += '<div style="font-size:.75rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Checklist Items</div>';
+          tpl.items.forEach(function (item, itemIdx) {
+            h += '<div class="as-list-item" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-50)" draggable="true" data-list="checklist-' + tplIdx + '" data-index="' + itemIdx + '">';
+            h += '<div class="as-drag-handle" draggable="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="var(--gray-300)"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></div>';
+            h += '<input type="text" value="' + escHtml(item.label) + '" data-action="update-checklist-item-label" data-tpl-idx="' + tplIdx + '" data-item-idx="' + itemIdx + '" style="flex:1;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.85rem">';
+            h += '<button class="btn btn-outline btn-sm" data-action="remove-checklist-item" data-tpl-idx="' + tplIdx + '" data-item-idx="' + itemIdx + '" style="color:var(--rose);border-color:var(--gray-200);padding:4px 8px;font-size:.75rem" title="Remove">&times;</button>';
+            h += '</div>';
+          });
+          h += '</div>';
+
+          // Add item button
+          h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">';
+          h += '<button class="btn btn-outline btn-sm" data-action="add-checklist-item" data-tpl-idx="' + tplIdx + '" style="color:var(--indigo);border-color:var(--indigo);font-size:.8rem">+ Add Item</button>';
+          h += '</div>';
+
+          // Delete template
+          h += '<div style="border-top:1px solid var(--gray-100);padding-top:12px">';
+          h += '<button class="btn btn-danger btn-sm" data-action="delete-checklist-template" data-tpl-idx="' + tplIdx + '">Delete Template</button>';
+          h += '</div>';
+
+          h += '</div>'; // expanded content
+        }
+
+        h += '</div>'; // as-card
+      });
+    }
+
+    h += '</div>';
+    return h;
+  }
+
   // ---- Tab definitions ----
   var TABS = [
     { key: 'theme', label: 'Theme & Colors', icon: '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>' },
@@ -233,6 +376,7 @@
     { key: 'transactions', label: 'Transaction Settings', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>' },
     { key: 'listings', label: 'Listing Settings', icon: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>' },
     { key: 'leadSources', label: 'Lead Sources', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' },
+    { key: 'checklists', label: 'Checklist Templates', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>' },
     { key: 'expenses', label: 'Expense Categories', icon: '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>' },
     { key: 'teamRoles', label: 'Team & Roles', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
     { key: 'leaderboard', label: 'Leaderboard Settings', icon: '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>' },
@@ -336,6 +480,11 @@
   }
 
   function getListArray(listKey) {
+    if (listKey && listKey.indexOf('checklist-') === 0) {
+      var tplIdx = parseInt(listKey.replace('checklist-', ''));
+      var templates = loadChecklistTemplates();
+      return templates[tplIdx] ? templates[tplIdx].items : null;
+    }
     switch (listKey) {
       case 'txn-statuses': return settings.transactions.statuses;
       case 'lst-statuses': return settings.listings.statuses;
@@ -347,6 +496,15 @@
   }
 
   function setListArray(listKey, arr) {
+    if (listKey && listKey.indexOf('checklist-') === 0) {
+      var tplIdx = parseInt(listKey.replace('checklist-', ''));
+      var templates = loadChecklistTemplates();
+      if (templates[tplIdx]) {
+        templates[tplIdx].items = arr;
+        saveChecklistTemplates(templates);
+      }
+      return;
+    }
     switch (listKey) {
       case 'txn-statuses': settings.transactions.statuses = arr; break;
       case 'lst-statuses': settings.listings.statuses = arr; break;
@@ -369,6 +527,7 @@
       case 'clientPortal': return renderClientPortal();
       case 'goals': return renderGoals();
       case 'announcements': return renderAnnouncements();
+      case 'checklists': return renderChecklists();
       default: return '';
     }
   }
@@ -1036,6 +1195,62 @@
       render();
       return;
     }
+
+    // ---- Checklist Templates ----
+    if (action === 'toggle-checklist-expand') {
+      var tplId = btn.getAttribute('data-tpl-id');
+      expandedTemplateId = expandedTemplateId === tplId ? null : tplId;
+      render();
+      return;
+    }
+    if (action === 'add-checklist-template') {
+      var templates = loadChecklistTemplates();
+      var newTpl = {
+        id: 'tpl-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6),
+        name: 'New Checklist',
+        category: 'escrow',
+        items: []
+      };
+      templates.push(newTpl);
+      saveChecklistTemplates(templates);
+      expandedTemplateId = newTpl.id;
+      render();
+      return;
+    }
+    if (action === 'delete-checklist-template') {
+      var tplIdx = parseInt(btn.getAttribute('data-tpl-idx'));
+      var templates = loadChecklistTemplates();
+      if (!templates[tplIdx]) return;
+      if (!confirm('Delete this checklist template?')) return;
+      templates.splice(tplIdx, 1);
+      saveChecklistTemplates(templates);
+      expandedTemplateId = null;
+      showToast('Template deleted');
+      render();
+      return;
+    }
+    if (action === 'add-checklist-item') {
+      var tplIdx = parseInt(btn.getAttribute('data-tpl-idx'));
+      var templates = loadChecklistTemplates();
+      if (!templates[tplIdx]) return;
+      templates[tplIdx].items.push({
+        id: 'ci-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 6),
+        label: 'New item'
+      });
+      saveChecklistTemplates(templates);
+      render();
+      return;
+    }
+    if (action === 'remove-checklist-item') {
+      var tplIdx = parseInt(btn.getAttribute('data-tpl-idx'));
+      var itemIdx = parseInt(btn.getAttribute('data-item-idx'));
+      var templates = loadChecklistTemplates();
+      if (!templates[tplIdx]) return;
+      templates[tplIdx].items.splice(itemIdx, 1);
+      saveChecklistTemplates(templates);
+      render();
+      return;
+    }
   });
 
   // ---- Change event delegation (inputs, selects, checkboxes, color pickers) ----
@@ -1146,6 +1361,18 @@
     if (action === 'toggle-portal') {
       settings.clientPortal[key] = el.checked;
       saveSettings(settings);
+      return;
+    }
+
+    // Checklist template category
+    if (action === 'update-checklist-category') {
+      var tplIdx = parseInt(el.getAttribute('data-tpl-idx'));
+      var templates = loadChecklistTemplates();
+      if (templates[tplIdx]) {
+        templates[tplIdx].category = el.value;
+        saveChecklistTemplates(templates);
+        render();
+      }
       return;
     }
 
@@ -1279,6 +1506,33 @@
       if (field === 'teamName') {
         settings.general.teamName = val;
         saveSettings(settings);
+      }
+      return;
+    }
+
+    // Checklist template name on blur
+    if (action === 'update-checklist-name') {
+      var tplIdx = parseInt(el.getAttribute('data-tpl-idx'));
+      var val = el.value.trim();
+      if (!val) { showToast('Template name cannot be empty', 'error'); render(); return; }
+      var templates = loadChecklistTemplates();
+      if (templates[tplIdx]) {
+        templates[tplIdx].name = val;
+        saveChecklistTemplates(templates);
+      }
+      return;
+    }
+
+    // Checklist item label on blur
+    if (action === 'update-checklist-item-label') {
+      var tplIdx = parseInt(el.getAttribute('data-tpl-idx'));
+      var itemIdx = parseInt(el.getAttribute('data-item-idx'));
+      var val = el.value.trim();
+      if (!val) { showToast('Item label cannot be empty', 'error'); render(); return; }
+      var templates = loadChecklistTemplates();
+      if (templates[tplIdx] && templates[tplIdx].items[itemIdx]) {
+        templates[tplIdx].items[itemIdx].label = val;
+        saveChecklistTemplates(templates);
       }
       return;
     }

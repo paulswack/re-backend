@@ -7,9 +7,61 @@
 
   var PREFIX = 'reb_';
 
-  // ---- Inject settings dropdown CSS ----
+  // ---- Inject settings + notifications CSS ----
   var settingsCSS = document.createElement('style');
   settingsCSS.textContent = [
+    // Notification bell styles
+    '.notif-wrap { position: relative; }',
+    '.notif-btn {',
+    '  width: 32px; height: 32px; border-radius: 8px;',
+    '  border: 1.5px solid var(--gray-200); background: var(--white);',
+    '  cursor: pointer; display: flex; align-items: center; justify-content: center;',
+    '  transition: all .15s; color: var(--gray-500); padding: 0; position: relative;',
+    '}',
+    '.notif-btn:hover { border-color: var(--gray-300); background: var(--gray-50); color: var(--gray-700); }',
+    '.notif-btn svg { width: 18px; height: 18px; fill: currentColor; }',
+    '.notif-badge {',
+    '  position: absolute; top: -4px; right: -4px;',
+    '  min-width: 16px; height: 16px; border-radius: 99px;',
+    '  background: var(--rose); color: #fff; font-size: .6rem; font-weight: 700;',
+    '  display: flex; align-items: center; justify-content: center; padding: 0 4px;',
+    '}',
+    '.notif-dd {',
+    '  position: absolute; top: calc(100% + 6px); right: 0;',
+    '  width: 340px; background: var(--white); border-radius: 12px;',
+    '  box-shadow: 0 10px 40px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.05);',
+    '  z-index: 1001; opacity: 0; pointer-events: none;',
+    '  transform: translateY(-4px); transition: all .15s; max-height: 420px; overflow-y: auto;',
+    '}',
+    '.notif-dd.open { opacity: 1; pointer-events: auto; transform: translateY(0); }',
+    '.notif-dd-header {',
+    '  padding: 12px 14px; border-bottom: 1px solid var(--gray-100);',
+    '  display: flex; align-items: center; justify-content: space-between;',
+    '}',
+    '.notif-dd-title { font-size: .82rem; font-weight: 700; color: var(--gray-800); }',
+    '.notif-dd-clear { font-size: .72rem; color: var(--indigo); cursor: pointer; border: none; background: none; font-weight: 600; }',
+    '.notif-dd-clear:hover { text-decoration: underline; }',
+    '.notif-item {',
+    '  display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--gray-50);',
+    '  cursor: pointer; transition: background .1s;',
+    '}',
+    '.notif-item:hover { background: var(--gray-50); }',
+    '.notif-item:last-child { border-bottom: none; }',
+    '.notif-icon {',
+    '  width: 32px; height: 32px; border-radius: 8px;',
+    '  display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .9rem;',
+    '}',
+    '.notif-icon.closing { background: #FEF3C7; }',
+    '.notif-icon.status { background: var(--indigo-light); }',
+    '.notif-icon.meeting { background: #F5F3FF; }',
+    '.notif-icon.checklist { background: var(--emerald-light); }',
+    '.notif-body { flex: 1; min-width: 0; }',
+    '.notif-title { font-size: .82rem; font-weight: 600; color: var(--gray-800); }',
+    '.notif-detail { font-size: .75rem; color: var(--gray-400); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+    '.notif-time { font-size: .65rem; color: var(--gray-300); margin-top: 2px; }',
+    '.notif-empty { padding: 24px 14px; text-align: center; font-size: .82rem; color: var(--gray-400); }',
+    '',
+    // Settings dropdown styles (existing)
     '.settings-wrap { position: relative; }',
     '.settings-btn {',
     '  width: 32px; height: 32px; border-radius: 8px;',
@@ -408,11 +460,251 @@
     }
   }
 
+  // ---- Notifications System ----
+  var NOTIF_KEY = PREFIX + 'notifications';
+  var NOTIF_READ_KEY = PREFIX + 'notifications_read';
+
+  function getNotifications() {
+    try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch (e) { return []; }
+  }
+
+  function saveNotifications(arr) {
+    // Keep last 50 max
+    if (arr.length > 50) arr = arr.slice(arr.length - 50);
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(arr));
+  }
+
+  function getReadIds() {
+    try {
+      var all = JSON.parse(localStorage.getItem(NOTIF_READ_KEY) || '{}');
+      var session = Auth.getSession();
+      return session ? (all[session.username] || []) : [];
+    } catch (e) { return []; }
+  }
+
+  function markAllRead() {
+    var session = Auth.getSession();
+    if (!session) return;
+    var all;
+    try { all = JSON.parse(localStorage.getItem(NOTIF_READ_KEY) || '{}'); } catch (e) { all = {}; }
+    var notifs = getNotifications();
+    all[session.username] = notifs.map(function (n) { return n.id; });
+    localStorage.setItem(NOTIF_READ_KEY, JSON.stringify(all));
+  }
+
+  function addNotification(opts) {
+    var notifs = getNotifications();
+    // Dedup by type + linkId + targetUser
+    var exists = notifs.find(function (n) {
+      return n.type === opts.type && n.linkId === opts.linkId && n.targetUser === opts.targetUser;
+    });
+    if (exists) return;
+    notifs.push({
+      id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5),
+      type: opts.type || 'info',
+      title: opts.title || '',
+      detail: opts.detail || '',
+      linkPage: opts.linkPage || '',
+      linkId: opts.linkId || '',
+      targetUser: opts.targetUser || null,
+      createdAt: new Date().toISOString()
+    });
+    saveNotifications(notifs);
+  }
+
+  function generateNotifications() {
+    var session = Auth.getSession();
+    if (!session) return;
+
+    var notifs = getNotifications();
+    var now = new Date();
+    var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+
+    // Closing within 7 days
+    try {
+      var txns = JSON.parse(localStorage.getItem(PREFIX + 'transactions') || '[]');
+      txns.forEach(function (t) {
+        if (t.status === 'closed' || !t.closeDate) return;
+        var close = new Date(t.closeDate);
+        var daysLeft = Math.ceil((close - now) / (1000 * 60 * 60 * 24));
+        if (daysLeft >= 0 && daysLeft <= 7) {
+          var agentUser = users.find(function (u) { return u.displayName === t.agent; });
+          var targetUser = agentUser ? agentUser.username : null;
+          var dup = notifs.find(function (n) { return n.type === 'closing_soon' && n.linkId === t.id; });
+          if (!dup) {
+            notifs.push({
+              id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5),
+              type: 'closing_soon',
+              title: daysLeft === 0 ? 'Closing today!' : 'Closing in ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : ''),
+              detail: t.address,
+              linkPage: 'transactions.html',
+              linkId: t.id,
+              targetUser: targetUser,
+              createdAt: new Date().toISOString()
+            });
+          }
+        }
+      });
+    } catch (e) {}
+
+    // New meeting notes in last 7 days
+    try {
+      var notes = JSON.parse(localStorage.getItem(PREFIX + 'meeting_notes') || '[]');
+      notes.forEach(function (n) {
+        var created = new Date(n.createdAt);
+        var daysAgo = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+        if (daysAgo <= 7) {
+          var dup = notifs.find(function (ex) { return ex.type === 'new_meeting_note' && ex.linkId === n.id; });
+          if (!dup) {
+            notifs.push({
+              id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5),
+              type: 'new_meeting_note',
+              title: 'New meeting note',
+              detail: 'Meeting with ' + (n.createdByName || 'Team Lead') + ' on ' + (n.date || ''),
+              linkPage: 'meeting-notes.html',
+              linkId: n.id,
+              targetUser: n.agentUsername,
+              createdAt: n.createdAt
+            });
+          }
+        }
+      });
+    } catch (e) {}
+
+    saveNotifications(notifs);
+  }
+
+  function relativeTimeShort(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    var diffMs = new Date() - d;
+    var diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'now';
+    if (diffMin < 60) return diffMin + 'm';
+    var diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return diffHr + 'h';
+    var diffDay = Math.floor(diffHr / 24);
+    return diffDay + 'd';
+  }
+
+  function initNotificationBell() {
+    var topbarActions = document.querySelector('.topbar-actions');
+    if (!topbarActions) return;
+    if (topbarActions.querySelector('.notif-wrap')) return;
+    var session = Auth.getSession();
+    if (!session) return;
+
+    var notifs = getNotifications();
+    var readIds = getReadIds();
+
+    // Filter to this user's notifications
+    var myNotifs = notifs.filter(function (n) {
+      return !n.targetUser || n.targetUser === session.username;
+    }).sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+
+    var unreadCount = myNotifs.filter(function (n) { return readIds.indexOf(n.id) === -1; }).length;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'notif-wrap';
+
+    var btn = document.createElement('button');
+    btn.className = 'notif-btn';
+    btn.title = 'Notifications';
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>';
+    if (unreadCount > 0) {
+      btn.innerHTML += '<span class="notif-badge">' + unreadCount + '</span>';
+    }
+    wrap.appendChild(btn);
+
+    var dd = document.createElement('div');
+    dd.className = 'notif-dd';
+
+    var ddHtml = '<div class="notif-dd-header">';
+    ddHtml += '<span class="notif-dd-title">Notifications</span>';
+    if (myNotifs.length > 0) {
+      ddHtml += '<button class="notif-dd-clear" id="notifMarkRead">Mark all read</button>';
+    }
+    ddHtml += '</div>';
+
+    if (myNotifs.length === 0) {
+      ddHtml += '<div class="notif-empty">No notifications</div>';
+    } else {
+      var iconMap = {
+        closing_soon: { icon: '⏰', cls: 'closing' },
+        status_change: { icon: '📌', cls: 'status' },
+        new_meeting_note: { icon: '📋', cls: 'meeting' },
+        checklist_overdue: { icon: '✅', cls: 'checklist' }
+      };
+      myNotifs.slice(0, 15).forEach(function (n) {
+        var ic = iconMap[n.type] || { icon: '🔔', cls: 'status' };
+        var isUnread = readIds.indexOf(n.id) === -1;
+        ddHtml += '<div class="notif-item" data-notif-page="' + (n.linkPage || '') + '" data-notif-id="' + (n.linkId || '') + '" style="' + (isUnread ? 'background:var(--gray-50);' : '') + '">';
+        ddHtml += '<div class="notif-icon ' + ic.cls + '">' + ic.icon + '</div>';
+        ddHtml += '<div class="notif-body">';
+        ddHtml += '<div class="notif-title">' + n.title + '</div>';
+        if (n.detail) ddHtml += '<div class="notif-detail">' + n.detail + '</div>';
+        ddHtml += '<div class="notif-time">' + relativeTimeShort(n.createdAt) + ' ago</div>';
+        ddHtml += '</div></div>';
+      });
+    }
+
+    dd.innerHTML = ddHtml;
+    wrap.appendChild(dd);
+
+    // Insert before settings gear
+    var settingsWrap = topbarActions.querySelector('.settings-wrap');
+    if (settingsWrap) {
+      topbarActions.insertBefore(wrap, settingsWrap);
+    } else {
+      topbarActions.insertBefore(wrap, topbarActions.firstChild);
+    }
+
+    // Toggle dropdown
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      dd.classList.toggle('open');
+      // Close settings dropdown if open
+      var settingsDd = document.querySelector('.settings-dd');
+      if (settingsDd) settingsDd.classList.remove('open');
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) dd.classList.remove('open');
+    });
+
+    // Mark all read
+    var markBtn = dd.querySelector('#notifMarkRead');
+    if (markBtn) {
+      markBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        markAllRead();
+        var badge = btn.querySelector('.notif-badge');
+        if (badge) badge.remove();
+        // Remove unread backgrounds
+        dd.querySelectorAll('.notif-item').forEach(function (item) {
+          item.style.background = '';
+        });
+        showToast('All notifications marked as read');
+      });
+    }
+
+    // Click notification to navigate
+    dd.querySelectorAll('.notif-item').forEach(function (item) {
+      item.addEventListener('click', function () {
+        var page = this.getAttribute('data-notif-page');
+        if (page) window.location.href = page;
+      });
+    });
+  }
+
   // Auto-run on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function () {
     applySoloMode();
     applyAssistantMode();
     applyTheme();
+    generateNotifications();
+    initNotificationBell();
   });
 
   // ---- Helper: get the display name to filter data by ----
@@ -560,5 +852,6 @@
   window.getAdminSetting = getAdminSetting;
   window.applyTheme = applyTheme;
   window.applyPageColor = applyPageColor;
+  window.addNotification = addNotification;
 
 })();

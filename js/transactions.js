@@ -111,6 +111,17 @@
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
+  // ---- Checklist helpers ----
+  function getChecklistTemplates() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'checklist_templates') || '[]'); } catch (e) { return []; }
+  }
+  function getDealChecklists() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'deal_checklists') || '{}'); } catch (e) { return {}; }
+  }
+  function saveDealChecklists(data) {
+    localStorage.setItem(PREFIX + 'deal_checklists', JSON.stringify(data));
+  }
+
   function migratePartyData(data) {
     if (!data) return { buyers: [], sellers: [], contacts: {} };
     if (data.buyer && !data.buyers) {
@@ -155,6 +166,21 @@
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ---- Checklist helpers ----
+  function loadChecklistTemplates() {
+    var stored = localStorage.getItem(PREFIX + 'checklist_templates');
+    if (!stored) return [];
+    try { return JSON.parse(stored); } catch (e) { return []; }
+  }
+
+  function getDealChecklists() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'deal_checklists') || '{}'); } catch (e) { return {}; }
+  }
+
+  function saveDealChecklists(data) {
+    localStorage.setItem(PREFIX + 'deal_checklists', JSON.stringify(data));
   }
 
   function daysUntil(dateStr) {
@@ -253,7 +279,25 @@
       _leadSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t && t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
     '</select></div>';
     html += '</div>';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
+    var _clTemplates = getChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
+    html += '<div class="form-group"><label>Checklist Template</label><select id="fChecklist" style="padding:12px 16px"><option value="">— None —</option>' +
+      _clTemplates.map(function (tpl) { return '<option value="' + tpl.id + '">' + escapeHtml(tpl.name) + ' (' + tpl.items.length + ' items)</option>'; }).join('') +
+    '</select></div>';
+    html += '</div>';
+    // Checklist Template selector (escrow templates only)
+    var _clTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
+    if (_clTemplates.length > 0) {
+      var existingChecklist = isEdit ? getDealChecklists()[editingId] : null;
+      html += '<div class="form-group"><label>Checklist Template</label><select id="fChecklistTemplate" style="padding:12px 16px">';
+      html += '<option value="">&mdash; None &mdash;</option>';
+      _clTemplates.forEach(function (tpl) {
+        var sel = existingChecklist && existingChecklist.templateId === tpl.id ? ' selected' : '';
+        html += '<option value="' + escapeHtml(tpl.id) + '"' + sel + '>' + escapeHtml(tpl.name) + ' (' + tpl.items.length + ' items)</option>';
+      });
+      html += '</select></div>';
+    }
     html += '</div></div>';
 
     // Buyer Info
@@ -716,6 +760,99 @@
     }
     html += '</div>';
 
+    // Checklist Card
+    var dealChecklists = getDealChecklists();
+    var txnChecklist = dealChecklists[selectedTxnId];
+    html += '<div class="parties-card">';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between">';
+    html += '<span>Checklist</span>';
+    if (txnChecklist && txnChecklist.items.length > 0) {
+      var clDone = txnChecklist.items.filter(function (i) { return i.completed; }).length;
+      var clTotal = txnChecklist.items.length;
+      html += '<span style="font-size:.75rem;font-weight:700;color:var(--emerald);background:var(--emerald-light);padding:2px 10px;border-radius:20px">' + clDone + '/' + clTotal + '</span>';
+    }
+    html += '</div>';
+    if (txnChecklist && txnChecklist.items.length > 0) {
+      var clDoneCount = txnChecklist.items.filter(function (i) { return i.completed; }).length;
+      var clTotalCount = txnChecklist.items.length;
+      var clPct = Math.round((clDoneCount / clTotalCount) * 100);
+      html += '<div style="padding:12px 20px 0 20px">';
+      html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
+      html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
+      html += '</div></div>';
+      html += '<div style="padding:12px 20px">';
+      txnChecklist.items.forEach(function (item, idx) {
+        html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '" style="margin-top:3px;cursor:pointer;width:16px;height:16px;accent-color:var(--emerald)">';
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(item.label) + '</div>';
+        if (item.completed && item.completedBy) {
+          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
+        }
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      var escrowTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
+      if (escrowTemplates.length > 0) {
+        html += '<div style="padding:20px;text-align:center">';
+        html += '<div style="font-size:.85rem;color:var(--gray-400);margin-bottom:12px">No checklist attached</div>';
+        html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px">';
+        html += '<select id="attachChecklistSelect" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem">';
+        html += '<option value="">Select a template...</option>';
+        escrowTemplates.forEach(function (tpl) {
+          html += '<option value="' + escapeHtml(tpl.id) + '">' + escapeHtml(tpl.name) + '</option>';
+        });
+        html += '</select>';
+        html += '<button class="btn btn-primary btn-sm" data-action="attach-checklist">Attach</button>';
+        html += '</div>';
+        html += '</div>';
+      } else {
+        html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist attached. Create templates in Admin Settings.</div>';
+      }
+    }
+    html += '</div>';
+
+    // Checklist Card
+    var dealCls = getDealChecklists();
+    var dealCl = dealCls[selectedTxnId];
+    html += '<div class="notes-card">';
+    html += '<div class="notes-card-header" style="display:flex;align-items:center;justify-content:space-between">';
+    if (dealCl && dealCl.items) {
+      var clDone = dealCl.items.filter(function (i) { return i.completed; }).length;
+      var clTotal = dealCl.items.length;
+      var clPct = clTotal > 0 ? Math.round((clDone / clTotal) * 100) : 0;
+      html += '<span>Checklist — ' + escapeHtml(dealCl.templateName) + '</span>';
+      html += '<span style="font-size:.78rem;font-weight:600;color:var(--emerald)">' + clDone + '/' + clTotal + ' (' + clPct + '%)</span>';
+      html += '</div>';
+      html += '<div style="height:4px;background:var(--gray-100);"><div style="height:100%;width:' + clPct + '%;background:var(--emerald);border-radius:4px;transition:width .3s"></div></div>';
+      dealCl.items.forEach(function (item, idx) {
+        html += '<div style="padding:10px 20px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;gap:12px">';
+        html += '<input type="checkbox" data-action="toggle-checklist-item" data-item-idx="' + idx + '"' + (item.completed ? ' checked' : '') + ' style="width:18px;height:18px;cursor:pointer;accent-color:var(--emerald)">';
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-size:.88rem;' + (item.completed ? 'color:var(--gray-400);text-decoration:line-through' : 'color:var(--gray-800)') + '">' + escapeHtml(item.label) + '</div>';
+        if (item.completed && item.completedBy) {
+          html += '<div style="font-size:.7rem;color:var(--gray-300);margin-top:1px">' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
+        }
+        html += '</div></div>';
+      });
+    } else {
+      html += '<span>Checklist</span></div>';
+      var availTpls = getChecklistTemplates().filter(function (t) { return t.category === 'escrow'; });
+      if (availTpls.length > 0) {
+        html += '<div style="padding:16px 20px;display:flex;gap:10px;align-items:center">';
+        html += '<select id="attachChecklist" style="flex:1;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem"><option value="">Select a checklist template...</option>';
+        availTpls.forEach(function (t) { html += '<option value="' + t.id + '">' + escapeHtml(t.name) + ' (' + t.items.length + ' items)</option>'; });
+        html += '</select>';
+        html += '<button class="btn btn-primary btn-sm" data-action="attach-checklist">Attach</button>';
+        html += '</div>';
+      } else {
+        html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist attached. Create templates in Team Customization.</div>';
+      }
+    }
+    html += '</div>';
+
     // Client Updates (milestone timeline for portal)
     var allUpdates = getUpdates();
     var txnUpdates = (allUpdates[selectedTxnId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
@@ -1016,6 +1153,19 @@
           showToast('Escrow created.');
         }
 
+        // Attach checklist if selected (new escrows only)
+        if (!editingId) {
+          var fClId = (document.getElementById('fChecklist') || {}).value;
+          if (fClId) {
+            var clTpl = getChecklistTemplates().find(function (ct) { return ct.id === fClId; });
+            if (clTpl) {
+              var dcls = getDealChecklists();
+              dcls[fTxnId] = { templateId: clTpl.id, templateName: clTpl.name, items: clTpl.items.map(function (it) { return { id: generateId(), label: it.label, completed: false, completedBy: null, completedAt: null }; }) };
+              saveDealChecklists(dcls);
+            }
+          }
+        }
+
         // Save parties (buyers/sellers as arrays, contacts with split fields)
         var fParties = getParties();
         if (!fParties[fTxnId]) fParties[fTxnId] = { buyers: [], sellers: [], contacts: {} };
@@ -1070,6 +1220,30 @@
         delete fParties[fTxnId].seller;
         saveParties(fParties);
 
+        // Clone checklist template if selected
+        var fClTplId = (document.getElementById('fChecklistTemplate') || {}).value;
+        if (fClTplId) {
+          var allTemplates = loadChecklistTemplates();
+          var selectedTpl = allTemplates.find(function (t) { return t.id === fClTplId; });
+          if (selectedTpl) {
+            var dealChecklists = getDealChecklists();
+            dealChecklists[fTxnId] = {
+              templateId: selectedTpl.id,
+              templateName: selectedTpl.name,
+              items: selectedTpl.items.map(function (item) {
+                return {
+                  id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9),
+                  label: item.label,
+                  completed: false,
+                  completedBy: null,
+                  completedAt: null
+                };
+              })
+            };
+            saveDealChecklists(dealChecklists);
+          }
+        }
+
         viewMode = 'detail';
         selectedTxnId = fTxnId;
         editingId = null;
@@ -1089,6 +1263,33 @@
         sendClientUpdate();
         break;
 
+      case 'toggle-checklist-item':
+        var clItemIdx = parseInt(target.getAttribute('data-item-idx'));
+        var cls2 = getDealChecklists();
+        var cl2 = cls2[selectedTxnId];
+        if (cl2 && cl2.items[clItemIdx] !== undefined) {
+          var session2 = Auth.getSession();
+          cl2.items[clItemIdx].completed = !cl2.items[clItemIdx].completed;
+          cl2.items[clItemIdx].completedBy = cl2.items[clItemIdx].completed ? (session2 ? session2.displayName : '') : null;
+          cl2.items[clItemIdx].completedAt = cl2.items[clItemIdx].completed ? new Date().toISOString() : null;
+          saveDealChecklists(cls2);
+          renderDetail();
+        }
+        break;
+
+      case 'attach-checklist':
+        var selTpl = document.getElementById('attachChecklist');
+        if (!selTpl || !selTpl.value) { showToast('Select a template first', 'error'); break; }
+        var aTpl = getChecklistTemplates().find(function (t) { return t.id === selTpl.value; });
+        if (aTpl) {
+          var aCls = getDealChecklists();
+          aCls[selectedTxnId] = { templateId: aTpl.id, templateName: aTpl.name, items: aTpl.items.map(function (it) { return { id: generateId(), label: it.label, completed: false, completedBy: null, completedAt: null }; }) };
+          saveDealChecklists(aCls);
+          showToast('Checklist attached!');
+          renderDetail();
+        }
+        break;
+
       case 'dismiss-email-prompt':
         var emailModal = document.getElementById('emailPromptModal');
         if (emailModal) emailModal.parentNode.removeChild(emailModal);
@@ -1096,6 +1297,33 @@
 
       case 'add-note':
         addNote();
+        break;
+
+      case 'attach-checklist':
+        var attachSelect = document.getElementById('attachChecklistSelect');
+        if (!attachSelect || !attachSelect.value) { showToast('Please select a template.', 'error'); break; }
+        var attachTplId = attachSelect.value;
+        var attachTemplates = loadChecklistTemplates();
+        var attachTpl = attachTemplates.find(function (t) { return t.id === attachTplId; });
+        if (attachTpl && selectedTxnId) {
+          var dcls = getDealChecklists();
+          dcls[selectedTxnId] = {
+            templateId: attachTpl.id,
+            templateName: attachTpl.name,
+            items: attachTpl.items.map(function (item) {
+              return {
+                id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9),
+                label: item.label,
+                completed: false,
+                completedBy: null,
+                completedAt: null
+              };
+            })
+          };
+          saveDealChecklists(dcls);
+          showToast('Checklist attached.');
+          renderDetail();
+        }
         break;
 
       case 'add-task':
@@ -1137,6 +1365,29 @@
 
   // Also handle checkbox change events via delegation
   document.addEventListener('change', function (e) {
+    // Checklist item toggle
+    var clTarget = e.target.closest('[data-action="toggle-checklist-item"]');
+    if (clTarget && selectedTxnId) {
+      var itemIdx = parseInt(clTarget.getAttribute('data-item-idx'));
+      var dcls = getDealChecklists();
+      var cl = dcls[selectedTxnId];
+      if (cl && cl.items[itemIdx]) {
+        var session = Auth.getSession();
+        if (clTarget.checked) {
+          cl.items[itemIdx].completed = true;
+          cl.items[itemIdx].completedBy = session ? session.displayName : 'Unknown';
+          cl.items[itemIdx].completedAt = new Date().toISOString();
+        } else {
+          cl.items[itemIdx].completed = false;
+          cl.items[itemIdx].completedBy = null;
+          cl.items[itemIdx].completedAt = null;
+        }
+        saveDealChecklists(dcls);
+        renderDetail();
+      }
+      return;
+    }
+
     var target = e.target.closest('[data-action="toggle-task"]');
     if (!target) return;
     var taskId = target.getAttribute('data-task-id');
