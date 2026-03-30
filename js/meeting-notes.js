@@ -255,9 +255,9 @@
     var html = '';
 
     // Back button
-    html += '<button class="detail-back-btn" data-action="back-to-list">' +
-      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      'Back to Meeting Notes</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="back-to-list" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+      'All Meetings</button>';
 
     // Header card
     html += '<div class="lb-card" style="margin-bottom:20px">';
@@ -320,9 +320,9 @@
     var html = '';
 
     // Back button
-    html += '<button class="detail-back-btn" data-action="form-cancel">' +
-      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      (isEdit ? 'Back to Note' : 'Back to Meeting Notes') + '</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="form-cancel" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+      (isEdit ? 'Back to Note' : 'All Meetings') + '</button>';
 
     html += '<div style="max-width:720px">';
     html += '<h2 style="font-size:1.3rem;font-weight:800;color:var(--gray-900);margin-bottom:24px">' + (isEdit ? 'Edit Meeting Note' : 'New Meeting Note') + '</h2>';
