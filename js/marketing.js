@@ -1,5 +1,6 @@
 /* ============================================================
-   RE Back Office — Marketing Activities Page
+   RE Back Office — Marketing Activity Tracker
+   Donut rings, category groups, team cards
    ============================================================ */
 
 (function () {
@@ -11,347 +12,301 @@
   initSidebarToggle();
   applyPageColor('marketing');
 
-  document.getElementById('logoutBtn').addEventListener('click', function () {
-    Auth.logout();
-  });
+  document.getElementById('logoutBtn').addEventListener('click', function () { Auth.logout(); });
 
-  var STORAGE_KEY = 'reb_marketing';
+  var MKT_KEY = 'reb_marketing';
+  var USERS_KEY = 'reb_users';
   var pageBody = document.getElementById('pageBody');
-  var currentTab = 'weekly'; // weekly or monthly
+  var session = Auth.getSession();
+  var privileged = Auth.isPrivileged();
+  var currentTab = 'weekly';
 
-  // ---- Activity definitions ----
-  var WEEKLY_ACTIVITIES = [
-    { id: 'w1',  label: 'Instagram post' },
-    { id: 'w2',  label: 'Facebook post' },
-    { id: 'w3',  label: 'LinkedIn post' },
-    { id: 'w4',  label: '10+ prospecting calls' },
-    { id: 'w5',  label: '5+ follow-up texts/emails' },
-    { id: 'w6',  label: 'Host/attend open house' },
-    { id: 'w7',  label: 'Door knock/geo-farm' },
-    { id: 'w8',  label: 'Handwritten notes' },
-    { id: 'w9',  label: 'Engage sphere on social media' },
-    { id: 'w10', label: 'Share market update' }
+  // ---- Activity Definitions ----
+  var WEEKLY = [
+    { id: 'w_instagram',   label: 'Post on Instagram',                 detail: 'Listing photo, market tip, or personal brand content',    cat: 'Social Media', color: '#3B82F6' },
+    { id: 'w_facebook',    label: 'Post on Facebook',                  detail: 'Page post, story, or share in a community group',         cat: 'Social Media', color: '#3B82F6' },
+    { id: 'w_linkedin',    label: 'Post on LinkedIn',                  detail: 'Professional insight, deal close, or market update',      cat: 'Social Media', color: '#3B82F6' },
+    { id: 'w_calls',       label: 'Make 10+ prospecting calls',        detail: 'Call leads, past clients, or sphere of influence',         cat: 'Outreach',     color: '#10B981' },
+    { id: 'w_followup',    label: 'Send 5+ follow-up texts or emails', detail: 'Personalized outreach to active or warm leads',           cat: 'Outreach',     color: '#10B981' },
+    { id: 'w_openhouse',   label: 'Host or attend an open house',      detail: 'Your listing or a colleague\'s open house',               cat: 'In-Person',    color: '#F59E0B' },
+    { id: 'w_doorknock',   label: 'Door knock or geo-farm your area',  detail: 'At least one session in your target neighborhood',        cat: 'In-Person',    color: '#F59E0B' },
+    { id: 'w_handwritten', label: 'Send handwritten notes or cards',   detail: 'Thank-you, congratulations, or just-thinking-of-you',     cat: 'Outreach',     color: '#10B981' },
+    { id: 'w_engage',      label: 'Engage sphere on social media',     detail: 'Like, comment, and DM at least 20 connections',           cat: 'Social Media', color: '#3B82F6' },
+    { id: 'w_marketupdate',label: 'Share a market update online',      detail: 'Post or story with local data or buying/selling advice',  cat: 'Content',      color: '#8B5CF6' }
   ];
 
-  var MONTHLY_ACTIVITIES = [
-    { id: 'm1',  label: 'Email newsletter' },
-    { id: 'm2',  label: 'Mail postcards/flyers' },
-    { id: 'm3',  label: 'Request client reviews' },
-    { id: 'm4',  label: 'Paid social media ad' },
-    { id: 'm5',  label: 'Host client event' },
-    { id: 'm6',  label: 'Update Google Business Profile' },
-    { id: 'm7',  label: 'Record/publish video' },
-    { id: 'm8',  label: 'Attend networking event' },
-    { id: 'm9',  label: 'Create market report' },
-    { id: 'm10', label: 'Reconnect with 10+ past clients' }
+  var MONTHLY = [
+    { id: 'm_newsletter',  label: 'Send email newsletter',             detail: 'Monthly market update to your full database',             cat: 'Digital',          color: '#3B82F6' },
+    { id: 'm_postcards',   label: 'Mail postcards or flyers',          detail: 'Farm area direct mail campaign',                          cat: 'Direct Mail',      color: '#F59E0B' },
+    { id: 'm_reviews',     label: 'Request reviews from past clients', detail: 'Ask for Google, Zillow, or Realtor.com reviews',          cat: 'Digital',          color: '#3B82F6' },
+    { id: 'm_paidads',     label: 'Run a paid social media ad',        detail: 'Facebook, Instagram, or Google Ads campaign',             cat: 'Digital',          color: '#3B82F6' },
+    { id: 'm_event',       label: 'Host or plan a client event',       detail: 'Pop-by, appreciation event, or community activity',       cat: 'Events',           color: '#F59E0B' },
+    { id: 'm_google',      label: 'Update Google Business Profile',    detail: 'Add photos, posts, or respond to reviews',               cat: 'Digital',          color: '#3B82F6' },
+    { id: 'm_video',       label: 'Record and publish a video',        detail: 'Market update, neighborhood spotlight, or tips video',    cat: 'Content Creation', color: '#8B5CF6' },
+    { id: 'm_networking',  label: 'Attend a networking event',         detail: 'BNI, chamber of commerce, or real estate meetup',         cat: 'Networking',       color: '#10B981' },
+    { id: 'm_marketreport',label: 'Create and share a market report',  detail: 'Monthly stats for your farm area or niche',              cat: 'Content Creation', color: '#8B5CF6' },
+    { id: 'm_reconnect',   label: 'Reconnect with 10+ past clients',   detail: 'Personal call, text, or email just to check in',         cat: 'Networking',       color: '#10B981' }
   ];
+
+  // ---- Inject Styles ----
+  var mktCSS = document.createElement('style');
+  mktCSS.textContent = [
+    '.mkt-rings-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }',
+    '@media(max-width:640px){ .mkt-rings-row{grid-template-columns:1fr;} }',
+    '.mkt-ring-card { background:var(--white); border-radius:var(--radius-lg); padding:28px 24px; text-align:center; box-shadow:var(--shadow-sm); border:1px solid var(--gray-200); }',
+    '.mkt-ring-wrap { position:relative; width:140px; height:140px; margin:0 auto 14px; }',
+    '.mkt-ring-svg { width:140px; height:140px; transform:rotate(-90deg); }',
+    '.mkt-ring-track { fill:none; stroke:var(--gray-100); stroke-width:10; }',
+    '.mkt-ring-fill { fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset .8s ease; }',
+    '.mkt-ring-pct { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2rem; font-weight:800; color:var(--gray-900); line-height:1; }',
+    '.mkt-ring-pct small { font-size:.8rem; font-weight:600; color:var(--gray-400); }',
+    '.mkt-ring-title { font-size:1rem; font-weight:700; color:var(--gray-900); margin-bottom:2px; }',
+    '.mkt-ring-sub { font-size:.8rem; color:var(--gray-400); }',
+    '.mkt-cat-heading { display:flex; align-items:center; gap:8px; padding:12px 20px 6px; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--gray-400); }',
+    '.mkt-cat-heading::after { content:""; flex:1; height:1px; background:var(--gray-100); }',
+    '.mkt-item { display:flex; align-items:center; gap:14px; padding:12px 20px; border-bottom:1px solid var(--gray-50); transition:background .15s; cursor:pointer; }',
+    '.mkt-item:hover { background:var(--gray-50); }',
+    '.mkt-item:last-child { border-bottom:none; }',
+    '.mkt-item-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }',
+    '.mkt-item-info { flex:1; min-width:0; }',
+    '.mkt-item-label { font-size:.88rem; font-weight:600; color:var(--gray-800); }',
+    '.mkt-item-detail { font-size:.75rem; color:var(--gray-400); margin-top:1px; }',
+    '.mkt-item.checked .mkt-item-label { text-decoration:line-through; color:var(--gray-400); }',
+    '.mkt-item.checked .mkt-item-detail { text-decoration:line-through; }',
+    '.mkt-team-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:24px; }',
+    '.mkt-agent-card { background:var(--white); border-radius:var(--radius-lg); padding:20px; border:1px solid var(--gray-200); box-shadow:var(--shadow-sm); }',
+    '.mkt-mini-ring { position:relative; width:56px; height:56px; }',
+    '.mkt-mini-ring svg { width:56px; height:56px; transform:rotate(-90deg); }',
+    '.mkt-mini-ring .ring-track { fill:none; stroke:var(--gray-100); stroke-width:5; }',
+    '.mkt-mini-ring .ring-fill { fill:none; stroke-width:5; stroke-linecap:round; }',
+    '.mkt-mini-pct { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:.7rem; font-weight:700; color:var(--gray-900); }',
+    '.mkt-status-tag { font-size:.68rem; font-weight:700; padding:3px 10px; border-radius:99px; text-transform:uppercase; letter-spacing:.04em; }',
+    '.mkt-status-tag.on-fire { background:#ECFDF5; color:#065F46; }',
+    '.mkt-status-tag.doing-well { background:#FEF3C7; color:#92400E; }',
+    '.mkt-status-tag.needs-attn { background:#FEE2E2; color:#991B1B; }'
+  ].join('\n');
+  document.head.appendChild(mktCSS);
 
   // ---- Helpers ----
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  function getSession() {
-    return Auth.getSession();
-  }
-
-  function getUsers() {
-    try { return JSON.parse(localStorage.getItem('reb_users') || '[]'); } catch (e) { return []; }
-  }
-
-  // ---- Period key calculations ----
-  function getWeekKey(date) {
-    // ISO week: YYYY-WXX
-    var d = new Date(date);
+  function getWeekKey() {
+    var d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-    var yearStart = new Date(d.getFullYear(), 0, 4);
-    var weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    var weekStr = weekNum < 10 ? '0' + weekNum : String(weekNum);
-    return d.getFullYear() + '-W' + weekStr;
+    var jan1 = new Date(d.getFullYear(), 0, 1);
+    var days = Math.floor((d - jan1) / 86400000);
+    var week = Math.ceil((days + jan1.getDay() + 1) / 7);
+    return d.getFullYear() + '-W' + (week < 10 ? '0' : '') + week;
   }
 
-  function getMonthKey(date) {
-    var d = new Date(date);
-    var m = d.getMonth() + 1;
-    return d.getFullYear() + '-' + (m < 10 ? '0' + m : String(m));
+  function getMonthKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
   }
 
-  function getCurrentWeekKey() {
-    return getWeekKey(new Date());
+  function allData() {
+    try { return JSON.parse(localStorage.getItem(MKT_KEY) || '{}'); } catch (e) { return {}; }
   }
 
-  function getCurrentMonthKey() {
-    return getMonthKey(new Date());
+  function userData(username) {
+    return allData()[username] || { weekly: {}, monthly: {} };
   }
 
-  function getPreviousWeekKey(weekKey) {
-    // Parse YYYY-WXX and go back one week
-    var parts = weekKey.split('-W');
-    var year = parseInt(parts[0], 10);
-    var week = parseInt(parts[1], 10);
-    week--;
-    if (week < 1) {
-      year--;
-      week = 52;
-    }
-    var weekStr = week < 10 ? '0' + week : String(week);
-    return year + '-W' + weekStr;
+  function saveUser(username, data) {
+    var all = allData();
+    all[username] = data;
+    localStorage.setItem(MKT_KEY, JSON.stringify(all));
   }
 
-  // ---- Data access ----
-  function getData() {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
-    try { return JSON.parse(raw); } catch (e) { return {}; }
+  function getChecked(username, type, key) {
+    return userData(username)[type][key] || {};
   }
 
-  function saveData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  function countDone(map, list) {
+    return list.filter(function (a) { return map[a.id]; }).length;
   }
 
-  function getUserData(username) {
-    var data = getData();
-    if (!data[username]) {
-      data[username] = { weekly: {}, monthly: {} };
-    }
-    return data[username];
+  function ringColor(pct) {
+    if (pct >= 80) return '#10B981';
+    if (pct >= 50) return '#F59E0B';
+    return '#EF4444';
   }
 
-  function getCompletedCount(username, periodType, periodKey) {
-    var userData = getUserData(username);
-    var periodData = userData[periodType] || {};
-    var items = periodData[periodKey] || {};
-    return Object.keys(items).length;
+  function donutSVG(pct, size, sw, cls) {
+    var r = (size - sw) / 2;
+    var circ = 2 * Math.PI * r;
+    var offset = circ * (1 - pct / 100);
+    var color = ringColor(pct);
+    return '<svg class="' + (cls || 'mkt-ring-svg') + '" viewBox="0 0 ' + size + ' ' + size + '">' +
+      '<circle class="' + (cls ? 'ring-track' : 'mkt-ring-track') + '" cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '"/>' +
+      '<circle class="' + (cls ? 'ring-fill' : 'mkt-ring-fill') + '" cx="' + (size/2) + '" cy="' + (size/2) + '" r="' + r + '" stroke="' + color + '" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/>' +
+    '</svg>';
   }
 
-  function isActivityCompleted(username, periodType, periodKey, activityId) {
-    var userData = getUserData(username);
-    var periodData = userData[periodType] || {};
-    var items = periodData[periodKey] || {};
-    return !!items[activityId];
-  }
-
-  function toggleActivity(username, periodType, periodKey, activityId) {
-    var data = getData();
-    if (!data[username]) data[username] = { weekly: {}, monthly: {} };
-    if (!data[username][periodType]) data[username][periodType] = {};
-    if (!data[username][periodType][periodKey]) data[username][periodType][periodKey] = {};
-
-    if (data[username][periodType][periodKey][activityId]) {
-      delete data[username][periodType][periodKey][activityId];
-    } else {
-      data[username][periodType][periodKey][activityId] = true;
-    }
-
-    saveData(data);
-  }
-
-  // ---- Streak calculation ----
-  function calculateStreak(username) {
+  function calcStreak(username) {
+    var ud = userData(username);
+    var weeks = ud.weekly || {};
     var streak = 0;
-    var weekKey = getCurrentWeekKey();
-    var currentWeekCount = getCompletedCount(username, 'weekly', weekKey);
-
-    // If current week has 7+, start counting from current week
-    // Otherwise, start from previous week
-    if (currentWeekCount >= 7) {
-      streak = 1;
-      weekKey = getPreviousWeekKey(weekKey);
-    } else {
-      weekKey = getPreviousWeekKey(weekKey);
-    }
-
-    // Go back checking previous weeks
+    var d = new Date();
     for (var i = 0; i < 52; i++) {
-      var count = getCompletedCount(username, 'weekly', weekKey);
-      if (count >= 7) {
-        streak++;
-        weekKey = getPreviousWeekKey(weekKey);
-      } else {
-        break;
-      }
+      var temp = new Date(d);
+      temp.setDate(temp.getDate() - i * 7);
+      temp.setHours(0,0,0,0);
+      var jan1 = new Date(temp.getFullYear(), 0, 1);
+      var days = Math.floor((temp - jan1) / 86400000);
+      var wk = temp.getFullYear() + '-W' + (function(w){ return (w<10?'0':'')+w; })(Math.ceil((days + jan1.getDay() + 1) / 7));
+      var checked = weeks[wk] || {};
+      var done = WEEKLY.filter(function (a) { return checked[a.id]; }).length;
+      if (done >= 7) { streak++; }
+      else { if (i === 0) continue; break; }
     }
-
     return streak;
   }
 
-  // ---- Team average calculation ----
-  function getTeamAverage() {
+  function getUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function teamAvgWeekly() {
     var users = getUsers();
-    if (users.length === 0) return 0;
-    var weekKey = getCurrentWeekKey();
+    if (!users.length) return 0;
+    var wk = getWeekKey();
     var total = 0;
     users.forEach(function (u) {
-      total += getCompletedCount(u.username, 'weekly', weekKey);
+      var wd = getChecked(u.username, 'weekly', wk);
+      total += countDone(wd, WEEKLY);
     });
-    return (total / users.length).toFixed(1);
-  }
-
-  // ---- Stat card ----
-  function statCard(label, value, color, iconSvg) {
-    return '<div class="stat-card" style="background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">' +
-      '<div style="display:flex;align-items:center;gap:12px;">' +
-      '<div class="stat-icon" style="width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:' + color + '20;color:' + color + ';">' + iconSvg + '</div>' +
-      '<div>' +
-      '<div style="font-size:22px;font-weight:700;color:#1E293B;">' + value + '</div>' +
-      '<div style="font-size:13px;color:#64748B;">' + escapeHtml(label) + '</div>' +
-      '</div></div></div>';
-  }
-
-  // ---- Progress bar HTML ----
-  function progressBarHtml(completed, total, color) {
-    var pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return '<div style="width:100%;background:#E2E8F0;border-radius:99px;height:8px;overflow:hidden;">' +
-      '<div style="width:' + pct + '%;background:' + color + ';height:100%;border-radius:99px;transition:width 0.3s;"></div>' +
-      '</div>';
+    return Math.round((total / users.length / WEEKLY.length) * 100);
   }
 
   // ---- Render ----
   function render() {
-    var session = getSession();
-    if (!session) return;
-    var username = session.username;
-    var isTeamLead = Auth.isPrivileged();
-
-    var weekKey = getCurrentWeekKey();
-    var monthKey = getCurrentMonthKey();
-
-    var weeklyCount = getCompletedCount(username, 'weekly', weekKey);
-    var monthlyCount = getCompletedCount(username, 'monthly', monthKey);
-    var streak = calculateStreak(username);
-    var teamAvg = getTeamAverage();
+    var wk = getWeekKey();
+    var mk = getMonthKey();
+    var wChecked = getChecked(session.username, 'weekly', wk);
+    var mChecked = getChecked(session.username, 'monthly', mk);
+    var wDone = countDone(wChecked, WEEKLY);
+    var mDone = countDone(mChecked, MONTHLY);
+    var wPct = Math.round(wDone / WEEKLY.length * 100);
+    var mPct = Math.round(mDone / MONTHLY.length * 100);
+    var streak = calcStreak(session.username);
+    var activities = currentTab === 'weekly' ? WEEKLY : MONTHLY;
+    var checked = currentTab === 'weekly' ? wChecked : mChecked;
+    var periodKey = currentTab === 'weekly' ? wk : mk;
 
     var html = '';
 
     // Header
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">';
-    html += '<h2 style="margin:0;font-size:22px;font-weight:700;">Marketing Activities</h2>';
-    html += '<div style="font-size:13px;color:#64748B;">Week: ' + escapeHtml(weekKey) + ' &nbsp;|&nbsp; Month: ' + escapeHtml(monthKey) + '</div>';
+    html += '<div class="page-header"><div><h2>Marketing Activities</h2></div></div>';
+
+    // Donut Rings Row
+    html += '<div class="mkt-rings-row">';
+    html += '<div class="mkt-ring-card"><div class="mkt-ring-wrap">' + donutSVG(wPct, 140, 10) + '<div class="mkt-ring-pct">' + wPct + '<small>%</small></div></div>';
+    html += '<div class="mkt-ring-title">Weekly Progress</div><div class="mkt-ring-sub">' + wDone + '/' + WEEKLY.length + ' activities</div></div>';
+    html += '<div class="mkt-ring-card"><div class="mkt-ring-wrap">' + donutSVG(mPct, 140, 10) + '<div class="mkt-ring-pct">' + mPct + '<small>%</small></div></div>';
+    html += '<div class="mkt-ring-title">Monthly Progress</div><div class="mkt-ring-sub">' + mDone + '/' + MONTHLY.length + ' activities</div></div>';
     html += '</div>';
 
-    // Stat cards
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;">';
-    html += statCard('Weekly Progress', weeklyCount + '/10', '#3484D0', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>');
-    html += statCard('Monthly Progress', monthlyCount + '/10', '#6B21A8', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>');
-    html += statCard('Current Streak', streak + (streak === 1 ? ' week' : ' weeks'), '#F59E0B', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>');
-    html += statCard('Team Average', teamAvg + '/10', '#1A7F4B', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>');
+    // Stats
+    html += '<div class="stats-grid" style="margin-bottom:24px">';
+    html += '<div class="stat-card"><div class="stat-icon green"><svg viewBox="0 0 24 24"><path d="M12 22c4-4 8-7.58 8-12a8 8 0 10-16 0c0 4.42 4 8 8 12z"/></svg></div><div><div class="stat-value">' + streak + '</div><div class="stat-label">Week Streak ' + (streak > 0 ? '🔥' : '') + '</div></div></div>';
+    if (privileged) {
+      html += '<div class="stat-card"><div class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div><div><div class="stat-value">' + teamAvgWeekly() + '%</div><div class="stat-label">Team Avg Weekly</div></div></div>';
+    }
     html += '</div>';
 
     // Tab toggle
-    html += '<div style="display:flex;gap:4px;margin-bottom:20px;background:#F1F5F9;border-radius:10px;padding:4px;width:fit-content;">';
-    html += '<button data-action="switch-tab" data-tab="weekly" style="padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;' + (currentTab === 'weekly' ? 'background:#fff;color:#1E293B;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'background:transparent;color:#64748B;') + '">Weekly</button>';
-    html += '<button data-action="switch-tab" data-tab="monthly" style="padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;' + (currentTab === 'monthly' ? 'background:#fff;color:#1E293B;box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'background:transparent;color:#64748B;') + '">Monthly</button>';
+    html += '<div style="display:flex;gap:8px;margin-bottom:20px">';
+    html += '<button class="lb-filter-btn' + (currentTab === 'weekly' ? ' active' : '') + '" data-action="switch-tab" data-tab="weekly">Weekly</button>';
+    html += '<button class="lb-filter-btn' + (currentTab === 'monthly' ? ' active' : '') + '" data-action="switch-tab" data-tab="monthly">Monthly</button>';
     html += '</div>';
 
-    if (currentTab === 'weekly') {
-      html += renderChecklist(username, 'weekly', weekKey, WEEKLY_ACTIVITIES);
-    } else {
-      html += renderChecklist(username, 'monthly', monthKey, MONTHLY_ACTIVITIES);
-    }
+    // Activity List grouped by category
+    html += '<div class="lb-card">';
 
-    // Team Lead: show all agents grid
-    if (isTeamLead) {
-      html += renderTeamGrid(weekKey);
+    // Progress bar at top of card
+    var thisPct = currentTab === 'weekly' ? wPct : mPct;
+    var thisDone = currentTab === 'weekly' ? wDone : mDone;
+    var thisTotal = currentTab === 'weekly' ? WEEKLY.length : MONTHLY.length;
+    html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">';
+    html += '<div style="font-size:.9rem;font-weight:700;color:var(--gray-800)">' + (currentTab === 'weekly' ? 'This Week' : 'This Month') + '</div>';
+    html += '<span style="font-size:.82rem;font-weight:600;color:' + ringColor(thisPct) + '">' + thisDone + '/' + thisTotal + ' complete</span>';
+    html += '</div>';
+    html += '<div style="height:3px;background:var(--gray-100)"><div style="height:100%;width:' + thisPct + '%;background:' + ringColor(thisPct) + ';transition:width .3s"></div></div>';
+
+    // Group by category
+    var catOrder = [];
+    var catMap = {};
+    activities.forEach(function (a) {
+      if (!catMap[a.cat]) { catMap[a.cat] = []; catOrder.push(a.cat); }
+      catMap[a.cat].push(a);
+    });
+
+    catOrder.forEach(function (cat) {
+      html += '<div class="mkt-cat-heading">' + cat + '</div>';
+      catMap[cat].forEach(function (a) {
+        var isDone = !!checked[a.id];
+        html += '<div class="mkt-item' + (isDone ? ' checked' : '') + '" data-action="toggle-activity" data-id="' + a.id + '" data-type="' + currentTab + '" data-period="' + periodKey + '">';
+        html += '<input type="checkbox"' + (isDone ? ' checked' : '') + ' style="width:18px;height:18px;accent-color:var(--emerald);cursor:pointer;flex-shrink:0">';
+        html += '<div class="mkt-item-dot" style="background:' + a.color + '"></div>';
+        html += '<div class="mkt-item-info">';
+        html += '<div class="mkt-item-label">' + a.label + '</div>';
+        html += '<div class="mkt-item-detail">' + a.detail + '</div>';
+        html += '</div></div>';
+      });
+    });
+
+    html += '</div>';
+
+    // Team section (privileged only)
+    if (privileged) {
+      var users = getUsers().filter(function (u) { return u.role !== 'Team Lead'; });
+      if (users.length > 0) {
+        html += '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin-top:28px;margin-bottom:4px">Team Activity</h3>';
+        html += '<p style="font-size:.82rem;color:var(--gray-400);margin-bottom:16px">Weekly progress by agent</p>';
+        html += '<div class="mkt-team-grid">';
+
+        users.forEach(function (u) {
+          var uWk = getChecked(u.username, 'weekly', wk);
+          var uMk = getChecked(u.username, 'monthly', mk);
+          var uWDone = countDone(uWk, WEEKLY);
+          var uMDone = countDone(uMk, MONTHLY);
+          var uWPct = Math.round(uWDone / WEEKLY.length * 100);
+          var uMPct = Math.round(uMDone / MONTHLY.length * 100);
+          var uStreak = calcStreak(u.username);
+          var cls = agentClass(u.displayName);
+          var statusTag = uWPct >= 80 ? '<span class="mkt-status-tag on-fire">On Fire</span>' :
+                          uWPct >= 50 ? '<span class="mkt-status-tag doing-well">Doing Well</span>' :
+                                        '<span class="mkt-status-tag needs-attn">Needs Attention</span>';
+
+          html += '<div class="mkt-agent-card">';
+          html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
+          html += '<div class="agent-avatar ' + cls + '" style="width:38px;height:38px;font-size:.75rem">' + getInitials(u.displayName) + '</div>';
+          html += '<div style="flex:1"><div style="font-size:.9rem;font-weight:700;color:var(--gray-900)">' + u.displayName + '</div>';
+          html += '<div style="font-size:.75rem;color:var(--gray-400)">' + u.role + '</div></div>';
+          html += statusTag;
+          html += '</div>';
+
+          // Mini donut rings
+          html += '<div style="display:flex;gap:16px;justify-content:center;margin-bottom:14px">';
+          html += '<div><div class="mkt-mini-ring">' + donutSVG(uWPct, 56, 5, 'mkt-mini-svg') + '<div class="mkt-mini-pct">' + uWPct + '%</div></div><div style="font-size:.6rem;text-align:center;color:var(--gray-400);font-weight:600;text-transform:uppercase;margin-top:2px">WEEKLY</div></div>';
+          html += '<div><div class="mkt-mini-ring">' + donutSVG(uMPct, 56, 5, 'mkt-mini-svg') + '<div class="mkt-mini-pct">' + uMPct + '%</div></div><div style="font-size:.6rem;text-align:center;color:var(--gray-400);font-weight:600;text-transform:uppercase;margin-top:2px">MONTHLY</div></div>';
+          html += '</div>';
+
+          // Footer
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--gray-100)">';
+          html += '<span style="font-size:.75rem;font-weight:700;color:var(--amber)">' + (uStreak > 0 ? '🔥 ' + uStreak + ' week streak' : 'No streak') + '</span>';
+          html += '<span style="font-size:.75rem;color:var(--gray-400)">' + uWDone + '/' + WEEKLY.length + ' this week</span>';
+          html += '</div>';
+          html += '</div>';
+        });
+
+        html += '</div>';
+      }
     }
 
     pageBody.innerHTML = html;
   }
 
-  function renderChecklist(username, periodType, periodKey, activities) {
-    var completed = getCompletedCount(username, periodType, periodKey);
-    var total = activities.length;
-    var pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    var color = periodType === 'weekly' ? '#3484D0' : '#6B21A8';
-
-    var html = '';
-    html += '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;padding:20px;margin-bottom:24px;">';
-
-    // Progress header
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
-    html += '<div style="font-weight:700;font-size:16px;color:#1E293B;">' + (periodType === 'weekly' ? 'Weekly' : 'Monthly') + ' Checklist</div>';
-    html += '<div style="font-size:14px;font-weight:600;color:' + color + ';">' + pct + '% complete (' + completed + '/' + total + ')</div>';
-    html += '</div>';
-
-    // Progress bar
-    html += '<div style="margin-bottom:20px;">' + progressBarHtml(completed, total, color) + '</div>';
-
-    // Activity rows
-    activities.forEach(function (act) {
-      var checked = isActivityCompleted(username, periodType, periodKey, act.id);
-      html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F1F5F9;cursor:pointer;" data-action="toggle-activity" data-period="' + periodType + '" data-period-key="' + escapeHtml(periodKey) + '" data-activity-id="' + act.id + '">';
-
-      // Checkbox
-      if (checked) {
-        html += '<div style="width:22px;height:22px;border-radius:6px;background:#10B981;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-        html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-        html += '</div>';
-      } else {
-        html += '<div style="width:22px;height:22px;border-radius:6px;border:2px solid #CBD5E1;flex-shrink:0;"></div>';
-      }
-
-      // Label
-      html += '<span style="font-size:14px;color:' + (checked ? '#94A3B8' : '#1E293B') + ';' + (checked ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(act.label) + '</span>';
-      html += '</div>';
-    });
-
-    html += '</div>';
-    return html;
-  }
-
-  function renderTeamGrid(weekKey) {
-    var users = getUsers();
-    if (users.length === 0) return '';
-
-    var html = '';
-    html += '<div style="margin-top:8px;">';
-    html += '<h3 style="font-size:18px;font-weight:700;color:#1E293B;margin-bottom:16px;">Team Overview (This Week)</h3>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">';
-
-    users.forEach(function (u) {
-      var completed = getCompletedCount(u.username, 'weekly', weekKey);
-      var total = 10;
-      var pct = Math.round((completed / total) * 100);
-
-      // Determine bar color based on progress
-      var barColor = '#3484D0';
-      if (pct >= 70) barColor = '#10B981';
-      else if (pct >= 40) barColor = '#F59E0B';
-      else barColor = '#EF4444';
-
-      html += '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;padding:16px;">';
-
-      // Agent info
-      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
-      html += '<div class="agent-avatar agent-' + agentClass(u.displayName) + '" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:#3484D0;">' + getInitials(u.displayName) + '</div>';
-      html += '<div>';
-      html += '<div style="font-weight:600;font-size:14px;color:#1E293B;">' + escapeHtml(u.displayName) + '</div>';
-      html += '<div style="font-size:12px;color:#94A3B8;">' + escapeHtml(u.role) + '</div>';
-      html += '</div>';
-      html += '</div>';
-
-      // Progress
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-      html += '<span style="font-size:13px;color:#64748B;">Weekly progress</span>';
-      html += '<span style="font-size:13px;font-weight:700;color:' + barColor + ';">' + completed + '/10</span>';
-      html += '</div>';
-      html += progressBarHtml(completed, total, barColor);
-
-      // Streak
-      var streak = calculateStreak(u.username);
-      if (streak > 0) {
-        html += '<div style="margin-top:8px;font-size:12px;color:#F59E0B;font-weight:600;">' + streak + ' week streak</div>';
-      }
-
-      html += '</div>';
-    });
-
-    html += '</div></div>';
-    return html;
-  }
-
-  // ---- Event delegation ----
+  // ---- Events ----
   document.addEventListener('click', function (e) {
     var target = e.target.closest('[data-action]');
     if (!target) return;
@@ -360,18 +315,20 @@
     if (action === 'switch-tab') {
       currentTab = target.getAttribute('data-tab');
       render();
-    } else if (action === 'toggle-activity') {
-      var session = getSession();
-      if (!session) return;
-      var periodType = target.getAttribute('data-period');
-      var periodKey = target.getAttribute('data-period-key');
-      var activityId = target.getAttribute('data-activity-id');
-      toggleActivity(session.username, periodType, periodKey, activityId);
+    }
+
+    if (action === 'toggle-activity') {
+      var id = target.getAttribute('data-id');
+      var type = target.getAttribute('data-type');
+      var period = target.getAttribute('data-period');
+      var ud = userData(session.username);
+      if (!ud[type]) ud[type] = {};
+      if (!ud[type][period]) ud[type][period] = {};
+      ud[type][period][id] = !ud[type][period][id];
+      saveUser(session.username, ud);
       render();
     }
   });
 
-  // ---- Init ----
   render();
-
 })();

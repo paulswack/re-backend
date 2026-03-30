@@ -130,15 +130,11 @@
     return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:' + c.bg + ';color:' + c.text + ';">' + escapeHtml(source) + '</span>';
   }
 
-  // ---- Stat card ----
-  function statCard(label, value, color, iconSvg) {
-    return '<div class="stat-card" style="background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #E2E8F0;">' +
-      '<div style="display:flex;align-items:center;gap:12px;">' +
-      '<div class="stat-icon" style="width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:' + color + '20;color:' + color + ';">' + iconSvg + '</div>' +
-      '<div>' +
-      '<div style="font-size:22px;font-weight:700;color:#1E293B;">' + value + '</div>' +
-      '<div style="font-size:13px;color:#64748B;">' + escapeHtml(label) + '</div>' +
-      '</div></div></div>';
+  function statCard(label, value, iconClass, svgPath) {
+    return '<div class="stat-card">' +
+      '<div class="stat-icon ' + iconClass + '"><svg viewBox="0 0 24 24">' + svgPath + '</svg></div>' +
+      '<div><div class="stat-value">' + value + '</div><div class="stat-label">' + label + '</div></div>' +
+    '</div>';
   }
 
   // ---- Render ----
@@ -187,17 +183,17 @@
     var html = '';
 
     // Header
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">';
-    html += '<h2 style="margin:0;font-size:22px;font-weight:700;">Reviews</h2>';
-    html += '<button class="btn btn-primary" data-action="add-review" style="display:inline-flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Add Review</button>';
+    html += '<div class="page-header">';
+    html += '<div><h2>Reviews</h2></div>';
+    html += '<button class="btn btn-primary btn-sm" data-action="add-review"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Review</button>';
     html += '</div>';
 
     // Stat cards
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;">';
-    html += statCard('Total Reviews', total, '#3484D0', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>');
-    html += statCard('Avg Rating ' + starsHtml(Math.round(parseFloat(avgRating))), avgRating, '#F59E0B', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>');
-    html += statCard('5-Star Count', fiveStarCount, '#1A7F4B', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>');
-    html += statCard('Featured', featuredCount, '#6B21A8', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>');
+    html += '<div class="stats-grid" style="margin-bottom:20px">';
+    html += statCard('Total Reviews', total, 'navy', '<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>');
+    html += statCard('Avg Rating', avgRating + ' ' + starsHtml(Math.round(parseFloat(avgRating))), 'gold', '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>');
+    html += statCard('5-Star Reviews', fiveStarCount, 'green', '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>');
+    html += statCard('Featured', featuredCount, 'blue', '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>');
     html += '</div>';
 
     // Filters
