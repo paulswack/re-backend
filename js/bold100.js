@@ -406,12 +406,14 @@
     html += '</div>';
 
     if (agentStats.length > 0) {
+      var cols = 3;
+      html += '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:12px">';
       for (var a = 0; a < agentStats.length; a++) {
         var ag = agentStats[a];
         var rank = a + 1;
         var pct = Math.min(ag.count / ag.goal * 100, 100);
         var barColor = pct >= 100 ? '#10B981' : pct >= 50 ? '#3484D0' : '#F59E0B';
-        html += '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;' + (a < agentStats.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,.08);' : '') + '">';
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:8px">';
         // Rank
         html += '<div style="width:22px;height:22px;border-radius:50%;background:' + (rank === 1 ? 'rgba(255,215,0,.3)' : 'rgba(255,255,255,.1)') + ';display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:' + (rank === 1 ? '#FFD700' : 'rgba(255,255,255,.5)') + ';flex-shrink:0">' + rank + '</div>';
         // Name + count
@@ -432,6 +434,7 @@
         html += '</div>';
         html += '</div>';
       }
+      html += '</div>'; // grid
     }
     html += '</div>';
 
