@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-title="My Profile — RE Back Office">
+<html lang="en" data-title="Reviews — RE Back Office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile — RE Back Office</title>
+  <title>Reviews — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -29,8 +29,6 @@
         <a href="vendors.html" class="nav-item" data-page="vendors.html"><svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>Vendors</a>
         <a href="reviews.html" class="nav-item" data-page="reviews.html"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>Reviews</a>
         <a href="marketing.html" class="nav-item" data-page="marketing.html"><svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>Marketing</a>
-        <a href="knowledge-base.html" class="nav-item" data-page="knowledge-base.html"><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>Knowledge Base</a>
-        <a href="recruiting.html" class="nav-item" data-page="recruiting.html"><svg viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Recruiting</a>
       </nav>
       <div class="sidebar-footer">
         <button class="nav-item" id="logoutBtn"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>Sign Out</button>
@@ -41,52 +39,18 @@
       <div class="topbar">
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
-          <h1>My Profile</h1>
+          <h1>Reviews</h1>
+          <p>Client reviews and testimonials</p>
         </div>
         <div class="topbar-actions"></div>
       </div>
 
-      <div class="page-body" id="pageBody">
-        <div style="max-width:480px;margin:0 auto;">
-
-          <!-- Profile Card -->
-          <div class="card" style="text-align:center;padding:40px 28px 32px;">
-            <div id="profileAvatar" class="agent-avatar a" style="width:100px;height:100px;border-radius:50%;font-size:2rem;font-weight:800;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;position:relative;overflow:hidden;"></div>
-            <div id="profileName" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);"></div>
-            <div id="profileRole" style="font-size:.88rem;color:var(--gray-400);margin-top:4px;"></div>
-          </div>
-
-          <!-- Email Connection -->
-          <div class="card" style="margin-top:16px;">
-            <div style="padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);">
-              <h3 style="font-size:.95rem;font-weight:700;color:var(--gray-900);">Email Connection</h3>
-              <p style="font-size:.78rem;color:var(--gray-400);margin-top:2px;">Connect your email for client notifications</p>
-            </div>
-            <div style="padding:20px 24px;">
-              <div class="form-group" style="margin-bottom:0">
-                <label for="pEmail">Email Address</label>
-                <div style="display:flex;gap:10px">
-                  <input type="email" id="pEmail" placeholder="you@gmail.com" style="flex:1">
-                  <button class="btn btn-primary btn-sm" id="saveProfileBtn">Save</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Display Name (hidden but functional) -->
-          <input type="hidden" id="pDisplayName">
-          <input type="hidden" id="pPhone">
-          <input type="hidden" id="pLicense">
-          <input type="hidden" id="pYears">
-          <input type="hidden" id="pSpecialties">
-          <input type="hidden" id="pBio">
-
-        </div>
-      </div>
+      <div class="page-body" id="pageBody"></div>
     </main>
   </div>
 
   <script src="js/auth.js"></script>
-  <script src="js/profile.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/reviews.js"></script>
 </body>
 </html>
