@@ -264,11 +264,11 @@
     var users = getUsers();
     var agents = users.filter(function (u) { return u.role !== 'Team Lead'; });
 
-    var html = '<div class="modal-overlay" data-action="close-modal">';
-    html += '<div class="modal" style="max-width:600px" onclick="event.stopPropagation()">';
+    var html = '<div class="modal-overlay open" id="meetingModal">';
+    html += '<div class="modal" style="max-width:600px">';
     html += '<div class="modal-header">';
     html += '<h2 style="margin:0;font-size:1.15rem">' + (isEdit ? 'Edit Meeting Note' : 'New Meeting Note') + '</h2>';
-    html += '<button class="btn" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:0;color:var(--gray-400)" data-action="close-modal">&times;</button>';
+    html += '<button class="modal-close" data-action="close-modal">&times;</button>';
     html += '</div>';
     html += '<div class="modal-body" style="padding:20px 24px">';
 
@@ -457,6 +457,14 @@
     if (action === 'close-modal') {
       closeModal();
       return;
+    }
+  });
+
+  // Close modal on overlay click (outside the modal box)
+  document.addEventListener('click', function (e) {
+    var overlay = document.getElementById('meetingModal');
+    if (overlay && e.target === overlay) {
+      closeModal();
     }
   });
 
