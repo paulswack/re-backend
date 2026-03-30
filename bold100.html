@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-title="My Profile — RE Back Office">
+<html lang="en" data-title="Bold 100 — RE Back Office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile — RE Back Office</title>
+  <title>Bold 100 — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -42,52 +42,18 @@
       <div class="topbar">
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
-          <h1>My Profile</h1>
+          <h1>Bold 100</h1>
+          <p>100 contacts. One day. Make it count.</p>
         </div>
         <div class="topbar-actions"></div>
       </div>
 
-      <div class="page-body" id="pageBody">
-        <div style="max-width:480px;margin:0 auto;">
-
-          <!-- Profile Card -->
-          <div class="card" style="text-align:center;padding:40px 28px 32px;">
-            <div id="profileAvatar" class="agent-avatar a" style="width:100px;height:100px;border-radius:50%;font-size:2rem;font-weight:800;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;position:relative;overflow:hidden;"></div>
-            <div id="profileName" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);"></div>
-            <div id="profileRole" style="font-size:.88rem;color:var(--gray-400);margin-top:4px;"></div>
-          </div>
-
-          <!-- Email Connection -->
-          <div class="card" style="margin-top:16px;">
-            <div style="padding:20px 24px 16px;border-bottom:1px solid var(--gray-100);">
-              <h3 style="font-size:.95rem;font-weight:700;color:var(--gray-900);">Email Connection</h3>
-              <p style="font-size:.78rem;color:var(--gray-400);margin-top:2px;">Connect your email for client notifications</p>
-            </div>
-            <div style="padding:20px 24px;">
-              <div class="form-group" style="margin-bottom:0">
-                <label for="pEmail">Email Address</label>
-                <div style="display:flex;gap:10px">
-                  <input type="email" id="pEmail" placeholder="you@gmail.com" style="flex:1">
-                  <button class="btn btn-primary btn-sm" id="saveProfileBtn">Save</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Display Name (hidden but functional) -->
-          <input type="hidden" id="pDisplayName">
-          <input type="hidden" id="pPhone">
-          <input type="hidden" id="pLicense">
-          <input type="hidden" id="pYears">
-          <input type="hidden" id="pSpecialties">
-          <input type="hidden" id="pBio">
-
-        </div>
-      </div>
+      <div class="page-body" id="pageBody"></div>
     </main>
   </div>
 
   <script src="js/auth.js"></script>
-  <script src="js/profile.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/bold100.js"></script>
 </body>
 </html>
