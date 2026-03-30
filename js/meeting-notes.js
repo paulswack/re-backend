@@ -184,30 +184,37 @@
       // Progress bar
       html += '<div style="height:3px;background:var(--gray-100)"><div style="height:100%;width:' + agentPct + '%;background:var(--emerald);transition:width .3s"></div></div>';
 
-      // Active meetings
+      // Active meetings — show action items inline
       if (activeNotes.length > 0) {
         activeNotes.forEach(function (note) {
           var st = getActionStats(note);
-          var preview = note.notes ? note.notes.substring(0, 80) : '';
-          if (note.notes && note.notes.length > 80) preview += '...';
-          html += '<div class="list-row" data-action="open-detail" data-id="' + note.id + '" style="padding:14px 24px;gap:12px">';
-          // Date box
           var dp = Data.formatDate(note.date).split(' ');
+
+          // Meeting header row (clickable to detail)
+          html += '<div style="padding:14px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:12px;cursor:pointer" data-action="open-detail" data-id="' + note.id + '">';
           html += '<div style="width:44px;text-align:center;flex-shrink:0">';
           html += '<div style="font-size:.65rem;font-weight:700;color:var(--indigo);text-transform:uppercase">' + (dp[0] || '') + '</div>';
           html += '<div style="font-size:1.05rem;font-weight:800;color:var(--gray-800);line-height:1">' + (dp[1] ? dp[1].replace(',', '') : '') + '</div>';
           html += '</div>';
-          html += '<div style="flex:1;min-width:0">';
-          html += '<div style="font-size:.85rem;color:var(--gray-700);margin-bottom:3px">' + escapeHtml(preview) + '</div>';
+          html += '<div style="flex:1;min-width:0;font-size:.82rem;color:var(--gray-500)">' + Data.formatDate(note.date) + ' Meeting</div>';
           if (st.total > 0) {
-            html += '<div style="display:flex;align-items:center;gap:8px">';
-            html += '<div style="flex:0 0 60px;height:4px;background:var(--gray-100);border-radius:4px"><div style="height:100%;width:' + (Math.round((st.done / st.total) * 100)) + '%;background:var(--emerald);border-radius:4px"></div></div>';
-            html += '<span style="font-size:.7rem;color:var(--gray-400);font-weight:600">' + st.done + '/' + st.total + '</span>';
-            html += '</div>';
+            html += '<span style="font-size:.72rem;font-weight:600;color:' + (st.done === st.total ? 'var(--emerald)' : 'var(--gray-400)') + '">' + st.done + '/' + st.total + '</span>';
           }
+          html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="var(--gray-300)" style="flex-shrink:0"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
           html += '</div>';
-          html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="var(--gray-300)" style="flex-shrink:0"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>';
-          html += '</div>';
+
+          // Action items inline — visible right on the main page
+          if (note.actionItems && note.actionItems.length > 0) {
+            note.actionItems.forEach(function (item, idx) {
+              html += '<div style="padding:8px 24px 8px 80px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;gap:10px">';
+              html += '<input type="checkbox" data-action="list-toggle-action" data-note-id="' + note.id + '" data-item-idx="' + idx + '"' + (item.completed ? ' checked' : '') + ' style="width:17px;height:17px;accent-color:var(--emerald);flex-shrink:0;cursor:pointer">';
+              html += '<span style="font-size:.82rem;flex:1;' + (item.completed ? 'color:var(--gray-400);text-decoration:line-through' : 'color:var(--gray-700)') + '">' + escapeHtml(item.label) + '</span>';
+              if (item.completed && item.completedBy) {
+                html += '<span style="font-size:.65rem;color:var(--emerald);font-weight:600;flex-shrink:0">' + escapeHtml(item.completedBy.split(' ')[0]) + '</span>';
+              }
+              html += '</div>';
+            });
+          }
         });
       } else if (archivedNotes.length === 0) {
         html += '<div style="padding:20px 24px;text-align:center;font-size:.85rem;color:var(--gray-400)">No meetings yet</div>';
@@ -582,6 +589,27 @@
           dNote.actionItems.splice(dItemIdx, 1);
           saveNotes(dNotes);
           renderDetail();
+        }
+        break;
+
+      case 'list-toggle-action':
+        var lnId = target.getAttribute('data-note-id');
+        var liIdx = parseInt(target.getAttribute('data-item-idx'));
+        var lNotes = getNotes();
+        var ln = lNotes.find(function (x) { return x.id === lnId; });
+        if (ln) {
+          migrateActionItems(ln);
+          if (ln.actionItems[liIdx]) {
+            if (ln.actionItems[liIdx].completed && !privileged) {
+              target.checked = true;
+              break;
+            }
+            ln.actionItems[liIdx].completed = !ln.actionItems[liIdx].completed;
+            ln.actionItems[liIdx].completedBy = ln.actionItems[liIdx].completed ? session.displayName : null;
+            ln.actionItems[liIdx].completedAt = ln.actionItems[liIdx].completed ? new Date().toISOString() : null;
+            saveNotes(lNotes);
+            render();
+          }
         }
         break;
 
