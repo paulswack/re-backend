@@ -435,10 +435,9 @@
     html += '</div></div>';
 
     // ---- 100 Checkbox Grid ----
-    html += '<div class="lb-card" style="margin-bottom:20px;padding:20px 24px">';
-    html += '<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:6px">';
+    html += '<div class="lb-card" style="margin-bottom:20px;padding:16px 20px">';
+    html += '<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:420px;margin:0 auto">';
 
-    // Sort contacts by timestamp for filling order
     var sortedContacts = myData.contacts.slice().sort(function (a, b) { return (a.timestamp || '').localeCompare(b.timestamp || ''); });
 
     for (var box = 0; box < 100; box++) {
@@ -447,22 +446,29 @@
         var typeColors = { call: '#3B82F6', text: '#10B981', email: '#F59E0B' };
         var typeIcons = { call: '📞', text: '💬', email: '📧' };
         var bgColor = typeColors[contact.type] || '#3B82F6';
-        var iconChar = typeIcons[contact.type] || '✓';
-        var apptBorder = contact.madeAppointment ? ';box-shadow:0 0 0 2px #E97B2A' : '';
         var tooltipText = escapeHtml((contact.name || 'Contact') + ' (' + (contact.type || '') + ')');
-        html += '<div style="width:100%;aspect-ratio:1;border-radius:6px;background:' + bgColor + ';display:flex;align-items:center;justify-content:center;font-size:.75rem;cursor:default;position:relative' + apptBorder + '" title="' + tooltipText + '">';
-        html += '<span style="font-size:.85rem">' + iconChar + '</span>';
-        html += '</div>';
+        if (contact.madeAppointment) {
+          html += '<div style="width:100%;aspect-ratio:1;border-radius:4px;background:#E97B2A;display:flex;align-items:center;justify-content:center;cursor:default" title="' + tooltipText + ' ⭐ APPOINTMENT">';
+          html += '<span style="font-size:.9rem">⭐</span>';
+          html += '</div>';
+        } else {
+          html += '<div style="width:100%;aspect-ratio:1;border-radius:4px;background:' + bgColor + ';display:flex;align-items:center;justify-content:center;cursor:default" title="' + tooltipText + '">';
+          html += '<span style="font-size:.65rem">' + typeIcons[contact.type] + '</span>';
+          html += '</div>';
+        }
       } else {
-        html += '<div style="width:100%;aspect-ratio:1;border-radius:6px;background:var(--gray-100);border:1.5px dashed var(--gray-200);display:flex;align-items:center;justify-content:center">';
-        html += '<span style="font-size:.65rem;color:var(--gray-300);font-weight:700">' + (box + 1) + '</span>';
+        html += '<div style="width:100%;aspect-ratio:1;border-radius:4px;background:var(--gray-100);border:1px dashed var(--gray-200);display:flex;align-items:center;justify-content:center">';
+        html += '<span style="font-size:.5rem;color:var(--gray-300)">' + (box + 1) + '</span>';
         html += '</div>';
       }
     }
 
     html += '</div>';
-    html += '<div style="display:flex;gap:16px;margin-top:12px;font-size:.72rem;color:var(--gray-400)">';
-    html += '<span>📞 Phone Call</span><span>💬 Text</span><span>📧 Email</span><span style="color:#E97B2A">⭐ = Appointment</span>';
+    html += '<div style="display:flex;gap:14px;margin-top:10px;justify-content:center;font-size:.68rem;color:var(--gray-400)">';
+    html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3B82F6;vertical-align:middle;margin-right:3px"></span>Call</span>';
+    html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#10B981;vertical-align:middle;margin-right:3px"></span>Text</span>';
+    html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#F59E0B;vertical-align:middle;margin-right:3px"></span>Email</span>';
+    html += '<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#E97B2A;vertical-align:middle;margin-right:3px"></span>⭐ Appointment</span>';
     html += '</div>';
     html += '</div>';
 
