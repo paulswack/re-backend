@@ -139,7 +139,7 @@ var ApiBridge = (function () {
 
     var origSetItem = localStorage.setItem.bind(localStorage);
     localStorage.setItem = function (key, value) {
-      // Always write to localStorage first
+      // Always write to localStorage (pages need it to render)
       origSetItem(key, value);
 
       // Don't sync during initial load

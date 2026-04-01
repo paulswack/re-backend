@@ -42,10 +42,17 @@
       var profiles = getProfiles();
       if (!profiles[session.username]) profiles[session.username] = {};
       profiles[session.username].photo = e.target.result;
-      saveProfiles(profiles);
+
+      if (typeof API !== 'undefined' && API.isLoggedIn()) {
+        var user = API.getUser();
+        API.updateUser(user.id, { photo_url: e.target.result }).then(function () {
+          showToast('Photo updated');
+        }).catch(function () { showToast('Failed to save photo', 'error'); });
+      } else {
+        saveProfiles(profiles);
+      }
       renderHeader();
       populateSidebarUser();
-      showToast('Photo updated');
     };
     reader.readAsDataURL(file);
     this.value = '';
@@ -116,23 +123,40 @@
       photo: existing.photo || null
     };
 
-    saveProfiles(profiles);
+    // Save via API if available, otherwise localStorage
+    if (typeof API !== 'undefined' && API.isLoggedIn()) {
+      var user = API.getUser();
+      var profileData = profiles[session.username];
+      API.updateUser(user.id, {
+        display_name: displayName,
+        phone: profileData.phone,
+        email: profileData.email,
+        license_number: profileData.license,
+        profile: {
+          yearsExperience: profileData.yearsExperience,
+          specialties: profileData.specialties,
+          bio: profileData.bio,
+          photo: profileData.photo
+        }
+      }).then(function () {
+        showToast('Profile saved!');
+      }).catch(function () {
+        showToast('Failed to save profile', 'error');
+      });
+    } else {
+      saveProfiles(profiles);
+    }
 
-    // If display name changed, update reb_users and session
+    // If display name changed, update session
     if (displayName !== session.displayName) {
-      // Update users array
       var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
       var idx = users.findIndex(function (u) { return u.username === session.username; });
       if (idx !== -1) {
         users[idx].displayName = displayName;
-        localStorage.setItem(PREFIX + 'users', JSON.stringify(users));
+        try { localStorage.setItem(PREFIX + 'users', JSON.stringify(users)); } catch(e) {}
       }
-
-      // Update session
       session.displayName = displayName;
-      localStorage.setItem(PREFIX + 'session', JSON.stringify(session));
-
-      // Refresh sidebar
+      try { localStorage.setItem(PREFIX + 'session', JSON.stringify(session)); } catch(e) {}
       populateSidebarUser();
     }
 
