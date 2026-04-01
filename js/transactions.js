@@ -1876,24 +1876,53 @@
     var baseUrl = window.location.href.split('/').slice(0, -1).join('/');
     var portalUrl = baseUrl + '/client-portal.html?token=' + token;
 
-    // Build email body
-    var emailSubject = 'Your Transaction Portal — ' + (t.address || 'Real Estate Transaction');
-    var emailBody = 'Hi,\n\nYou can view your transaction details and progress at the link below:\n\n' +
-      portalUrl + '\n\n' +
-      'Transaction: ' + (t.address || '') + '\n' +
-      'Price: ' + Data.formatCurrencyFull(t.price) + '\n\n' +
-      'This link gives you read-only access to your transaction status, timeline, tasks, and upcoming appointments.\n\n' +
-      'If you have any questions, please don\'t hesitate to reach out.\n\n' +
-      'Best regards,\n' + (t.agent || 'Your Agent');
+    // Email templates
+    var session = Auth.getSession();
+    var agentName = session ? session.displayName : (t.agent || 'Your Agent');
+    var clientName = buyer.name || seller.name || '';
+    var clientFirst = clientName.split(' ')[0] || '';
 
-    var encodedSubject = encodeURIComponent(emailSubject);
-    var encodedBody = encodeURIComponent(emailBody);
+    var portalTemplates = [
+      {
+        name: 'Welcome to Your Portal',
+        subject: 'Your Transaction Portal — {{address}}',
+        body: 'Hi {{clientFirst}},\n\nGreat news! I\'ve set up a personal portal where you can track every step of your transaction.\n\n{{portalUrl}}\n\nHere you can see:\n- Real-time progress updates\n- Key dates and milestones\n- Everyone involved in the transaction\n- What to expect next at each stage\n\nI\'ll be posting updates here as we move through the process. Feel free to check it anytime!\n\nBest regards,\n{{agentName}}'
+      },
+      {
+        name: 'New Update Posted',
+        subject: 'Update on {{address}}',
+        body: 'Hi {{clientFirst}},\n\nI just posted a new update on your transaction portal. Check it out here:\n\n{{portalUrl}}\n\nLet me know if you have any questions!\n\n{{agentName}}'
+      },
+      {
+        name: 'Milestone Reached',
+        subject: 'Great news on {{address}}!',
+        body: 'Hi {{clientFirst}},\n\nWe\'ve hit another milestone on your transaction! Log in to your portal to see the latest progress:\n\n{{portalUrl}}\n\nWe\'re moving right along. I\'ll keep you updated every step of the way.\n\nBest,\n{{agentName}}'
+      },
+      {
+        name: 'Closing Coming Up',
+        subject: 'Closing is approaching — {{address}}',
+        body: 'Hi {{clientFirst}},\n\nWe\'re getting close to closing! Here\'s your portal link to review everything:\n\n{{portalUrl}}\n\nPlease make sure to:\n- Review your closing disclosure\n- Prepare your closing funds\n- Bring a valid photo ID to closing\n\nI\'ll be in touch with final details soon. Exciting times ahead!\n\nBest regards,\n{{agentName}}'
+      }
+    ];
+
+    var templateVars = {
+      address: t.address || '',
+      clientName: clientName,
+      clientFirst: clientFirst,
+      agentName: agentName,
+      portalUrl: portalUrl,
+      price: Data.formatCurrencyFull(t.price)
+    };
+
+    function mergeVars(text) {
+      return text.replace(/\{\{(\w+)\}\}/g, function (m, key) { return templateVars[key] || m; });
+    }
 
     // Build modal HTML
     var modalHtml = '<div class="modal-overlay open" id="shareClientModal">' +
-      '<div class="modal" style="max-width:560px;">' +
+      '<div class="modal" style="max-width:600px;">' +
         '<div class="modal-header">' +
-          '<h3>Share Portal Link</h3>' +
+          '<h3>Share Portal with Client</h3>' +
           '<button class="modal-close" data-action="close-share-modal">&times;</button>' +
         '</div>' +
         '<div class="modal-body">' +
@@ -1903,40 +1932,55 @@
               '<input type="text" id="sharePortalUrl" value="' + escapeHtml(portalUrl) + '" readonly style="flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;color:var(--gray-700);background:var(--gray-50);">' +
               '<button class="btn btn-primary btn-sm" data-action="copy-portal-link" style="white-space:nowrap;">Copy Link</button>' +
             '</div>' +
-          '</div>' +
-          '<div style="font-size:.78rem;color:var(--gray-400);margin-bottom:20px;">This link provides read-only access to the transaction progress, timeline, and upcoming appointments.</div>';
+          '</div>';
 
-    // Email buttons
-    var hasEmailButtons = false;
-    if (buyer.email || seller.email) {
-      modalHtml += '<div style="border-top:1px solid var(--gray-100);padding-top:16px;">' +
-        '<div style="font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:10px;">Send via Email</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    // Email compose section
+    var allEmails = [];
+    if (buyer.email) allEmails.push({ label: 'Buyer — ' + (buyer.name || buyer.email), email: buyer.email });
+    if (seller.email) allEmails.push({ label: 'Seller — ' + (seller.name || seller.email), email: seller.email });
 
-      if (buyer.email) {
-        modalHtml += '<a href="mailto:' + escapeHtml(buyer.email) + '?subject=' + encodedSubject + '&body=' + encodedBody + '" class="btn btn-outline btn-sm" style="text-decoration:none;">' +
-          '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>' +
-          'Send to Buyer (' + escapeHtml(buyer.name || buyer.email) + ')</a>';
-        hasEmailButtons = true;
-      }
+    modalHtml += '<div style="border-top:1px solid var(--gray-100);padding-top:16px;">' +
+      '<div style="font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:10px;">Email Client</div>';
 
-      if (seller.email) {
-        modalHtml += '<a href="mailto:' + escapeHtml(seller.email) + '?subject=' + encodedSubject + '&body=' + encodedBody + '" class="btn btn-outline btn-sm" style="text-decoration:none;">' +
-          '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>' +
-          'Send to Seller (' + escapeHtml(seller.name || seller.email) + ')</a>';
-        hasEmailButtons = true;
-      }
+    if (allEmails.length > 0) {
+      // Recipient selector
+      modalHtml += '<div class="form-group" style="margin-bottom:10px"><label style="font-size:.78rem;color:var(--gray-500)">To</label><select id="shareEmailTo" style="width:100%;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem">';
+      allEmails.forEach(function (e) {
+        modalHtml += '<option value="' + escapeHtml(e.email) + '">' + escapeHtml(e.label) + '</option>';
+      });
+      modalHtml += '</select></div>';
 
-      modalHtml += '</div></div>';
+      // Template selector
+      modalHtml += '<div class="form-group" style="margin-bottom:10px"><label style="font-size:.78rem;color:var(--gray-500)">Template</label><select id="shareEmailTemplate" style="width:100%;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem">';
+      portalTemplates.forEach(function (tpl, i) {
+        modalHtml += '<option value="' + i + '">' + escapeHtml(tpl.name) + '</option>';
+      });
+      modalHtml += '</select></div>';
+
+      // Subject
+      modalHtml += '<div class="form-group" style="margin-bottom:10px"><label style="font-size:.78rem;color:var(--gray-500)">Subject</label>' +
+        '<input type="text" id="shareEmailSubject" value="' + escapeHtml(mergeVars(portalTemplates[0].subject)) + '" style="width:100%;padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem"></div>';
+
+      // Body
+      modalHtml += '<div class="form-group" style="margin-bottom:12px"><label style="font-size:.78rem;color:var(--gray-500)">Message</label>' +
+        '<textarea id="shareEmailBody" rows="8" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;font-family:inherit;line-height:1.6;resize:vertical">' + escapeHtml(mergeVars(portalTemplates[0].body)) + '</textarea></div>';
+
+      // Buttons
+      modalHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button class="btn btn-primary btn-sm" data-action="share-open-email" style="flex:1">Open in Email App</button>' +
+        '<button class="btn btn-outline btn-sm" data-action="share-copy-email">Copy Email Text</button>' +
+        '</div>';
+
+      // Store templates data for JS access
+      modalHtml += '<script id="portalTemplatesData" type="application/json">' + JSON.stringify(portalTemplates.map(function (tpl) {
+        return { subject: mergeVars(tpl.subject), body: mergeVars(tpl.body) };
+      })) + '<\/script>';
+    } else {
+      modalHtml += '<div style="font-size:.82rem;color:var(--gray-400);font-style:italic;padding:8px 0">' +
+        'Add buyer or seller email addresses in the Parties section to email them the portal link.</div>';
     }
 
-    if (!hasEmailButtons) {
-      modalHtml += '<div style="border-top:1px solid var(--gray-100);padding-top:16px;font-size:.82rem;color:var(--gray-400);font-style:italic;">' +
-        'Add buyer or seller email addresses to enable email sharing.' +
-      '</div>';
-    }
-
-    modalHtml += '</div>' +
+    modalHtml += '</div></div>' +
         '<div class="modal-footer">' +
           '<button class="btn btn-outline" data-action="close-share-modal">Close</button>' +
         '</div>' +
@@ -1956,6 +2000,23 @@
     modal.addEventListener('click', function (e) {
       if (e.target === modal) modal.remove();
     });
+
+    // Template selector change
+    var tplSelect = document.getElementById('shareEmailTemplate');
+    if (tplSelect) {
+      tplSelect.addEventListener('change', function () {
+        var dataEl = document.getElementById('portalTemplatesData');
+        if (!dataEl) return;
+        try {
+          var templates = JSON.parse(dataEl.textContent);
+          var idx = parseInt(this.value);
+          if (templates[idx]) {
+            document.getElementById('shareEmailSubject').value = templates[idx].subject;
+            document.getElementById('shareEmailBody').value = templates[idx].body;
+          }
+        } catch (e) {}
+      });
+    }
   }
 
   // Handle share modal actions via delegation
@@ -1965,8 +2026,8 @@
     var action = target.getAttribute('data-action');
 
     if (action === 'close-share-modal') {
-      var modal = document.getElementById('shareClientModal');
-      if (modal) modal.remove();
+      var m = document.getElementById('shareClientModal');
+      if (m) m.remove();
     }
 
     if (action === 'copy-portal-link') {
@@ -1985,6 +2046,29 @@
           document.execCommand('copy');
           showToast('Portal link copied to clipboard!');
         }
+      }
+    }
+
+    if (action === 'share-open-email') {
+      var toEl = document.getElementById('shareEmailTo');
+      var subEl = document.getElementById('shareEmailSubject');
+      var bodyEl = document.getElementById('shareEmailBody');
+      if (toEl && subEl && bodyEl) {
+        window.open('mailto:' + encodeURIComponent(toEl.value) + '?subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value));
+        showToast('Email app opened!');
+      }
+    }
+
+    if (action === 'share-copy-email') {
+      var subEl = document.getElementById('shareEmailSubject');
+      var bodyEl = document.getElementById('shareEmailBody');
+      if (subEl && bodyEl) {
+        var text = 'Subject: ' + subEl.value + '\n\n' + bodyEl.value;
+        navigator.clipboard.writeText(text).then(function () {
+          showToast('Email text copied to clipboard!');
+        }).catch(function () {
+          showToast('Failed to copy', 'error');
+        });
       }
     }
   });
