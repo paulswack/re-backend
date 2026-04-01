@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me';
+const JWT_SECRET = process.env.JWT_SECRET || 're-backoffice-jwt-secret-change-this-in-production';
 
 function generateToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
