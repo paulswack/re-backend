@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { status, agent_id } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('listings')
       .select('*, listing_parties(*)')
       .eq('team_id', req.user.teamId)
@@ -29,7 +29,7 @@ router.get('/', requireAuth, async (req, res) => {
 // GET /api/listings/:id
 router.get('/:id', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('listings')
       .select('*, listing_parties(*)')
       .eq('id', req.params.id)
@@ -51,7 +51,7 @@ router.post('/', requireAuth, async (req, res) => {
     const { parties, ...fields } = req.body;
     fields.team_id = req.user.teamId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('listings')
       .insert(fields)
       .select()
@@ -78,7 +78,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('listings')
       .update(fields)
       .eq('id', req.params.id)
@@ -106,7 +106,7 @@ router.put('/:id', requireAuth, async (req, res) => {
 // DELETE /api/listings/:id
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('listings')
       .delete()
       .eq('id', req.params.id)

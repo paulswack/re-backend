@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Create team
-    const { data: team, error: teamErr } = await supabase
+    const { data: team, error: teamErr } = await getSupabase()
       .from('teams')
       .insert({
         name: teamName || displayName + "'s Team",
@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create team lead user
-    const { data: user, error: userErr } = await supabase
+    const { data: user, error: userErr } = await getSupabase()
       .from('users')
       .insert({
         team_id: team.id,
@@ -101,7 +101,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const { data: user, error } = await supabase
+    const { data: user, error } = await getSupabase()
       .from('users')
       .select('*, teams(*)')
       .eq('username', username)
@@ -120,7 +120,7 @@ router.post('/login', async (req, res) => {
 
     // Apply dev access code if provided
     if (accessCode === DEV_CODE && user.teams) {
-      await supabase
+      await getSupabase()
         .from('teams')
         .update({ account_type: 'admin_free' })
         .eq('id', user.team_id);
@@ -169,7 +169,7 @@ router.post('/login', async (req, res) => {
 // GET /api/auth/me — get current user info
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    const { data: user } = await supabase
+    const { data: user } = await getSupabase()
       .from('users')
       .select('*, teams(*)')
       .eq('id', req.user.userId)
@@ -204,7 +204,7 @@ async function seedDefaults(teamId) {
   ];
 
   for (const tpl of templates) {
-    const { data: template } = await supabase
+    const { data: template } = await getSupabase()
       .from('checklist_templates')
       .insert(tpl)
       .select()

@@ -12,7 +12,7 @@ const router = express.Router();
 router.get('/requests', requireAuth, async (req, res) => {
   try {
     const { user_id, status } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('review_requests')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -37,7 +37,7 @@ router.post('/requests', requireAuth, async (req, res) => {
     fields.team_id = req.user.teamId;
     if (!fields.user_id) fields.user_id = req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('review_requests')
       .insert(fields)
       .select()
@@ -58,7 +58,7 @@ router.put('/requests/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('review_requests')
       .update(fields)
       .eq('id', req.params.id)
@@ -77,7 +77,7 @@ router.put('/requests/:id', requireAuth, async (req, res) => {
 // DELETE /api/reviews/requests/:id
 router.delete('/requests/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('review_requests')
       .delete()
       .eq('id', req.params.id)
@@ -100,7 +100,7 @@ router.get('/scores', requireAuth, async (req, res) => {
   try {
     const userId = req.query.user_id || req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('review_scores')
       .select('*')
       .eq('user_id', userId)
@@ -120,7 +120,7 @@ router.post('/scores', requireAuth, async (req, res) => {
     const { user_id, platform, review_count, avg_rating, goal } = req.body;
     const targetUserId = user_id || req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('review_scores')
       .upsert({
         user_id: targetUserId,
@@ -144,7 +144,7 @@ router.post('/scores', requireAuth, async (req, res) => {
 // DELETE /api/reviews/scores/:id
 router.delete('/scores/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('review_scores')
       .delete()
       .eq('id', req.params.id);
@@ -166,7 +166,7 @@ router.get('/links', requireAuth, async (req, res) => {
   try {
     const userId = req.query.user_id || req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('review_links')
       .select('*')
       .eq('user_id', userId)
@@ -186,7 +186,7 @@ router.post('/links', requireAuth, async (req, res) => {
     const { user_id, platform, url, is_default } = req.body;
     const targetUserId = user_id || req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('review_links')
       .upsert({
         user_id: targetUserId,
@@ -208,7 +208,7 @@ router.post('/links', requireAuth, async (req, res) => {
 // DELETE /api/reviews/links/:id
 router.delete('/links/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('review_links')
       .delete()
       .eq('id', req.params.id);
@@ -228,7 +228,7 @@ router.delete('/links/:id', requireAuth, async (req, res) => {
 // GET /api/reviews/email-templates
 router.get('/email-templates', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('email_templates')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -249,7 +249,7 @@ router.post('/email-templates', requireAuth, async (req, res) => {
     fields.team_id = req.user.teamId;
     if (!fields.user_id) fields.user_id = req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('email_templates')
       .insert(fields)
       .select()
@@ -270,7 +270,7 @@ router.put('/email-templates/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('email_templates')
       .update(fields)
       .eq('id', req.params.id)
@@ -289,7 +289,7 @@ router.put('/email-templates/:id', requireAuth, async (req, res) => {
 // DELETE /api/reviews/email-templates/:id
 router.delete('/email-templates/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('email_templates')
       .delete()
       .eq('id', req.params.id)

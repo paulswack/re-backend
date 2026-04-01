@@ -11,7 +11,7 @@ const router = express.Router();
 // GET /api/checklists/templates
 router.get('/templates', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('checklist_templates')
       .select('*, checklist_template_items(*)')
       .eq('team_id', req.user.teamId)
@@ -31,7 +31,7 @@ router.post('/templates', requireAuth, async (req, res) => {
     const { items, ...fields } = req.body;
     fields.team_id = req.user.teamId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('checklist_templates')
       .insert(fields)
       .select()
@@ -49,7 +49,7 @@ router.post('/templates', requireAuth, async (req, res) => {
     }
 
     // Return with items
-    const { data: full } = await supabase
+    const { data: full } = await getSupabase()
       .from('checklist_templates')
       .select('*, checklist_template_items(*)')
       .eq('id', data.id)
@@ -69,7 +69,7 @@ router.put('/templates/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('checklist_templates')
       .update(fields)
       .eq('id', req.params.id)
@@ -90,7 +90,7 @@ router.put('/templates/:id', requireAuth, async (req, res) => {
       }
     }
 
-    const { data: full } = await supabase
+    const { data: full } = await getSupabase()
       .from('checklist_templates')
       .select('*, checklist_template_items(*)')
       .eq('id', req.params.id)
@@ -106,7 +106,7 @@ router.put('/templates/:id', requireAuth, async (req, res) => {
 // DELETE /api/checklists/templates/:id
 router.delete('/templates/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('checklist_templates')
       .delete()
       .eq('id', req.params.id)
@@ -127,7 +127,7 @@ router.delete('/templates/:id', requireAuth, async (req, res) => {
 // GET /api/checklists/deal/:entityType/:entityId
 router.get('/deal/:entityType/:entityId', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('checklists')
       .select('*, checklist_items(*)')
       .eq('team_id', req.user.teamId)
@@ -157,7 +157,7 @@ router.post('/deal', requireAuth, async (req, res) => {
     const { entity_type, entity_id, template_id } = req.body;
 
     // Get template with items
-    const { data: template } = await supabase
+    const { data: template } = await getSupabase()
       .from('checklist_templates')
       .select('*, checklist_template_items(*)')
       .eq('id', template_id)
@@ -167,7 +167,7 @@ router.post('/deal', requireAuth, async (req, res) => {
     if (!template) return res.status(404).json({ error: 'Template not found' });
 
     // Create checklist
-    const { data: checklist, error } = await supabase
+    const { data: checklist, error } = await getSupabase()
       .from('checklists')
       .insert({
         team_id: req.user.teamId,
@@ -193,7 +193,7 @@ router.post('/deal', requireAuth, async (req, res) => {
     }
 
     // Return full checklist
-    const { data: full } = await supabase
+    const { data: full } = await getSupabase()
       .from('checklists')
       .select('*, checklist_items(*)')
       .eq('id', checklist.id)
@@ -210,7 +210,7 @@ router.post('/deal', requireAuth, async (req, res) => {
 router.put('/items/:id/toggle', requireAuth, async (req, res) => {
   try {
     // Get current state
-    const { data: item } = await supabase
+    const { data: item } = await getSupabase()
       .from('checklist_items')
       .select('*, checklists!inner(team_id)')
       .eq('id', req.params.id)
@@ -222,7 +222,7 @@ router.put('/items/:id/toggle', requireAuth, async (req, res) => {
     }
 
     const nowCompleted = !item.completed;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('checklist_items')
       .update({
         completed: nowCompleted,
@@ -245,7 +245,7 @@ router.put('/items/:id/toggle', requireAuth, async (req, res) => {
 router.post('/:checklistId/items', requireAuth, async (req, res) => {
   try {
     // Verify ownership
-    const { data: checklist } = await supabase
+    const { data: checklist } = await getSupabase()
       .from('checklists')
       .select('id')
       .eq('id', req.params.checklistId)
@@ -255,7 +255,7 @@ router.post('/:checklistId/items', requireAuth, async (req, res) => {
     if (!checklist) return res.status(404).json({ error: 'Checklist not found' });
 
     const { label, sort_order } = req.body;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('checklist_items')
       .insert({
         checklist_id: req.params.checklistId,
@@ -277,7 +277,7 @@ router.post('/:checklistId/items', requireAuth, async (req, res) => {
 router.delete('/items/:id', requireAuth, async (req, res) => {
   try {
     // Verify ownership via join
-    const { data: item } = await supabase
+    const { data: item } = await getSupabase()
       .from('checklist_items')
       .select('*, checklists!inner(team_id)')
       .eq('id', req.params.id)
@@ -288,7 +288,7 @@ router.delete('/items/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('checklist_items')
       .delete()
       .eq('id', req.params.id);

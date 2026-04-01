@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/settings — team settings
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('teams')
       .select('settings')
       .eq('id', req.user.teamId)
@@ -27,7 +27,7 @@ router.put('/', requireAuth, requireLead, async (req, res) => {
     const { settings } = req.body;
 
     // Merge with existing settings
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('teams')
       .select('settings')
       .eq('id', req.user.teamId)
@@ -35,7 +35,7 @@ router.put('/', requireAuth, requireLead, async (req, res) => {
 
     const merged = { ...(existing?.settings || {}), ...settings };
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('teams')
       .update({ settings: merged })
       .eq('id', req.user.teamId)

@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/updates/:entityType/:entityId
 router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('updates')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -31,7 +31,7 @@ router.post('/', requireAuth, async (req, res) => {
     if (!fields.author_id) fields.author_id = req.user.userId;
     if (!fields.author_name) fields.author_name = req.user.displayName;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('updates')
       .insert(fields)
       .select()

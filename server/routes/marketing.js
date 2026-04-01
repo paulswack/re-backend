@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { user_id, period_key, period_type } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('marketing_activities')
       .select('*')
       .eq('team_id', req.user.teamId);
@@ -35,7 +35,7 @@ router.post('/toggle', requireAuth, async (req, res) => {
     const targetUserId = user_id || req.user.userId;
 
     // Check if exists
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabase()
       .from('marketing_activities')
       .select('*')
       .eq('user_id', targetUserId)
@@ -45,7 +45,7 @@ router.post('/toggle', requireAuth, async (req, res) => {
 
     if (existing) {
       // Delete to toggle off
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('marketing_activities')
         .delete()
         .eq('id', existing.id);
@@ -54,7 +54,7 @@ router.post('/toggle', requireAuth, async (req, res) => {
       res.json({ toggled: false, id: existing.id });
     } else {
       // Insert to toggle on
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('marketing_activities')
         .insert({
           team_id: req.user.teamId,
@@ -80,7 +80,7 @@ router.put('/:id/note', requireAuth, async (req, res) => {
   try {
     const { note } = req.body;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('marketing_activities')
       .update({ note })
       .eq('id', req.params.id)

@@ -11,7 +11,7 @@ const router = express.Router();
 // GET /api/misc/announcements
 router.get('/announcements', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('announcements')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -30,7 +30,7 @@ router.get('/announcements', requireAuth, async (req, res) => {
 router.post('/announcements', requireAuth, requireLead, async (req, res) => {
   try {
     const { text, pinned } = req.body;
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('announcements')
       .insert({
         team_id: req.user.teamId,
@@ -56,7 +56,7 @@ router.put('/announcements/:id', requireAuth, requireLead, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('announcements')
       .update(fields)
       .eq('id', req.params.id)
@@ -75,7 +75,7 @@ router.put('/announcements/:id', requireAuth, requireLead, async (req, res) => {
 // DELETE /api/misc/announcements/:id (Team Lead only)
 router.delete('/announcements/:id', requireAuth, requireLead, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('announcements')
       .delete()
       .eq('id', req.params.id)
@@ -97,7 +97,7 @@ router.delete('/announcements/:id', requireAuth, requireLead, async (req, res) =
 router.get('/vendors', requireAuth, async (req, res) => {
   try {
     const { category } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('vendors')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -120,7 +120,7 @@ router.post('/vendors', requireAuth, async (req, res) => {
     const fields = { ...req.body };
     fields.team_id = req.user.teamId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('vendors')
       .insert(fields)
       .select()
@@ -141,7 +141,7 @@ router.put('/vendors/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('vendors')
       .update(fields)
       .eq('id', req.params.id)
@@ -160,7 +160,7 @@ router.put('/vendors/:id', requireAuth, async (req, res) => {
 // DELETE /api/misc/vendors/:id
 router.delete('/vendors/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('vendors')
       .delete()
       .eq('id', req.params.id)
@@ -182,7 +182,7 @@ router.delete('/vendors/:id', requireAuth, async (req, res) => {
 router.get('/meeting-notes', requireAuth, async (req, res) => {
   try {
     const { agent_id } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('meeting_notes')
       .select('*, meeting_action_items(*)')
       .eq('team_id', req.user.teamId)
@@ -206,7 +206,7 @@ router.post('/meeting-notes', requireAuth, async (req, res) => {
     fields.team_id = req.user.teamId;
     if (!fields.created_by) fields.created_by = req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('meeting_notes')
       .insert(fields)
       .select()
@@ -223,7 +223,7 @@ router.post('/meeting-notes', requireAuth, async (req, res) => {
       await getSupabase().from('meeting_action_items').insert(items);
     }
 
-    const { data: full } = await supabase
+    const { data: full } = await getSupabase()
       .from('meeting_notes')
       .select('*, meeting_action_items(*)')
       .eq('id', data.id)
@@ -243,7 +243,7 @@ router.put('/meeting-notes/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('meeting_notes')
       .update(fields)
       .eq('id', req.params.id)
@@ -265,7 +265,7 @@ router.put('/meeting-notes/:id', requireAuth, async (req, res) => {
       }
     }
 
-    const { data: full } = await supabase
+    const { data: full } = await getSupabase()
       .from('meeting_notes')
       .select('*, meeting_action_items(*)')
       .eq('id', req.params.id)
@@ -281,7 +281,7 @@ router.put('/meeting-notes/:id', requireAuth, async (req, res) => {
 // DELETE /api/misc/meeting-notes/:id
 router.delete('/meeting-notes/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('meeting_notes')
       .delete()
       .eq('id', req.params.id)
@@ -305,7 +305,7 @@ router.get('/agent-goals', requireAuth, async (req, res) => {
     const { user_id, year } = req.query;
 
     // Get all team member IDs for scoping
-    const { data: teamUsers } = await supabase
+    const { data: teamUsers } = await getSupabase()
       .from('users')
       .select('id')
       .eq('team_id', req.user.teamId);
@@ -313,7 +313,7 @@ router.get('/agent-goals', requireAuth, async (req, res) => {
     const userIds = (teamUsers || []).map(u => u.id);
     if (userIds.length === 0) return res.json([]);
 
-    let query = supabase
+    let query = getSupabase()
       .from('agent_goals')
       .select('*')
       .in('user_id', userIds);
@@ -336,7 +336,7 @@ router.post('/agent-goals', requireAuth, async (req, res) => {
     const { user_id, year, closings_goal, volume_goal } = req.body;
     const targetUserId = user_id || req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('agent_goals')
       .upsert({
         user_id: targetUserId,
@@ -361,7 +361,7 @@ router.put('/agent-goals/:id', requireAuth, async (req, res) => {
     const fields = { ...req.body };
     delete fields.id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('agent_goals')
       .update(fields)
       .eq('id', req.params.id)
@@ -379,7 +379,7 @@ router.put('/agent-goals/:id', requireAuth, async (req, res) => {
 // DELETE /api/misc/agent-goals/:id
 router.delete('/agent-goals/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('agent_goals')
       .delete()
       .eq('id', req.params.id);
@@ -400,7 +400,7 @@ router.delete('/agent-goals/:id', requireAuth, async (req, res) => {
 router.get('/bold100', requireAuth, async (req, res) => {
   try {
     const { user_id, sprint_key } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('bold100_contacts')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -425,7 +425,7 @@ router.post('/bold100', requireAuth, async (req, res) => {
     fields.team_id = req.user.teamId;
     if (!fields.user_id) fields.user_id = req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('bold100_contacts')
       .insert(fields)
       .select()
@@ -446,7 +446,7 @@ router.put('/bold100/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('bold100_contacts')
       .update(fields)
       .eq('id', req.params.id)
@@ -465,7 +465,7 @@ router.put('/bold100/:id', requireAuth, async (req, res) => {
 // DELETE /api/misc/bold100/:id
 router.delete('/bold100/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('bold100_contacts')
       .delete()
       .eq('id', req.params.id)
@@ -487,7 +487,7 @@ router.delete('/bold100/:id', requireAuth, async (req, res) => {
 router.get('/knowledge', requireAuth, async (req, res) => {
   try {
     const { category } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('knowledge_articles')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -512,7 +512,7 @@ router.post('/knowledge', requireAuth, async (req, res) => {
     fields.team_id = req.user.teamId;
     if (!fields.author_id) fields.author_id = req.user.userId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('knowledge_articles')
       .insert(fields)
       .select()
@@ -533,7 +533,7 @@ router.put('/knowledge/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('knowledge_articles')
       .update(fields)
       .eq('id', req.params.id)
@@ -552,7 +552,7 @@ router.put('/knowledge/:id', requireAuth, async (req, res) => {
 // DELETE /api/misc/knowledge/:id
 router.delete('/knowledge/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('knowledge_articles')
       .delete()
       .eq('id', req.params.id)
@@ -574,7 +574,7 @@ router.delete('/knowledge/:id', requireAuth, async (req, res) => {
 router.get('/recruits', requireAuth, async (req, res) => {
   try {
     const { status } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('recruits')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -597,7 +597,7 @@ router.post('/recruits', requireAuth, async (req, res) => {
     const fields = { ...req.body };
     fields.team_id = req.user.teamId;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recruits')
       .insert(fields)
       .select()
@@ -618,7 +618,7 @@ router.put('/recruits/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recruits')
       .update(fields)
       .eq('id', req.params.id)
@@ -637,7 +637,7 @@ router.put('/recruits/:id', requireAuth, async (req, res) => {
 // DELETE /api/misc/recruits/:id
 router.delete('/recruits/:id', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('recruits')
       .delete()
       .eq('id', req.params.id)
@@ -659,7 +659,7 @@ router.delete('/recruits/:id', requireAuth, async (req, res) => {
 router.get('/notifications', requireAuth, async (req, res) => {
   try {
     const { unread_only } = req.query;
-    let query = supabase
+    let query = getSupabase()
       .from('notifications')
       .select('*')
       .eq('team_id', req.user.teamId)
@@ -681,7 +681,7 @@ router.get('/notifications', requireAuth, async (req, res) => {
 // PUT /api/misc/notifications/:id/read — mark single as read
 router.put('/notifications/:id/read', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('notifications')
       .update({ is_read: true })
       .eq('id', req.params.id)
@@ -700,7 +700,7 @@ router.put('/notifications/:id/read', requireAuth, async (req, res) => {
 // PUT /api/misc/notifications/read-all — mark all as read for user
 router.put('/notifications/read-all', requireAuth, async (req, res) => {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('notifications')
       .update({ is_read: true })
       .eq('team_id', req.user.teamId)

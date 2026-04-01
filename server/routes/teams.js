@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/teams — current team info
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('teams')
       .select('*')
       .eq('id', req.user.teamId)
@@ -30,7 +30,7 @@ router.put('/', requireAuth, requireLead, async (req, res) => {
     delete fields.stripe_customer_id;
     delete fields.stripe_subscription_id;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('teams')
       .update(fields)
       .eq('id', req.user.teamId)

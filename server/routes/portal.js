@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /api/portal/:token — public, no auth required
 router.get('/:token', async (req, res) => {
   try {
-    const { data: link, error } = await supabase
+    const { data: link, error } = await getSupabase()
       .from('portal_links')
       .select('*')
       .eq('token', req.params.token)
@@ -28,28 +28,28 @@ router.get('/:token', async (req, res) => {
     let checklists = [];
 
     if (link.entity_type === 'transaction') {
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from('transactions')
         .select('*')
         .eq('id', link.entity_id)
         .single();
       entity = data;
 
-      const { data: p } = await supabase
+      const { data: p } = await getSupabase()
         .from('transaction_parties')
         .select('*')
         .eq('transaction_id', link.entity_id)
         .order('sort_order');
       parties = p || [];
     } else if (link.entity_type === 'listing') {
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from('listings')
         .select('*')
         .eq('id', link.entity_id)
         .single();
       entity = data;
 
-      const { data: p } = await supabase
+      const { data: p } = await getSupabase()
         .from('listing_parties')
         .select('*')
         .eq('listing_id', link.entity_id)
@@ -58,7 +58,7 @@ router.get('/:token', async (req, res) => {
     }
 
     // Fetch updates
-    const { data: u } = await supabase
+    const { data: u } = await getSupabase()
       .from('updates')
       .select('*')
       .eq('entity_type', link.entity_type)
@@ -67,7 +67,7 @@ router.get('/:token', async (req, res) => {
     updates = u || [];
 
     // Fetch checklists
-    const { data: cl } = await supabase
+    const { data: cl } = await getSupabase()
       .from('checklists')
       .select('*, checklist_items(*)')
       .eq('entity_type', link.entity_type)
@@ -78,7 +78,7 @@ router.get('/:token', async (req, res) => {
     let agent = null;
     const agentId = entity?.agent_id;
     if (agentId) {
-      const { data: a } = await supabase
+      const { data: a } = await getSupabase()
         .from('users')
         .select('id, display_name, email, phone, photo_url')
         .eq('id', agentId)
@@ -107,7 +107,7 @@ router.post('/', requireAuth, async (req, res) => {
 
     const token = crypto.randomBytes(32).toString('hex');
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('portal_links')
       .insert({
         team_id: req.user.teamId,
@@ -133,7 +133,7 @@ router.post('/', requireAuth, async (req, res) => {
 // GET /api/portal/links/:entityType/:entityId — get links for an entity (authenticated)
 router.get('/links/:entityType/:entityId', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('portal_links')
       .select('*')
       .eq('team_id', req.user.teamId)

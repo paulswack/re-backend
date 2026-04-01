@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /api/users — team members
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('users')
       .select('id, team_id, username, display_name, role, email, phone, photo_url, license_number, brokerage, assigned_to, profile, is_active, created_at')
       .eq('team_id', req.user.teamId)
@@ -25,7 +25,7 @@ router.get('/', requireAuth, async (req, res) => {
 // GET /api/users/:id
 router.get('/:id', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('users')
       .select('id, team_id, username, display_name, role, email, phone, photo_url, license_number, brokerage, assigned_to, profile, is_active, created_at')
       .eq('id', req.params.id)
@@ -52,7 +52,7 @@ router.post('/', requireAuth, requireLead, async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, 10);
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('users')
       .insert({
         team_id: req.user.teamId,
@@ -99,7 +99,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       delete fields.password;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('users')
       .update(fields)
       .eq('id', req.params.id)
@@ -122,7 +122,7 @@ router.delete('/:id', requireAuth, requireLead, async (req, res) => {
       return res.status(400).json({ error: 'Cannot delete yourself' });
     }
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('users')
       .delete()
       .eq('id', req.params.id)
