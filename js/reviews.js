@@ -973,7 +973,8 @@
       var body = document.getElementById('ceBody').value;
 
       if (action === 'open-review-gmail') {
-        var a = document.createElement('a'); a.href = 'https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(r.clientEmail) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=' + encodeURIComponent(r.clientEmail) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+        window.open(gmailUrl, 'gmail_compose', 'width=700,height=600,scrollbars=yes');
       } else if (action === 'open-review-outlook') {
         var a = document.createElement('a'); a.href = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(r.clientEmail) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       } else {

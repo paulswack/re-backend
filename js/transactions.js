@@ -2059,8 +2059,8 @@
       var subEl = document.getElementById('shareEmailSubject');
       var bodyEl = document.getElementById('shareEmailBody');
       if (toEl && subEl && bodyEl) {
-        var gmailUrl = 'https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(toEl.value) + '&su=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
-        var a=document.createElement('a');a.href=gmailUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
+        var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=' + encodeURIComponent(toEl.value) + '&su=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
+        window.open(gmailUrl, 'gmail_compose', 'width=700,height=600,scrollbars=yes');
         showToast('Gmail opened!');
       }
     }
