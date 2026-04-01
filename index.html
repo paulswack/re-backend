@@ -1267,10 +1267,6 @@
             <label for="password">Password</label>
             <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
           </div>
-          <div class="form-group" style="margin-top:4px">
-            <label for="accessCode" style="font-size:.78rem;color:#64748B">Access Code (optional)</label>
-            <input type="text" id="accessCode" placeholder="Enter access code if you have one" style="font-size:.85rem">
-          </div>
           <button type="submit" class="login-btn">Sign In</button>
           <div class="login-error" id="loginError">Invalid username or password.</div>
         </form>
@@ -1405,18 +1401,15 @@
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
 
-        var accessCode = (document.getElementById('accessCode').value || '').trim();
-
         // Try server API login first
         if (window.location.protocol !== 'file:') {
-          API.login(username, password, accessCode).then(function (res) {
+          API.login(username, password).then(function (res) {
             if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
             window.location.href = 'dashboard.html';
           }).catch(function () {
             // Fallback to localStorage
             if (Auth.login(username, password)) {
               if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
-              if (accessCode === 'REBACKOFFICE-ADMIN-2026') localStorage.setItem('reb_account_type', 'admin_free');
               window.location.href = 'dashboard.html';
             } else {
               errorEl.style.display = 'block';
@@ -1425,7 +1418,6 @@
         } else {
           if (Auth.login(username, password)) {
             if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
-            if (accessCode === 'REBACKOFFICE-ADMIN-2026') localStorage.setItem('reb_account_type', 'admin_free');
             window.location.href = 'dashboard.html';
           } else {
             errorEl.style.display = 'block';
