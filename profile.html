@@ -67,42 +67,22 @@
 
           <!-- Profile Form -->
           <div style="margin-top:24px">
-            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div class="form-group">
-                <label for="pDisplayName">Display Name</label>
-                <input type="text" id="pDisplayName" placeholder="Your full name">
-              </div>
-              <div class="form-group">
-                <label for="pEmail">Email</label>
-                <input type="email" id="pEmail" placeholder="your@email.com">
-              </div>
-            </div>
-            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div class="form-group">
-                <label for="pPhone">Phone Number</label>
-                <input type="tel" id="pPhone" placeholder="(555) 555-5555">
-              </div>
-              <div class="form-group">
-                <label for="pLicense">License Number</label>
-                <input type="text" id="pLicense" placeholder="DRE# 01234567">
-              </div>
-            </div>
-            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div class="form-group">
-                <label for="pYears">Years of Experience</label>
-                <input type="number" id="pYears" placeholder="0" min="0">
-              </div>
-              <div class="form-group">
-                <label for="pSpecialties">Specialties</label>
-                <input type="text" id="pSpecialties" placeholder="Buyer, Seller, Luxury, etc.">
-              </div>
+            <div class="form-group">
+              <label for="pEmail">Email</label>
+              <input type="email" id="pEmail" placeholder="your@email.com">
             </div>
             <div class="form-group">
-              <label for="pBio">Bio</label>
-              <textarea id="pBio" rows="3" placeholder="Tell clients about yourself..." style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:.88rem;font-family:inherit;resize:vertical"></textarea>
+              <label for="pPhone">Phone Number</label>
+              <input type="tel" id="pPhone" placeholder="(555) 555-5555">
             </div>
             <button id="saveProfileBtn" class="btn btn-primary" style="margin-top:12px;width:100%">Save Profile</button>
           </div>
+          <!-- Hidden fields so JS doesn't break -->
+          <input type="hidden" id="pDisplayName">
+          <input type="hidden" id="pLicense">
+          <input type="hidden" id="pYears">
+          <input type="hidden" id="pSpecialties">
+          <input type="hidden" id="pBio">
 
         </div>
       </div>
