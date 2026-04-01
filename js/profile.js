@@ -111,11 +111,8 @@
 
   // ---- Save ----
   document.getElementById('saveProfileBtn').addEventListener('click', function () {
-    var displayName = document.getElementById('pDisplayName').value.trim();
-    if (!displayName) {
-      showToast('Display name is required', 'error');
-      return;
-    }
+    var displayName = document.getElementById('pDisplayName').value.trim() || session.displayName || 'Agent';
+    document.getElementById('pDisplayName').value = displayName;
 
     var profiles = getProfiles();
     var specialtiesRaw = document.getElementById('pSpecialties').value;
