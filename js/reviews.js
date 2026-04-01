@@ -277,20 +277,46 @@
     h += '<button class="btn btn-outline btn-sm" data-action="auto-detect">Auto-Detect from Closed Deals</button>';
     h += '</div>';
 
-    // Recent requests
+    // All requests with actions right on the dashboard
     h += '<div class="lb-card">';
-    h += '<div class="lb-card-header"><div><div class="lb-card-title">Recent Requests</div><div class="lb-card-sub">Your latest review requests and their status</div></div></div>';
-    var recent = requests.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); }).slice(0, 8);
-    if (!recent.length) {
-      h += '<div style="padding:40px;text-align:center;color:var(--gray-400);font-size:.85rem">No review requests yet. Click "New Review Request" or "Auto-Detect" to get started.</div>';
+    h += '<div class="lb-card-header"><div><div class="lb-card-title">Review Requests</div><div class="lb-card-sub">Create, send, and track — all from here</div></div></div>';
+
+    // Filter tabs inline
+    h += '<div style="display:flex;gap:6px;padding:12px 20px 0;flex-wrap:wrap">';
+    ['all', 'pending', 'sent', 'received', 'overdue'].forEach(function (f) {
+      h += '<button class="lb-filter-btn' + (currentFilter === f ? ' active' : '') + '" data-action="filter-requests" data-filter="' + f + '" style="font-size:.7rem;padding:3px 10px">' + f.charAt(0).toUpperCase() + f.slice(1) + '</button>';
+    });
+    h += '</div>';
+
+    var filtered = requests.slice();
+    if (currentFilter !== 'all') {
+      if (currentFilter === 'overdue') {
+        filtered = requests.filter(function (r) { return r.status === 'sent' && daysSince(r.sentDate) > 14; });
+      } else {
+        filtered = requests.filter(function (r) { return r.status === currentFilter; });
+      }
+    }
+    filtered.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+
+    if (!filtered.length) {
+      h += '<div style="padding:40px;text-align:center;color:var(--gray-400);font-size:.85rem">No requests' + (currentFilter !== 'all' ? ' matching this filter' : ' yet') + '. Click "New Review Request" to get started.</div>';
     } else {
-      recent.forEach(function (r) {
-        h += '<div class="lb-row" style="cursor:pointer" data-action="view-request" data-id="' + r.id + '">';
-        h += '<div style="flex:1;min-width:0"><div class="lb-row-name">' + escHtml(r.clientName) + '</div>';
-        h += '<div class="lb-row-sub">' + escHtml(r.clientEmail || 'No email') + ' · ' + (r.source ? escHtml(r.source) : 'No platform') + ' · ' + formatDate(r.createdAt) + '</div></div>';
-        h += '<div style="display:flex;align-items:center;gap:8px">';
+      filtered.forEach(function (r) {
+        var isOverdue = r.status === 'sent' && daysSince(r.sentDate) > 14;
+        h += '<div class="lb-row" style="flex-wrap:wrap;gap:8px">';
+        h += '<div style="flex:1;min-width:180px"><div class="lb-row-name">' + escHtml(r.clientName) + '</div>';
+        h += '<div class="lb-row-sub">' + escHtml(r.clientEmail || 'No email') + (r.source ? ' · ' + escHtml(r.source) : '') + '</div></div>';
+        h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
         if (r.status === 'received' && r.rating) h += '<span>' + starsHtml(r.rating, '14px') + '</span>';
-        h += statusBadge(r.status);
+        h += statusBadge(isOverdue ? 'overdue' : r.status);
+        if (r.status === 'pending') {
+          h += '<button class="btn btn-primary btn-sm" style="font-size:.68rem;padding:3px 10px" data-action="compose-email" data-id="' + r.id + '">Send Email</button>';
+        }
+        if (r.status === 'sent') {
+          h += '<button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:3px 10px" data-action="compose-email" data-id="' + r.id + '">Follow Up</button>';
+          h += '<button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:3px 10px;color:var(--emerald);border-color:var(--emerald)" data-action="mark-received" data-id="' + r.id + '">Got It!</button>';
+        }
+        h += '<button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:3px 6px;color:var(--rose);border-color:var(--rose)" data-action="delete-request" data-id="' + r.id + '">&times;</button>';
         h += '</div></div>';
       });
     }
