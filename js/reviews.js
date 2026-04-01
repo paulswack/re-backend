@@ -947,9 +947,9 @@
       var body = document.getElementById('ceBody').value;
 
       if (action === 'open-review-gmail') {
-        window.open('https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(r.clientEmail) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+        var a = document.createElement('a'); a.href = 'https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(r.clientEmail) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       } else if (action === 'open-review-outlook') {
-        window.open('https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(r.clientEmail) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+        var a = document.createElement('a'); a.href = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(r.clientEmail) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
       } else {
         window.location.href = 'mailto:' + encodeURIComponent(r.clientEmail) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
       }

@@ -2060,7 +2060,7 @@
       var bodyEl = document.getElementById('shareEmailBody');
       if (toEl && subEl && bodyEl) {
         var gmailUrl = 'https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(toEl.value) + '&su=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
-        window.open(gmailUrl, '_blank');
+        var a=document.createElement('a');a.href=gmailUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
         showToast('Gmail opened!');
       }
     }
@@ -2071,7 +2071,7 @@
       var bodyEl = document.getElementById('shareEmailBody');
       if (toEl && subEl && bodyEl) {
         var outlookUrl = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(toEl.value) + '&subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
-        window.open(outlookUrl, '_blank');
+        var a=document.createElement('a');a.href=outlookUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
         showToast('Outlook opened!');
       }
     }
@@ -2082,7 +2082,7 @@
       var bodyEl = document.getElementById('shareEmailBody');
       if (toEl && subEl && bodyEl) {
         var yahooUrl = 'https://compose.mail.yahoo.com/?to=' + encodeURIComponent(toEl.value) + '&subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
-        window.open(yahooUrl, '_blank');
+        var a=document.createElement('a');a.href=yahooUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
         showToast('Yahoo Mail opened!');
       }
     }
