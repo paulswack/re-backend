@@ -133,28 +133,36 @@
       photo: existing.photo || null
     };
 
-    // Save via API if available, otherwise localStorage
+    // Always save to localStorage first so it shows immediately
+    saveProfiles(profiles);
+
+    // Also save to API if available
     if (typeof API !== 'undefined' && API.isLoggedIn()) {
       var user = API.getUser();
-      var profileData = profiles[session.username];
-      API.updateUser(user.id, {
-        display_name: displayName,
-        phone: profileData.phone,
-        email: profileData.email,
-        license_number: profileData.license,
-        profile: {
-          yearsExperience: profileData.yearsExperience,
-          specialties: profileData.specialties,
-          bio: profileData.bio,
-          photo: profileData.photo
-        }
-      }).then(function () {
+      if (user && user.id) {
+        var profileData = profiles[session.username];
+        API.updateUser(user.id, {
+          display_name: displayName,
+          phone: profileData.phone,
+          email: profileData.email,
+          license_number: profileData.license,
+          profile: {
+            yearsExperience: profileData.yearsExperience,
+            specialties: profileData.specialties,
+            bio: profileData.bio,
+            photo: profileData.photo
+          }
+        }).then(function () {
+          showToast('Profile saved!');
+        }).catch(function (err) {
+          console.error('Profile save error:', err);
+          showToast('Saved locally — server sync pending');
+        });
+      } else {
         showToast('Profile saved!');
-      }).catch(function () {
-        showToast('Failed to save profile', 'error');
-      });
+      }
     } else {
-      saveProfiles(profiles);
+      showToast('Profile saved!');
     }
 
     // If display name changed, update session
