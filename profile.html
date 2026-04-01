@@ -63,24 +63,46 @@
               <h3 style="font-size:.95rem;font-weight:700;color:var(--gray-900);">Email Connection</h3>
               <p style="font-size:.78rem;color:var(--gray-400);margin-top:2px;">Connect your email for client notifications</p>
             </div>
-            <div style="padding:20px 24px;">
-              <div class="form-group" style="margin-bottom:0">
-                <label for="pEmail">Email Address</label>
-                <div style="display:flex;gap:10px">
-                  <input type="email" id="pEmail" placeholder="you@gmail.com" style="flex:1">
-                  <button class="btn btn-primary btn-sm" id="saveProfileBtn">Save</button>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <!-- Display Name (hidden but functional) -->
-          <input type="hidden" id="pDisplayName">
-          <input type="hidden" id="pPhone">
-          <input type="hidden" id="pLicense">
-          <input type="hidden" id="pYears">
-          <input type="hidden" id="pSpecialties">
-          <input type="hidden" id="pBio">
+          <!-- Profile Form -->
+          <div style="margin-top:24px">
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group">
+                <label for="pDisplayName">Display Name</label>
+                <input type="text" id="pDisplayName" placeholder="Your full name">
+              </div>
+              <div class="form-group">
+                <label for="pEmail">Email</label>
+                <input type="email" id="pEmail" placeholder="your@email.com">
+              </div>
+            </div>
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group">
+                <label for="pPhone">Phone Number</label>
+                <input type="tel" id="pPhone" placeholder="(555) 555-5555">
+              </div>
+              <div class="form-group">
+                <label for="pLicense">License Number</label>
+                <input type="text" id="pLicense" placeholder="DRE# 01234567">
+              </div>
+            </div>
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="form-group">
+                <label for="pYears">Years of Experience</label>
+                <input type="number" id="pYears" placeholder="0" min="0">
+              </div>
+              <div class="form-group">
+                <label for="pSpecialties">Specialties</label>
+                <input type="text" id="pSpecialties" placeholder="Buyer, Seller, Luxury, etc.">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="pBio">Bio</label>
+              <textarea id="pBio" rows="3" placeholder="Tell clients about yourself..." style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:.88rem;font-family:inherit;resize:vertical"></textarea>
+            </div>
+            <button id="saveProfileBtn" class="btn btn-primary" style="margin-top:12px;width:100%">Save Profile</button>
+          </div>
 
         </div>
       </div>
