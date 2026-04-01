@@ -1246,31 +1246,102 @@
 
   <!-- ====== LOGIN ====== -->
   <section class="login-section" id="login">
-    <h2>Sign In</h2>
-    <p>Access your back office dashboard.</p>
-    <div id="planBanner" style="display:none;max-width:400px;margin:0 auto 16px;padding:12px 20px;border-radius:10px;background:rgba(52,132,208,.08);color:var(--blue);font-size:.92rem;font-weight:700;text-align:center"></div>
-    <div class="login-card">
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" placeholder="Enter your username" autocomplete="username" required>
+    <!-- Tab toggle -->
+    <div id="authTabs" style="display:flex;gap:4px;justify-content:center;margin-bottom:24px;background:rgba(255,255,255,.06);border-radius:10px;padding:4px;width:fit-content;margin-left:auto;margin-right:auto">
+      <button onclick="showAuthTab('signin')" id="tabSignin" style="padding:10px 28px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;background:var(--blue);color:#fff;transition:all .15s">Sign In</button>
+      <button onclick="showAuthTab('register')" id="tabRegister" style="padding:10px 28px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--gray-400);transition:all .15s">Create Account</button>
+    </div>
+
+    <!-- Sign In Panel -->
+    <div id="signinPanel">
+      <h2>Sign In</h2>
+      <p>Access your back office dashboard.</p>
+      <div id="planBanner" style="display:none;max-width:400px;margin:0 auto 16px;padding:12px 20px;border-radius:10px;background:rgba(52,132,208,.08);color:var(--blue);font-size:.92rem;font-weight:700;text-align:center"></div>
+      <div class="login-card">
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter your username" autocomplete="username" required>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+          </div>
+          <div class="form-group" style="margin-top:4px">
+            <label for="accessCode" style="font-size:.78rem;color:#64748B">Access Code (optional)</label>
+            <input type="text" id="accessCode" placeholder="Enter access code if you have one" style="font-size:.85rem">
+          </div>
+          <button type="submit" class="login-btn">Sign In</button>
+          <div class="login-error" id="loginError">Invalid username or password.</div>
+        </form>
+        <div class="demo-hint" style="margin-top:12px">
+          Don't have an account? <a href="javascript:showAuthTab('register')" style="color:var(--blue);font-weight:600;text-decoration:none">Create one here</a>
         </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+      </div>
+    </div>
+
+    <!-- Register Panel -->
+    <div id="registerPanel" style="display:none">
+      <h2>Create Your Account</h2>
+      <p>Get started with RE Back Office in 60 seconds.</p>
+      <div class="login-card">
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="regTeamName">Team / Brokerage Name</label>
+            <input type="text" id="regTeamName" placeholder="e.g. Walsh Real Estate" required>
+          </div>
+          <div class="form-group">
+            <label for="regDisplayName">Your Full Name</label>
+            <input type="text" id="regDisplayName" placeholder="e.g. Jennifer Walsh" required>
+          </div>
+          <div class="form-group">
+            <label for="regUsername">Choose a Username</label>
+            <input type="text" id="regUsername" placeholder="e.g. jwalsh" autocomplete="username" required>
+          </div>
+          <div class="form-group">
+            <label for="regPassword">Choose a Password</label>
+            <input type="password" id="regPassword" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="regPlan">Plan</label>
+            <select id="regPlan" style="width:100%;padding:12px 16px;border:1.5px solid rgba(255,255,255,.1);border-radius:10px;font-size:.9rem;background:rgba(255,255,255,.05);color:var(--white);outline:none">
+              <option value="solo">Solo Agent — $49/mo</option>
+              <option value="team" selected>Team — $79/mo</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-top:4px">
+            <label for="regAccessCode" style="font-size:.78rem;color:#64748B">Access Code (optional)</label>
+            <input type="text" id="regAccessCode" placeholder="Enter if you have one" style="font-size:.85rem">
+          </div>
+          <button type="submit" class="login-btn">Create Account & Start Free Trial</button>
+          <div class="login-error" id="registerError" style="display:none">Registration failed. Please try again.</div>
+        </form>
+        <div class="demo-hint" style="margin-top:12px">
+          Already have an account? <a href="javascript:showAuthTab('signin')" style="color:var(--blue);font-weight:600;text-decoration:none">Sign in here</a>
         </div>
-        <div class="form-group" style="margin-top:4px">
-          <label for="accessCode" style="font-size:.78rem;color:#64748B">Access Code (optional)</label>
-          <input type="text" id="accessCode" placeholder="Enter access code if you have one" style="font-size:.85rem">
-        </div>
-        <button type="submit" class="login-btn">Sign In</button>
-        <div class="login-error" id="loginError">Invalid username or password.</div>
-      </form>
-      <div class="demo-hint">
-        Demo: <code>admin</code> / <code>admin123</code> (Team Lead)
       </div>
     </div>
   </section>
+
+  <script>
+    function showAuthTab(tab) {
+      var signinPanel = document.getElementById('signinPanel');
+      var registerPanel = document.getElementById('registerPanel');
+      var tabSignin = document.getElementById('tabSignin');
+      var tabRegister = document.getElementById('tabRegister');
+      if (tab === 'register') {
+        signinPanel.style.display = 'none';
+        registerPanel.style.display = 'block';
+        tabSignin.style.background = 'transparent'; tabSignin.style.color = '#94A3B8';
+        tabRegister.style.background = 'var(--blue)'; tabRegister.style.color = '#fff';
+      } else {
+        signinPanel.style.display = 'block';
+        registerPanel.style.display = 'none';
+        tabRegister.style.background = 'transparent'; tabRegister.style.color = '#94A3B8';
+        tabSignin.style.background = 'var(--blue)'; tabSignin.style.color = '#fff';
+      }
+    }
+  </script>
 
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
@@ -1367,16 +1438,60 @@
     function toggleFaq(btn) {
       var item = btn.parentElement;
       var wasOpen = item.classList.contains('open');
-      // Close all
       var allItems = document.querySelectorAll('.faq-item');
-      for (var i = 0; i < allItems.length; i++) {
-        allItems[i].classList.remove('open');
-      }
-      // Toggle clicked
-      if (!wasOpen) {
-        item.classList.add('open');
-      }
+      for (var i = 0; i < allItems.length; i++) { allItems[i].classList.remove('open'); }
+      if (!wasOpen) { item.classList.add('open'); }
     }
+
+    // Registration form
+    (function () {
+      var regForm = document.getElementById('registerForm');
+      if (!regForm) return;
+      var regError = document.getElementById('registerError');
+
+      regForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        regError.style.display = 'none';
+
+        var teamName = document.getElementById('regTeamName').value.trim();
+        var displayName = document.getElementById('regDisplayName').value.trim();
+        var username = document.getElementById('regUsername').value.trim();
+        var password = document.getElementById('regPassword').value;
+        var plan = document.getElementById('regPlan').value;
+        var accessCode = (document.getElementById('regAccessCode').value || '').trim();
+
+        if (!teamName || !displayName || !username || !password) {
+          regError.textContent = 'All fields are required.';
+          regError.style.display = 'block';
+          return;
+        }
+        if (password.length < 6) {
+          regError.textContent = 'Password must be at least 6 characters.';
+          regError.style.display = 'block';
+          return;
+        }
+
+        var btn = regForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Creating account...';
+
+        API.register({
+          teamName: teamName,
+          displayName: displayName,
+          username: username,
+          password: password,
+          plan: plan,
+          accessCode: accessCode
+        }).then(function (res) {
+          window.location.href = 'dashboard.html';
+        }).catch(function (err) {
+          regError.textContent = (err && err.error) || 'Registration failed. Username may already be taken.';
+          regError.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Create Account & Start Free Trial';
+        });
+      });
+    })();
   </script>
 </body>
 </html>
