@@ -451,12 +451,12 @@
     // List rows
     html += '<div class="card" id="txnListCard">';
     html += '<div class="list-header">' +
-      '<div class="txn-row-address">Address</div>' +
-      '<div class="txn-row-specs">Beds / Baths / Sqft</div>' +
-      '<div class="txn-row-agent">Agent</div>' +
-      '<div class="txn-row-price">Price</div>' +
-      '<div class="txn-row-status">Status</div>' +
-      '<div class="txn-row-date">Close Date</div>' +
+      '<div class="lst-row-address">Address</div>' +
+      '<div class="lst-row-specs">Beds / Baths / Sqft</div>' +
+      '<div class="lst-row-agent">Agent</div>' +
+      '<div class="lst-row-price">Price</div>' +
+      '<div class="lst-row-status">Status</div>' +
+      '<div class="lst-row-date">Close Date</div>' +
     '</div>';
     html += '<div id="txnListBody"></div>';
     html += '<div id="txnEmpty" class="empty-state" style="display:none;">' +
@@ -531,23 +531,25 @@
       // Look up matching listing for bed/bath/sqft
       var matchLst = allListings.find(function (l) { return l.address === t.address; });
       var specsText = [];
-      if (matchLst) {
-        if (matchLst.beds) specsText.push(matchLst.beds + ' bd');
-        if (matchLst.baths) specsText.push(matchLst.baths + ' ba');
-        if (matchLst.sqft) specsText.push(Number(matchLst.sqft).toLocaleString() + ' sqft');
-      }
+      var beds = t.beds || (matchLst ? matchLst.beds : null);
+      var baths = t.baths || (matchLst ? matchLst.baths : null);
+      var sqft = t.sqft || (matchLst ? matchLst.sqft : null);
+      if (beds) specsText.push(beds + ' bd');
+      if (baths) specsText.push(baths + ' ba');
+      if (sqft) specsText.push(Number(sqft).toLocaleString() + ' sqft');
+
       return '<div class="list-row" data-action="open-detail" data-id="' + t.id + '">' +
-        '<div class="txn-row-address">' +
-          '<div class="txn-row-address-text">' + escapeHtml(t.address) + '</div>' +
+        '<div class="lst-row-address">' +
+          '<div class="lst-row-address-text">' + escapeHtml(t.address) + '</div>' +
         '</div>' +
-        '<div class="txn-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
-        '<div class="txn-row-agent">' +
+        '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
+        '<div class="lst-row-agent">' +
           '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(t.agent) + '</div>' +
-          '<div class="txn-row-agent-name">' + escapeHtml(t.agent || '—') + '</div>' +
+          '<div class="lst-row-agent-name">' + escapeHtml(t.agent || '—') + '</div>' +
         '</div>' +
-        '<div class="txn-row-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
-        '<div class="txn-row-status">' + Data.statusBadge(t.status) + '</div>' +
-        '<div class="txn-row-date">' + Data.formatDate(t.closeDate) + '</div>' +
+        '<div class="lst-row-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
+        '<div class="lst-row-status">' + Data.statusBadge(t.status) + '</div>' +
+        '<div class="lst-row-date">' + Data.formatDate(t.closeDate) + '</div>' +
       '</div>';
     }).join('');
   }
