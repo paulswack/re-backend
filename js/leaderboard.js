@@ -121,6 +121,54 @@
       return;
     }
 
+    // Top 3 Performers
+    if (agents.length >= 1) {
+      var profiles = {};
+      try { profiles = JSON.parse(localStorage.getItem('reb_profiles') || '{}'); } catch(e) {}
+      var users = [];
+      try { users = JSON.parse(localStorage.getItem('reb_users') || '[]'); } catch(e) {}
+
+      var top3 = agents.slice().sort(function (a, b) {
+        if (b.closedCount !== a.closedCount) return b.closedCount - a.closedCount;
+        return b.volume - a.volume;
+      }).slice(0, 3);
+
+      html += '<div style="display:flex;justify-content:center;gap:20px;margin-bottom:20px;flex-wrap:wrap">';
+
+      top3.forEach(function (a, i) {
+        var cls = agentClass(a.name);
+        var trophy = i === 0 ? '🏆' : (i === 1 ? '🥈' : '🥉');
+        var ringColor = i === 0 ? '#EAB308' : (i === 1 ? '#CBD5E1' : '#D97706');
+
+        var user = users.find(function(u) { return u.displayName === a.name; });
+        var profile = user ? (profiles[user.username] || {}) : {};
+        var hasPhoto = profile && profile.photo;
+
+        html += '<div style="width:240px;height:240px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px solid ' + ringColor + '">';
+
+        // Trophy
+        html += '<div style="font-size:1.8rem;margin-bottom:6px">' + trophy + '</div>';
+
+        // Headshot / avatar
+        if (hasPhoto) {
+          html += '<div style="width:60px;height:60px;border-radius:50%;overflow:hidden;margin-bottom:8px;border:2px solid ' + ringColor + '"><img src="' + profile.photo + '" style="width:100%;height:100%;object-fit:cover"></div>';
+        } else {
+          html += '<div class="agent-avatar ' + cls + '" style="display:flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:50%;font-size:1rem;font-weight:700;color:#fff;margin-bottom:8px;border:2px solid ' + ringColor + '">' + getInitials(a.name) + '</div>';
+        }
+
+        // Name
+        html += '<div style="font-size:.88rem;font-weight:700;color:var(--gray-900);line-height:1.2;padding:0 20px">' + a.name + '</div>';
+        // Closed count — primary stat
+        html += '<div style="font-size:1rem;font-weight:800;color:var(--gray-900);margin-top:4px">' + a.closedCount + ' closed</div>';
+        // Volume — secondary stat
+        html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">' + Data.formatCurrency(a.volume) + '</div>';
+
+        html += '</div>';
+      });
+
+      html += '</div>';
+    }
+
     // Two-column leaderboard grid
     html += '<div class="lb-grid">';
 
@@ -207,11 +255,11 @@
         var vol = sourceVolume[src] || 0;
         var pct = totalSourceDeals > 0 ? Math.round((count / totalSourceDeals) * 100) : 0;
         html += '<div class="lb-row">';
-        html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--indigo-light);color:var(--indigo);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;font-weight:700">' + pct + '%</div>';
+        html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--deal-source-circle-bg, var(--indigo-light));color:var(--deal-source-circle-text, var(--indigo));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;font-weight:700">' + pct + '%</div>';
         html += '<div class="lb-row-info">';
         html += '<div class="lb-row-name">' + src + '</div>';
         html += '<div class="lb-row-sub">' + count + ' deal' + (count !== 1 ? 's' : '') + (vol > 0 ? ' &middot; ' + Data.formatCurrency(vol) + ' closed volume' : '') + '</div>';
-        html += '<div class="lb-progress-wrap"><div class="lb-progress-fill" style="width:' + Math.max(pct, 3) + '%"></div></div>';
+        html += '<div class="lb-progress-wrap"><div class="lb-progress-fill" style="width:' + Math.max(pct, 3) + '%;background:linear-gradient(90deg, var(--deal-source-bar-start, #35BA9C), var(--deal-source-bar-end, #3484D0))"></div></div>';
         html += '</div>';
         html += '<div class="lb-row-value"><div class="lb-row-value-num">' + count + '</div></div>';
         html += '</div>';

@@ -19,6 +19,20 @@
   // ---- State ----
   var viewMode = 'list';       // 'list' or 'detail'
   var selectedTxnId = null;
+
+  // Deep-link: open specific transaction from URL param
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var deepId = params.get('id');
+    if (deepId) {
+      selectedTxnId = deepId;
+      viewMode = 'detail';
+      // Clean URL without reload
+      if (window.history.replaceState) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  })();
   var editingId = null;
   var editingPartyType = null; // 'buyer' or 'seller'
 
@@ -86,26 +100,35 @@
     saveUpdates(allUpdates);
   }
 
-  // Milestone options for the Update Client dropdown
-  var MILESTONES = [
-    { key: 'offer_accepted',    label: 'Offer Accepted',         icon: '🎉' },
-    { key: 'earnest_deposited', label: 'Earnest Money Deposited', icon: '💰' },
-    { key: 'inspection_scheduled', label: 'Inspection Scheduled', icon: '📅' },
-    { key: 'inspection_complete', label: 'Inspection Complete',   icon: '✅' },
-    { key: 'repairs_requested', label: 'Repairs Requested',       icon: '🔧' },
-    { key: 'repairs_agreed',    label: 'Repairs Agreed Upon',     icon: '🤝' },
-    { key: 'appraisal_ordered', label: 'Appraisal Ordered',      icon: '📋' },
-    { key: 'appraisal_complete', label: 'Appraisal Complete',     icon: '📊' },
-    { key: 'appraisal_came_in', label: 'Appraisal Came In at Value', icon: '✅' },
-    { key: 'appraisal_low',    label: 'Appraisal Came In Low',   icon: '⚠️' },
-    { key: 'loan_approved',    label: 'Loan Approved',            icon: '🏦' },
-    { key: 'clear_to_close',   label: 'Clear to Close',           icon: '🎯' },
-    { key: 'closing_scheduled', label: 'Closing Date Scheduled',  icon: '📆' },
-    { key: 'final_walkthrough', label: 'Final Walkthrough',       icon: '🏠' },
-    { key: 'closing_complete', label: 'Closing Complete!',         icon: '🔑' },
-    { key: 'keys_delivered',   label: 'Keys Delivered',            icon: '🗝️' },
-    { key: 'custom',           label: 'Custom Update...',          icon: '✏️' }
-  ];
+  // Milestone options for the Update Client dropdown — read from admin config or use defaults
+  var MILESTONES = (function () {
+    try {
+      var raw = localStorage.getItem('reb_portal_config');
+      if (raw) {
+        var cfg = JSON.parse(raw);
+        if (cfg.txnMilestones && cfg.txnMilestones.length) return cfg.txnMilestones;
+      }
+    } catch (e) {}
+    return [
+      { key: 'offer_accepted',    label: 'Offer Accepted',         icon: '🎉' },
+      { key: 'earnest_deposited', label: 'Earnest Money Deposited', icon: '💰' },
+      { key: 'inspection_scheduled', label: 'Inspection Scheduled', icon: '📅' },
+      { key: 'inspection_complete', label: 'Inspection Complete',   icon: '✅' },
+      { key: 'repairs_requested', label: 'Repairs Requested',       icon: '🔧' },
+      { key: 'repairs_agreed',    label: 'Repairs Agreed Upon',     icon: '🤝' },
+      { key: 'appraisal_ordered', label: 'Appraisal Ordered',      icon: '📋' },
+      { key: 'appraisal_complete', label: 'Appraisal Complete',     icon: '📊' },
+      { key: 'appraisal_came_in', label: 'Appraisal Came In at Value', icon: '✅' },
+      { key: 'appraisal_low',    label: 'Appraisal Came In Low',   icon: '⚠️' },
+      { key: 'loan_approved',    label: 'Loan Approved',            icon: '🏦' },
+      { key: 'clear_to_close',   label: 'Clear to Close',           icon: '🎯' },
+      { key: 'closing_scheduled', label: 'Closing Date Scheduled',  icon: '📆' },
+      { key: 'final_walkthrough', label: 'Final Walkthrough',       icon: '🏠' },
+      { key: 'closing_complete', label: 'Closing Complete!',         icon: '🔑' },
+      { key: 'keys_delivered',   label: 'Keys Delivered',            icon: '🗝️' },
+      { key: 'custom',           label: 'Custom Update...',          icon: '✏️' }
+    ];
+  })();
 
   function generateId() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
@@ -378,13 +401,6 @@
     // Exclude closed transactions — those live in the Closed section
     var txns = allTxns.filter(function (t) { return t.status !== 'closed'; });
 
-    // Agent-level access control: non-privileged users only see their own transactions
-    var session = Auth.getSession();
-    var isLead = Auth.isPrivileged() || (typeof getDataAgentName === "function" && getDataAgentName() === null);
-    if (!isLead) {
-      txns = txns.filter(function (t) { return t.agent === (typeof getDataAgentName === 'function' && getDataAgentName() ? getDataAgentName() : session.displayName); });
-    }
-
     var query = '';
     var statusVal = '';
     var agentVal = '';
@@ -395,7 +411,7 @@
     var pending = txns.filter(function (t) { return t.status === 'pending'; }).length;
     var volume = txns.reduce(function (sum, t) { return sum + (parseFloat(t.price) || 0); }, 0);
 
-    // Unique agents for filter (only for Team Lead)
+    // Unique agents for filter
     var agentSet = {};
     txns.forEach(function (t) { if (t.agent) agentSet[t.agent] = true; });
     var agents = Object.keys(agentSet).sort();
@@ -421,15 +437,15 @@
 
     // Filter Bar
     html += '<div class="filter-bar">' +
-      '<input type="text" id="searchInput" placeholder="Search by address' + (isLead ? ' or agent' : '') + '...">' +
+      '<input type="text" id="searchInput" placeholder="Search by address or agent...">' +
       '<select id="statusFilter">' +
         '<option value="">All Statuses</option>' +
         getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]).filter(function (s) { return s.key !== 'closed'; }).map(function (s) { return '<option value="' + s.key + '">' + s.label + '</option>'; }).join('') +
       '</select>' +
-      (isLead ? '<select id="agentFilter">' +
+      '<select id="agentFilter">' +
         '<option value="">All Agents</option>' +
         agents.map(function (a) { return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>'; }).join('') +
-      '</select>' : '') +
+      '</select>' +
     '</div>';
 
     // List rows
@@ -474,13 +490,6 @@
     var allTxns = Data.getTransactions();
     // Exclude closed transactions
     var txns = allTxns.filter(function (t) { return t.status !== 'closed'; });
-
-    // Agent-level access control: non-privileged users only see their own transactions
-    var session = Auth.getSession();
-    var isLead = Auth.isPrivileged() || (typeof getDataAgentName === "function" && getDataAgentName() === null);
-    if (!isLead) {
-      txns = txns.filter(function (t) { return t.agent === (typeof getDataAgentName === 'function' && getDataAgentName() ? getDataAgentName() : session.displayName); });
-    }
 
     var searchEl = document.getElementById('searchInput');
     var statusEl = document.getElementById('statusFilter');
@@ -773,26 +782,33 @@
           html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
         }
         html += '</div>';
+        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.8rem;padding:2px 4px;line-height:1" data-action="remove-checklist-item" data-item-idx="' + idx + '" title="Remove">&times;</button>';
         html += '</div>';
       });
+      // Add new item input
+      html += '<div style="display:flex;gap:8px;padding:10px 0;align-items:center">';
+      html += '<input type="text" id="newChecklistItem" placeholder="Add a checklist item..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 12px;font-size:.82rem;outline:none">';
+      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.78rem;padding:6px 14px;white-space:nowrap">+ Add</button>';
+      html += '</div>';
       html += '</div>';
     } else {
+      // Auto-attach first escrow template
       var escrowTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
       if (escrowTemplates.length > 0) {
-        html += '<div style="padding:20px;text-align:center">';
-        html += '<div style="font-size:.85rem;color:var(--gray-400);margin-bottom:12px">No checklist attached</div>';
-        html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px">';
-        html += '<select id="attachChecklistSelect" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem">';
-        html += '<option value="">Select a template...</option>';
-        escrowTemplates.forEach(function (tpl) {
-          html += '<option value="' + escapeHtml(tpl.id) + '">' + escapeHtml(tpl.name) + '</option>';
-        });
-        html += '</select>';
-        html += '<button class="btn btn-primary btn-sm" data-action="attach-checklist">Attach</button>';
-        html += '</div>';
-        html += '</div>';
+        var autoTpl = escrowTemplates[0];
+        var dc = getDealChecklists();
+        dc[selectedTxnId] = {
+          templateId: autoTpl.id,
+          templateName: autoTpl.name,
+          items: autoTpl.items.map(function (item) {
+            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null };
+          })
+        };
+        saveDealChecklists(dc);
+        render();
+        return;
       } else {
-        html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist attached. Create templates in Admin Settings.</div>';
+        html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist templates found. Create one in Admin Settings → Checklist Templates.</div>';
       }
     }
     html += '</div>';
@@ -1226,6 +1242,36 @@
           };
           saveDealChecklists(dcls);
           showToast('Checklist attached.');
+          renderDetail();
+        }
+        break;
+
+      case 'add-checklist-item':
+        var newItemInput = document.getElementById('newChecklistItem');
+        var newLabel = newItemInput ? newItemInput.value.trim() : '';
+        if (!newLabel) { if (newItemInput) newItemInput.focus(); break; }
+        var addDc = getDealChecklists();
+        if (addDc[selectedTxnId]) {
+          addDc[selectedTxnId].items.push({
+            id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9),
+            label: newLabel,
+            completed: false,
+            completedBy: null,
+            completedAt: null
+          });
+          saveDealChecklists(addDc);
+          showToast('Item added');
+          renderDetail();
+        }
+        break;
+
+      case 'remove-checklist-item':
+        var rmIdx = parseInt(target.getAttribute('data-item-idx'));
+        var rmDc = getDealChecklists();
+        if (rmDc[selectedTxnId] && rmDc[selectedTxnId].items[rmIdx] !== undefined) {
+          rmDc[selectedTxnId].items.splice(rmIdx, 1);
+          saveDealChecklists(rmDc);
+          showToast('Item removed');
           renderDetail();
         }
         break;

@@ -102,7 +102,7 @@
     document.getElementById('mDisplayName').value = editUser ? editUser.displayName : '';
     document.getElementById('mUsername').value = editUser ? editUser.username : '';
     document.getElementById('mPassword').value = editUser ? editUser.password : '';
-    document.getElementById('mRole').value = editUser ? editUser.role : 'Senior Agent';
+    document.getElementById('mRole').value = editUser ? editUser.role : 'Agent';
 
     // Populate assigned-to dropdown with non-assistant users
     var assignSelect = document.getElementById('mAssignedTo');

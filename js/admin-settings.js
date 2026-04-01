@@ -80,6 +80,10 @@
       statIconBlue: '#1E5FA8',
       progressStart: '#35BA9C',
       progressEnd: '#3484D0',
+      dealSourceCircleBg: '#E2F2FB',
+      dealSourceCircleText: '#002242',
+      dealSourceBarStart: '#35BA9C',
+      dealSourceBarEnd: '#3484D0',
       rankGold: '#FFD700',
       rankSilver: '#C0C0C0',
       rankBronze: '#CD7F32',
@@ -184,8 +188,8 @@
     teamRoles: {
       roles: [
         { key: 'Team Lead', canSeeTaxCenter: true, canDeleteTransactions: true, canSharePortal: true },
-        { key: 'Senior Agent', canSeeTaxCenter: true, canDeleteTransactions: false, canSharePortal: true },
-        { key: "Buyer's Agent", canSeeTaxCenter: true, canDeleteTransactions: false, canSharePortal: true },
+        { key: 'Broker Associate', canSeeTaxCenter: true, canDeleteTransactions: false, canSharePortal: true },
+        { key: 'Agent', canSeeTaxCenter: true, canDeleteTransactions: false, canSharePortal: true },
         { key: 'Assistant', canSeeTaxCenter: false, canDeleteTransactions: false, canSharePortal: false }
       ]
     },
@@ -318,6 +322,182 @@
 
   var expandedTemplateId = null;
 
+  // ---- Marketing Config ----
+  var MKT_CONFIG_KEY = PREFIX + 'marketing_config';
+
+  var DEFAULT_MKT_CATEGORIES = [
+    { key: 'Social Media', color: '#E1306C' },
+    { key: 'Outreach', color: '#10B981' },
+    { key: 'CRM & Database', color: '#6366F1' },
+    { key: 'In-Person', color: '#F59E0B' },
+    { key: 'Content', color: '#8B5CF6' },
+    { key: 'Digital', color: '#3B82F6' },
+    { key: 'Direct Mail', color: '#F59E0B' },
+    { key: 'Events & Networking', color: '#EC4899' },
+    { key: 'Content Creation', color: '#8B5CF6' },
+    { key: 'Relationship', color: '#10B981' }
+  ];
+
+  var DEFAULT_MKT_WEEKLY = [
+    { id: 'w_instagram',    label: 'Post on Instagram (Feed or Reel)',     detail: 'Listing photo, market tip, Reel, carousel, or personal brand content',  cat: 'Social Media',   required: true },
+    { id: 'w_instastory',   label: 'Post Instagram Stories (3+)',          detail: 'Behind-the-scenes, polls, Q&A, or day-in-the-life stories',             cat: 'Social Media',   required: false },
+    { id: 'w_facebook',     label: 'Post on Facebook',                     detail: 'Page post, story, live video, or share in a community group',           cat: 'Social Media',   required: true },
+    { id: 'w_linkedin',     label: 'Post on LinkedIn',                     detail: 'Professional insight, deal close, market update, or article',           cat: 'Social Media',   required: false },
+    { id: 'w_tiktok',       label: 'Post a TikTok or YouTube Short',       detail: 'Quick tip, listing tour, market update, or trending audio content',     cat: 'Social Media',   required: false },
+    { id: 'w_engage',       label: 'Engage sphere on social (20+ people)', detail: 'Like, comment, and DM at least 20 connections across platforms',        cat: 'Social Media',   required: true },
+    { id: 'w_calls',        label: 'Make 10+ prospecting calls',           detail: 'Call leads, past clients, FSBOs, expireds, or sphere of influence',     cat: 'Outreach',       required: true },
+    { id: 'w_followup',     label: 'Send 5+ follow-up texts or emails',    detail: 'Personalized outreach to active or warm leads',                        cat: 'Outreach',       required: true },
+    { id: 'w_handwritten',  label: 'Send handwritten notes or cards',      detail: 'Thank-you, congratulations, just-thinking-of-you, or pop-by notes',    cat: 'Outreach',       required: false },
+    { id: 'w_referral',     label: 'Ask for a referral',                   detail: 'Ask a past client, colleague, or vendor for a referral introduction',   cat: 'Outreach',       required: false },
+    { id: 'w_crm',          label: 'Update CRM with new contacts',         detail: 'Add new leads, update statuses, tag contacts, and set follow-ups',      cat: 'CRM & Database', required: true },
+    { id: 'w_drip',         label: 'Review & update drip campaigns',       detail: 'Check automated emails/texts are running and performing',               cat: 'CRM & Database', required: false },
+    { id: 'w_openhouse',    label: 'Host or attend an open house',         detail: 'Your listing or a colleague\'s open house — collect sign-ins',          cat: 'In-Person',      required: false },
+    { id: 'w_doorknock',    label: 'Door knock or geo-farm your area',     detail: 'At least one session in your target neighborhood',                      cat: 'In-Person',      required: false },
+    { id: 'w_coffee',       label: 'Coffee or lunch with a contact',       detail: 'Meet a referral partner, past client, or sphere contact face-to-face',  cat: 'In-Person',      required: false },
+    { id: 'w_marketupdate', label: 'Share a market update',                detail: 'Post, story, or email with local data or buying/selling advice',        cat: 'Content',        required: false },
+    { id: 'w_blog',         label: 'Write or publish a blog post',         detail: 'Neighborhood guide, market analysis, buyer/seller tips',                cat: 'Content',        required: false },
+    { id: 'w_video',        label: 'Record a video or go live',            detail: 'Listing walkthrough, market update, tips, or Q&A live stream',          cat: 'Content',        required: false }
+  ];
+
+  var DEFAULT_MKT_MONTHLY = [
+    { id: 'm_newsletter',   label: 'Send email newsletter',                detail: 'Monthly market update to your full database',                           cat: 'Digital',             required: true },
+    { id: 'm_postcards',    label: 'Mail postcards or flyers',             detail: 'Farm area direct mail campaign',                                        cat: 'Direct Mail',         required: false },
+    { id: 'm_magnet',       label: 'Drop off fridge magnets or swag',      detail: 'Branded calendars, magnets, pens, or notepads to sphere or farm',       cat: 'Direct Mail',         required: false },
+    { id: 'm_reviews',      label: 'Request reviews from past clients',    detail: 'Ask for Google, Zillow, or Realtor.com reviews — aim for 2+',          cat: 'Digital',             required: true },
+    { id: 'm_paidads',      label: 'Run a paid social media ad',           detail: 'Facebook, Instagram, Google, or YouTube Ads campaign',                  cat: 'Digital',             required: false },
+    { id: 'm_seo',          label: 'Update website or SEO content',        detail: 'Refresh listings, add blog posts, optimize local SEO keywords',        cat: 'Digital',             required: false },
+    { id: 'm_google',       label: 'Update Google Business Profile',       detail: 'Add photos, posts, respond to reviews, update hours',                  cat: 'Digital',             required: false },
+    { id: 'm_event',        label: 'Host or plan a client event',          detail: 'Pop-by, appreciation event, community cleanup, or holiday party',      cat: 'Events & Networking', required: false },
+    { id: 'm_networking',   label: 'Attend a networking event',            detail: 'BNI, chamber of commerce, real estate meetup, or charity event',        cat: 'Events & Networking', required: false },
+    { id: 'm_sponsor',      label: 'Sponsor or attend a community event',  detail: 'Little league, school fundraiser, local 5K, or farmers market',       cat: 'Events & Networking', required: false },
+    { id: 'm_video',        label: 'Publish a produced video',             detail: 'Market update, neighborhood spotlight, listing video, or testimonial',  cat: 'Content Creation',    required: false },
+    { id: 'm_marketreport', label: 'Create and share a market report',     detail: 'Monthly stats for your farm area or niche with branded PDF',            cat: 'Content Creation',    required: false },
+    { id: 'm_presentation', label: 'Refine listing or buyer presentation', detail: 'Update slides, stats, testimonials, and marketing plan',               cat: 'Content Creation',    required: false },
+    { id: 'm_reconnect',    label: 'Reconnect with 10+ past clients',      detail: 'Personal call, text, or email just to check in — no selling',          cat: 'Relationship',        required: false },
+    { id: 'm_birthday',     label: 'Send birthday/anniversary messages',   detail: 'Check CRM for milestones — send cards, texts, or small gifts',         cat: 'Relationship',        required: false },
+    { id: 'm_vendor',       label: 'Strengthen a vendor relationship',     detail: 'Lunch with lender, inspector, or title rep — build referral pipeline',  cat: 'Relationship',        required: false }
+  ];
+
+  function loadMktConfig() {
+    try {
+      var raw = localStorage.getItem(MKT_CONFIG_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {
+      categories: JSON.parse(JSON.stringify(DEFAULT_MKT_CATEGORIES)),
+      weekly: JSON.parse(JSON.stringify(DEFAULT_MKT_WEEKLY)),
+      monthly: JSON.parse(JSON.stringify(DEFAULT_MKT_MONTHLY)),
+      streakThreshold: 70,
+      enableNotes: true,
+      enableCustomActivities: true
+    };
+  }
+
+  function saveMktConfig(cfg) {
+    localStorage.setItem(MKT_CONFIG_KEY, JSON.stringify(cfg));
+  }
+
+  var mktEditTab = 'weekly';
+
+  function renderMarketing() {
+    var cfg = loadMktConfig();
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Marketing Activities</h2><p>Manage the weekly and monthly marketing activities your agents see and track</p></div>';
+
+    // Settings card
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Marketing Settings</div>';
+    h += '<div class="as-card-subtitle">General options for the marketing tracker</div>';
+
+    h += '<div class="as-list-item" style="padding:10px 0">';
+    h += '<div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">Streak Threshold (%)</div>';
+    h += '<div style="font-size:.72rem;color:var(--gray-400)">Minimum % of weekly activities needed to count as a streak week</div></div>';
+    h += '<input type="number" min="10" max="100" step="5" value="' + (cfg.streakThreshold || 70) + '" style="width:70px;text-align:center;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 8px;font-size:.85rem" data-action="save-mkt-setting" data-field="streakThreshold">';
+    h += '</div>';
+
+    h += '<div class="as-list-item" style="padding:10px 0">';
+    h += '<div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">Allow Activity Notes</div>';
+    h += '<div style="font-size:.72rem;color:var(--gray-400)">Let agents add notes to completed activities</div></div>';
+    h += '<label class="toggle"><input type="checkbox"' + (cfg.enableNotes !== false ? ' checked' : '') + ' data-action="toggle-mkt-setting" data-field="enableNotes"><span class="toggle-slider"></span></label>';
+    h += '</div>';
+
+    h += '<div class="as-list-item" style="padding:10px 0">';
+    h += '<div style="flex:1"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">Allow Custom Activities</div>';
+    h += '<div style="font-size:.72rem;color:var(--gray-400)">Let agents add their own custom activities</div></div>';
+    h += '<label class="toggle"><input type="checkbox"' + (cfg.enableCustomActivities !== false ? ' checked' : '') + ' data-action="toggle-mkt-setting" data-field="enableCustomActivities"><span class="toggle-slider"></span></label>';
+    h += '</div>';
+    h += '</div>';
+
+    // Categories card
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Categories</div>';
+    h += '<div class="as-card-subtitle">Activity categories and their colors</div>';
+    cfg.categories.forEach(function (cat, i) {
+      h += '<div class="as-list-item" draggable="true" data-list="mkt-categories" data-index="' + i + '" style="padding:8px 0">';
+      h += '<div class="as-drag-handle">⠿</div>';
+      h += '<input type="color" class="as-color-input" value="' + cat.color + '" data-action="update-mkt-cat-color" data-index="' + i + '">';
+      h += '<input type="text" value="' + escHtml(cat.key) + '" style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem" data-action="update-mkt-cat-name" data-index="' + i + '">';
+      h += '<button class="btn btn-outline btn-sm" style="color:var(--rose);border-color:var(--rose);padding:4px 10px;font-size:.72rem" data-action="remove-mkt-cat" data-index="' + i + '">Remove</button>';
+      h += '</div>';
+    });
+    h += '<div style="padding:10px 0"><button class="btn btn-outline btn-sm" data-action="add-mkt-cat" style="font-size:.78rem">+ Add Category</button></div>';
+    h += '</div>';
+
+    // Weekly / Monthly toggle
+    h += '<div style="display:flex;gap:8px;margin-bottom:16px">';
+    h += '<button class="lb-filter-btn' + (mktEditTab === 'weekly' ? ' active' : '') + '" data-action="switch-mkt-tab" data-tab="weekly">Weekly Activities (' + cfg.weekly.length + ')</button>';
+    h += '<button class="lb-filter-btn' + (mktEditTab === 'monthly' ? ' active' : '') + '" data-action="switch-mkt-tab" data-tab="monthly">Monthly Activities (' + cfg.monthly.length + ')</button>';
+    h += '</div>';
+
+    // Activity list
+    var activities = mktEditTab === 'weekly' ? cfg.weekly : cfg.monthly;
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">' + (mktEditTab === 'weekly' ? 'Weekly' : 'Monthly') + ' Activities</div>';
+    h += '<div class="as-card-subtitle">Drag to reorder. Toggle required to mark as mandatory for agents.</div>';
+
+    activities.forEach(function (act, i) {
+      var catColor = '#6366F1';
+      cfg.categories.forEach(function (c) { if (c.key === act.cat) catColor = c.color; });
+
+      h += '<div class="as-list-item" draggable="true" data-list="mkt-' + mktEditTab + '" data-index="' + i + '" style="padding:10px 0;flex-wrap:wrap;gap:8px">';
+      h += '<div class="as-drag-handle">⠿</div>';
+      h += '<div style="width:10px;height:10px;border-radius:50%;background:' + catColor + ';flex-shrink:0"></div>';
+      h += '<div style="flex:1;min-width:200px">';
+      h += '<input type="text" value="' + escHtml(act.label) + '" style="width:100%;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:600" data-action="update-mkt-activity-label" data-type="' + mktEditTab + '" data-index="' + i + '">';
+      h += '<input type="text" value="' + escHtml(act.detail) + '" style="width:100%;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.78rem;color:var(--gray-500);margin-top:4px" data-action="update-mkt-activity-detail" data-type="' + mktEditTab + '" data-index="' + i + '">';
+      h += '</div>';
+
+      // Category selector
+      h += '<select style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 8px;font-size:.78rem" data-action="update-mkt-activity-cat" data-type="' + mktEditTab + '" data-index="' + i + '">';
+      cfg.categories.forEach(function (c) {
+        h += '<option value="' + escHtml(c.key) + '"' + (act.cat === c.key ? ' selected' : '') + '>' + escHtml(c.key) + '</option>';
+      });
+      h += '</select>';
+
+      // Required toggle
+      h += '<label style="display:flex;align-items:center;gap:4px;font-size:.72rem;font-weight:600;color:' + (act.required ? 'var(--emerald)' : 'var(--gray-400)') + ';white-space:nowrap;cursor:pointer"><input type="checkbox"' + (act.required ? ' checked' : '') + ' data-action="toggle-mkt-required" data-type="' + mktEditTab + '" data-index="' + i + '" style="accent-color:var(--emerald)"> Required</label>';
+
+      // Remove
+      h += '<button class="btn btn-outline btn-sm" style="color:var(--rose);border-color:var(--rose);padding:4px 10px;font-size:.72rem" data-action="remove-mkt-activity" data-type="' + mktEditTab + '" data-index="' + i + '">Remove</button>';
+      h += '</div>';
+    });
+
+    // Add new activity
+    h += '<div style="padding:12px 0;border-top:1px solid var(--gray-100)">';
+    h += '<button class="btn btn-outline btn-sm" data-action="add-mkt-activity" data-type="' + mktEditTab + '" style="font-size:.78rem">+ Add ' + (mktEditTab === 'weekly' ? 'Weekly' : 'Monthly') + ' Activity</button>';
+    h += '</div>';
+    h += '</div>';
+
+    // Reset button
+    h += '<div class="as-card" style="display:flex;align-items:center;justify-content:space-between">';
+    h += '<div><div style="font-size:.88rem;font-weight:600;color:var(--gray-700)">Reset to Defaults</div><div style="font-size:.75rem;color:var(--gray-400)">Restore all marketing activities to the original defaults</div></div>';
+    h += '<button class="btn btn-outline btn-sm" data-action="reset-mkt-config" style="color:var(--rose);border-color:var(--rose)">Reset All</button>';
+    h += '</div>';
+
+    h += '</div>';
+    return h;
+  }
+
   function renderChecklists() {
     var templates = loadChecklistTemplates();
     var h = '<div class="as-section">';
@@ -407,7 +587,8 @@
     { key: 'leaderboard', label: 'Leaderboard Settings', icon: '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>' },
     { key: 'clientPortal', label: 'Client Portal', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' },
     { key: 'goals', label: 'Goals', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>' },
-    { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' }
+    { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' },
+    { key: 'marketing', label: 'Marketing Activities', icon: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' }
   ];
 
   var activeTab = 'general';
@@ -516,6 +697,16 @@
       case 'property-types': return settings.listings.propertyTypes;
       case 'lead-sources': return settings.leadSources;
       case 'expense-cats': return settings.expenseCategories;
+      case 'mkt-categories': return loadMktConfig().categories;
+      case 'mkt-weekly': return loadMktConfig().weekly;
+      case 'mkt-monthly': return loadMktConfig().monthly;
+      case 'portal-txn-milestones': return loadPortalConfig().txnMilestones;
+      case 'portal-lst-milestones': return loadPortalConfig().lstMilestones;
+      case 'sidebar-order': return (settings.sidebarOrder || []).length ? settings.sidebarOrder.map(function(p) { return { page: p }; }) : [
+        {page:'dashboard.html'},{page:'leaderboard.html'},{page:'listings.html'},{page:'transactions.html'},{page:'closed.html'},
+        {page:'tax-center.html'},{page:'meeting-notes.html'},{page:'vendors.html'},{page:'reviews.html'},{page:'marketing.html'},
+        {page:'knowledge-base.html'},{page:'recruiting.html'},{page:'bold100.html'}
+      ];
       default: return null;
     }
   }
@@ -536,6 +727,12 @@
       case 'property-types': settings.listings.propertyTypes = arr; break;
       case 'lead-sources': settings.leadSources = arr; break;
       case 'expense-cats': settings.expenseCategories = arr; break;
+      case 'mkt-categories': var mc1 = loadMktConfig(); mc1.categories = arr; saveMktConfig(mc1); break;
+      case 'mkt-weekly': var mc2 = loadMktConfig(); mc2.weekly = arr; saveMktConfig(mc2); break;
+      case 'mkt-monthly': var mc3 = loadMktConfig(); mc3.monthly = arr; saveMktConfig(mc3); break;
+      case 'portal-txn-milestones': var pc1 = loadPortalConfig(); pc1.txnMilestones = arr; savePortalConfig(pc1); break;
+      case 'portal-lst-milestones': var pc2 = loadPortalConfig(); pc2.lstMilestones = arr; savePortalConfig(pc2); break;
+      case 'sidebar-order': settings.sidebarOrder = arr.map(function(item) { return item.page; }); saveSettings(settings); break;
     }
   }
 
@@ -553,6 +750,7 @@
       case 'goals': return renderGoals();
       case 'announcements': return renderAnnouncements();
       case 'checklists': return renderChecklists();
+      case 'marketing': return renderMarketing();
       default: return '';
     }
   }
@@ -659,6 +857,10 @@
         colors: [
           { key: 'progressStart', label: 'Progress Bar Start', desc: 'Left side of progress bars' },
           { key: 'progressEnd', label: 'Progress Bar End', desc: 'Right side of progress bars' },
+          { key: 'dealSourceCircleBg', label: 'Deal Source Circle BG', desc: 'Background of % circles in deal source breakdown' },
+          { key: 'dealSourceCircleText', label: 'Deal Source Circle Text', desc: 'Text color of % circles in deal source breakdown' },
+          { key: 'dealSourceBarStart', label: 'Deal Source Bar Start', desc: 'Left side of deal source progress bars' },
+          { key: 'dealSourceBarEnd', label: 'Deal Source Bar End', desc: 'Right side of deal source progress bars' },
           { key: 'rankGold', label: 'Gold Rank', desc: '#1 rank badge color' },
           { key: 'rankSilver', label: 'Silver Rank', desc: '#2 rank badge color' },
           { key: 'rankBronze', label: 'Bronze Rank', desc: '#3 rank badge color' }
@@ -772,6 +974,48 @@
     });
     h += '</select></div>';
     h += '</div>';
+    h += '</div>';
+
+    // Sidebar order
+    var defaultOrder = [
+      { page: 'dashboard.html', label: 'Dashboard' },
+      { page: 'leaderboard.html', label: 'Leaderboard' },
+      { page: 'listings.html', label: 'Listings' },
+      { page: 'transactions.html', label: 'Current Escrows' },
+      { page: 'closed.html', label: 'Closed' },
+      { page: 'tax-center.html', label: 'Tax Center' },
+      { page: 'meeting-notes.html', label: 'Monthly Meeting 1-1' },
+      { page: 'vendors.html', label: 'Vendors' },
+      { page: 'reviews.html', label: 'Reviews' },
+      { page: 'marketing.html', label: 'Marketing' },
+      { page: 'knowledge-base.html', label: 'Knowledge Base' },
+      { page: 'recruiting.html', label: 'Recruiting' },
+      { page: 'bold100.html', label: 'Bold 100' }
+    ];
+    var savedOrder = settings.sidebarOrder || [];
+    // Build ordered list: saved order first, then any new pages
+    var orderedItems = [];
+    var seen = {};
+    if (savedOrder.length) {
+      savedOrder.forEach(function (page) {
+        var item = defaultOrder.find(function (d) { return d.page === page; });
+        if (item) { orderedItems.push(item); seen[page] = true; }
+      });
+    }
+    defaultOrder.forEach(function (d) {
+      if (!seen[d.page]) orderedItems.push(d);
+    });
+
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Sidebar Navigation Order</div>';
+    h += '<div class="as-card-subtitle">Drag to reorder the sidebar menu for all users</div>';
+    orderedItems.forEach(function (item, i) {
+      h += '<div class="as-list-item" draggable="true" data-list="sidebar-order" data-index="' + i + '" style="padding:8px 0">';
+      h += '<div class="as-drag-handle">⠿</div>';
+      h += '<div style="flex:1;font-size:.85rem;font-weight:600;color:var(--gray-800)">' + escHtml(item.label) + '</div>';
+      h += '<div style="font-size:.72rem;color:var(--gray-400);font-family:monospace">' + escHtml(item.page) + '</div>';
+      h += '</div>';
+    });
     h += '</div>';
 
     h += '</div>';
@@ -1010,8 +1254,150 @@
     h += '<div class="form-group"><label>Auto-expire portal links after (days)</label><input type="number" id="as-portalExpire" value="' + (cp.autoExpireDays || 90) + '" min="1" max="365" data-action="save-portal" data-field="autoExpireDays"></div>';
     h += '</div>';
 
+    // ---- Transaction Update Types ----
+    var portalCfg = loadPortalConfig();
+
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Transaction Update Types</div>';
+    h += '<div class="as-card-subtitle">Milestone updates agents can post on transactions. Drag to reorder.</div>';
+    portalCfg.txnMilestones.forEach(function (m, i) {
+      h += '<div class="as-list-item" draggable="true" data-list="portal-txn-milestones" data-index="' + i + '" style="padding:8px 0;gap:8px">';
+      h += '<div class="as-drag-handle">⠿</div>';
+      h += '<input type="text" value="' + escHtml(m.icon) + '" style="width:40px;text-align:center;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 4px;font-size:1rem" data-action="update-portal-milestone-icon" data-mtype="txn" data-index="' + i + '">';
+      h += '<input type="text" value="' + escHtml(m.key) + '" style="width:160px;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.78rem;color:var(--gray-400);font-family:monospace" data-action="update-portal-milestone-key" data-mtype="txn" data-index="' + i + '">';
+      h += '<input type="text" value="' + escHtml(m.label) + '" style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:600" data-action="update-portal-milestone-label" data-mtype="txn" data-index="' + i + '">';
+      h += '<button class="btn btn-outline btn-sm" style="color:var(--rose);border-color:var(--rose);padding:4px 10px;font-size:.72rem" data-action="remove-portal-milestone" data-mtype="txn" data-index="' + i + '">Remove</button>';
+      h += '</div>';
+    });
+    h += '<div style="padding:10px 0"><button class="btn btn-outline btn-sm" data-action="add-portal-milestone" data-mtype="txn" style="font-size:.78rem">+ Add Update Type</button></div>';
+    h += '</div>';
+
+    // ---- Listing Update Types ----
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Listing Update Types</div>';
+    h += '<div class="as-card-subtitle">Milestone updates agents can post on listings. Drag to reorder.</div>';
+    portalCfg.lstMilestones.forEach(function (m, i) {
+      h += '<div class="as-list-item" draggable="true" data-list="portal-lst-milestones" data-index="' + i + '" style="padding:8px 0;gap:8px">';
+      h += '<div class="as-drag-handle">⠿</div>';
+      h += '<input type="text" value="' + escHtml(m.icon) + '" style="width:40px;text-align:center;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 4px;font-size:1rem" data-action="update-portal-milestone-icon" data-mtype="lst" data-index="' + i + '">';
+      h += '<input type="text" value="' + escHtml(m.key) + '" style="width:160px;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.78rem;color:var(--gray-400);font-family:monospace" data-action="update-portal-milestone-key" data-mtype="lst" data-index="' + i + '">';
+      h += '<input type="text" value="' + escHtml(m.label) + '" style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:600" data-action="update-portal-milestone-label" data-mtype="lst" data-index="' + i + '">';
+      h += '<button class="btn btn-outline btn-sm" style="color:var(--rose);border-color:var(--rose);padding:4px 10px;font-size:.72rem" data-action="remove-portal-milestone" data-mtype="lst" data-index="' + i + '">Remove</button>';
+      h += '</div>';
+    });
+    h += '<div style="padding:10px 0"><button class="btn btn-outline btn-sm" data-action="add-portal-milestone" data-mtype="lst" style="font-size:.78rem">+ Add Update Type</button></div>';
+    h += '</div>';
+
+    // ---- What to Expect Next (per escrow stage) ----
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">What to Expect Next — Escrow Stages</div>';
+    h += '<div class="as-card-subtitle">Customize the guidance shown to clients at each stage of escrow</div>';
+    var escrowStageNames = ['In Escrow', 'EMD', 'Disclosures', 'Inspections', 'Request for Repairs', 'Appraisal', 'Contingency Removal', 'Verification of Property', 'Close of Escrow'];
+    var nextSteps = portalCfg.nextSteps || {};
+    escrowStageNames.forEach(function (stageName, si) {
+      var stageKey = si + 1;
+      var items = nextSteps[stageKey] || [];
+      h += '<div style="margin-bottom:16px;padding:12px 0;' + (si > 0 ? 'border-top:1px solid var(--gray-100);' : '') + '">';
+      h += '<div style="font-size:.85rem;font-weight:700;color:var(--gray-800);margin-bottom:8px">Stage ' + stageKey + ': ' + stageName + '</div>';
+      items.forEach(function (item, ii) {
+        h += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:6px">';
+        h += '<input type="text" value="' + escHtml(item.title) + '" placeholder="Step title" style="width:200px;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.82rem;font-weight:600" data-action="update-portal-nextstep-title" data-stage="' + stageKey + '" data-index="' + ii + '">';
+        h += '<input type="text" value="' + escHtml(item.desc) + '" placeholder="Description" style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.78rem" data-action="update-portal-nextstep-desc" data-stage="' + stageKey + '" data-index="' + ii + '">';
+        h += '<button class="btn btn-outline btn-sm" style="color:var(--rose);border-color:var(--rose);padding:4px 8px;font-size:.72rem" data-action="remove-portal-nextstep" data-stage="' + stageKey + '" data-index="' + ii + '">&times;</button>';
+        h += '</div>';
+      });
+      h += '<button class="btn btn-outline btn-sm" data-action="add-portal-nextstep" data-stage="' + stageKey + '" style="font-size:.72rem;padding:3px 10px">+ Add Step</button>';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    // ---- Reset ----
+    h += '<div class="as-card" style="display:flex;align-items:center;justify-content:space-between">';
+    h += '<div><div style="font-size:.88rem;font-weight:600;color:var(--gray-700)">Reset Portal Config</div><div style="font-size:.75rem;color:var(--gray-400)">Restore update types and next steps to defaults</div></div>';
+    h += '<button class="btn btn-outline btn-sm" data-action="reset-portal-config" style="color:var(--rose);border-color:var(--rose)">Reset</button>';
+    h += '</div>';
+
     h += '</div>';
     return h;
+  }
+
+  // ---- Portal Config Storage ----
+  var PORTAL_CFG_KEY = PREFIX + 'portal_config';
+
+  var DEFAULT_TXN_MILESTONES = [
+    { key: 'offer_accepted', label: 'Offer Accepted', icon: '🎉' },
+    { key: 'earnest_deposited', label: 'Earnest Money Deposited', icon: '💰' },
+    { key: 'inspection_scheduled', label: 'Inspection Scheduled', icon: '📅' },
+    { key: 'inspection_complete', label: 'Inspection Complete', icon: '✅' },
+    { key: 'repairs_requested', label: 'Repairs Requested', icon: '🔧' },
+    { key: 'repairs_agreed', label: 'Repairs Agreed Upon', icon: '🤝' },
+    { key: 'appraisal_ordered', label: 'Appraisal Ordered', icon: '📋' },
+    { key: 'appraisal_complete', label: 'Appraisal Complete', icon: '📊' },
+    { key: 'appraisal_came_in', label: 'Appraisal Came In at Value', icon: '✅' },
+    { key: 'appraisal_low', label: 'Appraisal Came In Low', icon: '⚠️' },
+    { key: 'loan_approved', label: 'Loan Approved', icon: '🏦' },
+    { key: 'clear_to_close', label: 'Clear to Close', icon: '🎯' },
+    { key: 'closing_scheduled', label: 'Closing Date Scheduled', icon: '📆' },
+    { key: 'final_walkthrough', label: 'Final Walkthrough', icon: '🏠' },
+    { key: 'closing_complete', label: 'Closing Complete!', icon: '🔑' },
+    { key: 'keys_delivered', label: 'Keys Delivered', icon: '🗝️' },
+    { key: 'custom', label: 'Custom Update...', icon: '✏️' }
+  ];
+
+  var DEFAULT_LST_MILESTONES = [
+    { key: 'listing_agreement', label: 'Listing Agreement Signed', icon: '📝' },
+    { key: 'pre_listing_prep', label: 'Pre-Listing Prep Started', icon: '🏠' },
+    { key: 'repairs_started', label: 'Repairs / Touch-Ups Started', icon: '🔧' },
+    { key: 'repairs_complete', label: 'Repairs Complete', icon: '✅' },
+    { key: 'staging_scheduled', label: 'Staging Scheduled', icon: '🛋️' },
+    { key: 'staging_complete', label: 'Staging Complete', icon: '✨' },
+    { key: 'photos_scheduled', label: 'Photography Scheduled', icon: '📅' },
+    { key: 'photos_complete', label: 'Photos & Video Complete', icon: '📸' },
+    { key: 'sign_installed', label: 'Sign Installed', icon: '🪧' },
+    { key: 'mls_live', label: 'Listed on MLS — Live!', icon: '🚀' },
+    { key: 'open_house_scheduled', label: 'Open House Scheduled', icon: '🏡' },
+    { key: 'showing_feedback', label: 'Showing Feedback Received', icon: '💬' },
+    { key: 'offer_received', label: 'Offer Received', icon: '📩' },
+    { key: 'multiple_offers', label: 'Multiple Offers Received', icon: '🔥' },
+    { key: 'offer_accepted', label: 'Offer Accepted!', icon: '🎉' },
+    { key: 'price_adjustment', label: 'Price Adjustment', icon: '💲' },
+    { key: 'under_contract', label: 'Under Contract', icon: '📋' },
+    { key: 'sold', label: 'Sold!', icon: '🔑' },
+    { key: 'custom', label: 'Custom Update...', icon: '✏️' }
+  ];
+
+  var DEFAULT_NEXT_STEPS = {
+    1: [{ title: 'Your offer has been accepted', desc: 'Escrow is now open. Your agent and escrow officer will guide you through each step.' }, { title: 'Deposit earnest money', desc: 'Submit your EMD to the escrow/title company within the contract timeline.' }, { title: 'Gather important documents', desc: 'Have your ID, proof of funds, and financial documents ready for your lender.' }],
+    2: [{ title: 'Earnest money has been deposited', desc: 'Your good-faith deposit is being held in escrow.' }, { title: 'Review and sign disclosures', desc: 'Your agent will provide seller disclosures and other required documents.' }, { title: 'Start the loan process', desc: 'Provide all required documents to your lender to begin underwriting.' }],
+    3: [{ title: 'Review all disclosures carefully', desc: 'Go through every disclosure with your agent. Ask about anything unclear.' }, { title: 'Schedule inspections', desc: 'Your agent will coordinate a professional home inspection.' }, { title: 'Keep finances steady', desc: 'Avoid major purchases, new credit, or job changes until after closing.' }],
+    4: [{ title: 'Review inspection results', desc: 'Go through the inspection report with your agent and discuss concerns.' }, { title: 'Decide on repair requests', desc: 'Your agent will help you prepare a Request for Repairs if needed.' }, { title: 'Continue with loan processing', desc: 'Respond promptly to any lender requests.' }],
+    5: [{ title: 'Repair negotiations in progress', desc: 'Your agent is working with the seller to reach agreement on inspection items.' }, { title: 'Await appraisal scheduling', desc: 'Your lender will order an appraisal to confirm value.' }, { title: 'Keep finances steady', desc: 'Continue to avoid major purchases or credit changes.' }],
+    6: [{ title: 'Appraisal in progress', desc: 'The lender ordered an appraisal to confirm value meets the purchase price.' }, { title: 'Review appraisal results', desc: 'Your agent will share results and discuss next steps if needed.' }, { title: 'Begin planning your move', desc: 'Start coordinating moving logistics, utilities, and address changes.' }],
+    7: [{ title: 'Remove contingencies', desc: 'With inspections and appraisal complete, remove remaining contingencies.' }, { title: 'Final loan approval', desc: 'Your lender is finalizing your loan. Respond quickly to last requests.' }, { title: 'Review closing disclosure', desc: 'Review the Closing Disclosure carefully when received.' }],
+    8: [{ title: 'Verification of property', desc: 'A final check to confirm property condition matches what was agreed upon.' }, { title: 'Schedule final walkthrough', desc: 'Walk through one last time to confirm condition and repairs.' }, { title: 'Prepare closing funds', desc: 'Arrange wire transfer or cashier\'s check for closing costs.' }],
+    9: [{ title: 'Save your closing documents', desc: 'Keep all closing paperwork in a safe place for tax and insurance purposes.' }, { title: 'Set up your new home', desc: 'Transfer utilities, update your address, and change your locks.' }, { title: 'Leave a review for your agent', desc: 'A review on Google or Zillow goes a long way!' }]
+  };
+
+  function loadPortalConfig() {
+    try {
+      var raw = localStorage.getItem(PORTAL_CFG_KEY);
+      if (raw) {
+        var cfg = JSON.parse(raw);
+        if (!cfg.txnMilestones) cfg.txnMilestones = JSON.parse(JSON.stringify(DEFAULT_TXN_MILESTONES));
+        if (!cfg.lstMilestones) cfg.lstMilestones = JSON.parse(JSON.stringify(DEFAULT_LST_MILESTONES));
+        if (!cfg.nextSteps) cfg.nextSteps = JSON.parse(JSON.stringify(DEFAULT_NEXT_STEPS));
+        return cfg;
+      }
+    } catch (e) {}
+    return {
+      txnMilestones: JSON.parse(JSON.stringify(DEFAULT_TXN_MILESTONES)),
+      lstMilestones: JSON.parse(JSON.stringify(DEFAULT_LST_MILESTONES)),
+      nextSteps: JSON.parse(JSON.stringify(DEFAULT_NEXT_STEPS))
+    };
+  }
+
+  function savePortalConfig(cfg) {
+    localStorage.setItem(PORTAL_CFG_KEY, JSON.stringify(cfg));
   }
 
   // ---- Goals ----
@@ -1337,6 +1723,107 @@
       render();
       return;
     }
+
+    // ---- Marketing ----
+    if (action === 'switch-mkt-tab') {
+      mktEditTab = btn.getAttribute('data-tab');
+      render();
+      return;
+    }
+    if (action === 'add-mkt-cat') {
+      var cfg = loadMktConfig();
+      cfg.categories.push({ key: 'New Category', color: '#6366F1' });
+      saveMktConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'remove-mkt-cat') {
+      var cfg = loadMktConfig();
+      if (cfg.categories.length <= 1) { showToast('Must have at least one category', 'error'); return; }
+      cfg.categories.splice(index, 1);
+      saveMktConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'add-mkt-activity') {
+      var type = btn.getAttribute('data-type');
+      var cfg = loadMktConfig();
+      var list = type === 'weekly' ? cfg.weekly : cfg.monthly;
+      var defaultCat = cfg.categories.length > 0 ? cfg.categories[0].key : 'Custom';
+      list.push({
+        id: (type === 'weekly' ? 'w_' : 'm_') + Date.now().toString(36),
+        label: 'New activity',
+        detail: 'Description of this activity',
+        cat: defaultCat,
+        required: false
+      });
+      saveMktConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'remove-mkt-activity') {
+      var type = btn.getAttribute('data-type');
+      var cfg = loadMktConfig();
+      var list = type === 'weekly' ? cfg.weekly : cfg.monthly;
+      if (list.length <= 1) { showToast('Must have at least one activity', 'error'); return; }
+      list.splice(index, 1);
+      saveMktConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'reset-mkt-config') {
+      localStorage.removeItem(MKT_CONFIG_KEY);
+      showToast('Marketing activities reset to defaults');
+      render();
+      return;
+    }
+
+    // ---- Portal Config ----
+    if (action === 'add-portal-milestone') {
+      var mtype = btn.getAttribute('data-mtype');
+      var cfg = loadPortalConfig();
+      var list = mtype === 'txn' ? cfg.txnMilestones : cfg.lstMilestones;
+      list.push({ key: 'new_update', label: 'New Update', icon: '📌' });
+      savePortalConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'remove-portal-milestone') {
+      var mtype = btn.getAttribute('data-mtype');
+      var cfg = loadPortalConfig();
+      var list = mtype === 'txn' ? cfg.txnMilestones : cfg.lstMilestones;
+      if (list.length <= 1) { showToast('Must have at least one update type', 'error'); return; }
+      list.splice(index, 1);
+      savePortalConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'add-portal-nextstep') {
+      var stage = parseInt(btn.getAttribute('data-stage'));
+      var cfg = loadPortalConfig();
+      if (!cfg.nextSteps[stage]) cfg.nextSteps[stage] = [];
+      cfg.nextSteps[stage].push({ title: 'New step', desc: 'Description' });
+      savePortalConfig(cfg);
+      render();
+      return;
+    }
+    if (action === 'remove-portal-nextstep') {
+      var stage = parseInt(btn.getAttribute('data-stage'));
+      var cfg = loadPortalConfig();
+      if (cfg.nextSteps[stage]) {
+        cfg.nextSteps[stage].splice(index, 1);
+        savePortalConfig(cfg);
+      }
+      render();
+      return;
+    }
+    if (action === 'reset-portal-config') {
+      localStorage.removeItem(PORTAL_CFG_KEY);
+      showToast('Portal config reset to defaults');
+      render();
+      return;
+    }
+
   });
 
   // ---- Change event delegation (inputs, selects, checkboxes, color pickers) ----
@@ -1380,6 +1867,54 @@
     if (action === 'update-expense-color') {
       settings.expenseCategories[index].color = el.value;
       saveSettings(settings);
+      return;
+    }
+
+    // Marketing category color
+    if (action === 'update-mkt-cat-color') {
+      var cfg = loadMktConfig();
+      cfg.categories[index].color = el.value;
+      saveMktConfig(cfg);
+      return;
+    }
+
+    // Marketing activity category
+    if (action === 'update-mkt-activity-cat') {
+      var type = el.getAttribute('data-type');
+      var cfg = loadMktConfig();
+      var list = type === 'weekly' ? cfg.weekly : cfg.monthly;
+      list[index].cat = el.value;
+      saveMktConfig(cfg);
+      render();
+      return;
+    }
+
+    // Marketing required toggle
+    if (action === 'toggle-mkt-required') {
+      var type = el.getAttribute('data-type');
+      var cfg = loadMktConfig();
+      var list = type === 'weekly' ? cfg.weekly : cfg.monthly;
+      list[index].required = el.checked;
+      saveMktConfig(cfg);
+      render();
+      return;
+    }
+
+    // Marketing settings toggles
+    if (action === 'toggle-mkt-setting') {
+      var field = el.getAttribute('data-field');
+      var cfg = loadMktConfig();
+      cfg[field] = el.checked;
+      saveMktConfig(cfg);
+      return;
+    }
+
+    // Marketing streak threshold
+    if (action === 'save-mkt-setting') {
+      var field = el.getAttribute('data-field');
+      var cfg = loadMktConfig();
+      cfg[field] = parseInt(el.value) || 70;
+      saveMktConfig(cfg);
       return;
     }
 
@@ -1582,6 +2117,82 @@
       if (!val) { showToast('Category name cannot be empty', 'error'); render(); return; }
       settings.expenseCategories[index].key = val;
       saveSettings(settings);
+      return;
+    }
+
+    // Marketing category name
+    if (action === 'update-mkt-cat-name') {
+      var val = el.value.trim();
+      if (!val) { showToast('Category name cannot be empty', 'error'); render(); return; }
+      var cfg = loadMktConfig();
+      cfg.categories[index].key = val;
+      saveMktConfig(cfg);
+      return;
+    }
+
+    // Marketing activity label
+    if (action === 'update-mkt-activity-label') {
+      var val = el.value.trim();
+      if (!val) { showToast('Activity name cannot be empty', 'error'); render(); return; }
+      var type = el.getAttribute('data-type');
+      var cfg = loadMktConfig();
+      var list = type === 'weekly' ? cfg.weekly : cfg.monthly;
+      list[index].label = val;
+      saveMktConfig(cfg);
+      return;
+    }
+
+    // Marketing activity detail
+    if (action === 'update-mkt-activity-detail') {
+      var type = el.getAttribute('data-type');
+      var cfg = loadMktConfig();
+      var list = type === 'weekly' ? cfg.weekly : cfg.monthly;
+      list[index].detail = el.value.trim();
+      saveMktConfig(cfg);
+      return;
+    }
+
+    // Portal milestone edits
+    if (action === 'update-portal-milestone-icon') {
+      var mtype = el.getAttribute('data-mtype');
+      var cfg = loadPortalConfig();
+      var list = mtype === 'txn' ? cfg.txnMilestones : cfg.lstMilestones;
+      list[index].icon = el.value.trim() || '📌';
+      savePortalConfig(cfg);
+      return;
+    }
+    if (action === 'update-portal-milestone-key') {
+      var mtype = el.getAttribute('data-mtype');
+      var cfg = loadPortalConfig();
+      var list = mtype === 'txn' ? cfg.txnMilestones : cfg.lstMilestones;
+      list[index].key = el.value.trim().replace(/\s+/g, '_').toLowerCase() || 'update';
+      savePortalConfig(cfg);
+      return;
+    }
+    if (action === 'update-portal-milestone-label') {
+      var mtype = el.getAttribute('data-mtype');
+      var cfg = loadPortalConfig();
+      var list = mtype === 'txn' ? cfg.txnMilestones : cfg.lstMilestones;
+      list[index].label = el.value.trim() || 'Update';
+      savePortalConfig(cfg);
+      return;
+    }
+    if (action === 'update-portal-nextstep-title') {
+      var stage = parseInt(el.getAttribute('data-stage'));
+      var cfg = loadPortalConfig();
+      if (cfg.nextSteps[stage] && cfg.nextSteps[stage][index]) {
+        cfg.nextSteps[stage][index].title = el.value.trim();
+        savePortalConfig(cfg);
+      }
+      return;
+    }
+    if (action === 'update-portal-nextstep-desc') {
+      var stage = parseInt(el.getAttribute('data-stage'));
+      var cfg = loadPortalConfig();
+      if (cfg.nextSteps[stage] && cfg.nextSteps[stage][index]) {
+        cfg.nextSteps[stage][index].desc = el.value.trim();
+        savePortalConfig(cfg);
+      }
       return;
     }
 

@@ -124,8 +124,8 @@
     }
     var users = [
       { username: 'admin',  password: 'admin123', displayName: 'Jennifer Walsh', role: 'Team Lead' },
-      { username: 'agent1', password: 'demo123',  displayName: 'Marcus Rivera',  role: 'Senior Agent' },
-      { username: 'agent2', password: 'demo123',  displayName: 'Sarah Chen',     role: "Buyer's Agent" }
+      { username: 'agent1', password: 'demo123',  displayName: 'Marcus Rivera',  role: 'Broker Associate' },
+      { username: 'agent2', password: 'demo123',  displayName: 'Sarah Chen',     role: 'Agent' }
     ];
     localStorage.setItem(PREFIX + 'users', JSON.stringify(users));
   }
@@ -164,6 +164,8 @@
     },
 
     requireAuth: function () {
+      // Check API auth first, then localStorage
+      if (typeof API !== 'undefined' && API.isLoggedIn()) return;
       if (!Auth.isLoggedIn()) {
         window.location.href = 'login.html';
       }
@@ -173,6 +175,37 @@
       var session = Auth.getSession();
       if (!session) return false;
       return session.role === 'Team Lead';
+    },
+
+    isDemo: function () {
+      return localStorage.getItem(PREFIX + 'demo_mode') === 'true';
+    },
+
+    startDemo: function (mode) {
+      // Clear everything first
+      Object.keys(localStorage).forEach(function (k) {
+        if (k.indexOf(PREFIX) === 0) localStorage.removeItem(k);
+      });
+      localStorage.setItem(PREFIX + 'demo_mode', 'true');
+      localStorage.setItem(PREFIX + 'demo_type', mode); // 'solo' or 'team'
+      // Seed demo data
+      seedDemoData(mode);
+      // Auto-login
+      var session = {
+        username: mode === 'solo' ? 'demo_agent' : 'admin',
+        displayName: mode === 'solo' ? 'Alex Morgan' : 'Jennifer Walsh',
+        role: 'Team Lead',
+        loggedInAt: new Date().toISOString()
+      };
+      localStorage.setItem(PREFIX + 'session', JSON.stringify(session));
+      window.location.href = 'dashboard.html';
+    },
+
+    exitDemo: function () {
+      Object.keys(localStorage).forEach(function (k) {
+        if (k.indexOf(PREFIX) === 0) localStorage.removeItem(k);
+      });
+      window.location.href = 'index.html';
     },
 
     isAssistant: function () {
@@ -263,13 +296,48 @@
   function setActiveNav() {
     var path = window.location.pathname;
     var filename = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
-    var navItems = document.querySelectorAll('.nav-item');
+    var sidebarNav = document.querySelector('.sidebar-nav');
+    var navItems = sidebarNav ? sidebarNav.querySelectorAll('.nav-item[data-page]') : [];
+
+    // Reorder nav items based on saved order
+    try {
+      var raw = localStorage.getItem(PREFIX + 'admin_settings');
+      if (raw) {
+        var settings = JSON.parse(raw);
+        var order = settings.sidebarOrder;
+        if (order && order.length && sidebarNav) {
+          // Build a map of href -> element
+          var itemMap = {};
+          navItems.forEach(function (item) {
+            itemMap[item.getAttribute('data-page')] = item;
+          });
+          // Reinsert in saved order
+          order.forEach(function (page) {
+            if (itemMap[page]) {
+              sidebarNav.appendChild(itemMap[page]);
+              delete itemMap[page];
+            }
+          });
+          // Append any remaining items not in the order (new pages)
+          Object.keys(itemMap).forEach(function (page) {
+            sidebarNav.appendChild(itemMap[page]);
+          });
+        }
+      }
+    } catch (e) {}
+
+    // Re-query after reorder
+    navItems = sidebarNav ? sidebarNav.querySelectorAll('.nav-item[data-page]') : [];
     navItems.forEach(function (item) {
       var href = item.getAttribute('href');
       if (href === filename) {
         item.classList.add('active');
       } else {
         item.classList.remove('active');
+      }
+      // Hide recruiting nav item for non-privileged users
+      if (href === 'recruiting.html' && !Auth.isPrivileged()) {
+        item.style.display = 'none';
       }
     });
   }
@@ -428,6 +496,12 @@
         root.style.setProperty(mapping[themeKey], val);
       }
     });
+
+    // Deal source colors
+    if (theme.dealSourceCircleBg) root.style.setProperty('--deal-source-circle-bg', theme.dealSourceCircleBg);
+    if (theme.dealSourceCircleText) root.style.setProperty('--deal-source-circle-text', theme.dealSourceCircleText);
+    if (theme.dealSourceBarStart) root.style.setProperty('--deal-source-bar-start', theme.dealSourceBarStart);
+    if (theme.dealSourceBarEnd) root.style.setProperty('--deal-source-bar-end', theme.dealSourceBarEnd);
 
     // Sidebar — apply directly to avoid overriding --white (used by cards, modals, etc.)
     var sidebar = document.querySelector('.sidebar');
@@ -700,12 +774,311 @@
 
   // Auto-run on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function () {
-    applySoloMode();
-    applyAssistantMode();
-    applyTheme();
-    generateNotifications();
-    initNotificationBell();
+    // If API bridge is available, load server data into localStorage
+    if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
+      ApiBridge.init().then(function () {
+        applySoloMode();
+        applyAssistantMode();
+        applyTheme();
+        generateNotifications();
+        initNotificationBell();
+        initOnboarding();
+      });
+    } else {
+      applySoloMode();
+      applyAssistantMode();
+      applyTheme();
+      generateNotifications();
+      initNotificationBell();
+      initDemoBanner();
+      initOnboarding();
+    }
   });
+
+  // ---- Demo Banner & Read-Only ----
+  function initDemoBanner() {
+    // Check if we need to seed demo data
+    var pendingDemo = localStorage.getItem(PREFIX + 'demo_pending');
+    if (pendingDemo) {
+      localStorage.removeItem(PREFIX + 'demo_pending');
+      seedDemoData(pendingDemo);
+    }
+
+    if (!Auth.isDemo()) return;
+    var demoType = localStorage.getItem(PREFIX + 'demo_type') || 'team';
+
+    // Inject banner
+    var banner = document.createElement('div');
+    banner.id = 'demoBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#EAB308,#F59E0B);color:#000;text-align:center;padding:8px 16px;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px';
+    banner.innerHTML = '👀 You\'re in <strong>' + (demoType === 'solo' ? 'Solo Agent' : 'Team') + ' Demo Mode</strong> — explore everything, changes won\'t save.' +
+      '<button onclick="Auth.exitDemo()" style="background:#000;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;margin-left:8px">Exit Demo</button>';
+    document.body.prepend(banner);
+
+    // Push content down
+    document.body.style.paddingTop = '40px';
+
+    // Block all localStorage writes for reb_ keys
+    var origSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (key, value) {
+      if (key.indexOf(PREFIX) === 0 && key !== PREFIX + 'demo_mode' && key !== PREFIX + 'demo_type' && key !== PREFIX + 'session') {
+        return; // silently block
+      }
+      origSetItem(key, value);
+    };
+    var origRemoveItem = localStorage.removeItem.bind(localStorage);
+    localStorage.removeItem = function (key) {
+      if (key.indexOf(PREFIX) === 0 && key !== PREFIX + 'demo_mode' && key !== PREFIX + 'demo_type' && key !== PREFIX + 'session') {
+        return;
+      }
+      origRemoveItem(key);
+    };
+
+    // Override showToast to show "Demo mode" instead of success messages
+    if (typeof window.showToast === 'function') {
+      var origToast = window.showToast;
+      window.showToast = function (msg, type) {
+        if (type !== 'error') {
+          origToast('Demo mode — changes are not saved', 'info');
+        } else {
+          origToast(msg, type);
+        }
+      };
+    }
+  }
+
+  // ---- Demo Data Seeder ----
+  function seedDemoData(mode) {
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = now.getMonth();
+
+    // Users
+    var users;
+    if (mode === 'solo') {
+      users = [
+        { username: 'demo_agent', password: 'demo', displayName: 'Alex Morgan', role: 'Team Lead' }
+      ];
+    } else {
+      users = [
+        { username: 'admin', password: 'admin123', displayName: 'Jennifer Walsh', role: 'Team Lead' },
+        { username: 'agent1', password: 'demo123', displayName: 'Marcus Rivera', role: 'Broker Associate' },
+        { username: 'agent2', password: 'demo123', displayName: 'Sarah Chen', role: 'Agent' },
+        { username: 'agent3', password: 'demo123', displayName: 'David Kim', role: 'Agent' },
+        { username: 'asst1', password: 'demo123', displayName: 'Emily Torres', role: 'Assistant', assignedTo: 'admin' }
+      ];
+    }
+    localStorage.setItem(PREFIX + 'users', JSON.stringify(users));
+
+    var mainAgent = mode === 'solo' ? 'Alex Morgan' : 'Jennifer Walsh';
+    var agents = mode === 'solo' ? [mainAgent] : ['Jennifer Walsh', 'Marcus Rivera', 'Sarah Chen', 'David Kim'];
+
+    // Transactions
+    var txns = [
+      { id: 'txn_d1', address: '742 Evergreen Terrace, Springfield, IL 62704', type: 'Buyer', status: 'closed', price: 485000, agent: agents[0], closeDate: y + '-01-21', source: 'Referral', createdAt: y + '-01-01T10:00:00Z' },
+      { id: 'txn_d2', address: '1024 Maple Ave, Austin, TX 78731', type: 'Seller', status: 'closed', price: 725000, agent: agents[0], closeDate: y + '-02-15', source: 'Zillow', createdAt: y + '-01-10T10:00:00Z' },
+      { id: 'txn_d3', address: '550 Oak Lane, Denver, CO 80202', type: 'Buyer', status: 'pending', price: 395000, agent: agents[0], closeDate: y + '-05-01', source: 'Sphere of Influence', createdAt: y + '-03-01T10:00:00Z' },
+      { id: 'txn_d4', address: '2200 Birch Dr, Portland, OR 97201', type: 'Buyer', status: 'active', price: 540000, agent: agents[0], source: 'Google / SEO', createdAt: y + '-03-15T10:00:00Z' }
+    ];
+    if (mode === 'team') {
+      txns.push(
+        { id: 'txn_d5', address: '810 Pine St, Seattle, WA 98101', type: 'Buyer', status: 'closed', price: 620000, agent: 'Marcus Rivera', closeDate: y + '-01-28', source: 'Referral', createdAt: y + '-01-05T10:00:00Z' },
+        { id: 'txn_d6', address: '405 Cedar Blvd, San Diego, CA 92101', type: 'Seller', status: 'closed', price: 890000, agent: 'Marcus Rivera', closeDate: y + '-03-10', source: 'Open House', createdAt: y + '-02-01T10:00:00Z' },
+        { id: 'txn_d7', address: '1600 Elm Way, Nashville, TN 37201', type: 'Buyer', status: 'pending', price: 350000, agent: 'Sarah Chen', closeDate: y + '-04-20', source: 'Social Media', createdAt: y + '-03-05T10:00:00Z' },
+        { id: 'txn_d8', address: '900 Willow Ct, Scottsdale, AZ 85251', type: 'Buyer', status: 'closed', price: 475000, agent: 'Sarah Chen', closeDate: y + '-02-28', source: 'Zillow', createdAt: y + '-01-15T10:00:00Z' },
+        { id: 'txn_d9', address: '3300 Aspen Ridge, Park City, UT 84060', type: 'Seller', status: 'active', price: 1200000, agent: 'David Kim', source: 'Referral', createdAt: y + '-03-20T10:00:00Z' }
+      );
+    }
+    localStorage.setItem(PREFIX + 'transactions', JSON.stringify(txns));
+
+    // Listings
+    var listings = [
+      { id: 'lst_d1', address: '1500 Sunset Blvd, Los Angeles, CA 90028', status: 'active', price: 950000, agent: agents[0], beds: 4, baths: 3, sqft: 2800, listingDate: y + '-03-01', source: 'Sphere of Influence', createdAt: y + '-03-01T10:00:00Z' },
+      { id: 'lst_d2', address: '220 Harbor View, Miami, FL 33101', status: 'active', price: 675000, agent: agents[0], beds: 3, baths: 2, sqft: 1950, listingDate: y + '-03-10', source: 'Referral', createdAt: y + '-03-10T10:00:00Z' }
+    ];
+    if (mode === 'team') {
+      listings.push(
+        { id: 'lst_d3', address: '875 Mountain Dr, Boulder, CO 80301', status: 'active', price: 820000, agent: 'Marcus Rivera', beds: 5, baths: 4, sqft: 3400, listingDate: y + '-02-20', source: 'Cold Call / Door Knock', createdAt: y + '-02-20T10:00:00Z' },
+        { id: 'lst_d4', address: '460 Lakefront Rd, Chicago, IL 60601', status: 'pending', price: 550000, agent: 'Sarah Chen', beds: 3, baths: 2, sqft: 2100, listingDate: y + '-03-05', source: 'Open House', createdAt: y + '-03-05T10:00:00Z' }
+      );
+    }
+    localStorage.setItem(PREFIX + 'listings', JSON.stringify(listings));
+
+    // Parties
+    var parties = {};
+    parties['txn_d3'] = {
+      buyers: [{ name: 'John Thompson', phone: '555-0101', email: 'john@email.com' }],
+      sellers: [{ name: 'Robert Garcia', phone: '555-0201' }],
+      lender: 'First National Mortgage — Mark Stevens',
+      titleCompany: 'Horizon Title Services'
+    };
+    localStorage.setItem(PREFIX + 'txn_parties', JSON.stringify(parties));
+
+    // Transaction updates
+    var updates = {};
+    updates['txn_d3'] = [
+      { type: 'offer_accepted', title: 'Offer Accepted!', detail: 'Offer at $395,000 accepted.', timestamp: y + '-03-02T14:30:00Z', by: agents[0] },
+      { type: 'earnest_deposited', title: 'EMD Deposited', detail: '$5,000 deposited.', timestamp: y + '-03-05T09:00:00Z', by: agents[0] },
+      { type: 'inspection_scheduled', title: 'Inspection Scheduled', detail: 'March 12 at 10 AM.', timestamp: y + '-03-08T11:00:00Z', by: agents[0] },
+      { type: 'inspection_complete', title: 'Inspection Complete', detail: 'Minor items found.', timestamp: y + '-03-12T16:00:00Z', by: agents[0] }
+    ];
+    localStorage.setItem(PREFIX + 'txn_updates', JSON.stringify(updates));
+
+    // Portal links
+    var portalLinks = [
+      { token: 'demo_portal', txnId: 'txn_d3', type: 'transaction', clientName: 'John Thompson', createdAt: y + '-03-02T10:00:00Z', createdBy: agents[0] }
+    ];
+    localStorage.setItem(PREFIX + 'portal_links', JSON.stringify(portalLinks));
+
+    // Goals
+    var goalData = {};
+    agents.forEach(function (a) {
+      goalData[a] = { closings: mode === 'solo' ? 12 : 8, volume: mode === 'solo' ? 3000000 : 2000000 };
+    });
+    localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(goalData));
+
+    // Announcements
+    var anns = [
+      { id: 'ann1', text: 'Welcome to RE Back Office! Explore the demo to see how the system works.', author: mainAgent, timestamp: new Date().toISOString(), pinned: true }
+    ];
+    localStorage.setItem(PREFIX + 'announcements', JSON.stringify(anns));
+
+    // Seed default checklist templates
+    var templates = [
+      { id: 'tpl-demo-1', name: 'Buyer Closing Checklist', category: 'escrow', items: [
+        { id: 'i1', label: 'Open escrow' }, { id: 'i2', label: 'Deposit earnest money' }, { id: 'i3', label: 'Order inspections' },
+        { id: 'i4', label: 'Review disclosures' }, { id: 'i5', label: 'Negotiate repairs' }, { id: 'i6', label: 'Order appraisal' },
+        { id: 'i7', label: 'Loan approval' }, { id: 'i8', label: 'Remove contingencies' }, { id: 'i9', label: 'Final walkthrough' },
+        { id: 'i10', label: 'Sign closing docs' }
+      ]},
+      { id: 'tpl-demo-2', name: 'New Listing Checklist', category: 'listing', items: [
+        { id: 'j1', label: 'Listing agreement signed' }, { id: 'j2', label: 'Order inspections' }, { id: 'j3', label: 'Prelim & NHD' },
+        { id: 'j4', label: 'Complete disclosures' }, { id: 'j5', label: 'Agent visual inspection' }, { id: 'j6', label: 'Stage home' },
+        { id: 'j7', label: 'Professional photos' }, { id: 'j8', label: 'Go live on MLS' }
+      ]}
+    ];
+    localStorage.setItem(PREFIX + 'checklist_templates', JSON.stringify(templates));
+  }
+
+  // ---- Onboarding Walkthrough ----
+  var ONBOARDING_KEY = PREFIX + 'onboarding';
+
+  function initOnboarding() {
+    if (Auth.isDemo()) return;
+    if (!Auth.isLoggedIn()) return;
+    if (!Auth.isPrivileged()) return;
+
+    var raw = localStorage.getItem(ONBOARDING_KEY);
+    if (raw) {
+      var ob = JSON.parse(raw);
+      if (ob.dismissed) return;
+    }
+
+    // Check if this is a fresh install (no transactions, no listings)
+    var txns = [];
+    var lsts = [];
+    try { txns = JSON.parse(localStorage.getItem(PREFIX + 'transactions') || '[]'); } catch(e) {}
+    try { lsts = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]'); } catch(e) {}
+    var users = [];
+    try { users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]'); } catch(e) {}
+
+    // If there's real data, don't show onboarding
+    if (txns.length > 0 || lsts.length > 0 || users.length > 3) {
+      if (!raw) localStorage.setItem(ONBOARDING_KEY, JSON.stringify({ dismissed: true }));
+      return;
+    }
+
+    showOnboarding();
+  }
+
+  function showOnboarding() {
+    var ob;
+    try { ob = JSON.parse(localStorage.getItem(ONBOARDING_KEY) || '{}'); } catch(e) { ob = {}; }
+    if (!ob.steps) ob.steps = {};
+
+    var steps = [
+      { key: 'theme', label: 'Customize your theme & colors', page: 'admin-settings.html', desc: 'Set your brand colors, sidebar style, and page accents' },
+      { key: 'team', label: 'Add your team members', page: 'team.html', desc: 'Add agents with their roles — Broker Associate, Agent, or Assistant' },
+      { key: 'checklists', label: 'Set up checklist templates', page: 'admin-settings.html', desc: 'Create your buyer and listing checklists in Team Customization' },
+      { key: 'listing', label: 'Add your first listing', page: 'listings.html', desc: 'Enter a listing to see the full listing management flow' },
+      { key: 'escrow', label: 'Add your first escrow', page: 'transactions.html', desc: 'Enter a transaction to see the escrow tracking system' },
+      { key: 'marketing', label: 'Explore marketing activities', page: 'marketing.html', desc: 'Check off weekly and monthly marketing tasks' },
+      { key: 'reviews', label: 'Set up your review links', page: 'reviews.html', desc: 'Add your Google, Zillow, and other review profile URLs' },
+      { key: 'portal', label: 'Preview the client portal', page: 'admin-settings.html', desc: 'Customize what clients see when you share a portal link' }
+    ];
+
+    var done = steps.filter(function (s) { return ob.steps[s.key]; }).length;
+    var total = steps.length;
+
+    var panel = document.createElement('div');
+    panel.id = 'onboardingPanel';
+    panel.style.cssText = 'position:fixed;bottom:20px;right:20px;width:360px;max-height:80vh;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.05);z-index:9998;overflow:hidden;display:flex;flex-direction:column';
+
+    var h = '';
+    // Header
+    h += '<div style="padding:18px 20px;border-bottom:1px solid #F1F5F9;background:linear-gradient(135deg,#1E3A5F,#3B82F6);color:#fff">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between">';
+    h += '<div style="font-size:.95rem;font-weight:800">Getting Started</div>';
+    h += '<button onclick="dismissOnboarding()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center">&times;</button>';
+    h += '</div>';
+    h += '<div style="font-size:.75rem;opacity:.7;margin-top:4px">' + done + ' of ' + total + ' complete</div>';
+    h += '<div style="height:4px;background:rgba(255,255,255,.2);border-radius:99px;margin-top:8px;overflow:hidden"><div style="height:100%;width:' + Math.round(done/total*100) + '%;background:#fff;border-radius:99px;transition:width .3s"></div></div>';
+    h += '</div>';
+
+    // Steps
+    h += '<div style="overflow-y:auto;flex:1;padding:8px 0">';
+    steps.forEach(function (s) {
+      var isDone = ob.steps[s.key];
+      h += '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid #F8FAFC;cursor:pointer" onclick="toggleOnboardingStep(\'' + s.key + '\',\'' + s.page + '\')">';
+      h += '<div style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (isDone ? '#10B981' : '#E2E8F0') + ';background:' + (isDone ? '#10B981' : '#fff') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">';
+      if (isDone) h += '<svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+      h += '</div>';
+      h += '<div>';
+      h += '<div style="font-size:.85rem;font-weight:600;color:' + (isDone ? '#94A3B8' : '#1E293B') + ';' + (isDone ? 'text-decoration:line-through;' : '') + '">' + s.label + '</div>';
+      h += '<div style="font-size:.72rem;color:#94A3B8;margin-top:2px">' + s.desc + '</div>';
+      h += '</div></div>';
+    });
+    h += '</div>';
+
+    // Footer
+    if (done === total) {
+      h += '<div style="padding:16px 20px;border-top:1px solid #F1F5F9;text-align:center">';
+      h += '<div style="font-size:.9rem;font-weight:700;color:#10B981;margin-bottom:8px">🎉 All done! You\'re ready to go.</div>';
+      h += '<button onclick="dismissOnboarding()" style="background:#3B82F6;color:#fff;border:none;padding:8px 24px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">Close Setup Guide</button>';
+      h += '</div>';
+    }
+
+    panel.innerHTML = h;
+    // Remove existing
+    var existing = document.getElementById('onboardingPanel');
+    if (existing) existing.remove();
+    document.body.appendChild(panel);
+  }
+
+  window.toggleOnboardingStep = function (key, page) {
+    var ob;
+    try { ob = JSON.parse(localStorage.getItem(ONBOARDING_KEY) || '{}'); } catch(e) { ob = {}; }
+    if (!ob.steps) ob.steps = {};
+    ob.steps[key] = !ob.steps[key];
+    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(ob));
+    showOnboarding();
+    // Navigate if checking (not unchecking)
+    if (ob.steps[key] && page) {
+      var currentPage = window.location.pathname.split('/').pop();
+      if (currentPage !== page) {
+        window.location.href = page;
+      }
+    }
+  };
+
+  window.dismissOnboarding = function () {
+    var ob;
+    try { ob = JSON.parse(localStorage.getItem(ONBOARDING_KEY) || '{}'); } catch(e) { ob = {}; }
+    ob.dismissed = true;
+    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(ob));
+    var panel = document.getElementById('onboardingPanel');
+    if (panel) panel.remove();
+  };
 
   // ---- Helper: get the display name to filter data by ----
   // For assistants, returns their assigned agent's displayName

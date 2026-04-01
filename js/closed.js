@@ -102,13 +102,6 @@
     var allTxns = Data.getTransactions();
     var closedTxns = filterByRange(allTxns.filter(function (t) { return t.status === 'closed'; }));
 
-    // Agent-level access control: non-privileged users only see their own closed deals
-    var session = Auth.getSession();
-    var isLead = Auth.isPrivileged() || (typeof getDataAgentName === "function" && getDataAgentName() === null);
-    if (!isLead) {
-      closedTxns = closedTxns.filter(function (t) { return t.agent === (typeof getDataAgentName === 'function' && getDataAgentName() ? getDataAgentName() : session.displayName); });
-    }
-
     // Stats
     var totalClosed = closedTxns.length;
     var totalVolume = closedTxns.reduce(function (sum, t) { return sum + (parseFloat(t.price) || 0); }, 0);
@@ -140,7 +133,6 @@
     html += closedStatCard('Total Closed', totalClosed, '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>');
     html += closedStatCard('Total Volume', Data.formatCurrency(totalVolume), '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>');
     html += closedStatCard('Avg Deal Size', Data.formatCurrency(avgDeal), '<path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/>');
-    html += closedStatCard('Commission (' + (COMMISSION_RATE * 100) + '%)', Data.formatCurrency(totalCommission), '<path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>');
     html += '</div>';
 
     // Group by agent
@@ -165,49 +157,40 @@
       html += '<p style="color:var(--gray-400);font-size:.88rem">Close your first deal and it will appear here.</p>';
       html += '</div>';
     } else {
+      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">';
+
       sortedAgents.forEach(function (agentName) {
         var deals = agentGroups[agentName];
         var agentVolume = deals.reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
-        var agentCommission = agentVolume * COMMISSION_RATE;
         var cls = agentClass(agentName);
 
-        // Sort deals by close date desc
         deals.sort(function (a, b) { return (b.closeDate || '').localeCompare(a.closeDate || ''); });
 
-        html += '<div class="lb-card" style="margin-bottom:20px">';
+        html += '<div class="lb-card" style="margin-bottom:0">';
 
         // Agent header
-        html += '<div style="padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">';
-        html += '<div style="display:flex;align-items:center;gap:14px">';
-        html += '<div class="agent-avatar ' + cls + '" style="width:44px;height:44px;font-size:.85rem">' + getInitials(agentName) + '</div>';
-        html += '<div>';
-        html += '<div style="font-size:1.05rem;font-weight:700;color:var(--gray-900)">' + escapeHtml(agentName) + '</div>';
-        html += '<div style="font-size:.8rem;color:var(--gray-400);margin-top:1px">' + deals.length + ' closing' + (deals.length !== 1 ? 's' : '') + '</div>';
+        html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:12px">';
+        html += '<div class="agent-avatar ' + cls + '" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;font-size:.78rem;color:#fff;flex-shrink:0">' + getInitials(agentName) + '</div>';
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-size:.9rem;font-weight:700;color:var(--gray-900)">' + escapeHtml(agentName) + '</div>';
+        html += '<div style="font-size:.72rem;color:var(--gray-400)">' + deals.length + ' closed · ' + Data.formatCurrency(agentVolume) + '</div>';
         html += '</div></div>';
 
-        // Agent summary stats
-        html += '<div style="display:flex;gap:24px;flex-wrap:wrap">';
-        html += '<div style="text-align:right"><div style="font-size:.68rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">Volume</div><div style="font-size:1rem;font-weight:700;color:var(--gray-800)">' + Data.formatCurrency(agentVolume) + '</div></div>';
-        html += '<div style="text-align:right"><div style="font-size:.68rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">Commission</div><div style="font-size:1rem;font-weight:700;color:var(--emerald)">' + Data.formatCurrency(agentCommission) + '</div></div>';
-        html += '</div>';
-        html += '</div>';
-
-        // Deal rows
+        // Deal list
         deals.forEach(function (t) {
-          html += '<div class="list-row" data-action="open-detail" data-id="' + t.id + '" style="padding:14px 24px">';
+          html += '<div class="list-row" data-action="open-detail" data-id="' + t.id + '" style="padding:10px 20px;cursor:pointer">';
           html += '<div style="flex:1;min-width:0">';
-          html += '<div style="font-size:.9rem;font-weight:600;color:var(--gray-800)">' + escapeHtml(t.address) + '</div>';
-          html += '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">' + Data.formatDate(t.closeDate) + (t.source ? ' &middot; ' + escapeHtml(t.source) : '') + '</div>';
+          html += '<div style="font-size:.82rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml((t.address || '').split(',')[0]) + '</div>';
+          html += '<div style="font-size:.68rem;color:var(--gray-400)">' + Data.formatDate(t.closeDate) + '</div>';
           html += '</div>';
-          html += '<div style="text-align:right;flex-shrink:0">';
-          html += '<div style="font-size:.95rem;font-weight:700;color:var(--gray-900)">' + Data.formatCurrencyFull(t.price) + '</div>';
-          html += '<div style="font-size:.78rem;color:var(--emerald);font-weight:600">' + formatCommission(t.price) + '</div>';
-          html += '</div>';
+          html += '<div style="font-size:.82rem;font-weight:700;color:var(--gray-900);flex-shrink:0">' + Data.formatCurrency(t.price) + '</div>';
           html += '</div>';
         });
 
-        html += '</div>'; // lb-card
+        html += '</div>';
       });
+
+      html += '</div>';
     }
 
     pageBody.innerHTML = html;
@@ -252,14 +235,6 @@
     '</button>';
 
     // Commission highlight banner
-    html += '<div class="commission-highlight">' +
-      '<div class="commission-highlight-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>' +
-      '<div>' +
-        '<div class="commission-highlight-label">Commission Earned (' + (COMMISSION_RATE * 100) + '%)</div>' +
-        '<div class="commission-highlight-value">' + Data.formatCurrencyFull(commission) + '</div>' +
-      '</div>' +
-    '</div>';
-
     // Header Card
     html += '<div class="detail-header-card">';
     html += '<div class="detail-header-accent"></div>';
@@ -298,22 +273,9 @@
       '<div class="detail-block-value">' + Data.formatCurrencyFull(t.price) + '</div>' +
     '</div>';
 
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Commission (' + (COMMISSION_RATE * 100) + '%)</div>' +
-      '<div class="detail-block-value" style="color:#10B981;font-weight:700">' + Data.formatCurrencyFull(commission) + '</div>' +
-    '</div>';
-
     html += '</div>'; // detail-blocks-row
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
-
-    // Notes (if any)
-    if (t.notes) {
-      html += '<div class="notes-card" style="margin-bottom:24px">';
-      html += '<div class="notes-card-header">Deal Notes</div>';
-      html += '<div style="padding:16px 20px;font-size:.88rem;color:var(--gray-600);line-height:1.6">' + escapeHtml(t.notes) + '</div>';
-      html += '</div>';
-    }
 
     // Buyer / Seller Info Card
     var hasBuyer = buyer.name || buyer.phone || buyer.email;
@@ -352,21 +314,6 @@
       html += '</div>'; // parties-card
     }
 
-    // Activity / Notes timeline
-    if (txnNotes.length > 0) {
-      html += '<div class="notes-card">';
-      html += '<div class="notes-card-header">Activity &amp; Notes</div>';
-      txnNotes.forEach(function (note) {
-        html += '<div class="note-item">' +
-          '<div class="note-meta">' +
-            '<span class="note-author">' + escapeHtml(note.author) + '</span>' +
-            '<span class="note-time">' + relativeTime(note.timestamp) + '</span>' +
-          '</div>' +
-          '<div class="note-text">' + escapeHtml(note.text) + '</div>' +
-        '</div>';
-      });
-      html += '</div>';
-    }
 
     pageBody.innerHTML = html;
   }

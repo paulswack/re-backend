@@ -57,7 +57,7 @@
       background: rgba(255,255,255,.06);
     }
     .portal-header-inner {
-      max-width: 720px;
+      max-width: 820px;
       margin: 0 auto;
       padding: 20px 28px;
       display: flex;
@@ -103,7 +103,7 @@
 
     /* ---- Container ---- */
     .portal-main {
-      max-width: 720px;
+      max-width: 820px;
       margin: 0 auto;
       padding: 28px 28px 60px;
     }
@@ -262,17 +262,17 @@
       z-index: 1;
     }
     .stepper-circle {
-      width: 40px; height: 40px;
+      width: 34px; height: 34px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: .72rem; font-weight: 800;
+      font-size: .65rem; font-weight: 800;
       border: 3px solid var(--p-200);
       background: var(--p-white);
       color: var(--p-400);
       position: relative; z-index: 2;
       transition: all .3s;
     }
-    .stepper-circle svg { width: 18px; height: 18px; fill: #fff; }
+    .stepper-circle svg { width: 16px; height: 16px; fill: #fff; }
     .stepper-step.completed .stepper-circle {
       background: var(--p-indigo);
       border-color: var(--p-indigo);
@@ -284,22 +284,34 @@
       box-shadow: 0 0 0 5px rgba(99,102,241,.12);
     }
     .stepper-label {
-      margin-top: 8px;
-      font-size: .65rem;
-      font-weight: 600;
+      margin-top: 6px;
+      font-size: .62rem;
+      font-weight: 700;
       color: var(--p-400);
       text-align: center;
-      max-width: 80px;
-      line-height: 1.3;
+      max-width: 68px;
+      line-height: 1.2;
     }
     .stepper-step.completed .stepper-label { color: var(--p-indigo); }
     .stepper-step.active .stepper-label { color: var(--p-indigo); font-weight: 700; }
 
+    .stepper-sublabel {
+      font-size: .55rem;
+      font-weight: 500;
+      color: var(--p-400);
+      text-align: center;
+      max-width: 72px;
+      line-height: 1.2;
+      margin-top: 2px;
+    }
+    .stepper-step.completed .stepper-sublabel { color: var(--p-indigo); opacity: .7; }
+    .stepper-step.active .stepper-sublabel { color: var(--p-indigo); opacity: .8; }
+
     .stepper-line {
       position: absolute;
-      top: 20px;
-      left: 8.33%;
-      right: 8.33%;
+      top: 17px;
+      left: 5.5%;
+      right: 5.5%;
       height: 3px;
       z-index: 0;
     }
@@ -467,7 +479,7 @@
 
     /* ---- Footer ---- */
     .portal-footer {
-      max-width: 720px;
+      max-width: 820px;
       margin: 0 auto;
       padding: 20px 28px 40px;
       text-align: center;
@@ -497,6 +509,232 @@
 
     @media (max-width: 480px) {
       .portal-details-row { grid-template-columns: 1fr; }
+    }
+
+    /* ---- Countdown Banner ---- */
+    .portal-countdown {
+      background: linear-gradient(135deg, #1E3A5F 0%, var(--p-indigo) 50%, var(--p-violet) 100%);
+      border-radius: var(--p-radius);
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      color: #fff;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .portal-countdown::after {
+      content: '';
+      position: absolute;
+      top: -40%; right: -15%;
+      width: 250px; height: 250px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.06);
+      pointer-events: none;
+    }
+    .portal-countdown-num {
+      font-size: 3rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 4px;
+      letter-spacing: -2px;
+    }
+    .portal-countdown-label {
+      font-size: .85rem;
+      font-weight: 600;
+      opacity: .8;
+    }
+    .portal-countdown-sub {
+      font-size: .75rem;
+      opacity: .55;
+      margin-top: 6px;
+    }
+
+    /* ---- Celebration ---- */
+    .portal-celebration {
+      background: linear-gradient(135deg, #065F46 0%, #10B981 50%, #34D399 100%);
+      border-radius: var(--p-radius);
+      padding: 32px 28px;
+      margin-bottom: 20px;
+      color: #fff;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .portal-celebration::before,
+    .portal-celebration::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      pointer-events: none;
+    }
+    .portal-celebration::before { top: -30%; left: -10%; width: 200px; height: 200px; }
+    .portal-celebration::after { bottom: -20%; right: -8%; width: 160px; height: 160px; }
+    .portal-celebration-emoji { font-size: 3rem; margin-bottom: 8px; }
+    .portal-celebration-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 4px; }
+    .portal-celebration-sub { font-size: .9rem; opacity: .8; }
+
+    /* ---- Key Dates ---- */
+    .portal-dates { padding: 4px 0; }
+    .portal-date-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--p-50);
+      transition: background .1s;
+    }
+    .portal-date-row:last-child { border-bottom: none; }
+    .portal-date-row:hover { background: var(--p-50); }
+    .portal-date-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .portal-date-icon.upcoming { background: #DBEAFE; }
+    .portal-date-icon.done { background: var(--p-emerald-light); }
+    .portal-date-icon.today { background: #FEF3C7; }
+    .portal-date-info { flex: 1; min-width: 0; }
+    .portal-date-name { font-size: .85rem; font-weight: 600; color: var(--p-800); }
+    .portal-date-val { font-size: .75rem; color: var(--p-500); margin-top: 1px; }
+    .portal-date-badge {
+      font-size: .68rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 99px; flex-shrink: 0;
+    }
+    .portal-date-badge.upcoming { background: #DBEAFE; color: #1D4ED8; }
+    .portal-date-badge.done { background: var(--p-emerald-light); color: #065F46; }
+    .portal-date-badge.today { background: #FEF3C7; color: #92400E; }
+
+    /* ---- Contacts Card ---- */
+    .portal-contacts { padding: 4px 0; }
+    .portal-contact-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--p-50);
+    }
+    .portal-contact-row:last-child { border-bottom: none; }
+    .portal-contact-avatar {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .portal-contact-info { flex: 1; min-width: 0; }
+    .portal-contact-name { font-size: .85rem; font-weight: 600; color: var(--p-800); }
+    .portal-contact-role { font-size: .72rem; color: var(--p-400); }
+    .portal-contact-details { font-size: .75rem; color: var(--p-500); margin-top: 2px; }
+    .portal-contact-details a { color: var(--p-indigo); text-decoration: none; }
+    .portal-contact-details a:hover { text-decoration: underline; }
+
+    /* ---- Next Steps ---- */
+    .portal-steps-list { padding: 8px 0; }
+    .portal-step-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--p-50);
+    }
+    .portal-step-item:last-child { border-bottom: none; }
+    .portal-step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--p-indigo-light);
+      color: var(--p-indigo);
+      font-size: .72rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .portal-step-text { flex: 1; }
+    .portal-step-title { font-size: .85rem; font-weight: 600; color: var(--p-800); }
+    .portal-step-desc { font-size: .78rem; color: var(--p-500); margin-top: 2px; line-height: 1.5; }
+
+    /* ---- FAQ Accordion ---- */
+    .portal-faq-list { padding: 4px 0; }
+    .portal-faq-item { border-bottom: 1px solid var(--p-50); }
+    .portal-faq-item:last-child { border-bottom: none; }
+    .portal-faq-q {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--p-800);
+      user-select: none;
+      transition: background .1s;
+    }
+    .portal-faq-q:hover { background: var(--p-50); }
+    .portal-faq-arrow {
+      width: 20px; height: 20px;
+      fill: var(--p-400);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .portal-faq-item.open .portal-faq-arrow { transform: rotate(180deg); }
+    .portal-faq-a {
+      padding: 0 28px 16px 28px;
+      font-size: .82rem;
+      color: var(--p-500);
+      line-height: 1.6;
+      display: none;
+    }
+    .portal-faq-item.open .portal-faq-a { display: block; }
+
+    /* ---- Cost Estimator ---- */
+    .portal-costs { padding: 12px 28px 20px; }
+    .portal-cost-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: .85rem;
+      border-bottom: 1px solid var(--p-50);
+    }
+    .portal-cost-row:last-child { border-bottom: none; }
+    .portal-cost-label { color: var(--p-600); }
+    .portal-cost-val { font-weight: 700; color: var(--p-800); }
+    .portal-cost-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0 0;
+      margin-top: 8px;
+      border-top: 2px solid var(--p-200);
+      font-size: .95rem;
+    }
+    .portal-cost-total .portal-cost-label { font-weight: 700; color: var(--p-800); }
+    .portal-cost-total .portal-cost-val { color: var(--p-indigo); font-weight: 800; }
+    .portal-cost-note { font-size: .72rem; color: var(--p-400); margin-top: 12px; font-style: italic; }
+
+    /* ---- Enhanced Agent Card ---- */
+    .portal-agent-btn.outline {
+      background: transparent;
+      color: var(--p-indigo);
+      border: 1.5px solid var(--p-200);
+    }
+    .portal-agent-btn.outline:hover { background: var(--p-indigo-light); border-color: var(--p-indigo); }
+    .portal-agent-btn.outline svg { fill: var(--p-indigo); }
+
+    /* ---- Details Row 4-col ---- */
+    .portal-details-row-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 768px) {
+      .portal-details-row-4 { grid-template-columns: repeat(2, 1fr); }
+      .portal-countdown-num { font-size: 2.2rem; }
+    }
+    @media (max-width: 480px) {
+      .portal-details-row-4 { grid-template-columns: 1fr; }
     }
   </style>
 </head>

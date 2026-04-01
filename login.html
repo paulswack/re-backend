@@ -152,10 +152,17 @@
     <a href="index.html" class="back-link">Back to homepage</a>
   </div>
 
+  <script src="js/api.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/auth.js"></script>
   <script>
     (function () {
+      // If already logged in via API, redirect
+      if (API.isLoggedIn()) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+      // Fallback: localStorage auth
       if (Auth.isLoggedIn()) {
         window.location.href = 'dashboard.html';
         return;
@@ -171,10 +178,31 @@
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
 
-        if (Auth.login(username, password)) {
-          window.location.href = 'dashboard.html';
+        // Try server login first
+        if (window.location.protocol !== 'file:') {
+          var btn = form.querySelector('button[type="submit"]');
+          btn.disabled = true;
+          btn.textContent = 'Signing in...';
+
+          API.login(username, password).then(function (res) {
+            window.location.href = 'dashboard.html';
+          }).catch(function (err) {
+            // Fallback to localStorage login
+            if (Auth.login(username, password)) {
+              window.location.href = 'dashboard.html';
+            } else {
+              errorEl.style.display = 'block';
+              btn.disabled = false;
+              btn.textContent = 'Sign In';
+            }
+          });
         } else {
-          errorEl.style.display = 'block';
+          // File protocol — use localStorage only
+          if (Auth.login(username, password)) {
+            window.location.href = 'dashboard.html';
+          } else {
+            errorEl.style.display = 'block';
+          }
         }
       });
     })();

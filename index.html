@@ -700,6 +700,10 @@
         </a>
         <a href="#features" class="btn-outline">See It In Action</a>
       </div>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+        <button onclick="startDemo('solo')" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 24px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px)" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Try Solo Agent Demo</button>
+        <button onclick="startDemo('team')" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 24px;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px)" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Try Team Demo</button>
+      </div>
       <p class="hero-trust">Trusted by agents and teams across the country</p>
     </div>
   </section>
@@ -1007,7 +1011,7 @@
         <div class="step">
           <div class="step-number">1</div>
           <h3>Sign up in 60 seconds</h3>
-          <p>Pick Solo or Team plan, create your account, and you're in. No credit card required to start.</p>
+          <p>Pick Solo or Team plan, create your account, and you're in. Your 1-day free trial starts immediately.</p>
         </div>
         <div class="step">
           <div class="step-number">2</div>
@@ -1145,7 +1149,7 @@
           <button class="pricing-cta" onclick="selectPlan('team');document.getElementById('login').scrollIntoView({behavior:'smooth'})">Start Free Trial</button>
         </div>
       </div>
-      <p class="pricing-note">14-day free trial. No credit card required.</p>
+      <p class="pricing-note">1-day free trial. After your trial, your selected plan will be charged automatically to continue.</p>
     </div>
   </section>
 
@@ -1255,6 +1259,10 @@
           <label for="password">Password</label>
           <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
         </div>
+        <div class="form-group" style="margin-top:4px">
+          <label for="accessCode" style="font-size:.78rem;color:#64748B">Access Code (optional)</label>
+          <input type="text" id="accessCode" placeholder="Enter access code if you have one" style="font-size:.85rem">
+        </div>
         <button type="submit" class="login-btn">Sign In</button>
         <div class="login-error" id="loginError">Invalid username or password.</div>
       </form>
@@ -1264,6 +1272,7 @@
     </div>
   </section>
 
+  <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script>
     (function () {
@@ -1272,6 +1281,38 @@
         window.location.href = 'dashboard.html';
         return;
       }
+
+      // Demo launcher
+      window.startDemo = function (mode) {
+        // Load auth.js helpers
+        var PREFIX = 'reb_';
+        Object.keys(localStorage).forEach(function (k) { if (k.indexOf(PREFIX) === 0) localStorage.removeItem(k); });
+        localStorage.setItem(PREFIX + 'demo_mode', 'true');
+        localStorage.setItem(PREFIX + 'demo_type', mode);
+        // We need auth.js to seed data, so navigate to a page that loads it
+        // Set a flag so auth.js knows to seed on next page load
+        localStorage.setItem(PREFIX + 'demo_pending', mode);
+        // Create minimal session so requireAuth passes
+        var session = {
+          username: mode === 'solo' ? 'demo_agent' : 'admin',
+          displayName: mode === 'solo' ? 'Alex Morgan' : 'Jennifer Walsh',
+          role: 'Team Lead',
+          loggedInAt: new Date().toISOString()
+        };
+        localStorage.setItem(PREFIX + 'session', JSON.stringify(session));
+        // Minimal users so login works
+        var users = mode === 'solo'
+          ? [{ username: 'demo_agent', password: 'demo', displayName: 'Alex Morgan', role: 'Team Lead' }]
+          : [
+            { username: 'admin', password: 'admin123', displayName: 'Jennifer Walsh', role: 'Team Lead' },
+            { username: 'agent1', password: 'demo123', displayName: 'Marcus Rivera', role: 'Broker Associate' },
+            { username: 'agent2', password: 'demo123', displayName: 'Sarah Chen', role: 'Agent' },
+            { username: 'agent3', password: 'demo123', displayName: 'David Kim', role: 'Agent' },
+            { username: 'asst1', password: 'demo123', displayName: 'Emily Torres', role: 'Assistant', assignedTo: 'admin' }
+          ];
+        localStorage.setItem(PREFIX + 'users', JSON.stringify(users));
+        window.location.href = 'dashboard.html';
+      };
 
       var selectedPlan = null;
       window.selectPlan = function (mode) {
@@ -1293,13 +1334,31 @@
         var username = document.getElementById('username').value.trim();
         var password = document.getElementById('password').value;
 
-        if (Auth.login(username, password)) {
-          if (selectedPlan) {
-            localStorage.setItem('reb_plan_mode', selectedPlan);
-          }
-          window.location.href = 'dashboard.html';
+        var accessCode = (document.getElementById('accessCode').value || '').trim();
+
+        // Try server API login first
+        if (window.location.protocol !== 'file:') {
+          API.login(username, password, accessCode).then(function (res) {
+            if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
+            window.location.href = 'dashboard.html';
+          }).catch(function () {
+            // Fallback to localStorage
+            if (Auth.login(username, password)) {
+              if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
+              if (accessCode === 'REBACKOFFICE-ADMIN-2026') localStorage.setItem('reb_account_type', 'admin_free');
+              window.location.href = 'dashboard.html';
+            } else {
+              errorEl.style.display = 'block';
+            }
+          });
         } else {
-          errorEl.style.display = 'block';
+          if (Auth.login(username, password)) {
+            if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
+            if (accessCode === 'REBACKOFFICE-ADMIN-2026') localStorage.setItem('reb_account_type', 'admin_free');
+            window.location.href = 'dashboard.html';
+          } else {
+            errorEl.style.display = 'block';
+          }
         }
       });
     })();
