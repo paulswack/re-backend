@@ -107,7 +107,7 @@
       }
     ]);
   }
-  seedData();
+  if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) { seedData(); }
 
   function render() {
     if (viewMode === 'form') renderForm();

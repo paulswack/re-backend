@@ -64,13 +64,16 @@
   function getVendors() {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      var seeded = SEED_DATA.map(function (v) {
-        v.id = generateId();
-        v.createdAt = new Date().toISOString();
-        return v;
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-      return seeded;
+      if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) {
+        var seeded = SEED_DATA.map(function (v) {
+          v.id = generateId();
+          v.createdAt = new Date().toISOString();
+          return v;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+        return seeded;
+      }
+      return [];
     }
     try { return JSON.parse(raw); } catch (e) { return []; }
   }

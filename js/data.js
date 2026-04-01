@@ -335,7 +335,7 @@
       localStorage.setItem(PREFIX + 'txn_parties', JSON.stringify(sampleParties));
     }
   }
-  seedData();
+  if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) { seedData(); }
 
   // ---- Public Data API ----
   window.Data = {

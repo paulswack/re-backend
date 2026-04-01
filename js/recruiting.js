@@ -103,8 +103,11 @@
   function getRecruits() {
     var raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
-      return SEED_DATA.slice();
+      if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
+        return SEED_DATA.slice();
+      }
+      return [];
     }
     try { return JSON.parse(raw); } catch (e) { return []; }
   }

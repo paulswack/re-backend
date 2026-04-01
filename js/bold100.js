@@ -325,7 +325,7 @@
     saveAllData(all);
   }
 
-  seedData();
+  if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) { seedData(); }
 
   // ---- Render ----
   function render() {

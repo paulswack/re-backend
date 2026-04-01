@@ -182,8 +182,11 @@
     saveMileageTrips(trips);
   }
 
-  seedTaxData();
-  seedMileageData();
+  // Only seed demo data in demo mode
+  if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) {
+    seedTaxData();
+    seedMileageData();
+  }
 
   // ---- Populate category dropdown ----
   function populateCategories(type) {
