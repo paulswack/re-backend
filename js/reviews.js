@@ -44,28 +44,28 @@
       id: 'tpl_close',
       name: 'Post-Close Thank You',
       subject: 'Thank you for choosing {{agentName}} — would you share your experience?',
-      body: 'Hi {{clientName}},\n\nCongratulations again on your {{transactionType}}! It was such a pleasure working with you through this process.\n\nIf you had a great experience, I would truly appreciate it if you could take a moment to leave a review. It helps me help more families like yours.\n\n{{reviewLink}}\n\nIt only takes a minute and means the world to me. Thank you so much!\n\nWarm regards,\n{{agentName}}',
+      body: 'Hi {{clientName}},\n\nCongratulations again on your {{transactionType}}! It was such a pleasure working with you through this process.\n\nIf you had a great experience, I would truly appreciate it if you could take a moment to leave a review. It helps me help more families like yours.\n\n{{reviewLink}}\n\nIt only takes a minute and means the world to me. Thank you so much!\n\n{{signature}}',
       timing: 'Send 1-3 days after close of escrow'
     },
     {
       id: 'tpl_followup',
       name: 'Gentle Follow-Up',
       subject: 'Quick favor, {{clientFirstName}}? 🙏',
-      body: 'Hi {{clientFirstName}},\n\nI hope you\'re settling into your new home beautifully! I wanted to follow up on my earlier note — if you have a quick moment, I\'d be so grateful for a review.\n\n{{reviewLink}}\n\nYour feedback helps me grow my business and serve more wonderful clients. No pressure at all — I appreciate you either way!\n\nBest,\n{{agentName}}',
+      body: 'Hi {{clientFirstName}},\n\nI hope you\'re settling into your new home beautifully! I wanted to follow up on my earlier note — if you have a quick moment, I\'d be so grateful for a review.\n\n{{reviewLink}}\n\nYour feedback helps me grow my business and serve more wonderful clients. No pressure at all — I appreciate you either way!\n\n{{signature}}',
       timing: 'Send 7-10 days after first email if no response'
     },
     {
       id: 'tpl_anniversary',
       name: 'Home Anniversary Check-In',
       subject: 'Happy Home Anniversary, {{clientFirstName}}! 🏡🎉',
-      body: 'Hi {{clientFirstName}},\n\nCan you believe it\'s been a year since you {{transactionType === "Buyer" ? "moved into" : "sold"}} your home? Time flies!\n\nI wanted to check in and see how everything is going. If you haven\'t already, I\'d love it if you could share your experience working together.\n\n{{reviewLink}}\n\nHope all is well — feel free to reach out anytime if you need anything real estate related!\n\nCheers,\n{{agentName}}',
+      body: 'Hi {{clientFirstName}},\n\nCan you believe it\'s been a year since you {{transactionType === "Buyer" ? "moved into" : "sold"}} your home? Time flies!\n\nI wanted to check in and see how everything is going. If you haven\'t already, I\'d love it if you could share your experience working together.\n\n{{reviewLink}}\n\nHope all is well — feel free to reach out anytime if you need anything real estate related!\n\n{{signature}}',
       timing: 'Send on the 1-year anniversary of close'
     },
     {
       id: 'tpl_specific',
       name: 'Platform-Specific Ask',
       subject: 'Would you leave a quick {{platform}} review?',
-      body: 'Hi {{clientName}},\n\nI hope this finds you well! I\'m working on building up my {{platform}} reviews and would be so grateful if you could share a few words about your experience.\n\n{{reviewLink}}\n\nEven just a sentence or two makes a huge difference. Thank you for your time and for trusting me with your real estate needs!\n\nBest regards,\n{{agentName}}',
+      body: 'Hi {{clientName}},\n\nI hope this finds you well! I\'m working on building up my {{platform}} reviews and would be so grateful if you could share a few words about your experience.\n\n{{reviewLink}}\n\nEven just a sentence or two makes a huge difference. Thank you for your time and for trusting me with your real estate needs!\n\n{{signature}}',
       timing: 'Use when targeting a specific platform'
     }
   ];
@@ -700,14 +700,26 @@
     var defaultPlatform = links._default || 'Google';
     var reviewLink = links[r.source || defaultPlatform] || links[defaultPlatform] || '[Your review link — set up in Review Links tab]';
 
+    // Build signature from profile
+    var agentProfile = {};
+    try { var allProfiles = JSON.parse(localStorage.getItem('reb_profiles') || '{}'); agentProfile = allProfiles[session.username] || {}; } catch(e) {}
+    var sigParts = [session.displayName || ''];
+    if (agentProfile.phone) sigParts.push(agentProfile.phone);
+    if (agentProfile.email) sigParts.push(agentProfile.email);
+    if (agentProfile.license) sigParts.push('DRE# ' + agentProfile.license);
+    var signature = sigParts.join('\n');
+
     var vars = {
       clientName: r.clientName || '',
       clientFirstName: (r.clientName || '').split(' ')[0] || '',
       agentName: session.displayName || '',
+      agentPhone: agentProfile.phone || '',
+      agentEmail: agentProfile.email || '',
       reviewLink: reviewLink,
       platform: r.source || defaultPlatform,
       transactionType: 'purchase',
-      address: r.address || ''
+      address: r.address || '',
+      signature: signature
     };
 
     var tplOpts = '<option value="">Select a template...</option>';

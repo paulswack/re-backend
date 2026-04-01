@@ -1882,26 +1882,35 @@
     var clientName = buyer.name || seller.name || '';
     var clientFirst = clientName.split(' ')[0] || '';
 
+    // Build signature from profile
+    var agentProfile = {};
+    try { var allProfiles = JSON.parse(localStorage.getItem('reb_profiles') || '{}'); agentProfile = allProfiles[session.username] || {}; } catch(e) {}
+    var sigParts = [agentName];
+    if (agentProfile.phone) sigParts.push(agentProfile.phone);
+    if (agentProfile.email) sigParts.push(agentProfile.email);
+    if (agentProfile.license) sigParts.push('DRE# ' + agentProfile.license);
+    var signature = sigParts.join('\n');
+
     var portalTemplates = [
       {
         name: 'Welcome to Your Portal',
         subject: 'Your Transaction Portal — {{address}}',
-        body: 'Hi {{clientFirst}},\n\nGreat news! I\'ve set up a personal portal where you can track every step of your transaction.\n\n{{portalUrl}}\n\nHere you can see:\n- Real-time progress updates\n- Key dates and milestones\n- Everyone involved in the transaction\n- What to expect next at each stage\n\nI\'ll be posting updates here as we move through the process. Feel free to check it anytime!\n\nBest regards,\n{{agentName}}'
+        body: 'Hi {{clientFirst}},\n\nGreat news! I\'ve set up a personal portal where you can track every step of your transaction.\n\n{{portalUrl}}\n\nHere you can see:\n- Real-time progress updates\n- Key dates and milestones\n- Everyone involved in the transaction\n- What to expect next at each stage\n\nI\'ll be posting updates here as we move through the process. Feel free to check it anytime!\n\n{{signature}}'
       },
       {
         name: 'New Update Posted',
         subject: 'Update on {{address}}',
-        body: 'Hi {{clientFirst}},\n\nI just posted a new update on your transaction portal. Check it out here:\n\n{{portalUrl}}\n\nLet me know if you have any questions!\n\n{{agentName}}'
+        body: 'Hi {{clientFirst}},\n\nI just posted a new update on your transaction portal. Check it out here:\n\n{{portalUrl}}\n\nLet me know if you have any questions!\n\n{{signature}}'
       },
       {
         name: 'Milestone Reached',
         subject: 'Great news on {{address}}!',
-        body: 'Hi {{clientFirst}},\n\nWe\'ve hit another milestone on your transaction! Log in to your portal to see the latest progress:\n\n{{portalUrl}}\n\nWe\'re moving right along. I\'ll keep you updated every step of the way.\n\nBest,\n{{agentName}}'
+        body: 'Hi {{clientFirst}},\n\nWe\'ve hit another milestone on your transaction! Log in to your portal to see the latest progress:\n\n{{portalUrl}}\n\nWe\'re moving right along. I\'ll keep you updated every step of the way.\n\n{{signature}}'
       },
       {
         name: 'Closing Coming Up',
         subject: 'Closing is approaching — {{address}}',
-        body: 'Hi {{clientFirst}},\n\nWe\'re getting close to closing! Here\'s your portal link to review everything:\n\n{{portalUrl}}\n\nPlease make sure to:\n- Review your closing disclosure\n- Prepare your closing funds\n- Bring a valid photo ID to closing\n\nI\'ll be in touch with final details soon. Exciting times ahead!\n\nBest regards,\n{{agentName}}'
+        body: 'Hi {{clientFirst}},\n\nWe\'re getting close to closing! Here\'s your portal link to review everything:\n\n{{portalUrl}}\n\nPlease make sure to:\n- Review your closing disclosure\n- Prepare your closing funds\n- Bring a valid photo ID to closing\n\nI\'ll be in touch with final details soon. Exciting times ahead!\n\n{{signature}}'
       }
     ];
 
@@ -1911,7 +1920,8 @@
       clientFirst: clientFirst,
       agentName: agentName,
       portalUrl: portalUrl,
-      price: Data.formatCurrencyFull(t.price)
+      price: Data.formatCurrencyFull(t.price),
+      signature: signature
     };
 
     function mergeVars(text) {
