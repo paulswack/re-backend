@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const supabase = require('../lib/supabase');
+const { getSupabase } = require('../lib/supabase');
 const { generateToken, requireAuth } = require('../lib/auth');
 
 const router = express.Router();
@@ -53,7 +53,7 @@ router.post('/register', async (req, res) => {
 
     if (userErr) {
       // Clean up team if user creation fails
-      await supabase.from('teams').delete().eq('id', team.id);
+      await getSupabase().from('teams').delete().eq('id', team.id);
       if (userErr.code === '23505') {
         return res.status(400).json({ error: 'Username already taken' });
       }
@@ -86,8 +86,8 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('Register error:', err.message || err);
+    res.status(500).json({ error: 'Registration failed: ' + (err.message || 'Unknown error') });
   }
 });
 
@@ -216,7 +216,7 @@ async function seedDefaults(teamId) {
       ? ['Open escrow', 'Deposit earnest money', 'Order inspections', 'Review disclosures', 'Negotiate repairs', 'Order appraisal', 'Loan approval', 'Remove contingencies', 'Final walkthrough', 'Sign closing docs']
       : ['Listing agreement signed', 'Order inspections', 'Prelim & NHD', 'Complete disclosures', 'Agent visual inspection', 'Stage home', 'Professional photos', 'Go live on MLS'];
 
-    await supabase.from('checklist_template_items').insert(
+    await getSupabase().from('checklist_template_items').insert(
       items.map((label, i) => ({
         template_id: template.id,
         label,

@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 let _client = null;
 
-function getClient() {
+function getSupabase() {
   if (!_client) {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -14,9 +14,4 @@ function getClient() {
   return _client;
 }
 
-// Return a proxy that lazily initializes the client
-module.exports = new Proxy({}, {
-  get: function(target, prop) {
-    return getClient()[prop];
-  }
-});
+module.exports = { getSupabase };

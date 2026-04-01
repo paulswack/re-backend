@@ -1,5 +1,5 @@
 const express = require('express');
-const supabase = require('../lib/supabase');
+const { getSupabase } = require('../lib/supabase');
 const { requireAuth } = require('../lib/auth');
 
 const router = express.Router();
@@ -62,7 +62,7 @@ router.post('/', requireAuth, async (req, res) => {
     // Insert parties if provided
     if (parties && parties.length > 0) {
       const partyRows = parties.map(p => ({ ...p, transaction_id: data.id }));
-      await supabase.from('transaction_parties').insert(partyRows);
+      await getSupabase().from('transaction_parties').insert(partyRows);
     }
 
     res.status(201).json(data);
@@ -91,10 +91,10 @@ router.put('/:id', requireAuth, async (req, res) => {
 
     // Replace parties if provided
     if (parties) {
-      await supabase.from('transaction_parties').delete().eq('transaction_id', req.params.id);
+      await getSupabase().from('transaction_parties').delete().eq('transaction_id', req.params.id);
       if (parties.length > 0) {
         const partyRows = parties.map(p => ({ ...p, transaction_id: req.params.id }));
-        await supabase.from('transaction_parties').insert(partyRows);
+        await getSupabase().from('transaction_parties').insert(partyRows);
       }
     }
 

@@ -1,5 +1,5 @@
 const express = require('express');
-const supabase = require('../lib/supabase');
+const { getSupabase } = require('../lib/supabase');
 const { requireAuth } = require('../lib/auth');
 
 const router = express.Router();
@@ -45,7 +45,7 @@ router.post('/templates', requireAuth, async (req, res) => {
         label: typeof item === 'string' ? item : item.label,
         sort_order: typeof item === 'string' ? i : (item.sort_order ?? i)
       }));
-      await supabase.from('checklist_template_items').insert(itemRows);
+      await getSupabase().from('checklist_template_items').insert(itemRows);
     }
 
     // Return with items
@@ -79,14 +79,14 @@ router.put('/templates/:id', requireAuth, async (req, res) => {
 
     // Replace items if provided
     if (items) {
-      await supabase.from('checklist_template_items').delete().eq('template_id', req.params.id);
+      await getSupabase().from('checklist_template_items').delete().eq('template_id', req.params.id);
       if (items.length > 0) {
         const itemRows = items.map((item, i) => ({
           template_id: req.params.id,
           label: typeof item === 'string' ? item : item.label,
           sort_order: typeof item === 'string' ? i : (item.sort_order ?? i)
         }));
-        await supabase.from('checklist_template_items').insert(itemRows);
+        await getSupabase().from('checklist_template_items').insert(itemRows);
       }
     }
 
@@ -189,7 +189,7 @@ router.post('/deal', requireAuth, async (req, res) => {
           label: ti.label,
           sort_order: ti.sort_order ?? i
         }));
-      await supabase.from('checklist_items').insert(items);
+      await getSupabase().from('checklist_items').insert(items);
     }
 
     // Return full checklist

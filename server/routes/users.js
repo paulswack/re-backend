@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const supabase = require('../lib/supabase');
+const { getSupabase } = require('../lib/supabase');
 const { requireAuth, requireLead } = require('../lib/auth');
 
 const router = express.Router();

@@ -1,5 +1,5 @@
 const express = require('express');
-const supabase = require('../lib/supabase');
+const { getSupabase } = require('../lib/supabase');
 const { requireAuth, requireLead } = require('../lib/auth');
 
 const router = express.Router();
@@ -220,7 +220,7 @@ router.post('/meeting-notes', requireAuth, async (req, res) => {
         label: typeof item === 'string' ? item : item.label,
         sort_order: typeof item === 'string' ? i : (item.sort_order ?? i)
       }));
-      await supabase.from('meeting_action_items').insert(items);
+      await getSupabase().from('meeting_action_items').insert(items);
     }
 
     const { data: full } = await supabase
@@ -252,7 +252,7 @@ router.put('/meeting-notes/:id', requireAuth, async (req, res) => {
     if (error) throw error;
 
     if (action_items) {
-      await supabase.from('meeting_action_items').delete().eq('meeting_id', req.params.id);
+      await getSupabase().from('meeting_action_items').delete().eq('meeting_id', req.params.id);
       if (action_items.length > 0) {
         const items = action_items.map((item, i) => ({
           meeting_id: req.params.id,
@@ -261,7 +261,7 @@ router.put('/meeting-notes/:id', requireAuth, async (req, res) => {
           completed_at: item.completed_at || null,
           sort_order: typeof item === 'string' ? i : (item.sort_order ?? i)
         }));
-        await supabase.from('meeting_action_items').insert(items);
+        await getSupabase().from('meeting_action_items').insert(items);
       }
     }
 
