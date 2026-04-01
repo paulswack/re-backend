@@ -704,7 +704,9 @@
           '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">' +
             '<button class="btn btn-outline" data-action="close-compose">Cancel</button>' +
             '<button class="btn btn-outline" data-action="copy-email">Copy to Clipboard</button>' +
-            '<button class="btn btn-primary" data-action="open-mailto" data-id="' + r.id + '">Open in Email App</button>' +
+            '<button class="btn btn-primary" data-action="open-review-gmail" data-id="' + r.id + '">Open in Gmail</button>' +
+            '<button class="btn btn-outline" data-action="open-review-outlook" data-id="' + r.id + '">Outlook</button>' +
+            '<button class="btn btn-outline" data-action="open-mailto" data-id="' + r.id + '">Other</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -924,15 +926,7 @@
       }
     }
 
-    if (action === 'open-mailto') {
-      var reqId = t.getAttribute('data-id');
-      var requests = getMyRequests();
-      var r = requests.find(function (req) { return req.id === reqId; });
-      if (!r) return;
-      var subject = encodeURIComponent(document.getElementById('ceSubject').value);
-      var body = encodeURIComponent(document.getElementById('ceBody').value);
-      window.open('mailto:' + encodeURIComponent(r.clientEmail) + '?subject=' + subject + '&body=' + body);
-      // Mark as sent
+    function markReviewSent(reqId) {
       var all = getRequests();
       all = all.map(function (req) {
         if (req.id === reqId && req.status === 'pending') { req.status = 'sent'; req.sentDate = new Date().toISOString(); }
@@ -942,6 +936,24 @@
       var m = document.getElementById('composeModalOverlay'); if (m) m.remove();
       showToast('Email opened — request marked as sent');
       render();
+    }
+
+    if (action === 'open-review-gmail' || action === 'open-review-outlook' || action === 'open-mailto') {
+      var reqId = t.getAttribute('data-id');
+      var requests = getMyRequests();
+      var r = requests.find(function (req) { return req.id === reqId; });
+      if (!r) return;
+      var subject = document.getElementById('ceSubject').value;
+      var body = document.getElementById('ceBody').value;
+
+      if (action === 'open-review-gmail') {
+        window.open('https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(r.clientEmail) + '&su=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+      } else if (action === 'open-review-outlook') {
+        window.open('https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(r.clientEmail) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body), '_blank');
+      } else {
+        window.location.href = 'mailto:' + encodeURIComponent(r.clientEmail) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+      }
+      markReviewSent(reqId);
     }
 
     if (action === 'mark-received') {

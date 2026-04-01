@@ -1966,9 +1966,14 @@
         '<textarea id="shareEmailBody" rows="8" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;font-family:inherit;line-height:1.6;resize:vertical">' + escapeHtml(mergeVars(portalTemplates[0].body)) + '</textarea></div>';
 
       // Buttons
-      modalHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-        '<button class="btn btn-primary btn-sm" data-action="share-open-email" style="flex:1">Open in Email App</button>' +
-        '<button class="btn btn-outline btn-sm" data-action="share-copy-email">Copy Email Text</button>' +
+      modalHtml += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<button class="btn btn-primary btn-sm" data-action="share-open-gmail" style="flex:1"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff;margin-right:4px"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>Open in Gmail</button>' +
+        '<button class="btn btn-outline btn-sm" data-action="share-open-outlook" style="flex:1">Open in Outlook</button>' +
+        '<button class="btn btn-outline btn-sm" data-action="share-open-yahoo">Yahoo</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-outline btn-sm" data-action="share-copy-email" style="flex:1">Copy Email Text</button>' +
+        '<button class="btn btn-outline btn-sm" data-action="share-open-email">Other Email App</button>' +
         '</div>';
 
       // Store templates data for JS access
@@ -2049,12 +2054,45 @@
       }
     }
 
+    if (action === 'share-open-gmail') {
+      var toEl = document.getElementById('shareEmailTo');
+      var subEl = document.getElementById('shareEmailSubject');
+      var bodyEl = document.getElementById('shareEmailBody');
+      if (toEl && subEl && bodyEl) {
+        var gmailUrl = 'https://mail.google.com/mail/?view=cm&to=' + encodeURIComponent(toEl.value) + '&su=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
+        window.open(gmailUrl, '_blank');
+        showToast('Gmail opened!');
+      }
+    }
+
+    if (action === 'share-open-outlook') {
+      var toEl = document.getElementById('shareEmailTo');
+      var subEl = document.getElementById('shareEmailSubject');
+      var bodyEl = document.getElementById('shareEmailBody');
+      if (toEl && subEl && bodyEl) {
+        var outlookUrl = 'https://outlook.live.com/mail/0/deeplink/compose?to=' + encodeURIComponent(toEl.value) + '&subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
+        window.open(outlookUrl, '_blank');
+        showToast('Outlook opened!');
+      }
+    }
+
+    if (action === 'share-open-yahoo') {
+      var toEl = document.getElementById('shareEmailTo');
+      var subEl = document.getElementById('shareEmailSubject');
+      var bodyEl = document.getElementById('shareEmailBody');
+      if (toEl && subEl && bodyEl) {
+        var yahooUrl = 'https://compose.mail.yahoo.com/?to=' + encodeURIComponent(toEl.value) + '&subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
+        window.open(yahooUrl, '_blank');
+        showToast('Yahoo Mail opened!');
+      }
+    }
+
     if (action === 'share-open-email') {
       var toEl = document.getElementById('shareEmailTo');
       var subEl = document.getElementById('shareEmailSubject');
       var bodyEl = document.getElementById('shareEmailBody');
       if (toEl && subEl && bodyEl) {
-        window.open('mailto:' + encodeURIComponent(toEl.value) + '?subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value));
+        window.location.href = 'mailto:' + encodeURIComponent(toEl.value) + '?subject=' + encodeURIComponent(subEl.value) + '&body=' + encodeURIComponent(bodyEl.value);
         showToast('Email app opened!');
       }
     }
