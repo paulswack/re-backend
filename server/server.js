@@ -1,4 +1,5 @@
-require('dotenv').config({ path: __dirname + '/.env' });
+// Load .env file for local dev (Railway injects env vars directly)
+try { require('dotenv').config({ path: __dirname + '/.env' }); } catch (e) {}
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -52,6 +53,6 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`RE Back Office server running on port ${PORT}`);
 });
