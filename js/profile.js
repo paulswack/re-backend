@@ -9,7 +9,17 @@
 
   var PREFIX = 'reb_';
   var session = Auth.getSession();
+  // Also check API user cache
+  if (!session && typeof API !== 'undefined' && API.isLoggedIn()) {
+    var apiUser = API.getUser();
+    session = { username: apiUser.username, displayName: apiUser.displayName, role: apiUser.role };
+  }
   if (!session) return;
+  // Ensure displayName exists
+  if (!session.displayName && typeof API !== 'undefined') {
+    var u = API.getUser();
+    if (u) session.displayName = u.displayName;
+  }
 
   // ---- Profile data helpers ----
   function getProfiles() {
