@@ -151,53 +151,114 @@
       return;
     }
 
-    var users = getUsers();
-
-    if (editUsername) {
-      // Editing
-      var idx = users.findIndex(function (u) { return u.username === editUsername; });
-      if (idx === -1) { showToast('User not found', 'error'); return; }
-      users[idx].displayName = displayName;
-      users[idx].password = password;
-      users[idx].role = role;
-      users[idx].assignedTo = assignedTo;
-
-      // Update session if editing self
-      var session = Auth.getSession();
-      if (session && session.username === editUsername) {
-        session.displayName = displayName;
-        session.role = role;
-        localStorage.setItem('reb_session', JSON.stringify(session));
-        populateSidebarUser();
+    // Use API if available
+    if (typeof API !== 'undefined' && API.isLoggedIn()) {
+      if (editUsername) {
+        // Find user ID from localStorage cache
+        var users = getUsers();
+        var editUser = users.find(function (u) { return u.username === editUsername; });
+        if (!editUser || !editUser.id) {
+          showToast('User not found', 'error');
+          return;
+        }
+        API.updateUser(editUser.id, {
+          display_name: displayName,
+          password: password,
+          role: role,
+          assigned_to: assignedTo || null
+        }).then(function () {
+          showToast('Member updated');
+          // Refresh users from API
+          return API.getUsers();
+        }).then(function (apiUsers) {
+          var mapped = apiUsers.map(function (u) {
+            return { id: u.id, username: u.username, password: '***', displayName: u.display_name, role: u.role, phone: u.phone, email: u.email, assignedTo: u.assigned_to };
+          });
+          localStorage.setItem('reb_users', JSON.stringify(mapped));
+          closeModal();
+          renderStats();
+          renderTable();
+        }).catch(function (err) {
+          showToast('Failed to update: ' + (err.error || 'Unknown error'), 'error');
+        });
+      } else {
+        API.createUser({
+          username: username,
+          password: password,
+          display_name: displayName,
+          role: role,
+          assigned_to: assignedTo || null
+        }).then(function () {
+          showToast('Member added — they can now log in!');
+          return API.getUsers();
+        }).then(function (apiUsers) {
+          var mapped = apiUsers.map(function (u) {
+            return { id: u.id, username: u.username, password: '***', displayName: u.display_name, role: u.role, phone: u.phone, email: u.email, assignedTo: u.assigned_to };
+          });
+          localStorage.setItem('reb_users', JSON.stringify(mapped));
+          closeModal();
+          renderStats();
+          renderTable();
+        }).catch(function (err) {
+          showToast('Failed to add: ' + (err.error || 'Username may already be taken'), 'error');
+        });
       }
-
-      saveUsers(users);
-      showToast('Member updated');
     } else {
-      // Adding — check for duplicate username
-      var exists = users.some(function (u) { return u.username === username; });
-      if (exists) {
-        showToast('Username already taken', 'error');
-        return;
+      // Fallback to localStorage
+      var users = getUsers();
+      if (editUsername) {
+        var idx = users.findIndex(function (u) { return u.username === editUsername; });
+        if (idx === -1) { showToast('User not found', 'error'); return; }
+        users[idx].displayName = displayName;
+        users[idx].password = password;
+        users[idx].role = role;
+        users[idx].assignedTo = assignedTo;
+        saveUsers(users);
+        showToast('Member updated');
+      } else {
+        var exists = users.some(function (u) { return u.username === username; });
+        if (exists) { showToast('Username already taken', 'error'); return; }
+        users.push({ username: username, password: password, displayName: displayName, role: role, assignedTo: assignedTo });
+        saveUsers(users);
+        showToast('Member added');
       }
-      users.push({ username: username, password: password, displayName: displayName, role: role, assignedTo: assignedTo });
-      saveUsers(users);
-      showToast('Member added');
+      closeModal();
+      renderStats();
+      renderTable();
     }
-
-    closeModal();
-    renderStats();
-    renderTable();
   }
 
   function deleteMember(username) {
     if (!confirm('Delete this team member? This cannot be undone.')) return;
-    var users = getUsers();
-    users = users.filter(function (u) { return u.username !== username; });
-    saveUsers(users);
-    showToast('Member deleted');
-    renderStats();
-    renderTable();
+
+    if (typeof API !== 'undefined' && API.isLoggedIn()) {
+      var users = getUsers();
+      var user = users.find(function (u) { return u.username === username; });
+      if (!user || !user.id) {
+        showToast('User not found', 'error');
+        return;
+      }
+      API.deleteUser(user.id).then(function () {
+        showToast('Member deleted');
+        return API.getUsers();
+      }).then(function (apiUsers) {
+        var mapped = apiUsers.map(function (u) {
+          return { id: u.id, username: u.username, password: '***', displayName: u.display_name, role: u.role, phone: u.phone, email: u.email, assignedTo: u.assigned_to };
+        });
+        localStorage.setItem('reb_users', JSON.stringify(mapped));
+        renderStats();
+        renderTable();
+      }).catch(function (err) {
+        showToast('Failed to delete: ' + (err.error || 'Unknown error'), 'error');
+      });
+    } else {
+      var users = getUsers();
+      users = users.filter(function (u) { return u.username !== username; });
+      saveUsers(users);
+      showToast('Member deleted');
+      renderStats();
+      renderTable();
+    }
   }
 
   // ---- Event delegation ----
