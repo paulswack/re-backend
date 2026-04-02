@@ -38,12 +38,13 @@
 
   var CATEGORY_KEYS = Object.keys(CATEGORIES);
 
-  var STEP_TYPES = ['Read', 'Watch', 'Do', 'Quiz'];
+  var STEP_TYPES = ['Read', 'Watch', 'Do', 'Quiz', 'Video'];
   var STEP_ICONS = {
     'Read':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>',
     'Watch': '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
     'Do':    '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>',
-    'Quiz':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>'
+    'Quiz':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>',
+    'Video': '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'
   };
 
   var DIFFICULTY_COLORS = {
@@ -125,6 +126,78 @@
   function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ---- Video embed helper ----
+  function getVideoEmbed(url, width, height) {
+    if (!url) return '';
+    width = width || '100%';
+    height = height || '400';
+    var embedUrl = '';
+
+    // YouTube
+    var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]+)/);
+    if (ytMatch) embedUrl = 'https://www.youtube.com/embed/' + ytMatch[1];
+
+    // Vimeo
+    var vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) embedUrl = 'https://player.vimeo.com/video/' + vimeoMatch[1];
+
+    // Loom
+    var loomMatch = url.match(/loom\.com\/share\/([\w-]+)/);
+    if (loomMatch) embedUrl = 'https://www.loom.com/embed/' + loomMatch[1];
+
+    // Google Drive video
+    var driveMatch = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+    if (driveMatch) embedUrl = 'https://drive.google.com/file/d/' + driveMatch[1] + '/preview';
+
+    if (embedUrl) {
+      return '<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;margin:12px 0;background:#000">' +
+        '<iframe src="' + embedUrl + '" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>';
+    }
+
+    // Fallback: just show as a link
+    return '<div style="margin:12px 0"><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" style="color:var(--indigo);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Watch Video</a></div>';
+  }
+
+  // ---- Rich content renderer (simple markdown-like) ----
+  function renderContent(text) {
+    if (!text) return '';
+    var html = escapeHtml(text);
+
+    // Headers: lines starting with # ## ###
+    html = html.replace(/^### (.+)$/gm, '<h4 style="font-size:1rem;font-weight:700;color:#1E293B;margin:16px 0 8px">$1</h4>');
+    html = html.replace(/^## (.+)$/gm, '<h3 style="font-size:1.1rem;font-weight:700;color:#1E293B;margin:20px 0 8px">$1</h3>');
+    html = html.replace(/^# (.+)$/gm, '<h2 style="font-size:1.25rem;font-weight:800;color:#1E293B;margin:24px 0 10px">$1</h2>');
+
+    // Bold: **text**
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Italic: *text*
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    // Links: [text](url)
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--indigo);text-decoration:underline">$1</a>');
+
+    // Bullet lists: lines starting with - or *
+    html = html.replace(/^[-*] (.+)$/gm, '<div style="display:flex;gap:8px;padding:2px 0"><span style="color:#94A3B8;flex-shrink:0">•</span><span>$1</span></div>');
+
+    // Numbered lists: lines starting with 1. 2. etc
+    html = html.replace(/^(\d+)\. (.+)$/gm, '<div style="display:flex;gap:8px;padding:2px 0"><span style="color:#94A3B8;flex-shrink:0;font-weight:600;min-width:20px">$1.</span><span>$2</span></div>');
+
+    // Horizontal rule: ---
+    html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #E2E8F0;margin:16px 0">');
+
+    // Callout blocks: > text
+    html = html.replace(/^&gt; (.+)$/gm, '<div style="border-left:3px solid var(--indigo);padding:8px 14px;background:#F8FAFC;border-radius:0 6px 6px 0;margin:8px 0;font-style:italic;color:#475569">$1</div>');
+
+    // Video embeds: [video](url)
+    html = html.replace(/\[video\]\((.+?)\)/g, function (m, url) { return getVideoEmbed(url); });
+
+    // Preserve line breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
   }
 
   // ---- Data access ----
@@ -400,8 +473,13 @@
       html += '</div>';
     }
 
-    // Content
-    html += '<div style="white-space:pre-wrap;line-height:1.7;color:#334155;font-size:14px;">' + escapeHtml(item.content) + '</div>';
+    // Video embed (if item has a video URL)
+    if (item.videoUrl) {
+      html += getVideoEmbed(item.videoUrl);
+    }
+
+    // Content with rich rendering
+    html += '<div style="line-height:1.7;color:#334155;font-size:14px;">' + renderContent(item.content) + '</div>';
     html += '</div>';
 
     // Training steps
@@ -435,7 +513,10 @@
         html += '<span style="font-weight:600;font-size:14px;color:' + (isCompleted ? '#64748B' : '#1E293B') + ';' + (isCompleted ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(step.title) + '</span>';
         html += '</div>';
         if (step.description) {
-          html += '<div style="font-size:13px;color:#64748B;line-height:1.5;">' + escapeHtml(step.description) + '</div>';
+          html += '<div style="font-size:13px;color:#64748B;line-height:1.5;">' + renderContent(step.description) + '</div>';
+        }
+        if (step.videoUrl) {
+          html += getVideoEmbed(step.videoUrl, '100%', '280');
         }
         html += '</div></div>';
       });
@@ -492,8 +573,13 @@
     html += '</div>';
     html += '</div>';
 
+    // Video URL
+    html += '<div class="form-group"><label>Video URL (optional)</label><input type="text" id="kbVideoUrl" class="form-control" value="' + escapeHtml(v.videoUrl || '') + '" placeholder="YouTube, Vimeo, or Loom URL"></div>';
+    html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Supports YouTube, Vimeo, Loom, and Google Drive video links. Video will display at the top of the article.</div>';
+
     // Content
-    html += '<div class="form-group"><label>Content *</label><textarea id="kbContent" class="form-control" rows="8" placeholder="Full text content...">' + escapeHtml(v.content || '') + '</textarea></div>';
+    html += '<div class="form-group"><label>Content *</label><textarea id="kbContent" class="form-control" rows="12" placeholder="Write your content here...\n\nFormatting tips:\n# Heading 1\n## Heading 2\n### Heading 3\n**bold text**\n*italic text*\n- bullet point\n1. numbered list\n> callout block\n[link text](url)\n[video](youtube-url)\n--- horizontal line">' + escapeHtml(v.content || '') + '</textarea></div>';
+    html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Use # for headers, **bold**, *italic*, - for bullets, > for callouts, [video](url) to embed videos inline</div>';
 
     // Tags
     html += '<div class="form-group"><label>Tags (comma-separated)</label><input type="text" id="kbTags" class="form-control" value="' + escapeHtml((v.tags || []).join(', ')) + '" placeholder="e.g. buyer, scripts, onboarding"></div>';
@@ -551,7 +637,8 @@
     html += '<div class="form-group" style="margin:0;"><select class="form-control step-type">' + typeOpts + '</select></div>';
     html += '<button class="btn btn-outline btn-sm" data-action="remove-step" data-step-idx="' + idx + '" style="color:#DC2626;border-color:#FECACA;padding:6px 10px;" type="button">&times;</button>';
     html += '</div>';
-    html += '<div class="form-group" style="margin:8px 0 0 0;"><textarea class="form-control step-desc" rows="2" placeholder="Step description...">' + escapeHtml(step.description || '') + '</textarea></div>';
+    html += '<div class="form-group" style="margin:8px 0 0 0;"><textarea class="form-control step-desc" rows="2" placeholder="Step description (supports formatting)...">' + escapeHtml(step.description || '') + '</textarea></div>';
+    html += '<div class="form-group" style="margin:6px 0 0 0;"><input type="text" class="form-control step-video" value="' + escapeHtml(step.videoUrl || '') + '" placeholder="Video URL for this step (optional)"></div>';
     html += '</div>';
     return html;
   }
@@ -592,11 +679,13 @@
       var titleInput = rows[i].querySelector('.step-title');
       var typeSelect = rows[i].querySelector('.step-type');
       var descInput = rows[i].querySelector('.step-desc');
+      var videoInput = rows[i].querySelector('.step-video');
       if (titleInput && titleInput.value.trim()) {
         steps.push({
           title: titleInput.value.trim(),
           type: typeSelect ? typeSelect.value : 'Read',
-          description: descInput ? descInput.value.trim() : ''
+          description: descInput ? descInput.value.trim() : '',
+          videoUrl: videoInput ? videoInput.value.trim() : ''
         });
       }
     }
@@ -617,6 +706,7 @@
     if (!content) { showToast('Content is required.', 'error'); return; }
 
     var tags = tagsRaw ? tagsRaw.split(',').map(function (t) { return t.trim(); }).filter(function (t) { return t; }) : [];
+    var videoUrl = document.getElementById('kbVideoUrl').value.trim();
 
     var difficulty = null;
     var estimatedMinutes = null;
@@ -640,6 +730,7 @@
           item.content = content;
           item.tags = tags;
           item.pinned = pinned;
+          item.videoUrl = videoUrl;
           item.difficulty = difficulty;
           item.estimatedMinutes = estimatedMinutes;
           item.steps = steps;
@@ -656,6 +747,7 @@
         content: content,
         tags: tags,
         pinned: pinned,
+        videoUrl: videoUrl,
         difficulty: difficulty,
         estimatedMinutes: estimatedMinutes,
         steps: steps,
