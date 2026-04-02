@@ -35,4 +35,38 @@ function requireLead(req, res, next) {
   next();
 }
 
-module.exports = { generateToken, verifyToken, requireAuth, requireLead };
+// Middleware: check subscription is active (not expired trial)
+function requireActiveSubscription(req, res, next) {
+  const { getSupabase } = require('./supabase');
+  getSupabase()
+    .from('teams')
+    .select('plan, account_type, trial_ends_at, stripe_subscription_id')
+    .eq('id', req.user.teamId)
+    .single()
+    .then(function ({ data: team, error }) {
+      if (error || !team) {
+        return res.status(403).json({ error: 'Team not found' });
+      }
+      // Free accounts always pass
+      if (team.account_type === 'admin_free' || team.account_type === 'free') {
+        return next();
+      }
+      // Paid with active Stripe subscription passes
+      if (team.stripe_subscription_id) {
+        return next();
+      }
+      // Trial — check expiry
+      if (team.plan === 'trial') {
+        if (new Date(team.trial_ends_at) < new Date()) {
+          return res.status(402).json({
+            error: 'Trial expired',
+            message: 'Your free trial has ended. Please upgrade to continue using RE Back Office.',
+            expired: true
+          });
+        }
+      }
+      next();
+    });
+}
+
+module.exports = { generateToken, verifyToken, requireAuth, requireLead, requireActiveSubscription };

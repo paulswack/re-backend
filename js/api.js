@@ -29,11 +29,14 @@ var API = (function () {
     if (body !== undefined) opts.body = JSON.stringify(body);
     return fetch(BASE + path, opts).then(function (res) {
       if (res.status === 401) {
-        // Token expired — redirect to login
         localStorage.removeItem('reb_jwt');
         localStorage.removeItem('reb_user_cache');
         window.location.href = 'login.html';
         return Promise.reject(new Error('Unauthorized'));
+      }
+      if (res.status === 402) {
+        showTrialExpired();
+        return Promise.reject(new Error('Trial expired'));
       }
       return res.json().then(function (data) {
         if (!res.ok) return Promise.reject(data);
@@ -229,6 +232,52 @@ var API = (function () {
   }
   function markNotificationRead(id) { return put('/misc/notifications/' + id + '/read'); }
   function markAllNotificationsRead() { return put('/misc/notifications/read-all'); }
+
+  // ---- Trial Expired Lock Screen ----
+  var _expiredShown = false;
+  function showTrialExpired() {
+    if (_expiredShown) return;
+    _expiredShown = true;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'trialExpiredOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+    overlay.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:40px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
+        '<div style="font-size:3rem;margin-bottom:12px">⏰</div>' +
+        '<h2 style="font-size:1.4rem;font-weight:800;color:#1E293B;margin-bottom:8px">Your Free Trial Has Ended</h2>' +
+        '<p style="font-size:.9rem;color:#64748B;margin-bottom:24px;line-height:1.6">Your 1-day free trial of RE Back Office has expired. Upgrade now to keep managing your team, tracking deals, and growing your business.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">' +
+          '<div style="background:#F8FAFC;border:2px solid #E2E8F0;border-radius:12px;padding:16px 24px;flex:1;min-width:160px">' +
+            '<div style="font-size:1.5rem;font-weight:900;color:#1E293B">$49<span style="font-size:.8rem;font-weight:500;color:#94A3B8">/mo</span></div>' +
+            '<div style="font-size:.78rem;font-weight:600;color:#64748B;margin-top:2px">Solo Agent</div>' +
+          '</div>' +
+          '<div style="background:#EEF2FF;border:2px solid #6366F1;border-radius:12px;padding:16px 24px;flex:1;min-width:160px">' +
+            '<div style="font-size:1.5rem;font-weight:900;color:#1E293B">$79<span style="font-size:.8rem;font-weight:500;color:#94A3B8">/mo</span></div>' +
+            '<div style="font-size:.78rem;font-weight:600;color:#6366F1;margin-top:2px">Team Plan</div>' +
+          '</div>' +
+        '</div>' +
+        '<button onclick="window.location.href=\'mailto:support@eliteregbackoffice.com?subject=Upgrade%20Request\'" style="background:#6366F1;color:#fff;border:none;padding:14px 36px;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;width:100%;transition:background .15s">Upgrade Now</button>' +
+        '<div style="margin-top:12px">' +
+          '<button onclick="API.logout()" style="background:none;border:none;color:#94A3B8;font-size:.82rem;cursor:pointer;text-decoration:underline">Sign Out</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+
+  // Check subscription status on load
+  function checkSubscription() {
+    if (!isLoggedIn()) return;
+    var user = getUser();
+    if (user && user.subscriptionStatus === 'expired') {
+      showTrialExpired();
+    }
+  }
+
+  // Auto-check after a short delay to allow page to render
+  if (typeof window !== 'undefined') {
+    setTimeout(function () { checkSubscription(); }, 500);
+  }
 
   // ---- Public API ----
   return {

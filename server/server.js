@@ -28,20 +28,22 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..')));
 
-// API Routes
+const { requireActiveSubscription } = require('./lib/auth');
+
+// API Routes — auth and portal are public, everything else requires active subscription
 app.use('/api/auth', authRoutes);
-app.use('/api/teams', teamRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/listings', listingRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/checklists', checklistRoutes);
 app.use('/api/portal', portalRoutes);
-app.use('/api/marketing', marketingRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/updates', updateRoutes);
-app.use('/api/misc', miscRoutes);
-app.use('/api/transcribe', transcribeRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/transactions', requireActiveSubscription, transactionRoutes);
+app.use('/api/listings', requireActiveSubscription, listingRoutes);
+app.use('/api/users', requireActiveSubscription, userRoutes);
+app.use('/api/settings', requireActiveSubscription, settingsRoutes);
+app.use('/api/checklists', requireActiveSubscription, checklistRoutes);
+app.use('/api/marketing', requireActiveSubscription, marketingRoutes);
+app.use('/api/reviews', requireActiveSubscription, reviewRoutes);
+app.use('/api/updates', requireActiveSubscription, updateRoutes);
+app.use('/api/misc', requireActiveSubscription, miscRoutes);
+app.use('/api/transcribe', requireActiveSubscription, transcribeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
