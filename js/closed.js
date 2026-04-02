@@ -235,45 +235,66 @@
     '</button>';
 
     // Commission highlight banner
-    // Header Card
+    // Header Card — editable
     html += '<div class="detail-header-card">';
     html += '<div class="detail-header-accent"></div>';
     html += '<div class="detail-header-body">';
 
     html += '<div class="detail-header-top">';
     html += '<div style="flex:1;min-width:0">' +
-      '<div style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px">' + escapeHtml(t.address) + '</div>' +
-      '<div style="font-size:1.1rem;font-weight:700;color:#10B981;margin-top:2px">' + Data.formatCurrencyFull(t.price) + '</div>' +
+      '<input type="text" class="closed-edit-field" data-field="address" value="' + escapeHtml(t.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;border:1.5px solid transparent;border-radius:8px;padding:4px 8px;width:100%;background:transparent;transition:all .15s" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
     '</div>';
     html += '<div style="display:flex;align-items:center;gap:8px">' +
       '<span class="badge" style="background:#ECFDF5;color:#065F46;font-weight:700;padding:6px 14px;font-size:.82rem;">Closed</span>' +
     '</div>';
     html += '</div>';
 
-    // Detail blocks row
+    // Editable detail blocks
     html += '<div class="detail-blocks-row">';
 
-    // Agent (with avatar)
-    var cls = agentClass(t.agent);
+    // Agent
+    var users = JSON.parse(localStorage.getItem('reb_users') || '[]');
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Closed By</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-top:2px">' +
-        '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(t.agent) + '</div>' +
-        '<div class="detail-block-value">' + escapeHtml(t.agent || '—') + '</div>' +
-      '</div>' +
-    '</div>';
+      '<select class="closed-edit-field" data-field="agent" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:600;color:var(--gray-800);background:#fff;margin-top:4px">';
+    users.forEach(function (u) {
+      html += '<option value="' + escapeHtml(u.displayName || u.username) + '"' + ((u.displayName || u.username) === t.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName || u.username) + '</option>';
+    });
+    html += '</select></div>';
 
+    // Close Date
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Close Date</div>' +
-      '<div class="detail-block-value">' + Data.formatDate(t.closeDate) + '</div>' +
+      '<input type="date" class="closed-edit-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--gray-800);margin-top:4px">' +
     '</div>';
 
+    // Sale Price
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Sale Price</div>' +
-      '<div class="detail-block-value">' + Data.formatCurrencyFull(t.price) + '</div>' +
+      '<input type="number" class="closed-edit-field" data-field="price" value="' + (t.price || 0) + '" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:700;color:var(--gray-800);margin-top:4px;width:140px">' +
+    '</div>';
+
+    // Source
+    html += '<div class="detail-block">' +
+      '<div class="detail-block-label">Source</div>' +
+      '<input type="text" class="closed-edit-field" data-field="source" value="' + escapeHtml(t.source || '') + '" placeholder="Referral, Zillow, etc." style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--gray-800);margin-top:4px">' +
+    '</div>';
+
+    // Type
+    html += '<div class="detail-block">' +
+      '<div class="detail-block-label">Transaction Type</div>' +
+      '<select class="closed-edit-field" data-field="type" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--gray-800);background:#fff;margin-top:4px">' +
+        '<option value="Buyer"' + (t.type === 'Buyer' ? ' selected' : '') + '>Buyer</option>' +
+        '<option value="Seller"' + (t.type === 'Seller' ? ' selected' : '') + '>Seller</option>' +
+        '<option value="Dual"' + (t.type === 'Dual' ? ' selected' : '') + '>Dual</option>' +
+      '</select>' +
     '</div>';
 
     html += '</div>'; // detail-blocks-row
+
+    // Save button
+    html += '<div style="margin-top:12px"><button class="btn btn-primary btn-sm" data-action="save-closed-edit" data-id="' + t.id + '">Save Changes</button></div>';
+
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
 
@@ -343,6 +364,21 @@
         viewMode = 'list';
         selectedTxnId = null;
         render();
+        break;
+
+      case 'save-closed-edit':
+        var editId = target.getAttribute('data-id');
+        var fields = document.querySelectorAll('.closed-edit-field');
+        var updates = {};
+        fields.forEach(function (f) {
+          var field = f.getAttribute('data-field');
+          var val = f.value;
+          if (field === 'price') val = parseFloat(val) || 0;
+          updates[field] = val;
+        });
+        Data.updateTransaction(editId, updates);
+        showToast('Changes saved!');
+        renderDetail();
         break;
     }
   });
