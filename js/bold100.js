@@ -339,12 +339,10 @@
     var agentStats = [];
     var agentUsernames = Object.keys(dayData);
 
-    // Include all known users even if they have no data
+    // Include all known users (including Team Lead)
     var allUsernames = {};
     for (var u = 0; u < users.length; u++) {
-      if (users[u].role !== 'Team Lead') {
-        allUsernames[users[u].username] = users[u].displayName;
-      }
+      allUsernames[users[u].username] = users[u].displayName;
     }
     for (var dk in dayData) {
       if (dayData.hasOwnProperty(dk)) {
