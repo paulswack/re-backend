@@ -28,22 +28,22 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..')));
 
-const { requireActiveSubscription } = require('./lib/auth');
+const { requireAuth, requireActiveSubscription } = require('./lib/auth');
 
-// API Routes — auth and portal are public, everything else requires active subscription
+// API Routes — auth and portal are public, everything else requires auth + active subscription
 app.use('/api/auth', authRoutes);
 app.use('/api/portal', portalRoutes);
 app.use('/api/teams', teamRoutes);
-app.use('/api/transactions', requireActiveSubscription, transactionRoutes);
-app.use('/api/listings', requireActiveSubscription, listingRoutes);
-app.use('/api/users', requireActiveSubscription, userRoutes);
-app.use('/api/settings', requireActiveSubscription, settingsRoutes);
-app.use('/api/checklists', requireActiveSubscription, checklistRoutes);
-app.use('/api/marketing', requireActiveSubscription, marketingRoutes);
-app.use('/api/reviews', requireActiveSubscription, reviewRoutes);
-app.use('/api/updates', requireActiveSubscription, updateRoutes);
-app.use('/api/misc', requireActiveSubscription, miscRoutes);
-app.use('/api/transcribe', requireActiveSubscription, transcribeRoutes);
+app.use('/api/transactions', requireAuth, requireActiveSubscription, transactionRoutes);
+app.use('/api/listings', requireAuth, requireActiveSubscription, listingRoutes);
+app.use('/api/users', requireAuth, requireActiveSubscription, userRoutes);
+app.use('/api/settings', requireAuth, requireActiveSubscription, settingsRoutes);
+app.use('/api/checklists', requireAuth, requireActiveSubscription, checklistRoutes);
+app.use('/api/marketing', requireAuth, requireActiveSubscription, marketingRoutes);
+app.use('/api/reviews', requireAuth, requireActiveSubscription, reviewRoutes);
+app.use('/api/updates', requireAuth, requireActiveSubscription, updateRoutes);
+app.use('/api/misc', requireAuth, requireActiveSubscription, miscRoutes);
+app.use('/api/transcribe', requireAuth, requireActiveSubscription, transcribeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
