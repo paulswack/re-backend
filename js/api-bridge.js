@@ -55,15 +55,15 @@ var ApiBridge = (function () {
       API.getSettings().then(function (d) { if (d) localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(d)); }).catch(function () {}),
       API.getAnnouncements().then(function (d) { localStorage.setItem(PREFIX + 'announcements', JSON.stringify(mapAnnouncements(d))); }).catch(function () {}),
       API.getChecklistTemplates().then(function (d) { localStorage.setItem(PREFIX + 'checklist_templates', JSON.stringify(mapTemplates(d))); }).catch(function () {}),
-      API.getVendors().then(function (d) { localStorage.setItem(PREFIX + 'vendors', JSON.stringify(d)); }).catch(function () {}),
+      API.getVendors().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'vendors', JSON.stringify(d)); }).catch(function () {}),
       API.getReviewRequests().then(function (d) { localStorage.setItem(PREFIX + 'review_requests', JSON.stringify(d)); }).catch(function () {}),
       API.getReviewScores().then(function (d) { localStorage.setItem(PREFIX + 'review_scorecard', JSON.stringify(d)); }).catch(function () {}),
       API.getReviewLinks().then(function (d) { localStorage.setItem(PREFIX + 'review_links', JSON.stringify(d)); }).catch(function () {}),
       API.getEmailTemplates().then(function (d) { localStorage.setItem(PREFIX + 'review_templates', JSON.stringify(d)); }).catch(function () {}),
       API.getMeetingNotes().then(function (d) { localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(d)); }).catch(function () {}),
       API.getAgentGoals().then(function (d) { localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(d)); }).catch(function () {}),
-      API.getKnowledge().then(function (d) { localStorage.setItem(PREFIX + 'knowledge_base', JSON.stringify(d)); }).catch(function () {}),
-      API.getRecruits().then(function (d) { localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(function () {}),
+      API.getKnowledge().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'knowledge_base', JSON.stringify(d)); }).catch(function () {}),
+      API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(function () {}),
       API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(function () {}),
       API.getNotifications().then(function (d) { localStorage.setItem(PREFIX + 'notifications', JSON.stringify(d)); }).catch(function () {})
     ];
