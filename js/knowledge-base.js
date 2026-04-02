@@ -219,6 +219,16 @@
     // Links: [text](url)
     html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--indigo);text-decoration:underline">$1</a>');
 
+    // Checkboxes: - [ ] unchecked, - [x] checked
+    html = html.replace(/^- \[x\] (.+)$/gm, function (m, text) {
+      var cbId = 'cb-' + Math.random().toString(36).substr(2, 8);
+      return '<div style="display:flex;align-items:center;gap:8px;padding:3px 0"><input type="checkbox" checked data-action="toggle-content-check" data-cb-id="' + cbId + '" style="width:16px;height:16px;accent-color:#10B981;cursor:pointer;flex-shrink:0"><span style="color:#94A3B8;text-decoration:line-through">' + text + '</span></div>';
+    });
+    html = html.replace(/^- \[ \] (.+)$/gm, function (m, text) {
+      var cbId = 'cb-' + Math.random().toString(36).substr(2, 8);
+      return '<div style="display:flex;align-items:center;gap:8px;padding:3px 0"><input type="checkbox" data-action="toggle-content-check" data-cb-id="' + cbId + '" style="width:16px;height:16px;accent-color:#10B981;cursor:pointer;flex-shrink:0"><span>' + text + '</span></div>';
+    });
+
     // Bullet lists: lines starting with - or *
     html = html.replace(/^[-*] (.+)$/gm, '<div style="display:flex;gap:8px;padding:2px 0"><span style="color:#94A3B8;flex-shrink:0">•</span><span>$1</span></div>');
 
@@ -674,7 +684,7 @@
 
     // Content
     html += '<div class="form-group"><label>Content *</label><textarea id="kbContent" class="form-control" rows="12" placeholder="Write your content here...\n\nFormatting tips:\n# Heading 1\n## Heading 2\n### Heading 3\n**bold text**\n*italic text*\n- bullet point\n1. numbered list\n> callout block\n[link text](url)\n[video](youtube-url)\n--- horizontal line">' + escapeHtml(v.content || '') + '</textarea></div>';
-    html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Use # for headers, **bold**, *italic*, - for bullets, > for callouts, [video](url) to embed videos inline</div>';
+    html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Formatting: # heading, **bold**, *italic*, - bullet, - [ ] checkbox, - [x] checked, > callout, [video](url) embed, [link](url), --- divider</div>';
 
     // Tags
     html += '<div class="form-group"><label>Tags (comma-separated)</label><input type="text" id="kbTags" class="form-control" value="' + escapeHtml((v.tags || []).join(', ')) + '" placeholder="e.g. buyer, scripts, onboarding"></div>';
@@ -941,6 +951,33 @@
       var itemId = target.getAttribute('data-item-id');
       var stepIdx = target.getAttribute('data-step-idx');
       toggleStep(itemId, stepIdx);
+      return;
+    }
+
+    // Handle content checkboxes (toggle - [ ] / - [x] in the content)
+    var cbTarget = e.target.closest('[data-action="toggle-content-check"]');
+    if (cbTarget && viewingId) {
+      // Find the checkbox's text content
+      var span = cbTarget.parentElement.querySelector('span');
+      if (span) {
+        var text = span.textContent;
+        var items = getItems();
+        var item = items.find(function (i) { return i.id === viewingId; });
+        if (item && item.content) {
+          if (cbTarget.checked) {
+            // Replace - [ ] text with - [x] text
+            item.content = item.content.replace('- [ ] ' + text, '- [x] ' + text);
+            span.style.color = '#94A3B8';
+            span.style.textDecoration = 'line-through';
+          } else {
+            // Replace - [x] text with - [ ] text
+            item.content = item.content.replace('- [x] ' + text, '- [ ] ' + text);
+            span.style.color = '';
+            span.style.textDecoration = '';
+          }
+          saveItems(items);
+        }
+      }
       return;
     }
 
