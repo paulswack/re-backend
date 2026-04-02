@@ -370,6 +370,63 @@
     html += statCard('Completion Rate', completionRate + '%', '#10B981', '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>');
     html += '</div>';
 
+    // Learning Path Checklist
+    var readKey = PREFIX + 'kb_read';
+    var readItems = {};
+    try { readItems = JSON.parse(localStorage.getItem(readKey) || '{}'); } catch(e) {}
+    var myReads = readItems[session ? session.username : ''] || {};
+    var totalArticles = items.length;
+    var readCount = Object.keys(myReads).filter(function (k) { return myReads[k]; }).length;
+    var readPct = totalArticles > 0 ? Math.round(readCount / totalArticles * 100) : 0;
+
+    html += '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #E2E8F0;margin-bottom:24px;overflow:hidden">';
+    html += '<div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="document.getElementById(\'learningPathBody\').style.display=document.getElementById(\'learningPathBody\').style.display===\'none\'?\'\':\'none\';this.querySelector(\'.lp-arrow\').style.transform=document.getElementById(\'learningPathBody\').style.display===\'none\'?\'\':\' rotate(180deg)\'">';
+    html += '<div style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="#6366F1"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>';
+    html += '<div><div style="font-size:.92rem;font-weight:700;color:#1E293B">Learning Path</div>';
+    html += '<div style="font-size:.72rem;color:#64748B">' + readCount + ' of ' + totalArticles + ' completed (' + readPct + '%)</div></div></div>';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<div style="width:120px;height:6px;background:#F1F5F9;border-radius:99px;overflow:hidden"><div style="height:100%;width:' + readPct + '%;background:linear-gradient(90deg,#6366F1,#3B82F6);border-radius:99px;transition:width .3s"></div></div>';
+    html += '<svg class="lp-arrow" viewBox="0 0 24 24" width="18" height="18" fill="#94A3B8" style="transition:transform .2s"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>';
+    html += '</div></div>';
+
+    // Collapsible body grouped by category
+    html += '<div id="learningPathBody" style="display:none">';
+    var catGroups = {};
+    items.forEach(function (item) {
+      var cat = item.category || 'Other';
+      if (!catGroups[cat]) catGroups[cat] = [];
+      catGroups[cat].push(item);
+    });
+    Object.keys(catGroups).sort().forEach(function (cat) {
+      var catItems = catGroups[cat];
+      var catDone = catItems.filter(function (i) { return myReads[i.id]; }).length;
+      var c = CATEGORIES[cat] || { bg: '#F1F5F9', text: '#475569' };
+      html += '<div style="padding:0 20px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid #F8FAFC">';
+      html += '<span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:.7rem;font-weight:600;background:' + c.bg + ';color:' + c.text + '">' + escapeHtml(cat) + '</span>';
+      html += '<span style="font-size:.72rem;color:#94A3B8;font-weight:600">' + catDone + '/' + catItems.length + '</span>';
+      html += '</div>';
+      catItems.forEach(function (item) {
+        var isRead = !!myReads[item.id];
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #FAFAFA">';
+        html += '<input type="checkbox"' + (isRead ? ' checked' : '') + ' data-action="toggle-read" data-item-id="' + item.id + '" style="width:16px;height:16px;accent-color:#6366F1;cursor:pointer;flex-shrink:0">';
+        html += '<span style="font-size:.82rem;color:' + (isRead ? '#94A3B8' : '#1E293B') + ';font-weight:' + (isRead ? '400' : '600') + ';' + (isRead ? 'text-decoration:line-through;' : '') + 'cursor:pointer;flex:1" data-action="view-resource" data-id="' + item.id + '">' + escapeHtml(item.title) + '</span>';
+        if (item.type === 'training') html += '<span style="font-size:.65rem;font-weight:600;color:#1E40AF;background:#DBEAFE;padding:1px 8px;border-radius:99px">Training</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    });
+
+    // Celebration if all done
+    if (readCount === totalArticles && totalArticles > 0) {
+      html += '<div style="padding:20px;text-align:center;background:#F0FDF4;border-top:1px solid #D1FAE5">';
+      html += '<div style="font-size:1.5rem;margin-bottom:4px">🎉🏆</div>';
+      html += '<div style="font-size:.9rem;font-weight:700;color:#065F46">All articles completed! You\'re a knowledge champion.</div>';
+      html += '</div>';
+    }
+
+    html += '</div></div>';
+
     // Search bar
     html += '<div style="margin-bottom:16px;">';
     html += '<input type="text" id="kbSearch" class="form-control" placeholder="Search resources by title, category, or tags..." value="' + escapeHtml(searchQuery) + '" style="max-width:400px;">';
@@ -880,10 +937,27 @@
   // Handle checkbox changes for training steps
   document.addEventListener('change', function (e) {
     var target = e.target.closest('[data-action="toggle-step"]');
-    if (!target) return;
-    var itemId = target.getAttribute('data-item-id');
-    var stepIdx = target.getAttribute('data-step-idx');
-    toggleStep(itemId, stepIdx);
+    if (target) {
+      var itemId = target.getAttribute('data-item-id');
+      var stepIdx = target.getAttribute('data-step-idx');
+      toggleStep(itemId, stepIdx);
+      return;
+    }
+
+    // Handle "mark as read" checkboxes
+    var readTarget = e.target.closest('[data-action="toggle-read"]');
+    if (readTarget) {
+      var articleId = readTarget.getAttribute('data-item-id');
+      var readKey = 'reb_kb_read';
+      var readItems = {};
+      try { readItems = JSON.parse(localStorage.getItem(readKey) || '{}'); } catch(ex) {}
+      var username = session ? session.username : '';
+      if (!readItems[username]) readItems[username] = {};
+      readItems[username][articleId] = readTarget.checked;
+      localStorage.setItem(readKey, JSON.stringify(readItems));
+      renderList();
+      return;
+    }
   });
 
   // ---- Init ----
