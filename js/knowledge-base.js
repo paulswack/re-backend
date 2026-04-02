@@ -253,13 +253,17 @@
   // ---- Data access ----
   function getItems() {
     var raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      // Load starter templates for all new accounts (not just demo)
+    var items = [];
+    if (raw) {
+      try { items = JSON.parse(raw); } catch (e) { items = []; }
+    }
+    // If empty, load starter templates
+    if (!items || items.length === 0) {
       var seeded = SEED_DATA.map(function (item) { return item; });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
     }
-    try { return JSON.parse(raw); } catch (e) { return []; }
+    return items;
   }
 
   function saveItems(items) {
