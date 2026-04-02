@@ -152,6 +152,16 @@ var ApiBridge = (function () {
           API.updateSettings(settings).catch(function () {});
         } catch (e) {}
       }
+
+      // Sync announcements
+      if (key === PREFIX + 'announcements') {
+        // Announcements are managed via misc routes — synced on individual actions
+      }
+
+      // Sync checklist templates
+      if (key === PREFIX + 'checklist_templates') {
+        // Templates are synced on individual add/edit/delete actions
+      }
     };
   }
 

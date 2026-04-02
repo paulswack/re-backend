@@ -337,21 +337,117 @@
   }
   if (typeof Auth !== 'undefined' && Auth.isDemo && Auth.isDemo()) { seedData(); }
 
+  // ---- Check if server mode ----
+  function isServerMode() {
+    return typeof API !== 'undefined' && API.isLoggedIn() && window.location.protocol !== 'file:';
+  }
+
+  // ---- Server-synced CRUD for transactions ----
+  function serverAddTransaction(item) {
+    var result = txns.add(item); // save locally first for instant UI
+    if (isServerMode()) {
+      API.createTransaction({
+        address: item.address, city: item.city, state: item.state, zip: item.zip,
+        type: item.type, status: item.status, price: item.price,
+        agent_name: item.agent, source: item.source, close_date: item.closeDate,
+        notes: item.notes, metadata: {}
+      }).then(function (serverItem) {
+        // Update local ID to match server
+        var items = getCollection('transactions');
+        var idx = items.findIndex(function (i) { return i.id === result.id; });
+        if (idx !== -1) { items[idx].id = serverItem.id; saveCollection('transactions', items); }
+      }).catch(function (err) { console.error('Sync add txn error:', err); });
+    }
+    return result;
+  }
+
+  function serverUpdateTransaction(id, updates) {
+    var result = txns.update(id, updates);
+    if (isServerMode()) {
+      var mapped = {};
+      if (updates.address !== undefined) mapped.address = updates.address;
+      if (updates.type !== undefined) mapped.type = updates.type;
+      if (updates.status !== undefined) mapped.status = updates.status;
+      if (updates.price !== undefined) mapped.price = updates.price;
+      if (updates.agent !== undefined) mapped.agent_name = updates.agent;
+      if (updates.source !== undefined) mapped.source = updates.source;
+      if (updates.closeDate !== undefined) mapped.close_date = updates.closeDate;
+      if (updates.notes !== undefined) mapped.notes = updates.notes;
+      API.updateTransaction(id, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
+    }
+    return result;
+  }
+
+  function serverDeleteTransaction(id) {
+    var result = txns.remove(id);
+    if (isServerMode()) {
+      API.deleteTransaction(id).catch(function (err) { console.error('Sync delete txn error:', err); });
+    }
+    return result;
+  }
+
+  // ---- Server-synced CRUD for listings ----
+  function serverAddListing(item) {
+    var result = listings.add(item);
+    if (isServerMode()) {
+      API.createListing({
+        address: item.address, city: item.city, state: item.state, zip: item.zip,
+        status: item.status, price: item.price, agent_name: item.agent,
+        beds: item.beds, baths: item.baths, sqft: item.sqft,
+        description: item.description, source: item.source,
+        listing_date: item.listingDate, property_type: item.propertyType, metadata: {}
+      }).then(function (serverItem) {
+        var items = getCollection('listings');
+        var idx = items.findIndex(function (i) { return i.id === result.id; });
+        if (idx !== -1) { items[idx].id = serverItem.id; saveCollection('listings', items); }
+      }).catch(function (err) { console.error('Sync add listing error:', err); });
+    }
+    return result;
+  }
+
+  function serverUpdateListing(id, updates) {
+    var result = listings.update(id, updates);
+    if (isServerMode()) {
+      var mapped = {};
+      if (updates.address !== undefined) mapped.address = updates.address;
+      if (updates.status !== undefined) mapped.status = updates.status;
+      if (updates.price !== undefined) mapped.price = updates.price;
+      if (updates.agent !== undefined) mapped.agent_name = updates.agent;
+      if (updates.beds !== undefined) mapped.beds = updates.beds;
+      if (updates.baths !== undefined) mapped.baths = updates.baths;
+      if (updates.sqft !== undefined) mapped.sqft = updates.sqft;
+      if (updates.description !== undefined) mapped.description = updates.description;
+      if (updates.source !== undefined) mapped.source = updates.source;
+      if (updates.listingDate !== undefined) mapped.listing_date = updates.listingDate;
+      if (updates.propertyType !== undefined) mapped.property_type = updates.propertyType;
+      API.updateListing(id, mapped).catch(function (err) { console.error('Sync update listing error:', err); });
+    }
+    return result;
+  }
+
+  function serverDeleteListing(id) {
+    var result = listings.remove(id);
+    if (isServerMode()) {
+      API.deleteListing(id).catch(function (err) { console.error('Sync delete listing error:', err); });
+    }
+    return result;
+  }
+
   // ---- Public Data API ----
   window.Data = {
-    // Transactions
+    // Transactions — synced to server
     getTransactions:    txns.getAll,
-    addTransaction:     txns.add,
-    updateTransaction:  txns.update,
-    deleteTransaction:  txns.remove,
+    addTransaction:     serverAddTransaction,
+    updateTransaction:  serverUpdateTransaction,
+    deleteTransaction:  serverDeleteTransaction,
 
-    // Listings
+    // Listings — synced to server
     getListings:    listings.getAll,
-    addListing:     listings.add,
-    updateListing:  listings.update,
-    deleteListing:  listings.remove,
+    addListing:     serverAddListing,
+    updateListing:  serverUpdateListing,
+    deleteListing:  serverDeleteListing,
 
-    // Tasks
+    // Tasks (local only for now)
     getTasks:    tasks.getAll,
     addTask:     tasks.add,
     updateTask:  tasks.update,
