@@ -1344,7 +1344,7 @@
   <script>
     (function () {
       // If already logged in, redirect to dashboard
-      if (Auth.isLoggedIn()) {
+      if ((typeof API !== 'undefined' && API.isLoggedIn()) || Auth.isLoggedIn()) {
         window.location.href = 'dashboard.html';
         return;
       }
