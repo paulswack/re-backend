@@ -378,13 +378,25 @@
     html += '<div class="form-group"><label>Date *</label><input type="date" id="fDate" value="' + (note ? note.date : todayStr()) + '" style="padding:12px 16px"></div>';
     html += '</div></div></div>';
 
-    // AI Recording placeholder in form
-    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px;border:2px dashed var(--gray-200)">';
-    html += '<div style="padding:14px 20px;background:var(--gray-50);display:flex;align-items:center;gap:10px;justify-content:space-between">';
-    html += '<div style="display:flex;align-items:center;gap:10px">';
+    // AI Recording
+    html += '<div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">';
+    html += '<div style="padding:14px 20px;background:var(--indigo-light);border-bottom:1px solid rgba(99,102,241,.1);display:flex;align-items:center;gap:10px">';
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--indigo)"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>';
-    html += '<span style="font-size:.88rem;font-weight:600;color:var(--gray-600)">Record Meeting with AI</span></div>';
-    html += '<span style="font-size:.72rem;color:var(--indigo);font-weight:600;background:var(--indigo-light);padding:3px 10px;border-radius:12px">Coming Soon</span>';
+    html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">AI Meeting Recorder</span></div>';
+    html += '<div style="padding:20px 24px;text-align:center" id="recorderArea">';
+    html += '<div id="recorderStatus" style="font-size:.85rem;color:var(--gray-500);margin-bottom:16px">Click record to start capturing your meeting. AI will transcribe and summarize it.</div>';
+    html += '<div id="recorderTimer" style="font-size:2rem;font-weight:800;color:var(--gray-900);margin-bottom:16px;display:none">00:00</div>';
+    html += '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">';
+    html += '<button id="btnStartRecord" class="btn btn-primary" data-action="start-recording" style="padding:10px 28px;display:flex;align-items:center;gap:8px">';
+    html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>';
+    html += 'Start Recording</button>';
+    html += '<button id="btnStopRecord" class="btn btn-outline" data-action="stop-recording" style="padding:10px 28px;display:none;color:var(--rose);border-color:var(--rose)">';
+    html += '⬛ Stop Recording</button>';
+    html += '</div>';
+    html += '<div id="recorderProcessing" style="display:none;margin-top:16px;padding:16px;background:var(--gray-50);border-radius:10px">';
+    html += '<div style="font-size:.85rem;font-weight:600;color:var(--indigo);margin-bottom:8px">🤖 Processing with AI...</div>';
+    html += '<div style="font-size:.78rem;color:var(--gray-400)">Transcribing audio and generating meeting summary. This may take a moment.</div>';
+    html += '</div>';
     html += '</div></div>';
 
     // Notes
@@ -615,8 +627,152 @@
 
       case 'add-action-item':
         addActionItem(target.getAttribute('data-note-id')); break;
+
+      case 'start-recording':
+        startRecording(); break;
+
+      case 'stop-recording':
+        stopRecording(); break;
     }
   });
+
+  // ============================================================
+  //  AI MEETING RECORDER
+  // ============================================================
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var recordingTimer = null;
+  var recordingSeconds = 0;
+
+  function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showToast('Your browser does not support audio recording', 'error');
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      audioChunks = [];
+      recordingSeconds = 0;
+
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+      mediaRecorder.ondataavailable = function (e) {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = function () {
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        processRecording();
+      };
+
+      mediaRecorder.start(1000); // collect data every second
+
+      // UI updates
+      document.getElementById('btnStartRecord').style.display = 'none';
+      document.getElementById('btnStopRecord').style.display = 'inline-flex';
+      document.getElementById('recorderTimer').style.display = 'block';
+      document.getElementById('recorderStatus').textContent = '🔴 Recording... Speak naturally.';
+      document.getElementById('recorderStatus').style.color = '#EF4444';
+
+      recordingTimer = setInterval(function () {
+        recordingSeconds++;
+        var mins = Math.floor(recordingSeconds / 60);
+        var secs = recordingSeconds % 60;
+        document.getElementById('recorderTimer').textContent =
+          (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+      }, 1000);
+
+    }).catch(function (err) {
+      console.error('Microphone error:', err);
+      showToast('Could not access microphone. Please allow microphone access.', 'error');
+    });
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    clearInterval(recordingTimer);
+
+    document.getElementById('btnStopRecord').style.display = 'none';
+    document.getElementById('btnStartRecord').style.display = 'none';
+    document.getElementById('recorderTimer').style.display = 'none';
+    document.getElementById('recorderProcessing').style.display = 'block';
+    document.getElementById('recorderStatus').textContent = '';
+  }
+
+  function processRecording() {
+    var blob = new Blob(audioChunks, { type: 'audio/webm' });
+    var formData = new FormData();
+    formData.append('audio', blob, 'meeting.webm');
+
+    var token = (typeof API !== 'undefined' && API.getToken) ? API.getToken() : localStorage.getItem('reb_jwt');
+
+    fetch('/api/transcribe', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.error) {
+        showToast('Transcription failed: ' + data.error, 'error');
+        resetRecorderUI();
+        return;
+      }
+
+      // Fill in the form fields with AI summary
+      var notesField = document.getElementById('fNotes');
+      if (notesField) {
+        var parts = [];
+        if (data.summary.wins) parts.push('WINS:\n' + data.summary.wins);
+        if (data.summary.challenges) parts.push('CHALLENGES:\n' + data.summary.challenges);
+        if (data.summary.goals) parts.push('GOALS:\n' + data.summary.goals);
+        if (data.summary.notes) parts.push('NOTES:\n' + data.summary.notes);
+        parts.push('---\nFULL TRANSCRIPT:\n' + data.transcript);
+        notesField.value = parts.join('\n\n');
+      }
+
+      // Add action items
+      if (data.summary.actionItems && data.summary.actionItems.length > 0) {
+        var container = document.getElementById('formActionItems');
+        var addBtn = container.querySelector('[data-action="form-add-action"]');
+        var insertBefore = addBtn ? addBtn.closest('div') : null;
+
+        data.summary.actionItems.forEach(function (item) {
+          var row = document.createElement('div');
+          row.className = 'form-action-row';
+          row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50)';
+          row.innerHTML =
+            '<div style="width:20px;height:20px;border-radius:6px;border:2px solid var(--gray-300);flex-shrink:0"></div>' +
+            '<input type="text" class="form-action-input" value="' + item.replace(/"/g, '&quot;') + '" style="flex:1;border:none;outline:none;font-size:.88rem;color:var(--gray-700);padding:6px 0">' +
+            '<button type="button" class="form-action-remove" style="background:none;border:none;color:var(--gray-300);cursor:pointer;font-size:1.1rem;padding:4px">&times;</button>';
+          if (insertBefore) {
+            container.insertBefore(row, insertBefore);
+          } else {
+            container.appendChild(row);
+          }
+        });
+      }
+
+      showToast('Meeting transcribed and summarized! Review the notes below.');
+      resetRecorderUI();
+    })
+    .catch(function (err) {
+      console.error('Transcription error:', err);
+      showToast('Failed to process recording', 'error');
+      resetRecorderUI();
+    });
+  }
+
+  function resetRecorderUI() {
+    var processing = document.getElementById('recorderProcessing');
+    var startBtn = document.getElementById('btnStartRecord');
+    var status = document.getElementById('recorderStatus');
+    if (processing) processing.style.display = 'none';
+    if (startBtn) { startBtn.style.display = 'inline-flex'; startBtn.textContent = '🎙 Record Again'; }
+    if (status) { status.textContent = 'Recording complete. You can record again or edit the notes below.'; status.style.color = 'var(--emerald)'; }
+  }
 
   render();
 })();

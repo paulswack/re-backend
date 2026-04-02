@@ -16,6 +16,7 @@ const marketingRoutes = require('./routes/marketing');
 const reviewRoutes = require('./routes/reviews');
 const updateRoutes = require('./routes/updates');
 const miscRoutes = require('./routes/misc');
+const transcribeRoutes = require('./routes/transcribe');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,7 @@ app.use('/api/marketing', marketingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/updates', updateRoutes);
 app.use('/api/misc', miscRoutes);
+app.use('/api/transcribe', transcribeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
