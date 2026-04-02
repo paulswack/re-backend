@@ -1269,6 +1269,12 @@
           </div>
           <button type="submit" class="login-btn">Sign In</button>
           <div class="login-error" id="loginError">Invalid username or password.</div>
+          <div id="forgotPwSection" style="display:none;margin-top:12px;padding:12px;background:rgba(255,255,255,.06);border-radius:8px;font-size:.8rem;color:rgba(255,255,255,.6);text-align:center">
+            Contact your Team Lead to reset your password.
+          </div>
+          <div style="text-align:center;margin-top:10px">
+            <a href="javascript:void(0)" onclick="document.getElementById('forgotPwSection').style.display='block'" style="font-size:.78rem;color:rgba(255,255,255,.4);text-decoration:none">Forgot Password?</a>
+          </div>
         </form>
         <div class="demo-hint" style="margin-top:12px">
           Don't have an account? <a href="javascript:showAuthTab('register')" style="color:var(--blue);font-weight:600;text-decoration:none">Create one here</a>

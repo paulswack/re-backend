@@ -115,6 +115,30 @@ router.put('/:id', requireAuth, async (req, res) => {
   }
 });
 
+// POST /api/users/:id/reset-password (Team Lead only)
+router.post('/:id/reset-password', requireAuth, requireLead, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    const password_hash = await bcrypt.hash(newPassword, 10);
+    const { data, error } = await getSupabase()
+      .from('users')
+      .update({ password_hash })
+      .eq('id', req.params.id)
+      .eq('team_id', req.user.teamId)
+      .select('id, username, display_name')
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Password reset for ' + data.display_name });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
 // DELETE /api/users/:id (Team Lead only)
 router.delete('/:id', requireAuth, requireLead, async (req, res) => {
   try {

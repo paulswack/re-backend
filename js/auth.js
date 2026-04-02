@@ -791,8 +791,9 @@
       generateNotifications();
       initNotificationBell();
       initDemoBanner();
-      initOnboarding();
     }
+    // Always run onboarding check (works in both modes)
+    initOnboarding();
   });
 
   // ---- Demo Banner & Read-Only ----
@@ -965,29 +966,23 @@
 
   function initOnboarding() {
     if (Auth.isDemo()) return;
-    if (!Auth.isLoggedIn()) return;
-    if (!Auth.isPrivileged()) return;
+
+    // Check both API and localStorage auth
+    var isLoggedIn = (typeof API !== 'undefined' && API.isLoggedIn()) || Auth.isLoggedIn();
+    if (!isLoggedIn) return;
+
+    var isLead = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
+    if (!isLead) return;
 
     var raw = localStorage.getItem(ONBOARDING_KEY);
     if (raw) {
-      var ob = JSON.parse(raw);
-      if (ob.dismissed) return;
+      try {
+        var ob = JSON.parse(raw);
+        if (ob.dismissed) return;
+      } catch(e) {}
     }
 
-    // Check if this is a fresh install (no transactions, no listings)
-    var txns = [];
-    var lsts = [];
-    try { txns = JSON.parse(localStorage.getItem(PREFIX + 'transactions') || '[]'); } catch(e) {}
-    try { lsts = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]'); } catch(e) {}
-    var users = [];
-    try { users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]'); } catch(e) {}
-
-    // If there's real data, don't show onboarding
-    if (txns.length > 0 || lsts.length > 0 || users.length > 3) {
-      if (!raw) localStorage.setItem(ONBOARDING_KEY, JSON.stringify({ dismissed: true }));
-      return;
-    }
-
+    // Always show onboarding for team leads who haven't dismissed it
     showOnboarding();
   }
 

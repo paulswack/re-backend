@@ -151,10 +151,13 @@
         </div>
         <button type="submit" class="login-btn">Sign In</button>
         <div class="login-error" id="loginError">Invalid username or password.</div>
+        <div id="forgotPwSection" style="display:none;margin-top:12px;padding:14px;background:var(--gray-50);border-radius:8px;font-size:.82rem;color:var(--gray-600);text-align:center">
+          Contact your Team Lead to reset your password. They can reset it from the Team page in Admin Settings.
+        </div>
+        <div style="text-align:center;margin-top:12px">
+          <a href="javascript:void(0)" onclick="document.getElementById('forgotPwSection').style.display='block'" style="font-size:.78rem;color:rgba(255,255,255,.5);text-decoration:none">Forgot Password?</a>
+        </div>
       </form>
-      <div class="demo-hint">
-        Demo: <code>admin</code> / <code>admin123</code> &nbsp;|&nbsp; <code>agent1</code> / <code>demo123</code>
-      </div>
     </div>
     <a href="index.html" class="back-link">Back to homepage</a>
   </div>

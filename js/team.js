@@ -76,6 +76,7 @@
         '<td><span class="badge ' + roleBadge(u.role) + '">' + escapeHtml(u.role) + '</span></td>' +
         '<td style="text-align:right;">' +
           '<button class="btn btn-outline btn-sm" data-action="edit" data-username="' + escapeHtml(u.username) + '" style="margin-right:4px;">Edit</button>' +
+          (isSelf ? '' : '<button class="btn btn-outline btn-sm" data-action="reset-pw" data-username="' + escapeHtml(u.username) + '" data-id="' + (u.id || '') + '" style="margin-right:4px;">Reset PW</button>') +
           (isSelf ? '' : '<button class="btn btn-danger btn-sm" data-action="delete" data-username="' + escapeHtml(u.username) + '">Delete</button>') +
         '</td>' +
       '</tr>';
@@ -284,6 +285,27 @@
       case 'delete':
         var delUn = target.getAttribute('data-username');
         deleteMember(delUn);
+        break;
+      case 'reset-pw':
+        var resetId = target.getAttribute('data-id');
+        var resetName = target.getAttribute('data-username');
+        if (!resetId) { showToast('Cannot reset — user ID not found', 'error'); break; }
+        var newPw = prompt('Enter new password for ' + resetName + ' (min 6 characters):');
+        if (!newPw) break;
+        if (newPw.length < 6) { showToast('Password must be at least 6 characters', 'error'); break; }
+        if (typeof API !== 'undefined' && API.isLoggedIn()) {
+          fetch('/api/users/' + resetId + '/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API.getToken() },
+            body: JSON.stringify({ newPassword: newPw })
+          }).then(function (r) { return r.json(); }).then(function (data) {
+            if (data.error) { showToast(data.error, 'error'); } else { showToast('Password reset! New password: ' + newPw); }
+          }).catch(function () { showToast('Failed to reset password', 'error'); });
+        } else {
+          var users = getUsers();
+          var idx = users.findIndex(function (u) { return u.username === resetName; });
+          if (idx !== -1) { users[idx].password = newPw; saveUsers(users); showToast('Password reset!'); }
+        }
         break;
     }
   });
