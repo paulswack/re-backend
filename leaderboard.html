@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leaderboard — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .top3-circle { width:240px; height:240px; }
+    @media(max-width:768px) { .top3-circle { width:160px; height:160px; } .top3-podium { gap:12px; } }
+    @media(max-width:480px) { .top3-circle { width:110px; height:110px; } }
+  </style>
 </head>
 <body>
   <div class="app-layout">

@@ -157,7 +157,7 @@
       html += '<p style="color:var(--gray-400);font-size:.88rem">Close your first deal and it will appear here.</p>';
       html += '</div>';
     } else {
-      html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">';
 
       sortedAgents.forEach(function (agentName) {
         var deals = agentGroups[agentName];

@@ -624,6 +624,12 @@ tr:hover { background: var(--gray-50); }
   .lb-row { flex-wrap: wrap; }
   .lb-row-value { width: 100%; text-align: left; margin-top: 4px; }
   .lb-progress-wrap { width: 100%; }
+  .lb-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 320px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .lb-stats-grid { grid-template-columns: 1fr; }
 }
 
 /* ============================================================

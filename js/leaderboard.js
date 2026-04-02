@@ -133,7 +133,7 @@
         return b.volume - a.volume;
       }).slice(0, 3);
 
-      html += '<div style="display:flex;justify-content:center;gap:20px;margin-bottom:20px;flex-wrap:wrap">';
+      html += '<div style="display:flex;justify-content:center;gap:20px;margin-bottom:20px;flex-wrap:wrap" class="top3-podium">';
 
       top3.forEach(function (a, i) {
         var cls = agentClass(a.name);
@@ -144,7 +144,7 @@
         var profile = user ? (profiles[user.username] || {}) : {};
         var hasPhoto = profile && profile.photo;
 
-        html += '<div style="width:240px;height:240px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px solid ' + ringColor + '">';
+        html += '<div class="top3-circle" style="border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px solid ' + ringColor + '">';
 
         // Trophy
         html += '<div style="font-size:1.8rem;margin-bottom:6px">' + trophy + '</div>';

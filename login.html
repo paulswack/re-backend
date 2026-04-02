@@ -123,6 +123,13 @@
     .toast.success { background: var(--emerald); }
     .toast.error { background: var(--rose); }
     @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    @media (max-width: 480px) {
+      .login-container { padding: 16px; }
+      .login-card { padding: 20px; }
+      .login-logo h1 { font-size: 1.2rem; }
+      .login-logo svg { width: 36px; height: 36px; }
+    }
   </style>
 </head>
 <body>
