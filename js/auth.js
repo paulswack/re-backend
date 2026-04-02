@@ -992,62 +992,73 @@
     if (!ob.steps) ob.steps = {};
 
     var steps = [
-      { key: 'theme', label: 'Customize your theme & colors', page: 'admin-settings.html', desc: 'Set your brand colors, sidebar style, and page accents' },
-      { key: 'team', label: 'Add your team members', page: 'team.html', desc: 'Add agents with their roles — Broker Associate, Agent, or Assistant' },
-      { key: 'checklists', label: 'Set up checklist templates', page: 'admin-settings.html', desc: 'Create your buyer and listing checklists in Team Customization' },
-      { key: 'listing', label: 'Add your first listing', page: 'listings.html', desc: 'Enter a listing to see the full listing management flow' },
-      { key: 'escrow', label: 'Add your first escrow', page: 'transactions.html', desc: 'Enter a transaction to see the escrow tracking system' },
-      { key: 'marketing', label: 'Explore marketing activities', page: 'marketing.html', desc: 'Check off weekly and monthly marketing tasks' },
-      { key: 'reviews', label: 'Set up your review links', page: 'reviews.html', desc: 'Add your Google, Zillow, and other review profile URLs' },
-      { key: 'portal', label: 'Preview the client portal', page: 'admin-settings.html', desc: 'Customize what clients see when you share a portal link' }
+      { key: 'theme', label: 'Customize Theme', page: 'admin-settings.html' },
+      { key: 'team', label: 'Add Team Members', page: 'team.html' },
+      { key: 'checklists', label: 'Set Up Checklists', page: 'admin-settings.html' },
+      { key: 'listing', label: 'Add First Listing', page: 'listings.html' },
+      { key: 'escrow', label: 'Add First Escrow', page: 'transactions.html' },
+      { key: 'marketing', label: 'Explore Marketing', page: 'marketing.html' },
+      { key: 'reviews', label: 'Set Up Reviews', page: 'reviews.html' },
+      { key: 'portal', label: 'Preview Portal', page: 'admin-settings.html' }
     ];
 
     var done = steps.filter(function (s) { return ob.steps[s.key]; }).length;
     var total = steps.length;
+    var pct = Math.round(done / total * 100);
 
-    var panel = document.createElement('div');
-    panel.id = 'onboardingPanel';
-    panel.style.cssText = 'position:fixed;bottom:20px;right:20px;width:360px;max-height:80vh;background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.05);z-index:9998;overflow:hidden;display:flex;flex-direction:column';
+    // Remove existing
+    var existing = document.getElementById('onboardingBar');
+    if (existing) existing.remove();
+
+    // If all done, show celebration then auto-dismiss after 5 seconds
+    if (done === total) {
+      var celebration = document.createElement('div');
+      celebration.id = 'onboardingBar';
+      celebration.style.cssText = 'background:linear-gradient(135deg,#065F46,#10B981);border-radius:var(--radius-lg,12px);padding:20px 24px;margin-bottom:20px;text-align:center;color:#fff;animation:fadeInBar .4s ease';
+      celebration.innerHTML =
+        '<div style="font-size:1.8rem;margin-bottom:6px">🎉🏡🚀</div>' +
+        '<div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">Setup Complete!</div>' +
+        '<div style="font-size:.85rem;opacity:.8;margin-bottom:12px">You\'re all set up and ready to manage your team like a pro.</div>' +
+        '<button onclick="dismissOnboarding()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 24px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;backdrop-filter:blur(4px)">Got it!</button>';
+
+      // Inject at top of page-body
+      var pageBody = document.querySelector('.page-body') || document.getElementById('pageBody');
+      if (pageBody) pageBody.insertBefore(celebration, pageBody.firstChild);
+      return;
+    }
+
+    // Build inline progress bar
+    var bar = document.createElement('div');
+    bar.id = 'onboardingBar';
+    bar.style.cssText = 'background:#fff;border-radius:var(--radius-lg,12px);box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 20px rgba(0,0,0,.06);padding:16px 20px;margin-bottom:20px;animation:fadeInBar .4s ease';
 
     var h = '';
-    // Header
-    h += '<div style="padding:18px 20px;border-bottom:1px solid #F1F5F9;background:linear-gradient(135deg,#1E3A5F,#3B82F6);color:#fff">';
-    h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-    h += '<div style="font-size:.95rem;font-weight:800">Getting Started</div>';
-    h += '<button onclick="dismissOnboarding()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center">&times;</button>';
-    h += '</div>';
-    h += '<div style="font-size:.75rem;opacity:.7;margin-top:4px">' + done + ' of ' + total + ' complete</div>';
-    h += '<div style="height:4px;background:rgba(255,255,255,.2);border-radius:99px;margin-top:8px;overflow:hidden"><div style="height:100%;width:' + Math.round(done/total*100) + '%;background:#fff;border-radius:99px;transition:width .3s"></div></div>';
+    // Top row: title + progress + dismiss
+    h += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+    h += '<div style="font-size:.9rem;font-weight:700;color:#1E293B">Getting Started</div>';
+    h += '<div style="flex:1;height:6px;background:#F1F5F9;border-radius:99px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#3B82F6,#6366F1);border-radius:99px;transition:width .4s ease"></div></div>';
+    h += '<span style="font-size:.75rem;font-weight:700;color:#3B82F6">' + done + '/' + total + '</span>';
+    h += '<button onclick="dismissOnboarding()" style="background:none;border:none;color:#94A3B8;cursor:pointer;font-size:1rem;padding:2px 4px;line-height:1" title="Dismiss">&times;</button>';
     h += '</div>';
 
-    // Steps
-    h += '<div style="overflow-y:auto;flex:1;padding:8px 0">';
+    // Steps as horizontal pills
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
     steps.forEach(function (s) {
       var isDone = ob.steps[s.key];
-      h += '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid #F8FAFC;cursor:pointer" onclick="toggleOnboardingStep(\'' + s.key + '\',\'' + s.page + '\')">';
-      h += '<div style="width:22px;height:22px;border-radius:50%;border:2px solid ' + (isDone ? '#10B981' : '#E2E8F0') + ';background:' + (isDone ? '#10B981' : '#fff') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">';
-      if (isDone) h += '<svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
-      h += '</div>';
-      h += '<div>';
-      h += '<div style="font-size:.85rem;font-weight:600;color:' + (isDone ? '#94A3B8' : '#1E293B') + ';' + (isDone ? 'text-decoration:line-through;' : '') + '">' + s.label + '</div>';
-      h += '<div style="font-size:.72rem;color:#94A3B8;margin-top:2px">' + s.desc + '</div>';
-      h += '</div></div>';
+      var bg = isDone ? '#ECFDF5' : '#F8FAFC';
+      var color = isDone ? '#065F46' : '#64748B';
+      var border = isDone ? '#D1FAE5' : '#E2E8F0';
+      var check = isDone ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="#10B981" style="flex-shrink:0"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' : '<div style="width:12px;height:12px;border-radius:50%;border:2px solid #CBD5E1;flex-shrink:0"></div>';
+      h += '<button onclick="toggleOnboardingStep(\'' + s.key + '\',\'' + s.page + '\')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:.72rem;font-weight:600;color:' + color + ';background:' + bg + ';border:1px solid ' + border + ';cursor:pointer;transition:all .15s;white-space:nowrap">';
+      h += check + ' ' + s.label + '</button>';
     });
     h += '</div>';
 
-    // Footer
-    if (done === total) {
-      h += '<div style="padding:16px 20px;border-top:1px solid #F1F5F9;text-align:center">';
-      h += '<div style="font-size:.9rem;font-weight:700;color:#10B981;margin-bottom:8px">🎉 All done! You\'re ready to go.</div>';
-      h += '<button onclick="dismissOnboarding()" style="background:#3B82F6;color:#fff;border:none;padding:8px 24px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">Close Setup Guide</button>';
-      h += '</div>';
-    }
+    bar.innerHTML = h;
 
-    panel.innerHTML = h;
-    // Remove existing
-    var existing = document.getElementById('onboardingPanel');
-    if (existing) existing.remove();
-    document.body.appendChild(panel);
+    // Inject at top of page-body
+    var pageBody = document.querySelector('.page-body') || document.getElementById('pageBody');
+    if (pageBody) pageBody.insertBefore(bar, pageBody.firstChild);
   }
 
   window.toggleOnboardingStep = function (key, page) {
@@ -1057,7 +1068,6 @@
     ob.steps[key] = !ob.steps[key];
     localStorage.setItem(ONBOARDING_KEY, JSON.stringify(ob));
     showOnboarding();
-    // Navigate if checking (not unchecking)
     if (ob.steps[key] && page) {
       var currentPage = window.location.pathname.split('/').pop();
       if (currentPage !== page) {
@@ -1071,8 +1081,8 @@
     try { ob = JSON.parse(localStorage.getItem(ONBOARDING_KEY) || '{}'); } catch(e) { ob = {}; }
     ob.dismissed = true;
     localStorage.setItem(ONBOARDING_KEY, JSON.stringify(ob));
-    var panel = document.getElementById('onboardingPanel');
-    if (panel) panel.remove();
+    var bar = document.getElementById('onboardingBar');
+    if (bar) bar.remove();
   };
 
   // ---- Helper: get the display name to filter data by ----

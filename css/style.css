@@ -3,6 +3,8 @@
    Navy/Blue palette matching the original portal
    ============================================================ */
 
+@keyframes fadeInBar { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
 /* -- Variables -- */
 :root {
   --indigo: #002242;
