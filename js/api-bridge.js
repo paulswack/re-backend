@@ -62,7 +62,8 @@ var ApiBridge = (function () {
       API.getEmailTemplates().then(function (d) { localStorage.setItem(PREFIX + 'review_templates', JSON.stringify(d)); }).catch(function () {}),
       API.getMeetingNotes().then(function (d) { localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(d)); }).catch(function () {}),
       API.getAgentGoals().then(function (d) { localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(d)); }).catch(function () {}),
-      API.getKnowledge().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'knowledge_base', JSON.stringify(d)); }).catch(function () {}),
+      // Knowledge base handled by its own seed logic — don't overwrite
+      Promise.resolve(),
       API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(function () {}),
       API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(function () {}),
       API.getNotifications().then(function (d) { localStorage.setItem(PREFIX + 'notifications', JSON.stringify(d)); }).catch(function () {})
@@ -153,17 +154,10 @@ var ApiBridge = (function () {
         }, 2000);
       }
 
-      // Knowledge Base
+      // Knowledge Base — synced via settings JSONB instead of individual API calls
       if (key === PREFIX + 'knowledge_base') {
         debounceSync('knowledge', function () {
-          try {
-            var items = JSON.parse(value);
-            API.getKnowledge().then(function (existing) {
-              return Promise.all(existing.map(function (k) { return API.deleteKnowledge(k.id).catch(function () {}); }));
-            }).then(function () {
-              return Promise.all(items.map(function (k) { return API.createKnowledge(k).catch(function () {}); }));
-            }).catch(function () {});
-          } catch (e) {}
+          try { API.updateSettings({ _knowledge_base: JSON.parse(value) }).catch(function () {}); } catch (e) {}
         }, 2000);
       }
 
