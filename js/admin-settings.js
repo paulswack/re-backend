@@ -241,6 +241,12 @@
 
   function saveSettings(settings) {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    // Sync to server if available
+    if (typeof API !== 'undefined' && API.isLoggedIn()) {
+      API.updateSettings({ settings: settings }).catch(function (err) {
+        console.error('Failed to sync settings to server:', err);
+      });
+    }
     showToast('Settings saved');
   }
 
