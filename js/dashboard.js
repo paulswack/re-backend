@@ -309,8 +309,8 @@
   // ============================================================
   var DEFAULT_LAYOUT = {
     col1: ['goals', 'recentClosed', 'currentEscrows'],
-    col2: ['top5', 'activeListings', 'reviews'],
-    col3: ['announcements', 'volumeSummary']
+    col2: ['top5', 'activeListings', 'volumeSummary'],
+    col3: ['reviews', 'announcements']
   };
 
   function loadLayout() {
