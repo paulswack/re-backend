@@ -35,8 +35,7 @@
     return profiles[session.username] || {};
   }
 
-  // ---- Photo upload ----
-  // Add hidden file input to page
+  // ---- Photo upload with zoom/crop ----
   var photoInput = document.createElement('input');
   photoInput.type = 'file';
   photoInput.accept = 'image/*';
@@ -46,27 +45,155 @@
   photoInput.addEventListener('change', function () {
     var file = this.files[0];
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) { showToast('Photo too large. Max 3MB.', 'error'); this.value = ''; return; }
+    if (file.size > 5 * 1024 * 1024) { showToast('Photo too large. Max 5MB.', 'error'); this.value = ''; return; }
     var reader = new FileReader();
     reader.onload = function (e) {
-      var profiles = getProfiles();
-      if (!profiles[session.username]) profiles[session.username] = {};
-      profiles[session.username].photo = e.target.result;
-
-      if (typeof API !== 'undefined' && API.isLoggedIn()) {
-        var user = API.getUser();
-        API.updateUser(user.id, { photo_url: e.target.result }).then(function () {
-          showToast('Photo updated');
-        }).catch(function () { showToast('Failed to save photo', 'error'); });
-      } else {
-        saveProfiles(profiles);
-      }
-      renderHeader();
-      populateSidebarUser();
+      showCropModal(e.target.result);
     };
     reader.readAsDataURL(file);
     this.value = '';
   });
+
+  function showCropModal(imgSrc) {
+    var old = document.getElementById('cropModal');
+    if (old) old.remove();
+
+    var zoom = 1;
+    var offsetX = 0, offsetY = 0;
+    var dragging = false, dragStartX = 0, dragStartY = 0, startOffX = 0, startOffY = 0;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'cropModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+
+    var modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff;border-radius:16px;padding:28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)';
+    modal.innerHTML =
+      '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);margin-bottom:4px">Adjust Photo</h3>' +
+      '<p style="font-size:.8rem;color:var(--gray-400);margin-bottom:16px">Drag to position, scroll or use slider to zoom</p>' +
+      '<div id="cropArea" style="width:200px;height:200px;border-radius:50%;overflow:hidden;margin:0 auto;border:3px solid var(--gray-200);cursor:grab;position:relative;background:#000">' +
+        '<img id="cropImg" src="' + imgSrc + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(1);max-width:none;max-height:none;pointer-events:none;user-select:none" draggable="false">' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin:16px auto;max-width:240px">' +
+        '<span style="font-size:.75rem;color:var(--gray-400)">-</span>' +
+        '<input type="range" id="cropZoom" min="50" max="300" value="100" style="flex:1;accent-color:var(--indigo,#002242)">' +
+        '<span style="font-size:.75rem;color:var(--gray-400)">+</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+        '<button id="cropCancel" style="padding:9px 20px;border-radius:8px;border:1.5px solid var(--gray-200);background:#fff;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--gray-600)">Cancel</button>' +
+        '<button id="cropSave" style="padding:9px 20px;border-radius:8px;border:none;background:var(--indigo,#002242);color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit">Save Photo</button>' +
+      '</div>';
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var cropArea = document.getElementById('cropArea');
+    var cropImg = document.getElementById('cropImg');
+    var cropZoom = document.getElementById('cropZoom');
+
+    // Wait for image to load to set initial zoom
+    var img = new Image();
+    img.onload = function () {
+      var minDim = Math.min(img.width, img.height);
+      var initialScale = 200 / minDim;
+      zoom = Math.max(initialScale, 1);
+      cropZoom.value = Math.round(zoom * 100);
+      cropZoom.min = Math.round(initialScale * 100);
+      updateTransform();
+    };
+    img.src = imgSrc;
+
+    function updateTransform() {
+      cropImg.style.transform = 'translate(calc(-50% + ' + offsetX + 'px), calc(-50% + ' + offsetY + 'px)) scale(' + zoom + ')';
+    }
+
+    cropZoom.addEventListener('input', function () {
+      zoom = parseInt(this.value) / 100;
+      updateTransform();
+    });
+
+    cropArea.addEventListener('mousedown', function (e) {
+      dragging = true; dragStartX = e.clientX; dragStartY = e.clientY;
+      startOffX = offsetX; startOffY = offsetY;
+      cropArea.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      offsetX = startOffX + (e.clientX - dragStartX);
+      offsetY = startOffY + (e.clientY - dragStartY);
+      updateTransform();
+    });
+    document.addEventListener('mouseup', function () {
+      dragging = false;
+      if (cropArea) cropArea.style.cursor = 'grab';
+    });
+
+    // Touch support
+    cropArea.addEventListener('touchstart', function (e) {
+      if (e.touches.length === 1) {
+        dragging = true; dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY;
+        startOffX = offsetX; startOffY = offsetY;
+        e.preventDefault();
+      }
+    }, { passive: false });
+    document.addEventListener('touchmove', function (e) {
+      if (!dragging || e.touches.length !== 1) return;
+      offsetX = startOffX + (e.touches[0].clientX - dragStartX);
+      offsetY = startOffY + (e.touches[0].clientY - dragStartY);
+      updateTransform();
+    });
+    document.addEventListener('touchend', function () { dragging = false; });
+
+    // Scroll to zoom
+    cropArea.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var delta = e.deltaY > 0 ? -5 : 5;
+      var newVal = parseInt(cropZoom.value) + delta;
+      newVal = Math.max(parseInt(cropZoom.min), Math.min(300, newVal));
+      cropZoom.value = newVal;
+      zoom = newVal / 100;
+      updateTransform();
+    }, { passive: false });
+
+    document.getElementById('cropCancel').addEventListener('click', function () { overlay.remove(); });
+
+    document.getElementById('cropSave').addEventListener('click', function () {
+      // Render cropped image to canvas
+      var canvas = document.createElement('canvas');
+      canvas.width = 400; canvas.height = 400;
+      var ctx = canvas.getContext('2d');
+      var s = zoom;
+      var dx = (canvas.width / 2) + offsetX * 2 - (img.width * s / 2) * (canvas.width / 200);
+      var dy = (canvas.height / 2) + offsetY * 2 - (img.height * s / 2) * (canvas.height / 200);
+      var dw = img.width * s * (canvas.width / 200);
+      var dh = img.height * s * (canvas.height / 200);
+      ctx.beginPath();
+      ctx.arc(200, 200, 200, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, dx, dy, dw, dh);
+      var croppedData = canvas.toDataURL('image/jpeg', 0.85);
+
+      // Save locally
+      var profiles = getProfiles();
+      if (!profiles[session.username]) profiles[session.username] = {};
+      profiles[session.username].photo = croppedData;
+      saveProfiles(profiles);
+
+      // Save to server
+      if (typeof API !== 'undefined' && API.isLoggedIn()) {
+        var user = API.getUser();
+        API.updateUser(user.id, { photo_url: croppedData }).then(function () {
+          showToast('Photo saved!');
+        }).catch(function () { showToast('Photo saved locally', 'error'); });
+      } else {
+        showToast('Photo saved!');
+      }
+
+      renderHeader();
+      populateSidebarUser();
+      overlay.remove();
+    });
+  }
 
   // ---- Populate header card ----
   function renderHeader() {
