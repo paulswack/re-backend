@@ -927,6 +927,13 @@
               updates.closeDate = new Date().toISOString().split('T')[0];
             }
             Data.updateTransaction(selectedTxnId, updates);
+            // Also mark linked listing as sold
+            var linkedListing = Data.getListings().find(function (l) {
+              return l.address === currentTxn.address && l.status !== 'sold';
+            });
+            if (linkedListing) {
+              Data.updateListing(linkedListing.id, { status: 'sold' });
+            }
             addUpdate(selectedTxnId, 'closing_complete', 'Closing Complete!', 'Your transaction has officially closed. Congratulations!', true);
             notifyClientEmail('transaction', selectedTxnId, 'Closing Complete!', 'Your transaction has officially closed. Congratulations!');
             showToast('Deal closed! Moved to Closed section.');
