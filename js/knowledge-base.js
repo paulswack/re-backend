@@ -337,6 +337,7 @@
 
   // ---- Render list view ----
   function renderList() {
+    var session = Auth.getSession();
     var items = getItems();
 
     // Stats
@@ -993,7 +994,8 @@
       var readKey = 'reb_kb_read';
       var readItems = {};
       try { readItems = JSON.parse(localStorage.getItem(readKey) || '{}'); } catch(ex) {}
-      var username = session ? session.username : '';
+      var _s = Auth.getSession();
+      var username = _s ? _s.username : '';
       if (!readItems[username]) readItems[username] = {};
       readItems[username][articleId] = readTarget.checked;
       localStorage.setItem(readKey, JSON.stringify(readItems));
