@@ -256,7 +256,7 @@
     html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (l ? l.sqft || '' : '') + '" placeholder="1800" min="0" style="padding:12px 16px"></div>';
     html += '</div>';
 
-    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
+    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' +
       _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
@@ -371,7 +371,7 @@
     // Build stats
     var total = listings.length;
     var comingSoon = listings.filter(function (l) { return l.status === 'coming_soon'; }).length;
-    var active = listings.filter(function (l) { return l.status === 'active' || l.status === 'pending'; }).length;
+    var active = listings.filter(function (l) { return l.status === 'active'; }).length;
     var sold = listings.filter(function (l) { return l.status === 'sold'; }).length;
 
     // Unique agents for filter
@@ -496,7 +496,7 @@
 
     // Split into sections
     var comingSoonList = filtered.filter(function (l) { return l.status === 'coming_soon'; });
-    var activeList = filtered.filter(function (l) { return l.status === 'active' || l.status === 'pending'; });
+    var activeList = filtered.filter(function (l) { return l.status === 'active'; });
     var soldList = filtered.filter(function (l) { return l.status === 'sold'; });
 
     // Render helper
@@ -638,7 +638,7 @@
     '</div>';
 
     // Status
-    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
+    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
       '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
