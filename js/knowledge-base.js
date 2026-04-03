@@ -15,6 +15,7 @@
     Auth.logout();
   });
 
+  var PREFIX = 'reb_';
   var STORAGE_KEY = 'reb_knowledge_base';
   var PROGRESS_KEY = 'reb_training_progress';
   var pageBody = document.getElementById('pageBody');
