@@ -18,6 +18,7 @@ const updateRoutes = require('./routes/updates');
 const miscRoutes = require('./routes/misc');
 const transcribeRoutes = require('./routes/transcribe');
 const billingRoutes = require('./routes/billing');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +54,7 @@ app.use('/api/updates', requireAuth, requireActiveSubscription, updateRoutes);
 app.use('/api/misc', requireAuth, requireActiveSubscription, miscRoutes);
 app.use('/api/transcribe', requireAuth, requireActiveSubscription, transcribeRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/email', requireAuth, emailRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

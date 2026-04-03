@@ -69,6 +69,13 @@ router.post('/register', async (req, res) => {
       role: user.role
     });
 
+    // Send welcome email if user provided email-like username or we have an email
+    const { sendEmail, welcomeEmail } = require('../lib/email');
+    if (username && username.includes('@')) {
+      const emailContent = welcomeEmail(displayName, team.name);
+      sendEmail({ to: username, ...emailContent }).catch(() => {});
+    }
+
     // Seed default checklist templates
     await seedDefaults(team.id);
 

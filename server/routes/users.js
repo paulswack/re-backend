@@ -128,10 +128,16 @@ router.post('/:id/reset-password', requireAuth, requireLead, async (req, res) =>
       .update({ password_hash })
       .eq('id', req.params.id)
       .eq('team_id', req.user.teamId)
-      .select('id, username, display_name')
+      .select('id, username, display_name, email')
       .single();
 
     if (error) throw error;
+    // Send password reset email if user has an email
+    if (data.email) {
+      const { sendEmail, passwordResetEmail } = require('../lib/email');
+      const emailContent = passwordResetEmail(data.display_name, newPassword);
+      sendEmail({ to: data.email, ...emailContent }).catch(() => {});
+    }
     res.json({ success: true, message: 'Password reset for ' + data.display_name });
   } catch (err) {
     console.error('Reset password error:', err);

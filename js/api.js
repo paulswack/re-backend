@@ -283,6 +283,10 @@ var API = (function () {
   function createCheckout(plan, interval) { return post('/billing/create-checkout', { plan: plan, interval: interval }); }
   function openBillingPortal() { return post('/billing/portal'); }
 
+  // Email
+  function sendDealUpdate(data) { return post('/email/deal-update', data); }
+  function sendReviewRequest(data) { return post('/email/review-request', data); }
+
   // Check subscription status on load
   function checkSubscription() {
     if (!isLoggedIn()) return;
@@ -362,6 +366,9 @@ var API = (function () {
 
     // Password & Billing
     changePassword: changePassword,
-    getBillingStatus: getBillingStatus, createCheckout: createCheckout, openBillingPortal: openBillingPortal
+    getBillingStatus: getBillingStatus, createCheckout: createCheckout, openBillingPortal: openBillingPortal,
+
+    // Email
+    sendDealUpdate: sendDealUpdate, sendReviewRequest: sendReviewRequest
   };
 })();

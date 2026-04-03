@@ -101,7 +101,37 @@
     '.settings-dd-item svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }',
     '.settings-dd-item.danger { color: var(--rose); }',
     '.settings-dd-item.danger:hover { background: var(--rose-light); }',
-    '.settings-dd-divider { height: 1px; background: var(--gray-100); margin: 4px 6px; }'
+    '.settings-dd-divider { height: 1px; background: var(--gray-100); margin: 4px 6px; }',
+    '',
+    // Onboarding wizard modal styles
+    '.ob-overlay { position:fixed;inset:0;background:rgba(0,34,66,.55);z-index:10000;display:flex;align-items:center;justify-content:center;animation:obFadeIn .3s ease; }',
+    '@keyframes obFadeIn { from{opacity:0} to{opacity:1} }',
+    '@keyframes obSlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }',
+    '.ob-modal { background:#fff;border-radius:16px;width:460px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:obSlideUp .35s ease;overflow:hidden; }',
+    '.ob-header { background:linear-gradient(135deg,var(--indigo,#002242),var(--navy-mid,#003366));padding:28px 32px 24px;text-align:center;color:#fff; }',
+    '.ob-header h2 { font-size:1.35rem;font-weight:800;margin-bottom:4px; }',
+    '.ob-header p { font-size:.85rem;opacity:.75;line-height:1.4; }',
+    '.ob-body { padding:24px 32px 28px; }',
+    '.ob-steps { display:flex;gap:6px;justify-content:center;margin-bottom:20px; }',
+    '.ob-dot { width:8px;height:8px;border-radius:50%;background:var(--gray-200,#E2E6EF);transition:all .2s; }',
+    '.ob-dot.active { background:var(--indigo,#002242);width:24px;border-radius:4px; }',
+    '.ob-dot.done { background:var(--emerald,#1A7F4B); }',
+    '.ob-field { margin-bottom:14px; }',
+    '.ob-field label { display:block;font-size:.78rem;font-weight:600;color:var(--gray-600,#5A6478);margin-bottom:4px; }',
+    '.ob-field input, .ob-field select { width:100%;padding:9px 12px;border:1.5px solid var(--gray-200,#E2E6EF);border-radius:8px;font-size:.88rem;color:var(--gray-800,#2D3444);background:#fff;transition:border-color .15s;outline:none;font-family:inherit; }',
+    '.ob-field input:focus, .ob-field select:focus { border-color:var(--indigo,#002242); }',
+    '.ob-field .ob-optional { font-weight:400;color:var(--gray-400,#9BA5B7);font-size:.72rem;margin-left:4px; }',
+    '.ob-actions { display:flex;gap:10px;margin-top:20px; }',
+    '.ob-btn { flex:1;padding:10px 20px;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .15s;border:none;font-family:inherit; }',
+    '.ob-btn-primary { background:var(--indigo,#002242);color:#fff; }',
+    '.ob-btn-primary:hover { background:var(--navy-mid,#003366); }',
+    '.ob-btn-skip { background:none;color:var(--gray-400,#9BA5B7);flex:0 0 auto;padding:10px 12px;font-size:.82rem; }',
+    '.ob-btn-skip:hover { color:var(--gray-600,#5A6478); }',
+    '.ob-success-icon { width:56px;height:56px;border-radius:50%;background:var(--emerald-light,#E6F5EE);display:flex;align-items:center;justify-content:center;margin:0 auto 16px; }',
+    '.ob-success-icon svg { width:28px;height:28px;fill:var(--emerald,#1A7F4B); }',
+    '.ob-center { text-align:center; }',
+    '.ob-center h3 { font-size:1.15rem;font-weight:800;color:var(--gray-800,#2D3444);margin-bottom:6px; }',
+    '.ob-center p { font-size:.85rem;color:var(--gray-500,#5A6478);line-height:1.5; }'
   ].join('\n');
   document.head.appendChild(settingsCSS);
 
@@ -929,8 +959,10 @@
 
     // Listings
     var listings = [
+      { id: 'lst_d0', address: '88 Crestview Dr, Malibu, CA 90265', status: 'coming_soon', price: 1450000, agent: agents[0], beds: 5, baths: 4, sqft: 3600, source: 'Sphere of Influence', createdAt: y + '-03-20T10:00:00Z' },
       { id: 'lst_d1', address: '1500 Sunset Blvd, Los Angeles, CA 90028', status: 'active', price: 950000, agent: agents[0], beds: 4, baths: 3, sqft: 2800, listingDate: y + '-03-01', source: 'Sphere of Influence', createdAt: y + '-03-01T10:00:00Z' },
-      { id: 'lst_d2', address: '220 Harbor View, Miami, FL 33101', status: 'active', price: 675000, agent: agents[0], beds: 3, baths: 2, sqft: 1950, listingDate: y + '-03-10', source: 'Referral', createdAt: y + '-03-10T10:00:00Z' }
+      { id: 'lst_d2', address: '220 Harbor View, Miami, FL 33101', status: 'active', price: 675000, agent: agents[0], beds: 3, baths: 2, sqft: 1950, listingDate: y + '-03-10', source: 'Referral', createdAt: y + '-03-10T10:00:00Z' },
+      { id: 'lst_d5', address: '1024 Maple Ave, Austin, TX 78731', status: 'sold', price: 725000, agent: agents[0], beds: 4, baths: 3, sqft: 2400, listingDate: y + '-01-10', source: 'Zillow', createdAt: y + '-01-10T10:00:00Z' }
     ];
     if (mode === 'team') {
       listings.push(
@@ -973,9 +1005,26 @@
     });
     localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(goalData));
 
+    // Vendors
+    var vendors = [
+      { id: 'v1', name: 'Horizon Title Services', category: 'Title Company', phone: '555-0301', email: 'info@horizontitle.com', notes: 'Fast closings, great communication', rating: 5, is_preferred: true },
+      { id: 'v2', name: 'First National Mortgage', category: 'Lender', phone: '555-0302', email: 'loans@firstnational.com', notes: 'Competitive rates, pre-approvals in 24hrs', rating: 5, is_preferred: true },
+      { id: 'v3', name: 'Eagle Eye Inspections', category: 'Inspector', phone: '555-0303', email: 'schedule@eagleeye.com', notes: 'Same-day reports', rating: 4, is_preferred: false },
+      { id: 'v4', name: 'Showcase Photography', category: 'Photographer', phone: '555-0304', email: 'book@showcase.com', notes: 'Drone + twilight shots available', rating: 5, is_preferred: true },
+      { id: 'v5', name: 'CleanSlate Staging', category: 'Stager', phone: '555-0305', email: 'hello@cleanslate.com', notes: 'Modern luxury staging', rating: 4, is_preferred: false }
+    ];
+    localStorage.setItem(PREFIX + 'vendors', JSON.stringify(vendors));
+
+    // Meeting notes
+    var meetingNotes = [
+      { id: 'mn1', agentUsername: mode === 'solo' ? 'demo_agent' : 'agent2', agentName: mode === 'solo' ? 'Alex Morgan' : 'Sarah Chen', createdByName: mainAgent, date: y + '-03-15', wins: 'Closed 2 deals this month, got 5-star review from Thompson family', challenges: 'Struggling with lead follow-up timing', goals_text: 'Close 2 more by end of quarter', notes: 'Discussed time-blocking strategy for lead follow-up. Sarah will try the 5-5-5 method.', createdAt: y + '-03-15T14:00:00Z' }
+    ];
+    localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(meetingNotes));
+
     // Announcements
     var anns = [
-      { id: 'ann1', text: 'Welcome to RE Back Office! Explore the demo to see how the system works.', author: mainAgent, timestamp: new Date().toISOString(), pinned: true }
+      { id: 'ann1', text: 'Welcome to RE Back Office! Explore the demo to see how the system works.', author: mainAgent, timestamp: new Date().toISOString(), pinned: true },
+      { id: 'ann2', text: 'Reminder: All listing photos must be uploaded within 48 hours of going active. Contact Showcase Photography for rush orders.', author: mainAgent, timestamp: new Date(Date.now() - 86400000).toISOString(), pinned: false }
     ];
     localStorage.setItem(PREFIX + 'announcements', JSON.stringify(anns));
 
@@ -998,6 +1047,7 @@
 
   // ---- Onboarding Walkthrough ----
   var ONBOARDING_KEY = PREFIX + 'onboarding';
+  var ONBOARDING_DONE_KEY = PREFIX + 'onboarding_done';
 
   function initOnboarding() {
     if (Auth.isDemo()) return;
@@ -1007,6 +1057,14 @@
     if (!isLoggedIn) return;
 
     var isLead = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
+
+    // Show wizard modal for new users on dashboard who haven't completed it
+    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    if (currentPage === 'dashboard.html' && !localStorage.getItem(ONBOARDING_DONE_KEY)) {
+      showOnboardingWizard(isLead);
+      return;
+    }
+
     if (!isLead) return;
 
     var raw = localStorage.getItem(ONBOARDING_KEY);
@@ -1019,6 +1077,240 @@
 
     // Always show onboarding for team leads who haven't dismissed it
     showOnboarding();
+  }
+
+  // ---- Onboarding Wizard Modal ----
+  function showOnboardingWizard(isLead) {
+    var currentStep = 0;
+    var totalSteps = isLead ? 4 : 3; // skip "Add Agent" for non-leads
+    var stepKeys = isLead ? ['welcome', 'team', 'agent', 'done'] : ['welcome', 'team', 'done'];
+
+    // Get existing team name from admin settings
+    var settings = typeof getAdminSettings === 'function' ? getAdminSettings() : {};
+    var existingTeamName = (settings.general && settings.general.teamName) || 'RE Back Office';
+
+    // Create overlay
+    var overlay = document.createElement('div');
+    overlay.className = 'ob-overlay';
+    overlay.id = 'obWizardOverlay';
+
+    var modal = document.createElement('div');
+    modal.className = 'ob-modal';
+    modal.id = 'obWizardModal';
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    function renderStep() {
+      var key = stepKeys[currentStep];
+      var h = '';
+
+      // Dots
+      var dots = '<div class="ob-steps">';
+      for (var i = 0; i < totalSteps; i++) {
+        var cls = 'ob-dot';
+        if (i < currentStep) cls += ' done';
+        else if (i === currentStep) cls += ' active';
+        dots += '<div class="' + cls + '"></div>';
+      }
+      dots += '</div>';
+
+      if (key === 'welcome') {
+        h += '<div class="ob-header">';
+        h += '<h2>Welcome to RE Back Office!</h2>';
+        h += '<p>Let\'s get your team set up in under a minute.</p>';
+        h += '</div>';
+        h += '<div class="ob-body">';
+        h += dots;
+        h += '<div class="ob-actions">';
+        h += '<button class="ob-btn ob-btn-skip" id="obSkipBtn">Skip setup</button>';
+        h += '<button class="ob-btn ob-btn-primary" id="obNextBtn">Get Started</button>';
+        h += '</div></div>';
+      } else if (key === 'team') {
+        h += '<div class="ob-header">';
+        h += '<h2>Team Info</h2>';
+        h += '<p>Tell us a bit about your team.</p>';
+        h += '</div>';
+        h += '<div class="ob-body">';
+        h += dots;
+        h += '<div class="ob-field"><label>Team Name</label>';
+        h += '<input type="text" id="obTeamName" value="' + escHtml(existingTeamName) + '" placeholder="e.g. Smith Realty Group"></div>';
+        h += '<div class="ob-field"><label>Brokerage Name <span class="ob-optional">(optional)</span></label>';
+        h += '<input type="text" id="obBrokerage" placeholder="e.g. Keller Williams"></div>';
+        h += '<div class="ob-actions">';
+        h += '<button class="ob-btn ob-btn-skip" id="obSkipBtn">Skip</button>';
+        h += '<button class="ob-btn ob-btn-primary" id="obNextBtn">Next</button>';
+        h += '</div></div>';
+      } else if (key === 'agent') {
+        h += '<div class="ob-header">';
+        h += '<h2>Add Your First Agent</h2>';
+        h += '<p>Add a team member to get started.</p>';
+        h += '</div>';
+        h += '<div class="ob-body">';
+        h += dots;
+        h += '<div class="ob-field"><label>Display Name</label>';
+        h += '<input type="text" id="obAgentName" placeholder="e.g. Jane Smith"></div>';
+        h += '<div class="ob-field"><label>Email <span class="ob-optional">(optional)</span></label>';
+        h += '<input type="email" id="obAgentEmail" placeholder="jane@example.com"></div>';
+        h += '<div class="ob-field"><label>Phone <span class="ob-optional">(optional)</span></label>';
+        h += '<input type="tel" id="obAgentPhone" placeholder="(555) 123-4567"></div>';
+        h += '<div class="ob-field"><label>Role</label>';
+        h += '<select id="obAgentRole"><option value="Agent">Agent</option><option value="Broker Associate">Broker Associate</option><option value="Assistant">Assistant</option></select></div>';
+        h += '<div class="ob-actions">';
+        h += '<button class="ob-btn ob-btn-skip" id="obSkipBtn">Skip</button>';
+        h += '<button class="ob-btn ob-btn-primary" id="obNextBtn">Add Agent</button>';
+        h += '</div></div>';
+      } else if (key === 'done') {
+        h += '<div class="ob-header">';
+        h += '<h2>All Set!</h2>';
+        h += '<p>Your workspace is ready.</p>';
+        h += '</div>';
+        h += '<div class="ob-body">';
+        h += dots;
+        h += '<div class="ob-center">';
+        h += '<div class="ob-success-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>';
+        h += '<h3>You\'re ready to go!</h3>';
+        h += '<p>Start by adding your first listing or transaction.</p>';
+        h += '</div>';
+        h += '<div class="ob-actions" style="justify-content:center">';
+        h += '<button class="ob-btn ob-btn-primary" id="obNextBtn" style="flex:0 0 auto;padding:10px 32px">Go to Dashboard</button>';
+        h += '</div></div>';
+      }
+
+      modal.innerHTML = h;
+      attachStepHandlers();
+    }
+
+    function escHtml(str) {
+      var d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML.replace(/"/g, '&quot;');
+    }
+
+    function attachStepHandlers() {
+      var nextBtn = document.getElementById('obNextBtn');
+      var skipBtn = document.getElementById('obSkipBtn');
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+          var key = stepKeys[currentStep];
+
+          if (key === 'team') {
+            saveTeamInfo();
+          } else if (key === 'agent') {
+            saveAgent();
+            return; // saveAgent handles advancing
+          }
+
+          if (currentStep < totalSteps - 1) {
+            currentStep++;
+            renderStep();
+          } else {
+            completeWizard();
+          }
+        });
+      }
+
+      if (skipBtn) {
+        skipBtn.addEventListener('click', function () {
+          if (currentStep < totalSteps - 1) {
+            currentStep++;
+            renderStep();
+          } else {
+            completeWizard();
+          }
+        });
+      }
+    }
+
+    function saveTeamInfo() {
+      var nameEl = document.getElementById('obTeamName');
+      var brokerageEl = document.getElementById('obBrokerage');
+      var teamName = nameEl ? nameEl.value.trim() : '';
+      var brokerage = brokerageEl ? brokerageEl.value.trim() : '';
+
+      if (teamName && teamName !== existingTeamName) {
+        // Update admin settings locally
+        var adminRaw = localStorage.getItem(PREFIX + 'admin_settings');
+        var adminSettings;
+        try { adminSettings = adminRaw ? JSON.parse(adminRaw) : {}; } catch(e) { adminSettings = {}; }
+        if (!adminSettings.general) adminSettings.general = {};
+        adminSettings.general.teamName = teamName;
+        if (brokerage) adminSettings.general.brokerageName = brokerage;
+        localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(adminSettings));
+
+        // Update via API if available
+        if (typeof API !== 'undefined' && API.isLoggedIn() && API.updateTeam) {
+          var teamData = { name: teamName };
+          if (brokerage) teamData.brokerage = brokerage;
+          API.updateTeam(teamData).catch(function () {});
+        }
+        existingTeamName = teamName;
+      }
+    }
+
+    function saveAgent() {
+      var nameEl = document.getElementById('obAgentName');
+      var emailEl = document.getElementById('obAgentEmail');
+      var phoneEl = document.getElementById('obAgentPhone');
+      var roleEl = document.getElementById('obAgentRole');
+
+      var name = nameEl ? nameEl.value.trim() : '';
+      if (!name) {
+        // No name entered, just advance
+        currentStep++;
+        renderStep();
+        return;
+      }
+
+      var agentData = {
+        display_name: name,
+        role: roleEl ? roleEl.value : 'Agent',
+        username: name.toLowerCase().replace(/\s+/g, '.'),
+        password: 'changeme123'
+      };
+      if (emailEl && emailEl.value.trim()) agentData.email = emailEl.value.trim();
+      if (phoneEl && phoneEl.value.trim()) agentData.phone = phoneEl.value.trim();
+
+      // Save via API if available
+      if (typeof API !== 'undefined' && API.isLoggedIn() && API.createUser) {
+        var btn = document.getElementById('obNextBtn');
+        if (btn) { btn.textContent = 'Adding...'; btn.disabled = true; }
+        API.createUser(agentData).then(function () {
+          currentStep++;
+          renderStep();
+        }).catch(function () {
+          // Still advance on error
+          currentStep++;
+          renderStep();
+        });
+      } else {
+        // Fallback: save to localStorage
+        var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+        users.push({
+          id: Date.now().toString(),
+          username: agentData.username,
+          displayName: name,
+          role: agentData.role,
+          email: agentData.email || '',
+          phone: agentData.phone || ''
+        });
+        localStorage.setItem(PREFIX + 'users', JSON.stringify(users));
+        currentStep++;
+        renderStep();
+      }
+    }
+
+    function completeWizard() {
+      localStorage.setItem(ONBOARDING_DONE_KEY, '1');
+      var ov = document.getElementById('obWizardOverlay');
+      if (ov) {
+        ov.style.transition = 'opacity .25s';
+        ov.style.opacity = '0';
+        setTimeout(function () { ov.remove(); }, 260);
+      }
+    }
+
+    renderStep();
   }
 
   function showOnboarding() {
