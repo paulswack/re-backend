@@ -856,9 +856,8 @@
       generateNotifications();
       initNotificationBell();
       initDemoBanner();
+      initOnboarding();
     }
-    // Always run onboarding check (works in both modes)
-    initOnboarding();
   });
 
   // ---- Demo Banner & Read-Only ----
