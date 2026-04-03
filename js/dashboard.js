@@ -13,52 +13,72 @@
   applyPageColor('dashboard');
   document.getElementById('logoutBtn').addEventListener('click', function () { Auth.logout(); });
 
-  var session = Auth.getSession();
-  var txns = Data.getTransactions();
-  var listings = Data.getListings();
-  var users = JSON.parse(localStorage.getItem('reb_users') || '[]');
-  var closedTxns = txns.filter(function (t) { return t.status === 'closed'; });
-  var activeTxns = txns.filter(function (t) { return t.status === 'active'; });
-  var pendingTxns = txns.filter(function (t) { return t.status === 'pending'; });
-  var activeListings = listings.filter(function (l) { return l.status === 'active'; });
-  var escrowCount = activeTxns.length + pendingTxns.length;
-  var stats = Data.getStats();
-  var isLead = Auth.isPrivileged();
-  var closeRate = txns.length > 0 ? Math.round((closedTxns.length / txns.length) * 100) : 0;
+  var session, txns, listings, users, closedTxns, activeTxns, pendingTxns, activeListings;
+  var escrowCount, stats, isLead, closeRate;
+  var greeting, dateStr;
+  var taxEntries, myTaxEntries, myClosedTxnsForTax, expenses, totalExpenses;
+  var _dashCommRate, _dashTaxRate, commissionIncome;
+  var allAgentGoals, myGoals, teamGoals, myClosings, myVolume;
+  var agentStats;
 
-  var hour = new Date().getHours();
-  var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  var dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  function reloadData() {
+    session = Auth.getSession();
+    txns = Data.getTransactions();
+    listings = Data.getListings();
+    users = JSON.parse(localStorage.getItem('reb_users') || '[]');
+    closedTxns = txns.filter(function (t) { return t.status === 'closed'; });
+    activeTxns = txns.filter(function (t) { return t.status === 'active'; });
+    pendingTxns = txns.filter(function (t) { return t.status === 'pending'; });
+    activeListings = listings.filter(function (l) { return l.status === 'active'; });
+    escrowCount = activeTxns.length + pendingTxns.length;
+    stats = Data.getStats();
+    isLead = Auth.isPrivileged();
+    closeRate = txns.length > 0 ? Math.round((closedTxns.length / txns.length) * 100) : 0;
 
-  // Tax (personal)
-  var taxEntries = []; try { taxEntries = JSON.parse(localStorage.getItem('reb_tax_entries') || '[]'); } catch(e) {}
-  var myTaxEntries = isLead ? taxEntries : taxEntries.filter(function (e) { return e.username === session.username || (!e.username && session.username === 'admin'); });
-  var myClosedTxnsForTax = isLead ? closedTxns : closedTxns.filter(function (t) { return t.agent === session.displayName; });
-  var expenses = myTaxEntries.filter(function (e) { return e.type === 'expense'; });
-  var totalExpenses = expenses.reduce(function (s, e) { return s + (e.amount || 0); }, 0);
-  var _dashCommRate = getAdminSetting('general.defaultCommissionRate', 0.03);
-  var _dashTaxRate = getAdminSetting('general.estimatedTaxRate', 0.25);
-  var commissionIncome = myClosedTxnsForTax.reduce(function (s, t) { return s + ((t.price || 0) * _dashCommRate); }, 0);
+    var hour = new Date().getHours();
+    greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Goals
-  var allAgentGoals = JSON.parse(localStorage.getItem('reb_agent_goals') || '{}');
-  if (Object.keys(allAgentGoals).length === 0) {
-    users.forEach(function (u) { allAgentGoals[u.username] = { closings: 8, volume: 2000000 }; });
-    localStorage.setItem('reb_agent_goals', JSON.stringify(allAgentGoals));
+    taxEntries = []; try { taxEntries = JSON.parse(localStorage.getItem('reb_tax_entries') || '[]'); } catch(e) {}
+    myTaxEntries = isLead ? taxEntries : taxEntries.filter(function (e) { return session && (e.username === session.username || (!e.username && session.username === 'admin')); });
+    myClosedTxnsForTax = isLead ? closedTxns : closedTxns.filter(function (t) { return session && t.agent === session.displayName; });
+    expenses = myTaxEntries.filter(function (e) { return e.type === 'expense'; });
+    totalExpenses = expenses.reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+    _dashCommRate = getAdminSetting('general.defaultCommissionRate', 0.03);
+    _dashTaxRate = getAdminSetting('general.estimatedTaxRate', 0.25);
+    commissionIncome = myClosedTxnsForTax.reduce(function (s, t) { return s + ((t.price || 0) * _dashCommRate); }, 0);
+
+    allAgentGoals = JSON.parse(localStorage.getItem('reb_agent_goals') || '{}');
+    if (Object.keys(allAgentGoals).length === 0) {
+      users.forEach(function (u) { allAgentGoals[u.username] = { closings: 8, volume: 2000000 }; });
+      localStorage.setItem('reb_agent_goals', JSON.stringify(allAgentGoals));
+    }
+    myGoals = session ? (allAgentGoals[session.username] || { closings: 8, volume: 2000000 }) : { closings: 8, volume: 2000000 };
+    teamGoals = { closings: 0, volume: 0 };
+    Object.values(allAgentGoals).forEach(function (g) { teamGoals.closings += (g.closings || 0); teamGoals.volume += (g.volume || 0); });
+    myClosings = closedTxns.filter(function (t) { return session && t.agent === session.displayName; }).length;
+    myVolume = closedTxns.filter(function (t) { return session && t.agent === session.displayName; }).reduce(function (s, t) { return s + (t.price || 0); }, 0);
+
+    agentStats = users.filter(function(u) { return u.role !== 'Assistant'; }).map(function (u) {
+      var closed = closedTxns.filter(function (t) { return t.agent === u.displayName; });
+      var vol = closed.reduce(function (s, t) { return s + (t.price || 0); }, 0);
+      var active = txns.filter(function (t) { return t.agent === u.displayName && t.status !== 'closed'; });
+      return { name: u.displayName, role: u.role, closings: closed.length, volume: vol, active: active.length };
+    }).sort(function (a, b) { return b.volume - a.volume; });
   }
-  var myGoals = allAgentGoals[session.username] || { closings: 8, volume: 2000000 };
-  var teamGoals = { closings: 0, volume: 0 };
-  Object.values(allAgentGoals).forEach(function (g) { teamGoals.closings += (g.closings || 0); teamGoals.volume += (g.volume || 0); });
-  var myClosings = closedTxns.filter(function (t) { return t.agent === session.displayName; }).length;
-  var myVolume = closedTxns.filter(function (t) { return t.agent === session.displayName; }).reduce(function (s, t) { return s + (t.price || 0); }, 0);
 
-  // Leaderboard
-  var agentStats = users.filter(function(u) { return u.role !== 'Assistant'; }).map(function (u) {
-    var closed = closedTxns.filter(function (t) { return t.agent === u.displayName; });
-    var vol = closed.reduce(function (s, t) { return s + (t.price || 0); }, 0);
-    var active = txns.filter(function (t) { return t.agent === u.displayName && t.status !== 'closed'; });
-    return { name: u.displayName, role: u.role, closings: closed.length, volume: vol, active: active.length };
-  }).sort(function (a, b) { return b.volume - a.volume; });
+  // Initial load
+  reloadData();
+
+  // Re-render after server data loads
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
+      ApiBridge.init().then(function () {
+        reloadData();
+        renderDashboard();
+      }).catch(function () {});
+    }
+  });
 
   // Announcements
   var announcements = JSON.parse(localStorage.getItem('reb_announcements') || '[]');
