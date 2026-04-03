@@ -188,6 +188,11 @@
 
     logout: function () {
       localStorage.removeItem(PREFIX + 'session');
+      localStorage.removeItem(PREFIX + 'jwt');
+      localStorage.removeItem(PREFIX + 'user_cache');
+      if (typeof API !== 'undefined' && API.clearSession) {
+        API.clearSession();
+      }
       window.location.href = 'login.html';
     },
 
