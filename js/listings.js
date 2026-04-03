@@ -215,6 +215,74 @@
     selectEl.innerHTML = opts;
   }
 
+  // ---- Representation Modal (shown when listing goes to Pending) ----
+  function showRepresentationModal(listing) {
+    // Remove existing modal if any
+    var old = document.getElementById('repModal');
+    if (old) old.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'repModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+    overlay.innerHTML =
+      '<div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
+        '<h3 style="font-size:1.1rem;font-weight:800;color:var(--gray-900);margin-bottom:6px">Under Contract</h3>' +
+        '<p style="font-size:.85rem;color:var(--gray-500);margin-bottom:20px">How did you represent this deal?</p>' +
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+          '<button data-rep="Seller" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+            '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Seller Side Only</div>' +
+            '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the seller on this listing</div>' +
+          '</button>' +
+          '<button data-rep="Buyer" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+            '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Buyer Side Only</div>' +
+            '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the buyer on this property</div>' +
+          '</button>' +
+          '<button data-rep="Dual" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--indigo);background:var(--indigo-light);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+            '<div style="font-size:.92rem;font-weight:700;color:var(--indigo)">Both Sides (Dual Agent)</div>' +
+            '<div style="font-size:.78rem;color:var(--gray-500);margin-top:2px">I represented both buyer and seller — no separate transaction needed</div>' +
+          '</button>' +
+        '</div>' +
+        '<button id="repCancelBtn" style="margin-top:14px;width:100%;padding:10px;border:none;background:none;color:var(--gray-400);font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    // Handle clicks
+    overlay.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-rep]');
+      if (btn) {
+        var repType = btn.getAttribute('data-rep');
+        overlay.remove();
+
+        // Update listing to pending
+        Data.updateListing(selectedListingId, { status: 'pending' });
+        addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
+        notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
+
+        // Create transaction with the selected type
+        Data.addTransaction({
+          address: listing.address,
+          price: listing.price,
+          agent: listing.agent,
+          type: repType,
+          status: 'pending',
+          notes: 'Created from listing (' + repType + ' representation)',
+          closeDate: ''
+        });
+        showToast('Transaction created — ' + repType + ' representation');
+        renderDetail();
+      }
+      if (e.target.id === 'repCancelBtn' || e.target === overlay) {
+        overlay.remove();
+        // Reset the status dropdown back
+        var statusSelect = document.querySelector('.ie-field[data-field="status"]');
+        if (statusSelect) {
+          var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
+          if (currentListing) statusSelect.value = currentListing.status;
+        }
+      }
+    });
+  }
+
   // ---- Main Render Dispatcher ----
   function render() {
     if (viewMode === 'form') {
@@ -859,29 +927,23 @@
           var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
           var oldStatus = currentListing ? currentListing.status : '';
 
-          // Status → Pending: auto-create a transaction from this listing
+          // Status → Pending: ask representation type, then create transaction
           if (val === 'pending' && oldStatus !== 'pending') {
-            Data.updateListing(selectedListingId, { status: 'pending' });
-            addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
-            notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
             // Check if a transaction already exists for this address
             var existingTxn = Data.getTransactions().find(function (t) {
               return currentListing && t.address === currentListing.address;
             });
-            if (!existingTxn && currentListing) {
-              Data.addTransaction({
-                address: currentListing.address,
-                price: currentListing.price,
-                agent: currentListing.agent,
-                status: 'pending',
-                notes: 'Created from listing',
-                closeDate: ''
-              });
-              showToast('Transaction created from listing.');
-            } else {
+            if (existingTxn) {
+              // Transaction already exists, just update status
+              Data.updateListing(selectedListingId, { status: 'pending' });
+              addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
+              notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
               showToast('Saved');
+              renderDetail();
+              return;
             }
-            renderDetail();
+            // Show representation modal
+            showRepresentationModal(currentListing);
             return;
           }
 
