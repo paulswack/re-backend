@@ -256,7 +256,7 @@
     html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (l ? l.sqft || '' : '') + '" placeholder="1800" min="0" style="padding:12px 16px"></div>';
     html += '</div>';
 
-    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'sold', label: 'Sold' }]);
+    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' +
       _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
@@ -372,6 +372,7 @@
     var total = listings.length;
     var comingSoon = listings.filter(function (l) { return l.status === 'coming_soon'; }).length;
     var active = listings.filter(function (l) { return l.status === 'active'; }).length;
+    var pending = listings.filter(function (l) { return l.status === 'pending'; }).length;
     var sold = listings.filter(function (l) { return l.status === 'sold'; }).length;
 
     // Unique agents for filter
@@ -395,6 +396,7 @@
     html += statCard('Total', total, 'indigo', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>');
     html += statCard('Coming Soon', comingSoon, 'violet', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>');
     html += statCard('Active', active, 'indigo', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>');
+    html += statCard('Pending', pending, 'amber', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>');
     html += statCard('Sold', sold, 'emerald', '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>');
     html += '</div>';
 
@@ -439,6 +441,18 @@
     html += '<div id="lstActiveBody"></div>';
     html += '<div id="lstActiveEmpty" class="empty-state" style="display:none;padding:24px">' +
       '<p style="font-size:.88rem;color:var(--gray-400)">No active listings</p></div>';
+    html += '</div></div>';
+
+    // ---- Pending Section ----
+    html += '<div style="margin-bottom:28px">';
+    html += '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:10px;display:flex;align-items:center;gap:8px">' +
+      '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#FEF3C7;color:#92400E;font-size:.8rem">&#9202;</span>' +
+      'Pending <span id="pendingCount" style="font-size:.78rem;font-weight:600;color:var(--gray-400)"></span></h3>';
+    html += '<div class="card">';
+    html += listHeader;
+    html += '<div id="lstPendingBody"></div>';
+    html += '<div id="lstPendingEmpty" class="empty-state" style="display:none;padding:24px">' +
+      '<p style="font-size:.88rem;color:var(--gray-400)">No pending listings</p></div>';
     html += '</div></div>';
 
     // ---- Sold Section ----
@@ -497,6 +511,7 @@
     // Split into sections
     var comingSoonList = filtered.filter(function (l) { return l.status === 'coming_soon'; });
     var activeList = filtered.filter(function (l) { return l.status === 'active'; });
+    var pendingList = filtered.filter(function (l) { return l.status === 'pending'; });
     var soldList = filtered.filter(function (l) { return l.status === 'sold'; });
 
     // Render helper
@@ -542,6 +557,16 @@
       actBody.innerHTML = renderRows(activeList);
       if (actEmpty) actEmpty.style.display = activeList.length === 0 ? 'block' : 'none';
       if (actCount) actCount.textContent = '(' + activeList.length + ')';
+    }
+
+    // Pending
+    var penBody = document.getElementById('lstPendingBody');
+    var penEmpty = document.getElementById('lstPendingEmpty');
+    var penCount = document.getElementById('pendingCount');
+    if (penBody) {
+      penBody.innerHTML = renderRows(pendingList);
+      if (penEmpty) penEmpty.style.display = pendingList.length === 0 ? 'block' : 'none';
+      if (penCount) penCount.textContent = '(' + pendingList.length + ')';
     }
 
     // Sold
@@ -638,7 +663,7 @@
     '</div>';
 
     // Status
-    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'sold', label: 'Sold' }]);
+    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
       '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +

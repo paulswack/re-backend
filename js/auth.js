@@ -1160,6 +1160,7 @@
       statuses: [
         { key: 'coming_soon', label: 'Coming Soon', color: '#7C3AED' },
         { key: 'active', label: 'Active', color: '#3B82F6' },
+        { key: 'pending', label: 'Pending', color: '#F59E0B' },
         { key: 'sold', label: 'Sold', color: '#10B981' }
       ],
       propertyTypes: [
