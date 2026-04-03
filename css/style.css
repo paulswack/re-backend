@@ -1632,3 +1632,39 @@ tr:hover { background: var(--gray-50); }
     padding: 20px 16px;
   }
 }
+
+/* ============================================================
+   ADDITIONAL MOBILE FIXES
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* Sidebar footer items stack nicely */
+  .sidebar-footer { padding: 8px 12px 12px; }
+  .sidebar-footer .nav-item { font-size: .82rem; }
+
+  /* Settings/notification dropdowns fit on mobile */
+  .settings-dd, .notif-dd { width: calc(100vw - 32px); right: -8px; }
+
+  /* Modals — full width on mobile */
+  .modal-content, [class*="modal"] > div {
+    max-width: 100% !important;
+    margin: 16px !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Cards breathe on mobile */
+  .card { border-radius: 10px; }
+
+  /* Filter bars wrap cleanly */
+  .page-header .btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .topbar { padding: 12px 16px; }
+  .topbar-actions { gap: 6px; }
+  .topbar-title h1 { font-size: 1rem; }
+
+  /* Profile page avatar scales */
+  #profileAvatar { width: 80px !important; height: 80px !important; font-size: 1.5rem !important; }
+}

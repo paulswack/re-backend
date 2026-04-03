@@ -185,6 +185,45 @@
     logoutBtn.addEventListener('click', function () { Auth.logout(); });
   }
 
+  // ---- Change Password ----
+  var changePwBtn = document.getElementById('changePwBtn');
+  if (changePwBtn) {
+    changePwBtn.addEventListener('click', function () {
+      var current = document.getElementById('pCurrentPw').value;
+      var newPw = document.getElementById('pNewPw').value;
+      var confirm = document.getElementById('pConfirmPw').value;
+
+      if (!current || !newPw || !confirm) {
+        showToast('Please fill in all password fields', 'error');
+        return;
+      }
+      if (newPw.length < 6) {
+        showToast('New password must be at least 6 characters', 'error');
+        return;
+      }
+      if (newPw !== confirm) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+
+      changePwBtn.disabled = true;
+      changePwBtn.textContent = 'Changing...';
+
+      API.changePassword(current, newPw).then(function () {
+        showToast('Password changed successfully!');
+        document.getElementById('pCurrentPw').value = '';
+        document.getElementById('pNewPw').value = '';
+        document.getElementById('pConfirmPw').value = '';
+        changePwBtn.disabled = false;
+        changePwBtn.textContent = 'Change Password';
+      }).catch(function (err) {
+        showToast(err.error || 'Failed to change password', 'error');
+        changePwBtn.disabled = false;
+        changePwBtn.textContent = 'Change Password';
+      });
+    });
+  }
+
   // ---- Init ----
   populateSidebarUser();
   setActiveNav();

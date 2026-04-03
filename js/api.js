@@ -42,6 +42,14 @@ var API = (function () {
         if (!res.ok) return Promise.reject(data);
         return data;
       });
+    }).catch(function (err) {
+      // Network errors (offline, server down, CORS)
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        if (typeof showToast === 'function') {
+          showToast('Network error — check your connection', 'error');
+        }
+      }
+      return Promise.reject(err);
     });
   }
 
@@ -257,13 +265,23 @@ var API = (function () {
             '<div style="font-size:.78rem;font-weight:600;color:#6366F1;margin-top:2px">Team Plan</div>' +
           '</div>' +
         '</div>' +
-        '<button onclick="window.location.href=\'mailto:support@eliteregbackoffice.com?subject=Upgrade%20Request\'" style="background:#6366F1;color:#fff;border:none;padding:14px 36px;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;width:100%;transition:background .15s">Upgrade Now</button>' +
+        '<button id="upgradeBtn" onclick="if(typeof API!==\'undefined\'&&API.createCheckout){API.createCheckout(\'solo\',\'monthly\').then(function(r){window.location.href=r.url}).catch(function(){window.location.href=\'mailto:support@eliteregbackoffice.com?subject=Upgrade%20Request\'})}else{window.location.href=\'mailto:support@eliteregbackoffice.com?subject=Upgrade%20Request\'}" style="background:#6366F1;color:#fff;border:none;padding:14px 36px;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;width:100%;transition:background .15s">Upgrade Now</button>' +
         '<div style="margin-top:12px">' +
           '<button onclick="API.logout()" style="background:none;border:none;color:#94A3B8;font-size:.82rem;cursor:pointer;text-decoration:underline">Sign Out</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
   }
+
+  // Password
+  function changePassword(currentPassword, newPassword) {
+    return post('/auth/change-password', { currentPassword: currentPassword, newPassword: newPassword });
+  }
+
+  // Billing
+  function getBillingStatus() { return get('/billing/status'); }
+  function createCheckout(plan, interval) { return post('/billing/create-checkout', { plan: plan, interval: interval }); }
+  function openBillingPortal() { return post('/billing/portal'); }
 
   // Check subscription status on load
   function checkSubscription() {
@@ -340,6 +358,10 @@ var API = (function () {
     getRecruits: getRecruits, createRecruit: createRecruit,
     updateRecruit: updateRecruit, deleteRecruit: deleteRecruit,
     getNotifications: getNotifications, markNotificationRead: markNotificationRead,
-    markAllNotificationsRead: markAllNotificationsRead
+    markAllNotificationsRead: markAllNotificationsRead,
+
+    // Password & Billing
+    changePassword: changePassword,
+    getBillingStatus: getBillingStatus, createCheckout: createCheckout, openBillingPortal: openBillingPortal
   };
 })();

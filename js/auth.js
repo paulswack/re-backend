@@ -10,6 +10,13 @@
   // ---- Inject settings + notifications CSS ----
   var settingsCSS = document.createElement('style');
   settingsCSS.textContent = [
+    // Page loading overlay
+    '.page-loader { position: fixed; inset: 0; background: var(--off-white, #F8F9FC); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity .3s; }',
+    '.page-loader.fade-out { opacity: 0; pointer-events: none; }',
+    '.page-loader-spinner { width: 36px; height: 36px; border: 3px solid var(--gray-200, #E2E6EF); border-top-color: var(--indigo, #002242); border-radius: 50%; animation: pageLoaderSpin .7s linear infinite; }',
+    '@keyframes pageLoaderSpin { to { transform: rotate(360deg); } }',
+    '.page-loader-text { margin-top: 12px; font-size: .85rem; color: var(--gray-400, #9BA5B7); font-weight: 600; }',
+    '',
     // Notification bell styles
     '.notif-wrap { position: relative; }',
     '.notif-btn {',
@@ -335,11 +342,16 @@
       } else {
         item.classList.remove('active');
       }
-      // Hide recruiting nav item for non-privileged users
-      if (href === 'recruiting.html' && !Auth.isPrivileged()) {
+      // Hide admin-only nav items for non-privileged users
+      if ((href === 'recruiting.html' || href === 'team.html' || href === 'admin-settings.html') && !Auth.isPrivileged()) {
         item.style.display = 'none';
       }
     });
+    // Hide "Team" nav label for non-privileged users
+    var teamLabel = document.getElementById('navTeamLabel');
+    if (teamLabel && !Auth.isPrivileged()) {
+      teamLabel.style.display = 'none';
+    }
   }
 
   // ---- Helper: mobile sidebar toggle ----
@@ -772,10 +784,30 @@
     });
   }
 
+  // ---- Loading overlay helpers ----
+  function showPageLoader() {
+    var page = window.location.pathname;
+    if (page.indexOf('login') !== -1 || page.indexOf('index') !== -1 || page === '/') return;
+    if (document.getElementById('pageLoader')) return;
+    var loader = document.createElement('div');
+    loader.className = 'page-loader';
+    loader.id = 'pageLoader';
+    loader.innerHTML = '<div class="page-loader-spinner"></div><div class="page-loader-text">Loading...</div>';
+    document.body.appendChild(loader);
+  }
+
+  function hidePageLoader() {
+    var loader = document.getElementById('pageLoader');
+    if (!loader) return;
+    loader.classList.add('fade-out');
+    setTimeout(function () { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 300);
+  }
+
   // Auto-run on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function () {
     // If API bridge is available, load server data into localStorage
     if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
+      showPageLoader();
       ApiBridge.init().then(function () {
         applySoloMode();
         applyAssistantMode();
@@ -783,6 +815,9 @@
         generateNotifications();
         initNotificationBell();
         initOnboarding();
+        hidePageLoader();
+      }).catch(function () {
+        hidePageLoader();
       });
     } else {
       applySoloMode();

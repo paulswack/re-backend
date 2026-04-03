@@ -17,13 +17,21 @@ const reviewRoutes = require('./routes/reviews');
 const updateRoutes = require('./routes/updates');
 const miscRoutes = require('./routes/misc');
 const transcribeRoutes = require('./routes/transcribe');
+const billingRoutes = require('./routes/billing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+// Parse JSON for all routes except Stripe webhook (needs raw body)
+app.use(function (req, res, next) {
+  if (req.originalUrl === '/api/billing/webhook') {
+    next();
+  } else {
+    express.json({ limit: '10mb' })(req, res, next);
+  }
+});
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..')));
@@ -44,6 +52,7 @@ app.use('/api/reviews', requireAuth, requireActiveSubscription, reviewRoutes);
 app.use('/api/updates', requireAuth, requireActiveSubscription, updateRoutes);
 app.use('/api/misc', requireAuth, requireActiveSubscription, miscRoutes);
 app.use('/api/transcribe', requireAuth, requireActiveSubscription, transcribeRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
