@@ -844,6 +844,8 @@
     if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
       showPageLoader();
       ApiBridge.init().then(function () {
+        populateSidebarUser();
+        setActiveNav();
         applySoloMode();
         applyAssistantMode();
         applyTheme();
