@@ -193,7 +193,7 @@
       if (typeof API !== 'undefined' && API.clearSession) {
         API.clearSession();
       }
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     },
 
     getSession: function () {
