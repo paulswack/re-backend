@@ -103,8 +103,9 @@
   function statusBadge(status) {
     if (!status) return '';
     var s = status.toLowerCase();
-    return '<span class="badge badge-' + s + '">' +
-      s.charAt(0).toUpperCase() + s.slice(1) + '</span>';
+    var labels = { coming_soon: 'Coming Soon' };
+    var label = labels[s] || s.charAt(0).toUpperCase() + s.slice(1);
+    return '<span class="badge badge-' + s + '">' + label + '</span>';
   }
 
   function priorityBadge(priority) {

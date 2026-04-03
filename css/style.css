@@ -405,6 +405,7 @@ tr:hover { background: var(--gray-50); }
   font-weight: 600;
 }
 
+.badge-coming_soon { background: #F3E8FF; color: #7C3AED; }
 .badge-active { background: #DBEAFE; color: #1D4ED8; }
 .badge-pending { background: #FEF3C7; color: #92400E; }
 .badge-closed { background: var(--emerald-light); color: #065F46; }

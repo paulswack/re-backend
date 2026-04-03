@@ -256,7 +256,7 @@
     html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (l ? l.sqft || '' : '') + '" placeholder="1800" min="0" style="padding:12px 16px"></div>';
     html += '</div>';
 
-    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
+    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' +
       _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
@@ -370,8 +370,8 @@
 
     // Build stats
     var total = listings.length;
-    var active = listings.filter(function (l) { return l.status === 'active'; }).length;
-    var pending = listings.filter(function (l) { return l.status === 'pending'; }).length;
+    var comingSoon = listings.filter(function (l) { return l.status === 'coming_soon'; }).length;
+    var active = listings.filter(function (l) { return l.status === 'active' || l.status === 'pending'; }).length;
     var sold = listings.filter(function (l) { return l.status === 'sold'; }).length;
 
     // Unique agents for filter
@@ -393,27 +393,22 @@
     // Stat Cards
     html += '<div class="lst-stats-grid">';
     html += statCard('Total', total, 'indigo', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>');
+    html += statCard('Coming Soon', comingSoon, 'violet', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>');
     html += statCard('Active', active, 'indigo', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>');
-    html += statCard('Pending', pending, 'amber', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>');
     html += statCard('Sold', sold, 'emerald', '<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>');
     html += '</div>';
 
     // Filter Bar
     html += '<div class="filter-bar">' +
       '<input type="text" id="searchInput" placeholder="Search by address or agent...">' +
-      '<select id="statusFilter">' +
-        '<option value="">All Statuses</option>' +
-        getAdminSetting('listings.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]).map(function (s) { return '<option value="' + s.key + '">' + s.label + '</option>'; }).join('') +
-      '</select>' +
       '<select id="agentFilter">' +
         '<option value="">All Agents</option>' +
         agents.map(function (a) { return '<option value="' + escapeHtml(a) + '">' + escapeHtml(a) + '</option>'; }).join('') +
       '</select>' +
     '</div>';
 
-    // List rows
-    html += '<div class="card" id="lstListCard">';
-    html += '<div class="list-header">' +
+    // List header helper
+    var listHeader = '<div class="list-header">' +
       '<div class="lst-row-address">Address</div>' +
       '<div class="lst-row-specs">Beds / Baths / Sqft</div>' +
       '<div class="lst-row-agent">Agent</div>' +
@@ -421,13 +416,42 @@
       '<div class="lst-row-status">Status</div>' +
       '<div class="lst-row-date">Listed</div>' +
     '</div>';
-    html += '<div id="lstListBody"></div>';
-    html += '<div id="lstEmpty" class="empty-state" style="display:none;">' +
-      '<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>' +
-      '<h3>No listings found</h3>' +
-      '<p>Add your first listing to get started.</p>' +
-    '</div>';
-    html += '</div>';
+
+    // ---- Coming Soon Section ----
+    html += '<div style="margin-bottom:28px">';
+    html += '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:10px;display:flex;align-items:center;gap:8px">' +
+      '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#F3E8FF;color:#7C3AED;font-size:.8rem">&#9733;</span>' +
+      'Coming Soon <span id="comingSoonCount" style="font-size:.78rem;font-weight:600;color:var(--gray-400)"></span></h3>';
+    html += '<div class="card">';
+    html += listHeader;
+    html += '<div id="lstComingSoonBody"></div>';
+    html += '<div id="lstComingSoonEmpty" class="empty-state" style="display:none;padding:24px">' +
+      '<p style="font-size:.88rem;color:var(--gray-400)">No coming soon listings</p></div>';
+    html += '</div></div>';
+
+    // ---- Active Listings Section ----
+    html += '<div style="margin-bottom:28px">';
+    html += '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:10px;display:flex;align-items:center;gap:8px">' +
+      '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#DBEAFE;color:#1D4ED8;font-size:.8rem">&#9679;</span>' +
+      'Active Listings <span id="activeCount" style="font-size:.78rem;font-weight:600;color:var(--gray-400)"></span></h3>';
+    html += '<div class="card">';
+    html += listHeader;
+    html += '<div id="lstActiveBody"></div>';
+    html += '<div id="lstActiveEmpty" class="empty-state" style="display:none;padding:24px">' +
+      '<p style="font-size:.88rem;color:var(--gray-400)">No active listings</p></div>';
+    html += '</div></div>';
+
+    // ---- Sold Section ----
+    html += '<div style="margin-bottom:28px">';
+    html += '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:10px;display:flex;align-items:center;gap:8px">' +
+      '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--emerald-light);color:#065F46;font-size:.8rem">&#10003;</span>' +
+      'Sold <span id="soldCount" style="font-size:.78rem;font-weight:600;color:var(--gray-400)"></span></h3>';
+    html += '<div class="card">';
+    html += listHeader;
+    html += '<div id="lstSoldBody"></div>';
+    html += '<div id="lstSoldEmpty" class="empty-state" style="display:none;padding:24px">' +
+      '<p style="font-size:.88rem;color:var(--gray-400)">No sold listings</p></div>';
+    html += '</div></div>';
 
     pageBody.innerHTML = html;
 
@@ -436,7 +460,6 @@
 
     // Attach filter listeners
     document.getElementById('searchInput').addEventListener('input', renderListRows);
-    document.getElementById('statusFilter').addEventListener('change', renderListRows);
     if (document.getElementById('agentFilter')) {
       document.getElementById('agentFilter').addEventListener('change', renderListRows);
     }
@@ -453,24 +476,17 @@
     var listings = Data.getListings();
 
     var searchEl = document.getElementById('searchInput');
-    var statusEl = document.getElementById('statusFilter');
     var agentEl = document.getElementById('agentFilter');
-    var listBody = document.getElementById('lstListBody');
-    var emptyEl = document.getElementById('lstEmpty');
-
-    if (!listBody) return;
 
     var query = searchEl ? searchEl.value.toLowerCase() : '';
-    var statusVal = statusEl ? statusEl.value : '';
     var agentVal = agentEl ? agentEl.value : '';
 
     var filtered = listings.filter(function (l) {
       var matchSearch = !query ||
         (l.address && l.address.toLowerCase().indexOf(query) > -1) ||
         (l.agent && l.agent.toLowerCase().indexOf(query) > -1);
-      var matchStatus = !statusVal || l.status === statusVal;
       var matchAgent = !agentVal || l.agent === agentVal;
-      return matchSearch && matchStatus && matchAgent;
+      return matchSearch && matchAgent;
     });
 
     // Sort by createdAt desc
@@ -478,35 +494,65 @@
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
-    if (filtered.length === 0) {
-      listBody.innerHTML = '';
-      emptyEl.style.display = 'block';
-      return;
+    // Split into sections
+    var comingSoonList = filtered.filter(function (l) { return l.status === 'coming_soon'; });
+    var activeList = filtered.filter(function (l) { return l.status === 'active' || l.status === 'pending'; });
+    var soldList = filtered.filter(function (l) { return l.status === 'sold'; });
+
+    // Render helper
+    function renderRows(items) {
+      return items.map(function (l) {
+        var cls = agentClass(l.agent);
+        var specsText = [];
+        if (l.beds) specsText.push(l.beds + ' bd');
+        if (l.baths) specsText.push(l.baths + ' ba');
+        if (l.sqft) specsText.push(Number(l.sqft).toLocaleString() + ' sqft');
+
+        return '<div class="list-row" data-action="open-detail" data-id="' + l.id + '">' +
+          '<div class="lst-row-address">' +
+            '<div class="lst-row-address-text">' + escapeHtml(l.address) + '</div>' +
+          '</div>' +
+          '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
+          '<div class="lst-row-agent">' +
+            '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(l.agent) + '</div>' +
+            '<div class="lst-row-agent-name">' + escapeHtml(l.agent || '—') + '</div>' +
+          '</div>' +
+          '<div class="lst-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
+          '<div class="lst-row-status">' + Data.statusBadge(l.status) + '</div>' +
+          '<div class="lst-row-date">' + Data.formatDate(l.listingDate) + '</div>' +
+        '</div>';
+      }).join('');
     }
 
-    emptyEl.style.display = 'none';
+    // Coming Soon
+    var csBody = document.getElementById('lstComingSoonBody');
+    var csEmpty = document.getElementById('lstComingSoonEmpty');
+    var csCount = document.getElementById('comingSoonCount');
+    if (csBody) {
+      csBody.innerHTML = renderRows(comingSoonList);
+      if (csEmpty) csEmpty.style.display = comingSoonList.length === 0 ? 'block' : 'none';
+      if (csCount) csCount.textContent = '(' + comingSoonList.length + ')';
+    }
 
-    listBody.innerHTML = filtered.map(function (l) {
-      var cls = agentClass(l.agent);
-      var specsText = [];
-      if (l.beds) specsText.push(l.beds + ' bd');
-      if (l.baths) specsText.push(l.baths + ' ba');
-      if (l.sqft) specsText.push(Number(l.sqft).toLocaleString() + ' sqft');
+    // Active
+    var actBody = document.getElementById('lstActiveBody');
+    var actEmpty = document.getElementById('lstActiveEmpty');
+    var actCount = document.getElementById('activeCount');
+    if (actBody) {
+      actBody.innerHTML = renderRows(activeList);
+      if (actEmpty) actEmpty.style.display = activeList.length === 0 ? 'block' : 'none';
+      if (actCount) actCount.textContent = '(' + activeList.length + ')';
+    }
 
-      return '<div class="list-row" data-action="open-detail" data-id="' + l.id + '">' +
-        '<div class="lst-row-address">' +
-          '<div class="lst-row-address-text">' + escapeHtml(l.address) + '</div>' +
-        '</div>' +
-        '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
-        '<div class="lst-row-agent">' +
-          '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(l.agent) + '</div>' +
-          '<div class="lst-row-agent-name">' + escapeHtml(l.agent || '—') + '</div>' +
-        '</div>' +
-        '<div class="lst-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
-        '<div class="lst-row-status">' + Data.statusBadge(l.status) + '</div>' +
-        '<div class="lst-row-date">' + Data.formatDate(l.listingDate) + '</div>' +
-      '</div>';
-    }).join('');
+    // Sold
+    var soldBody = document.getElementById('lstSoldBody');
+    var soldEmpty = document.getElementById('lstSoldEmpty');
+    var soldCount = document.getElementById('soldCount');
+    if (soldBody) {
+      soldBody.innerHTML = renderRows(soldList);
+      if (soldEmpty) soldEmpty.style.display = soldList.length === 0 ? 'block' : 'none';
+      if (soldCount) soldCount.textContent = '(' + soldList.length + ')';
+    }
   }
 
   // ============================================================
@@ -592,7 +638,7 @@
     '</div>';
 
     // Status
-    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
+    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
       '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
