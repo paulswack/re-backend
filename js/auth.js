@@ -373,7 +373,7 @@
         item.classList.remove('active');
       }
       // Hide admin-only nav items for non-privileged users
-      if ((href === 'recruiting.html' || href === 'team.html' || href === 'admin-settings.html') && !Auth.isPrivileged()) {
+      if ((href === 'recruiting.html' || href === 'meeting-notes.html' || href === 'team.html' || href === 'admin-settings.html') && !Auth.isPrivileged()) {
         item.style.display = 'none';
       }
     });
