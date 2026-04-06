@@ -460,9 +460,11 @@
     '</div>';
     html += '<div id="txnListBody"></div>';
     html += '<div id="txnEmpty" class="empty-state" style="display:none;">' +
-      '<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>' +
-      '<h3>No transactions found</h3>' +
-      '<p>Add your first transaction to get started.</p>' +
+      '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">' +
+        '<div style="font-size:2rem;margin-bottom:12px">📋</div>' +
+        '<div style="font-weight:600;margin-bottom:4px">No active escrows yet</div>' +
+        '<div style="font-size:.85rem">Click \'New Escrow\' to get started.</div>' +
+      '</div>' +
     '</div>';
     html += '</div>';
 
@@ -1731,6 +1733,10 @@
     '</div>';
 
     document.body.insertAdjacentHTML('beforeend', promptHtml);
+    var emailOverlay = document.getElementById('emailPromptModal');
+    if (emailOverlay) {
+      emailOverlay.addEventListener('click', function (e) { if (e.target === emailOverlay) emailOverlay.parentNode.removeChild(emailOverlay); });
+    }
   }
 
   // ============================================================
@@ -1953,10 +1959,14 @@
             '</div>' +
           '</div>';
 
-    // Email compose section
+    // Email compose section — include all buyers and sellers
     var allEmails = [];
-    if (buyer.email) allEmails.push({ label: 'Buyer — ' + (buyer.name || buyer.email), email: buyer.email });
-    if (seller.email) allEmails.push({ label: 'Seller — ' + (seller.name || seller.email), email: seller.email });
+    txnP.buyers.forEach(function (b) {
+      if (b.email) allEmails.push({ label: 'Buyer' + (b.relationship ? ' (' + b.relationship + ')' : '') + ' — ' + (b.name || b.email), email: b.email });
+    });
+    txnP.sellers.forEach(function (s) {
+      if (s.email) allEmails.push({ label: 'Seller' + (s.relationship ? ' (' + s.relationship + ')' : '') + ' — ' + (s.name || s.email), email: s.email });
+    });
 
     modalHtml += '<div style="border-top:1px solid var(--gray-100);padding-top:16px;">' +
       '<div style="font-size:.82rem;font-weight:600;color:var(--gray-600);margin-bottom:10px;">Email Client</div>';

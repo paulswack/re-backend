@@ -157,9 +157,10 @@
 
     // Vendor grid
     if (filtered.length === 0) {
-      html += '<div style="text-align:center;padding:60px 20px;color:#94A3B8;">';
-      html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" style="opacity:0.3;margin-bottom:12px;"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>';
-      html += '<p style="font-size:16px;margin:0;">No vendors found. Click "Add Vendor" to get started.</p>';
+      html += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">';
+      html += '<div style="font-size:2rem;margin-bottom:12px">🔧</div>';
+      html += '<div style="font-weight:600;margin-bottom:4px">No vendors added yet</div>';
+      html += '<div style="font-size:.85rem">Click \'Add Vendor\' to get started.</div>';
       html += '</div>';
     } else {
       html += '<div class="vendor-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">';

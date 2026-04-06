@@ -337,7 +337,11 @@
   // ---- Helper: highlight active nav item based on current filename ----
   function setActiveNav() {
     var path = window.location.pathname;
-    var filename = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+    // Strip trailing slash, then extract filename; also strip query strings/hashes
+    var cleanPath = path.replace(/\/+$/, '');
+    var filename = cleanPath.substring(cleanPath.lastIndexOf('/') + 1) || 'index.html';
+    // Strip any query string or hash that may have been included in the path segment
+    filename = filename.split('?')[0].split('#')[0] || 'index.html';
     var sidebarNav = document.querySelector('.sidebar-nav');
     var navItems = sidebarNav ? sidebarNav.querySelectorAll('.nav-item[data-page]') : [];
 
@@ -371,8 +375,8 @@
     // Re-query after reorder
     navItems = sidebarNav ? sidebarNav.querySelectorAll('.nav-item[data-page]') : [];
     navItems.forEach(function (item) {
-      var href = item.getAttribute('href');
-      if (href === filename) {
+      var href = (item.getAttribute('href') || '').split('?')[0].split('#')[0];
+      if (href.toLowerCase() === filename.toLowerCase()) {
         item.classList.add('active');
       } else {
         item.classList.remove('active');

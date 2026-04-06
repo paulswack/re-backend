@@ -299,7 +299,14 @@
     filtered.sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
 
     if (!filtered.length) {
-      h += '<div style="padding:40px;text-align:center;color:var(--gray-400);font-size:.85rem">No requests' + (currentFilter !== 'all' ? ' matching this filter' : ' yet') + '. Click "New Review Request" to get started.</div>';
+      if (currentFilter === 'all') {
+        h += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">' +
+          '<div style="font-size:2rem;margin-bottom:12px">⭐</div>' +
+          '<div style="font-weight:600;margin-bottom:4px">No review requests yet</div>' +
+          '</div>';
+      } else {
+        h += '<div style="padding:40px;text-align:center;color:var(--gray-400);font-size:.85rem">No requests matching this filter.</div>';
+      }
     } else {
       filtered.forEach(function (r) {
         var isOverdue = r.status === 'sent' && daysSince(r.sentDate) > 14;

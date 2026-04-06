@@ -17,6 +17,8 @@
 
   var pageBody = document.getElementById('pageBody');
   var currentRange = 'year';
+  var agentSearch = '';
+  var currentSort = 'volume'; // volume | closed | avgDeal | listings
 
   // ---- Filter transactions by date range ----
   function filterByRange(txns) {
@@ -74,6 +76,10 @@
     });
 
     agents.sort(function (a, b) {
+      if (currentSort === 'closed') return b.closedCount - a.closedCount || b.volume - a.volume;
+      if (currentSort === 'avgDeal') return b.avgDeal - a.avgDeal;
+      if (currentSort === 'listings') return b.listingsCount - a.listingsCount;
+      // default: volume
       if (b.volume !== a.volume) return b.volume - a.volume;
       return b.closedCount - a.closedCount;
     });
@@ -85,12 +91,17 @@
   function render() {
     var agents = getAgentStats();
 
+    // Apply name filter
+    var filteredAgents = agentSearch
+      ? agents.filter(function (a) { return a.name.toLowerCase().indexOf(agentSearch.toLowerCase()) !== -1; })
+      : agents;
+
     var totalClosed = agents.reduce(function (s, a) { return s + a.closedCount; }, 0);
     var totalVolume = agents.reduce(function (s, a) { return s + a.volume; }, 0);
     var totalActive = agents.reduce(function (s, a) { return s + a.activeCount + a.pendingCount; }, 0);
     var topAgent = agents.length > 0 ? agents[0].name : '—';
-    var maxVolume = agents.length > 0 ? agents[0].volume : 1;
-    var maxClosed = agents.length > 0 ? Math.max.apply(null, agents.map(function (a) { return a.closedCount; })) : 1;
+    var maxVolume = filteredAgents.length > 0 ? Math.max.apply(null, filteredAgents.map(function (a) { return a.volume; })) : 1;
+    var maxClosed = filteredAgents.length > 0 ? Math.max.apply(null, filteredAgents.map(function (a) { return a.closedCount; })) : 1;
 
     var html = '';
 
@@ -102,6 +113,25 @@
     });
     html += '</div>';
 
+    // Search + Sort controls
+    html += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px">';
+
+    // Search input
+    html += '<div style="position:relative;flex:1;min-width:180px;max-width:300px">';
+    html += '<svg viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:var(--gray-400);pointer-events:none"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>';
+    html += '<input id="lbAgentSearch" type="text" placeholder="Search agents..." value="' + agentSearch.replace(/"/g, '&quot;') + '" style="width:100%;padding:8px 10px 8px 34px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-800);background:var(--white);outline:none;box-sizing:border-box">';
+    html += '</div>';
+
+    // Sort dropdown
+    var sortLabels = { volume: 'Sort: Volume', closed: 'Sort: Units Closed', avgDeal: 'Sort: Avg Deal', listings: 'Sort: Active Listings' };
+    html += '<select id="lbSortSelect" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700);background:var(--white);cursor:pointer">';
+    ['volume', 'closed', 'avgDeal', 'listings'].forEach(function (s) {
+      html += '<option value="' + s + '"' + (currentSort === s ? ' selected' : '') + '>' + sortLabels[s] + '</option>';
+    });
+    html += '</select>';
+
+    html += '</div>';
+
     // Stats
     html += '<div class="lb-stats-grid">';
     html += lbStatCard('Active Agents', agents.length, 'green', '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>');
@@ -111,10 +141,9 @@
     html += '</div>';
 
     if (agents.length === 0) {
-      html += '<div class="card" style="padding:60px 24px;text-align:center">';
-      html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="margin-bottom:16px"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>';
-      html += '<h3 style="color:var(--gray-700);margin-bottom:4px">No rankings yet</h3>';
-      html += '<p style="color:var(--gray-400);font-size:.88rem">Close some deals to populate the leaderboard.</p>';
+      html += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">';
+      html += '<div style="font-size:2rem;margin-bottom:12px">📊</div>';
+      html += '<div style="font-weight:600;margin-bottom:4px">No agent data available yet</div>';
       html += '</div>';
       pageBody.innerHTML = html;
       attachFilterListeners();
@@ -178,7 +207,7 @@
     html += '<div><div class="lb-card-title">Closed Transactions</div><div class="lb-card-sub">Ranked by deals closed</div></div>';
     html += '<span class="lb-badge">All Time</span>';
     html += '</div>';
-    var byClosedSorted = agents.slice().sort(function (a, b) { return b.closedCount - a.closedCount; });
+    var byClosedSorted = filteredAgents.slice().sort(function (a, b) { return b.closedCount - a.closedCount; });
     byClosedSorted.forEach(function (a, i) {
       var pct = maxClosed > 0 ? (a.closedCount / maxClosed) * 100 : 0;
       html += lbRow(a, i, a.closedCount + ' closed', pct, a.pendingCount + ' pending / ' + a.activeCount + ' active');
@@ -191,7 +220,7 @@
     html += '<div><div class="lb-card-title">Sales Volume</div><div class="lb-card-sub">Ranked by total closed volume</div></div>';
     html += '<span class="lb-badge">All Time</span>';
     html += '</div>';
-    agents.forEach(function (a, i) {
+    filteredAgents.forEach(function (a, i) {
       var pct = maxVolume > 0 ? (a.volume / maxVolume) * 100 : 0;
       html += lbRow(a, i, Data.formatCurrency(a.volume), pct, a.closedCount + ' closed / ' + a.listingsCount + ' listings');
     });
@@ -207,7 +236,7 @@
     html += '<th>Rank</th><th>Agent</th><th>Closed</th><th>Pending</th><th>Active</th><th>Listings</th><th>Volume (Closed)</th><th>Avg. Deal Size</th>';
     html += '</tr></thead><tbody>';
 
-    agents.forEach(function (a, i) {
+    filteredAgents.forEach(function (a, i) {
       var cls = agentClass(a.name);
       var rankClass = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : ''));
       html += '<tr>';
@@ -222,6 +251,9 @@
       html += '</tr>';
     });
 
+    if (filteredAgents.length === 0) {
+      html += '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gray-400);font-size:.88rem">No agents match &ldquo;' + agentSearch + '&rdquo;</td></tr>';
+    }
     html += '</tbody></table></div>';
     html += '</div>';
 
@@ -304,6 +336,28 @@
         render();
       });
     });
+
+    var searchInput = document.getElementById('lbAgentSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        agentSearch = this.value;
+        render();
+        // Restore focus and cursor position after re-render
+        var newInput = document.getElementById('lbAgentSearch');
+        if (newInput) {
+          newInput.focus();
+          newInput.setSelectionRange(newInput.value.length, newInput.value.length);
+        }
+      });
+    }
+
+    var sortSelect = document.getElementById('lbSortSelect');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', function () {
+        currentSort = this.value;
+        render();
+      });
+    }
   }
 
   // ---- Init ----

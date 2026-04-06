@@ -538,9 +538,10 @@
 
     html += '<div class="b100-log-list" id="b100LogList">';
     if (logContacts.length === 0) {
-      html += '<div class="b100-log-empty">';
-      html += '<div class="b100-log-empty-icon"><svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" style="opacity:.3;"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></div>';
-      html += '<div>No contacts logged yet' + (isToday ? ' — start your sprint!' : '') + '</div>';
+      html += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">';
+      html += '<div style="font-size:2rem;margin-bottom:12px">📞</div>';
+      html += '<div style="font-weight:600;margin-bottom:4px">No contacts added yet</div>';
+      html += '<div style="font-size:.85rem">Start building your Bold 100 list.</div>';
       html += '</div>';
     } else {
       for (var li = 0; li < logContacts.length; li++) {

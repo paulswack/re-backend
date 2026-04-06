@@ -436,6 +436,24 @@
   function renderList() {
     var listings = Data.getListings();
 
+    if (listings.length === 0) {
+      var html = '';
+      html += '<div class="page-header">' +
+        '<div><h2>All Listings</h2></div>' +
+        '<button class="btn btn-primary btn-sm" data-action="add-listing">' +
+          '<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>' +
+          'Add Listing' +
+        '</button>' +
+      '</div>';
+      html += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">' +
+        '<div style="font-size:2rem;margin-bottom:12px">🏠</div>' +
+        '<div style="font-weight:600;margin-bottom:4px">No listings yet</div>' +
+        '<div style="font-size:.85rem">Click \'New Listing\' to get started.</div>' +
+      '</div>';
+      pageBody.innerHTML = html;
+      return;
+    }
+
     // Build stats
     var total = listings.length;
     var comingSoon = listings.filter(function (l) { return l.status === 'coming_soon'; }).length;
@@ -1392,6 +1410,10 @@
     '</div>';
 
     document.body.insertAdjacentHTML('beforeend', promptHtml);
+    var emailOverlay = document.getElementById('emailPromptModal');
+    if (emailOverlay) {
+      emailOverlay.addEventListener('click', function (e) { if (e.target === emailOverlay) emailOverlay.parentNode.removeChild(emailOverlay); });
+    }
   }
 
   // ============================================================
@@ -1467,6 +1489,10 @@
     '</div>';
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+    var shareOverlay = document.getElementById('shareClientModal');
+    if (shareOverlay) {
+      shareOverlay.addEventListener('click', function (e) { if (e.target === shareOverlay) shareOverlay.parentNode.removeChild(shareOverlay); });
+    }
   }
 
   // ============================================================

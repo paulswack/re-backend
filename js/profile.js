@@ -86,6 +86,10 @@
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) overlay.parentNode.removeChild(overlay);
+    });
+
     var cropArea = document.getElementById('cropArea');
     var cropImg = document.getElementById('cropImg');
     var cropZoom = document.getElementById('cropZoom');

@@ -191,9 +191,10 @@
 
     // List view
     if (filtered.length === 0) {
-      html += '<div style="text-align:center;padding:60px 20px;color:#94A3B8;">';
-      html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" style="opacity:0.3;margin-bottom:12px;"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-      html += '<p style="font-size:16px;margin:0;">No recruits found. Click "Add Recruit" to get started.</p>';
+      html += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">';
+      html += '<div style="font-size:2rem;margin-bottom:12px">🤝</div>';
+      html += '<div style="font-weight:600;margin-bottom:4px">No recruits added yet</div>';
+      html += '<div style="font-size:.85rem">Click \'Add Recruit\' to get started.</div>';
       html += '</div>';
     } else {
       // Sort by createdAt desc
@@ -502,7 +503,7 @@
 
   // ---- Delete recruit ----
   function deleteRecruit(id) {
-    if (!confirm('Delete this recruit?')) return;
+    if (!confirm('Delete this recruit? This cannot be undone.')) return;
     var recruits = getRecruits().filter(function (r) { return r.id !== id; });
     saveRecruits(recruits);
     showToast('Recruit deleted.');

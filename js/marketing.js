@@ -483,6 +483,13 @@
 
   // ---- Render: Activity List ----
   function renderActivityList(activities, checked, periodKey) {
+    if (!activities || activities.length === 0) {
+      return '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">' +
+        '<div style="font-size:2rem;margin-bottom:12px">📣</div>' +
+        '<div style="font-weight:600;margin-bottom:4px">No marketing activity recorded yet</div>' +
+        '</div>';
+    }
+
     var h = '<div class="lb-card">';
 
     // Progress bar header
@@ -592,7 +599,19 @@
       if (done > 0) {
         h += '<div class="mkt-history-items">';
         activities.forEach(function (a) {
-          var isDone = !!checked[a.id];
+          var checkVal = checked[a.id];
+          var isDone = !!checkVal;
+          // Format completion timestamp if available
+          var completedLabel = '';
+          if (isDone) {
+            var ts = (typeof checkVal === 'string' && checkVal.length > 4) ? checkVal : null;
+            if (ts) {
+              var tsDate = new Date(ts);
+              if (!isNaN(tsDate.getTime())) {
+                completedLabel = tsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              }
+            }
+          }
           h += '<div class="mkt-history-item ' + (isDone ? 'done' : 'missed') + '">';
           if (isDone) {
             h += '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
@@ -600,6 +619,9 @@
             h += '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
           }
           h += '<span>' + escHtml(a.label) + '</span>';
+          if (completedLabel) {
+            h += '<span style="margin-left:auto;font-size:.72rem;color:var(--gray-400);flex-shrink:0;padding-left:8px">' + completedLabel + '</span>';
+          }
           h += '</div>';
         });
         h += '</div>';
@@ -801,7 +823,12 @@
       var ud = userData(session.username);
       if (!ud[type]) ud[type] = {};
       if (!ud[type][period]) ud[type][period] = {};
-      ud[type][period][id] = !ud[type][period][id];
+      // Store ISO timestamp when checking; remove when unchecking
+      if (ud[type][period][id]) {
+        delete ud[type][period][id];
+      } else {
+        ud[type][period][id] = new Date().toISOString();
+      }
       saveUser(session.username, ud);
       render();
     }

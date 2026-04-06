@@ -101,6 +101,8 @@
   function renderList() {
     var allTxns = Data.getTransactions();
     var closedTxns = filterByRange(allTxns.filter(function (t) { return t.status === 'closed'; }));
+    // Ensure consistent descending sort by close date across all groups
+    closedTxns.sort(function (a, b) { return (b.closeDate || '').localeCompare(a.closeDate || ''); });
 
     // Stats
     var totalClosed = closedTxns.length;
@@ -151,10 +153,9 @@
     });
 
     if (sortedAgents.length === 0) {
-      html += '<div class="card" style="padding:60px 24px;text-align:center">';
-      html += '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="margin-bottom:16px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
-      html += '<h3 style="color:var(--gray-700);margin-bottom:4px">No closed deals yet</h3>';
-      html += '<p style="color:var(--gray-400);font-size:.88rem">Close your first deal and it will appear here.</p>';
+      html += '<div style="text-align:center;padding:60px 20px;color:var(--gray-400);">';
+      html += '<div style="font-size:2rem;margin-bottom:12px">🏆</div>';
+      html += '<div style="font-weight:600;margin-bottom:4px">No closed deals yet</div>';
       html += '</div>';
     } else {
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">';
