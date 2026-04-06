@@ -2145,4 +2145,13 @@
   // ============================================================
   render();
 
+  // Re-render after server data loads so DOM IDs match localStorage IDs
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
+      ApiBridge.init().then(function () {
+        render();
+      });
+    }
+  });
+
 })();
