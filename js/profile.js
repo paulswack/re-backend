@@ -231,9 +231,6 @@
     document.getElementById('pPhone').value = profile.phone || '';
     document.getElementById('pEmail').value = profile.email || '';
     document.getElementById('pLicense').value = profile.license || '';
-    document.getElementById('pYears').value = profile.yearsExperience || '';
-    document.getElementById('pSpecialties').value = (profile.specialties || []).join(', ');
-    document.getElementById('pBio').value = profile.bio || '';
   }
 
   // ---- Save ----
@@ -242,18 +239,12 @@
     document.getElementById('pDisplayName').value = displayName;
 
     var profiles = getProfiles();
-    var specialtiesRaw = document.getElementById('pSpecialties').value;
-    var specialties = specialtiesRaw ? specialtiesRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [];
-
     var existing = profiles[session.username] || {};
     profiles[session.username] = {
       displayName: displayName,
       phone: document.getElementById('pPhone').value.trim(),
       email: document.getElementById('pEmail').value.trim(),
       license: document.getElementById('pLicense').value.trim(),
-      yearsExperience: document.getElementById('pYears').value ? parseInt(document.getElementById('pYears').value, 10) : null,
-      specialties: specialties,
-      bio: document.getElementById('pBio').value.trim(),
       photo: existing.photo || null
     };
 
@@ -271,9 +262,6 @@
           email: profileData.email,
           license_number: profileData.license,
           profile: {
-            yearsExperience: profileData.yearsExperience,
-            specialties: profileData.specialties,
-            bio: profileData.bio,
             photo: profileData.photo
           }
         }).then(function () {
