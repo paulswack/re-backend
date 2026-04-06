@@ -353,10 +353,10 @@
         agent_name: item.agent, source: item.source, close_date: item.closeDate,
         notes: item.notes, metadata: {}
       }).then(function (serverItem) {
-        // Update local ID to match server
+        // Store server ID without replacing local ID (local ID is used for navigation)
         var items = getCollection('transactions');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
-        if (idx !== -1) { items[idx].id = serverItem.id; saveCollection('transactions', items); }
+        if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('transactions', items); }
       }).catch(function (err) { console.error('Sync add txn error:', err); });
     }
     return result;
@@ -365,6 +365,8 @@
   function serverUpdateTransaction(id, updates) {
     var result = txns.update(id, updates);
     if (isServerMode()) {
+      var item = txns.getAll().find(function (i) { return i.id === id; });
+      var apiId = (item && item.server_id) || id;
       var mapped = {};
       if (updates.address !== undefined) mapped.address = updates.address;
       if (updates.type !== undefined) mapped.type = updates.type;
@@ -374,15 +376,17 @@
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.closeDate !== undefined) mapped.close_date = updates.closeDate;
       if (updates.notes !== undefined) mapped.notes = updates.notes;
-      API.updateTransaction(id, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
+      API.updateTransaction(apiId, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
     }
     return result;
   }
 
   function serverDeleteTransaction(id) {
+    var item = txns.getAll().find(function (i) { return i.id === id; });
+    var apiId = (item && item.server_id) || id;
     var result = txns.remove(id);
     if (isServerMode()) {
-      API.deleteTransaction(id).catch(function (err) { console.error('Sync delete txn error:', err); });
+      API.deleteTransaction(apiId).catch(function (err) { console.error('Sync delete txn error:', err); });
     }
     return result;
   }
@@ -400,7 +404,7 @@
       }).then(function (serverItem) {
         var items = getCollection('listings');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
-        if (idx !== -1) { items[idx].id = serverItem.id; saveCollection('listings', items); }
+        if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('listings', items); }
       }).catch(function (err) { console.error('Sync add listing error:', err); });
     }
     return result;
@@ -409,6 +413,8 @@
   function serverUpdateListing(id, updates) {
     var result = listings.update(id, updates);
     if (isServerMode()) {
+      var item = listings.getAll().find(function (i) { return i.id === id; });
+      var apiId = (item && item.server_id) || id;
       var mapped = {};
       if (updates.address !== undefined) mapped.address = updates.address;
       if (updates.status !== undefined) mapped.status = updates.status;
@@ -421,15 +427,17 @@
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.listingDate !== undefined) mapped.listing_date = updates.listingDate;
       if (updates.propertyType !== undefined) mapped.property_type = updates.propertyType;
-      API.updateListing(id, mapped).catch(function (err) { console.error('Sync update listing error:', err); });
+      API.updateListing(apiId, mapped).catch(function (err) { console.error('Sync update listing error:', err); });
     }
     return result;
   }
 
   function serverDeleteListing(id) {
+    var item = listings.getAll().find(function (i) { return i.id === id; });
+    var apiId = (item && item.server_id) || id;
     var result = listings.remove(id);
     if (isServerMode()) {
-      API.deleteListing(id).catch(function (err) { console.error('Sync delete listing error:', err); });
+      API.deleteListing(apiId).catch(function (err) { console.error('Sync delete listing error:', err); });
     }
     return result;
   }

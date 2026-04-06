@@ -259,15 +259,14 @@
         notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
 
         // Create transaction with the selected type
-        Data.createTransaction({
+        Data.addTransaction({
           address: listing.address,
           price: listing.price,
-          agent_id: listing.agent_id,
-          agent_name: listing.agent_name,
+          agent: listing.agent,
           type: repType,
           status: 'pending',
           notes: 'Created from listing (' + repType + ' representation)',
-          close_date: null
+          closeDate: ''
         });
         showToast('Transaction created — ' + repType + ' representation');
         renderDetail();
