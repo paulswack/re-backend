@@ -865,12 +865,13 @@
         'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
     '</div>';
     var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
+    var btnBase = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;transition:opacity .15s;white-space:nowrap';
     html += '<div class="detail-header-actions">' +
-      '<a href="' + zillowUrl + '" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="color:#006AFF;border-color:#006AFF;text-decoration:none;display:inline-flex;align-items:center;gap:5px">' +
-        '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>' +
+      '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="' + btnBase + ';background:#006AFF;color:#fff;border:none">' +
+        '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>' +
         'Zillow' +
       '</a>' +
-      '<button class="btn btn-outline btn-sm" data-action="share-client" data-id="' + l.id + '" style="color:var(--indigo);border-color:var(--indigo);">Share with Client</button>' +
+      '<button data-action="share-client" data-id="' + l.id + '" style="' + btnBase + ';background:var(--indigo);color:#fff;border:none">Share with Client</button>' +
     '</div>';
     html += '</div>';
 
