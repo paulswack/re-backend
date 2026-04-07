@@ -293,8 +293,12 @@
 
     html += '</div>'; // detail-blocks-row
 
-    // Save button
-    html += '<div style="margin-top:12px"><button class="btn btn-primary btn-sm" data-action="save-closed-edit" data-id="' + t.id + '">Save Changes</button></div>';
+    // Action buttons
+    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
+    html += '<button class="btn btn-primary btn-sm" data-action="save-closed-edit" data-id="' + t.id + '">Save Changes</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="reopen-txn" data-id="' + t.id + '" style="color:var(--indigo);border-color:var(--indigo)">Move to Pending</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="delete-txn" data-id="' + t.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete</button>';
+    html += '</div>';
 
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
@@ -380,6 +384,28 @@
         Data.updateTransaction(editId, updates);
         showToast('Changes saved!');
         renderDetail();
+        break;
+
+      case 'reopen-txn':
+        var reopenId = target.getAttribute('data-id');
+        Data.updateTransaction(reopenId, { status: 'pending', closeDate: '' });
+        showToast('Moved back to pending — check Current Escrows.');
+        viewMode = 'list';
+        selectedTxnId = null;
+        render();
+        break;
+
+      case 'delete-txn':
+        var deleteId = target.getAttribute('data-id');
+        var deleteTxn = Data.getTransactions().find(function (t) { return t.id === deleteId; });
+        var deleteAddr = deleteTxn ? deleteTxn.address : 'this transaction';
+        if (confirm('Delete "' + deleteAddr + '"?\n\nThis cannot be undone.')) {
+          Data.deleteTransaction(deleteId);
+          showToast('Transaction deleted.');
+          viewMode = 'list';
+          selectedTxnId = null;
+          render();
+        }
         break;
     }
   });
