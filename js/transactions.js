@@ -675,8 +675,12 @@
     html += '</div>'; // detail-header-card
 
     // Buyer / Seller Info Card
+    var repType = t.type || 'Dual';
+    var showBuyer = repType === 'Buyer' || repType === 'Dual';
+    var showSeller = repType === 'Seller' || repType === 'Dual';
+    var partiesCardTitle = repType === 'Buyer' ? 'Buyer Information' : repType === 'Seller' ? 'Seller Information' : 'Buyer &amp; Seller Information';
     html += '<div class="parties-card">';
-    html += '<div class="parties-card-header">Buyer &amp; Seller Information</div>';
+    html += '<div class="parties-card-header">' + partiesCardTitle + '</div>';
     html += '<div class="parties-grid">';
 
     // Helper for party inline fields (array-based)
@@ -704,8 +708,8 @@
       return h;
     }
 
-    html += partyFieldsArray('buyer', party.buyers, 'var(--indigo)');
-    html += partyFieldsArray('seller', party.sellers, '#EC4899');
+    if (showBuyer) html += partyFieldsArray('buyer', party.buyers, 'var(--indigo)');
+    if (showSeller) html += partyFieldsArray('seller', party.sellers, '#EC4899');
 
     html += '</div>'; // parties-grid
     html += '</div>'; // parties-card
