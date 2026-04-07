@@ -217,106 +217,241 @@
 
   // ---- Representation Modal (shown when listing goes to Pending) ----
   function showRepresentationModal(listing) {
-    // Remove existing modal if any
     var old = document.getElementById('repModal');
     if (old) old.remove();
 
     var overlay = document.createElement('div');
     overlay.id = 'repModal';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
-    overlay.innerHTML =
-      '<div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
-        '<h3 style="font-size:1.1rem;font-weight:800;color:var(--gray-900);margin-bottom:6px">Under Contract</h3>' +
-        '<p style="font-size:.85rem;color:var(--gray-500);margin-bottom:20px">How did you represent this deal?</p>' +
-        '<div style="display:flex;flex-direction:column;gap:10px">' +
-          '<button data-rep="Seller" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
-            '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Seller Side Only</div>' +
-            '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the seller on this listing</div>' +
-          '</button>' +
-          '<button data-rep="Buyer" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
-            '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Buyer Side Only</div>' +
-            '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the buyer on this property</div>' +
-          '</button>' +
-          '<button data-rep="Dual" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
-            '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Both Sides (Dual Agent)</div>' +
-            '<div style="font-size:.78rem;color:var(--gray-500);margin-top:2px">I represented both buyer and seller — no separate transaction needed</div>' +
-          '</button>' +
-        '</div>' +
-        '<button id="repSaveBtn" disabled style="margin-top:16px;width:100%;padding:12px;border:none;border-radius:10px;background:var(--indigo);color:#fff;font-size:.92rem;font-weight:700;cursor:not-allowed;opacity:.4;font-family:inherit;transition:opacity .15s">Save</button>' +
-        '<button id="repCancelBtn" style="margin-top:8px;width:100%;padding:10px;border:none;background:none;color:var(--gray-400);font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>' +
-      '</div>';
     document.body.appendChild(overlay);
 
     var selectedRep = null;
-    var repBtns = overlay.querySelectorAll('[data-rep]');
-    var saveBtn = overlay.querySelector('#repSaveBtn');
 
-    // Selecting an option highlights it and enables Save
-    repBtns.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        selectedRep = btn.getAttribute('data-rep');
-        repBtns.forEach(function (b) {
-          b.style.border = '1.5px solid var(--gray-200)';
-          b.style.background = 'var(--white)';
-          b.querySelector('div').style.color = 'var(--gray-800)';
+    // ---- helpers ----
+    var inpStyle = 'width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:.88rem;box-sizing:border-box';
+
+    function cancelAndReset() {
+      overlay.remove();
+      var statusSelect = document.querySelector('.ie-field[data-field="status"]');
+      if (statusSelect) {
+        var cur = Data.getListings().find(function (x) { return x.id === selectedListingId; });
+        if (cur) statusSelect.value = cur.status;
+      }
+    }
+
+    // ---- Step 1: choose representation ----
+    function showStep1() {
+      overlay.innerHTML =
+        '<div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">' +
+          '<h3 style="font-size:1.1rem;font-weight:800;color:var(--gray-900);margin-bottom:6px">Under Contract</h3>' +
+          '<p style="font-size:.85rem;color:var(--gray-500);margin-bottom:20px">How did you represent this deal?</p>' +
+          '<div style="display:flex;flex-direction:column;gap:10px">' +
+            '<button data-rep="Seller" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+              '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Seller Side Only</div>' +
+              '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the seller on this listing</div>' +
+            '</button>' +
+            '<button data-rep="Buyer" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+              '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Buyer Side Only</div>' +
+              '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the buyer on this property</div>' +
+            '</button>' +
+            '<button data-rep="Dual" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+              '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Both Sides (Dual Agent)</div>' +
+              '<div style="font-size:.78rem;color:var(--gray-500);margin-top:2px">I represented both buyer and seller</div>' +
+            '</button>' +
+          '</div>' +
+          '<button id="repNextBtn" disabled style="margin-top:16px;width:100%;padding:12px;border:none;border-radius:10px;background:var(--indigo);color:#fff;font-size:.92rem;font-weight:700;cursor:not-allowed;opacity:.4;font-family:inherit;transition:opacity .15s">Next</button>' +
+          '<button id="repCancelBtn" style="margin-top:8px;width:100%;padding:10px;border:none;background:none;color:var(--gray-400);font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>' +
+        '</div>';
+
+      var repBtns = overlay.querySelectorAll('[data-rep]');
+      var nextBtn = overlay.querySelector('#repNextBtn');
+
+      repBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          selectedRep = btn.getAttribute('data-rep');
+          repBtns.forEach(function (b) {
+            b.style.border = '1.5px solid var(--gray-200)';
+            b.style.background = 'var(--white)';
+            b.querySelector('div').style.color = 'var(--gray-800)';
+          });
+          btn.style.border = '2px solid var(--indigo)';
+          btn.style.background = 'var(--indigo-light)';
+          btn.querySelector('div').style.color = 'var(--indigo)';
+          nextBtn.disabled = false;
+          nextBtn.style.opacity = '1';
+          nextBtn.style.cursor = 'pointer';
         });
-        btn.style.border = '2px solid var(--indigo)';
-        btn.style.background = 'var(--indigo-light)';
-        btn.querySelector('div').style.color = 'var(--indigo)';
-        saveBtn.disabled = false;
-        saveBtn.style.opacity = '1';
-        saveBtn.style.cursor = 'pointer';
       });
-    });
 
-    // Save confirms the selection
-    saveBtn.addEventListener('click', function () {
-      if (!selectedRep) return;
+      nextBtn.addEventListener('click', function () {
+        if (!selectedRep) return;
+        showStep2();
+      });
+
+      overlay.querySelector('#repCancelBtn').addEventListener('click', cancelAndReset);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) cancelAndReset(); });
+    }
+
+    // ---- Step 2: party info ----
+    function showStep2() {
+      var showBuyer  = selectedRep === 'Buyer'  || selectedRep === 'Dual';
+      var showSeller = selectedRep === 'Seller' || selectedRep === 'Dual';
+
+      // mutable arrays for each party list
+      var buyers  = [{ name: '', phone: '', email: '' }];
+      var sellers = [{ name: '', phone: '', email: '' }];
+
+      function buildPartyRows(type, arr) {
+        var color = type === 'buyer' ? 'var(--indigo)' : '#EC4899';
+        var label = type === 'buyer' ? 'Buyer' : 'Seller';
+        var h = '';
+        arr.forEach(function (p, idx) {
+          if (idx > 0) h += '<div style="border-top:1px solid var(--gray-100);margin:10px 0"></div>';
+          h += '<div style="margin-bottom:6px;display:flex;gap:6px;align-items:center">';
+          h += '<input type="text" data-ptype="' + type + '" data-pidx="' + idx + '" data-pf="name" placeholder="' + label + ' name" value="' + escapeHtml(p.name) + '" style="' + inpStyle + '">';
+          if (idx > 0) h += '<button type="button" data-rm-party data-ptype="' + type + '" data-pidx="' + idx + '" style="padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;color:var(--rose);background:none;cursor:pointer;flex-shrink:0;font-family:inherit">&times;</button>';
+          h += '</div>';
+          h += '<div style="display:flex;gap:6px">';
+          h += '<input type="tel" data-ptype="' + type + '" data-pidx="' + idx + '" data-pf="phone" placeholder="Phone" value="' + escapeHtml(p.phone) + '" style="' + inpStyle + '">';
+          h += '<input type="email" data-ptype="' + type + '" data-pidx="' + idx + '" data-pf="email" placeholder="Email" value="' + escapeHtml(p.email) + '" style="' + inpStyle + '">';
+          h += '</div>';
+        });
+        return h;
+      }
+
+      function syncFromDom() {
+        // read current field values back into arrays before rebuilding
+        overlay.querySelectorAll('[data-pf]').forEach(function (inp) {
+          var ptype = inp.getAttribute('data-ptype');
+          var idx   = parseInt(inp.getAttribute('data-pidx'), 10);
+          var field = inp.getAttribute('data-pf');
+          var arr   = ptype === 'buyer' ? buyers : sellers;
+          if (arr[idx]) arr[idx][field] = inp.value;
+        });
+      }
+
+      function renderStep2() {
+        var labelStyle = 'font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;margin-top:18px';
+        var h = '';
+        h += '<h3 style="font-size:1.1rem;font-weight:800;color:var(--gray-900);margin-bottom:4px">Party Information</h3>';
+        h += '<p style="font-size:.82rem;color:var(--gray-400);margin-bottom:6px">' + listing.address + ' &mdash; ' + selectedRep + ' representation</p>';
+
+        if (showBuyer) {
+          h += '<div style="' + labelStyle + ';color:var(--indigo)">Buyer(s)</div>';
+          h += '<div id="buyerRows">' + buildPartyRows('buyer', buyers) + '</div>';
+          h += '<button type="button" id="addBuyerBtn" style="margin-top:8px;padding:6px 14px;border:1.5px dashed var(--indigo);border-radius:8px;background:var(--indigo-light);color:var(--indigo);font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">+ Add Buyer</button>';
+        }
+
+        if (showSeller) {
+          h += '<div style="' + labelStyle + ';color:#BE185D">Seller(s)</div>';
+          h += '<div id="sellerRows">' + buildPartyRows('seller', sellers) + '</div>';
+          h += '<button type="button" id="addSellerBtn" style="margin-top:8px;padding:6px 14px;border:1.5px dashed #EC4899;border-radius:8px;background:#FDF2F8;color:#BE185D;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">+ Add Seller</button>';
+        }
+
+        h += '<div style="display:flex;gap:8px;margin-top:20px">';
+        h += '<button type="button" id="repBackBtn" style="padding:11px 18px;border:1.5px solid var(--gray-200);border-radius:10px;background:none;color:var(--gray-500);font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit">Back</button>';
+        h += '<button type="button" id="repSavePartyBtn" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--indigo);color:#fff;font-size:.92rem;font-weight:700;cursor:pointer;font-family:inherit">Save &amp; Create Escrow</button>';
+        h += '</div>';
+        h += '<button type="button" id="repSkipBtn" style="margin-top:8px;width:100%;padding:8px;border:none;background:none;color:var(--gray-400);font-size:.78rem;cursor:pointer;font-family:inherit">Skip — add party info later</button>';
+
+        overlay.querySelector('#repStep2Inner').innerHTML = h;
+        attachStep2Events();
+      }
+
+      function attachStep2Events() {
+        var addBuyerBtn  = overlay.querySelector('#addBuyerBtn');
+        var addSellerBtn = overlay.querySelector('#addSellerBtn');
+        var backBtn      = overlay.querySelector('#repBackBtn');
+        var saveBtn      = overlay.querySelector('#repSavePartyBtn');
+        var skipBtn      = overlay.querySelector('#repSkipBtn');
+
+        if (addBuyerBtn) addBuyerBtn.addEventListener('click', function () {
+          syncFromDom();
+          buyers.push({ name: '', phone: '', email: '' });
+          renderStep2();
+        });
+
+        if (addSellerBtn) addSellerBtn.addEventListener('click', function () {
+          syncFromDom();
+          sellers.push({ name: '', phone: '', email: '' });
+          renderStep2();
+        });
+
+        overlay.querySelectorAll('[data-rm-party]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            syncFromDom();
+            var ptype = btn.getAttribute('data-ptype');
+            var idx   = parseInt(btn.getAttribute('data-pidx'), 10);
+            if (ptype === 'buyer') buyers.splice(idx, 1);
+            else sellers.splice(idx, 1);
+            renderStep2();
+          });
+        });
+
+        if (backBtn) backBtn.addEventListener('click', showStep1);
+
+        if (saveBtn) saveBtn.addEventListener('click', function () {
+          syncFromDom();
+          finalize(buyers, sellers);
+        });
+
+        if (skipBtn) skipBtn.addEventListener('click', function () {
+          finalize([], []);
+        });
+      }
+
+      overlay.innerHTML =
+        '<div style="background:#fff;border-radius:16px;padding:32px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">' +
+          '<div id="repStep2Inner"></div>' +
+        '</div>';
+      renderStep2();
+    }
+
+    // ---- Finalize: create transaction + save parties ----
+    function finalize(buyersArr, sellersArr) {
       overlay.remove();
 
-      // Update listing to pending
       Data.updateListing(selectedListingId, { status: 'pending' });
       addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
       notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
 
-      // If a non-closed transaction already exists for this address, update it
       var linkedTxn = Data.getTransactions().find(function (t) {
         return t.address === listing.address && t.status !== 'closed';
       });
+      var txnId;
       if (linkedTxn) {
         Data.updateTransaction(linkedTxn.id, { status: 'pending', type: selectedRep });
+        txnId = linkedTxn.id;
         showToast('Escrow updated — ' + selectedRep + ' representation');
       } else {
-        Data.addTransaction({
-          address: listing.address,
-          city: listing.city,
-          state: listing.state,
-          zip: listing.zip,
-          price: listing.price,
-          agent: listing.agent,
-          source: listing.source,
-          type: selectedRep,
-          status: 'pending',
-          notes: 'Created from listing (' + selectedRep + ' representation)',
-          closeDate: ''
+        var newTxn = Data.addTransaction({
+          address: listing.address, city: listing.city, state: listing.state, zip: listing.zip,
+          price: listing.price, agent: listing.agent, source: listing.source,
+          type: selectedRep, status: 'pending',
+          notes: 'Created from listing (' + selectedRep + ' representation)', closeDate: ''
         });
+        txnId = newTxn.id;
         showToast('Transaction created — ' + selectedRep + ' representation');
       }
-      renderDetail();
-    });
 
-    // Cancel
-    overlay.addEventListener('click', function (e) {
-      if (e.target.id === 'repCancelBtn' || e.target === overlay) {
-        overlay.remove();
-        // Reset the status dropdown back
-        var statusSelect = document.querySelector('.ie-field[data-field="status"]');
-        if (statusSelect) {
-          var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
-          if (currentListing) statusSelect.value = currentListing.status;
-        }
+      // Save party data
+      var hasBuyers  = buyersArr.some(function (b) { return b.name || b.phone || b.email; });
+      var hasSellers = sellersArr.some(function (s) { return s.name || s.phone || s.email; });
+      if (txnId && (hasBuyers || hasSellers)) {
+        var allParties = JSON.parse(localStorage.getItem('reb_txn_parties') || '{}');
+        var existing = allParties[txnId] || { buyers: [], sellers: [], contacts: {} };
+        if (!existing.buyers) existing.buyers = [];
+        if (!existing.sellers) existing.sellers = [];
+        if (hasBuyers)  existing.buyers  = buyersArr.filter(function (b) { return b.name || b.phone || b.email; }).map(function (b) { return { name: b.name || '', phone: b.phone || '', email: b.email || '', relationship: 'Primary' }; });
+        if (hasSellers) existing.sellers = sellersArr.filter(function (s) { return s.name || s.phone || s.email; }).map(function (s) { return { name: s.name || '', phone: s.phone || '', email: s.email || '', relationship: 'Primary' }; });
+        allParties[txnId] = existing;
+        localStorage.setItem('reb_txn_parties', JSON.stringify(allParties));
       }
-    });
+
+      renderDetail();
+    }
+
+    showStep1();
   }
 
   // ---- Main Render Dispatcher ----
