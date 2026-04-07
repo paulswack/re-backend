@@ -10,6 +10,7 @@ var ApiBridge = (function () {
   var PREFIX = 'reb_';
   var _syncing = false;
   var _loaded = false;
+  var _rawGoals = [];
 
   function isServerMode() {
     return window.location.protocol !== 'file:' && typeof API !== 'undefined' && API.isLoggedIn();
@@ -77,7 +78,7 @@ var ApiBridge = (function () {
       API.getReviewLinks().then(function (d) { localStorage.setItem(PREFIX + 'review_links', JSON.stringify(d)); }).catch(function () {}),
       API.getEmailTemplates().then(function (d) { localStorage.setItem(PREFIX + 'review_templates', JSON.stringify(d)); }).catch(function () {}),
       API.getMeetingNotes().then(function (d) { localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(d)); }).catch(function () {}),
-      API.getAgentGoals().then(function (d) { localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(d)); }).catch(function () {}),
+      API.getAgentGoals().then(function (d) { _rawGoals = d || []; }).catch(function () {}),
       // Knowledge base handled by its own seed logic — don't overwrite
       Promise.resolve(),
       API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(function () {}),
@@ -87,6 +88,18 @@ var ApiBridge = (function () {
 
     return Promise.all(loads).then(function () {
       _loaded = true;
+      // Transform agent goals array → { username: { closings, volume } } while _syncing is still true
+      if (_rawGoals.length > 0) {
+        var loadedUsers = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+        var goalsMap = {};
+        _rawGoals.forEach(function (g) {
+          var u = loadedUsers.find(function (u) { return u.id === g.user_id; });
+          if (u) goalsMap[u.username] = { closings: g.closings_goal || 8, volume: g.volume_goal || 2000000 };
+        });
+        if (Object.keys(goalsMap).length > 0) {
+          localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(goalsMap));
+        }
+      }
       _syncing = false;
       var user = API.getUser();
       if (user) {
@@ -247,10 +260,24 @@ var ApiBridge = (function () {
         }, 2000);
       }
 
-      // Agent goals
+      // Agent goals — upsert each user's goal to the agent_goals table
       if (key === PREFIX + 'agent_goals') {
         debounceSync('agent_goals', function () {
-          try { API.updateSettings({ _agent_goals: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try {
+            var goalsMap = JSON.parse(value);
+            var savedUsers = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+            var year = new Date().getFullYear();
+            Object.keys(goalsMap).forEach(function (username) {
+              var g = goalsMap[username];
+              var u = savedUsers.find(function (u) { return u.username === username; });
+              API.upsertAgentGoal({
+                user_id: u ? u.id : undefined,
+                year: year,
+                closings_goal: g.closings || 0,
+                volume_goal: g.volume || 0
+              }).catch(function () {});
+            });
+          } catch (e) {}
         }, 2000);
       }
 
