@@ -71,13 +71,9 @@
   reloadData();
 
   // Re-render after server data loads
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
-      ApiBridge.init().then(function () {
-        reloadData();
-        renderDashboard();
-      }).catch(function () {});
-    }
+  document.addEventListener('apiBridgeReady', function () {
+    reloadData();
+    renderDashboard();
   });
 
   // Announcements
@@ -553,7 +549,7 @@
       var anns = JSON.parse(localStorage.getItem('reb_announcements') || '[]');
       anns.unshift({ id: Date.now().toString(36), text: input.value.trim(), author: session.displayName, timestamp: new Date().toISOString() });
       localStorage.setItem('reb_announcements', JSON.stringify(anns));
-      showToast('Posted!'); location.reload();
+      reloadData(); renderDashboard(); showToast('Posted!');
     }
 
     if (action === 'toggle-edit-mode') {
@@ -587,8 +583,10 @@
       var ag = JSON.parse(localStorage.getItem('reb_agent_goals') || '{}');
       ag[session.username] = { closings: parseInt(document.getElementById('goalClosings').value)||0, volume: parseInt(document.getElementById('goalVolume').value)||0 };
       localStorage.setItem('reb_agent_goals', JSON.stringify(ag));
+      var m = document.getElementById('goalsModal'); if (m) m.remove();
+      reloadData();
+      renderDashboard();
       showToast('Goals saved!');
-      var m = document.getElementById('goalsModal'); if (m) m.remove(); location.reload();
     }
   });
 
