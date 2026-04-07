@@ -18,6 +18,11 @@
   var pageBody = document.getElementById('pageBody');
   var currentRange = 'year';
 
+  // Dual rep counts as 2 deals, volume counts once
+  function countDeals(arr) {
+    return arr.reduce(function (sum, t) { return sum + (t.type === 'Dual' ? 2 : 1); }, 0);
+  }
+
   // ---- Filter transactions by date range ----
   function filterByRange(txns) {
     if (currentRange === 'all') return txns;
@@ -54,11 +59,12 @@
       var volume = closed.reduce(function (sum, t) { return sum + (parseFloat(t.price) || 0); }, 0);
       var agentListings = listings.filter(function (l) { return l.agent === name && l.status === 'active'; });
 
+      var closedCount = countDeals(closed);
       return {
         name: name,
-        closedCount: closed.length,
+        closedCount: closedCount,
         volume: volume,
-        avgDeal: closed.length ? volume / closed.length : 0,
+        avgDeal: closedCount > 0 ? volume / closedCount : 0,
         activeCount: active.length,
         pendingCount: pending.length,
         listingsCount: agentListings.length,

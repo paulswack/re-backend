@@ -21,6 +21,11 @@
   var allAgentGoals, myGoals, teamGoals, myClosings, myVolume;
   var agentStats;
 
+  // Dual rep counts as 2 deals, volume counts once
+  function countDeals(arr) {
+    return arr.reduce(function (sum, t) { return sum + (t.type === 'Dual' ? 2 : 1); }, 0);
+  }
+
   function reloadData() {
     session = Auth.getSession();
     txns = Data.getTransactions();
@@ -56,14 +61,14 @@
     myGoals = session ? (allAgentGoals[session.username] || { closings: 8, volume: 2000000 }) : { closings: 8, volume: 2000000 };
     teamGoals = { closings: 0, volume: 0 };
     Object.values(allAgentGoals).forEach(function (g) { teamGoals.closings += (g.closings || 0); teamGoals.volume += (g.volume || 0); });
-    myClosings = closedTxns.filter(function (t) { return session && t.agent === session.displayName; }).length;
+    myClosings = countDeals(closedTxns.filter(function (t) { return session && t.agent === session.displayName; }));
     myVolume = closedTxns.filter(function (t) { return session && t.agent === session.displayName; }).reduce(function (s, t) { return s + (t.price || 0); }, 0);
 
     agentStats = users.filter(function(u) { return u.role !== 'Assistant'; }).map(function (u) {
       var closed = closedTxns.filter(function (t) { return t.agent === u.displayName; });
       var vol = closed.reduce(function (s, t) { return s + (t.price || 0); }, 0);
       var active = txns.filter(function (t) { return t.agent === u.displayName && t.status !== 'closed'; });
-      return { name: u.displayName, role: u.role, closings: closed.length, volume: vol, active: active.length };
+      return { name: u.displayName, role: u.role, closings: countDeals(closed), volume: vol, active: active.length };
     }).sort(function (a, b) { return b.volume - a.volume; });
   }
 
@@ -97,7 +102,7 @@
     var s = '';
     s += widgetOpen('goals', 'Goals', 'var(--indigo)', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>', '<button class="btn btn-outline btn-sm" data-action="edit-goals" style="font-size:.7rem;padding:3px 8px">Edit</button>');
     s += '<div class="dash-widget-body" style="padding:18px 20px">';
-    s += goal('Team Closings', closedTxns.length, teamGoals.closings, 'var(--indigo)');
+    s += goal('Team Closings', countDeals(closedTxns), teamGoals.closings, 'var(--indigo)');
     s += goal('Team Volume', Data.formatCurrency(stats.totalVolume), Data.formatCurrency(teamGoals.volume), 'var(--emerald)');
     s += '<div style="height:1px;background:var(--gray-100);margin:12px 0"></div>';
     s += '<div style="font-size:.68rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">' + session.displayName.split(' ')[0] + '\'s Goal</div>';
