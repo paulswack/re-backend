@@ -1110,6 +1110,21 @@
                   status: 'closed',
                   closeDate: linkedTxn.closeDate || new Date().toISOString().split('T')[0]
                 });
+              } else {
+                // No linked transaction — create a closed one directly
+                Data.addTransaction({
+                  address: currentListing.address,
+                  city: currentListing.city,
+                  state: currentListing.state,
+                  zip: currentListing.zip,
+                  price: currentListing.price,
+                  agent: currentListing.agent,
+                  source: currentListing.source,
+                  type: 'Seller',
+                  status: 'closed',
+                  notes: 'Created from listing (sold)',
+                  closeDate: new Date().toISOString().split('T')[0]
+                });
               }
             }
             showToast('Listing sold! Moved to Closed.');
