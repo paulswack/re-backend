@@ -1526,13 +1526,9 @@
   // ---- Init ----
   render();
 
-  // Re-render after server data loads so DOM IDs match localStorage IDs
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof ApiBridge !== 'undefined' && ApiBridge.isServerMode()) {
-      ApiBridge.init().then(function () {
-        render();
-      });
-    }
+  // Re-render after bridge loads so DOM IDs match localStorage server IDs
+  document.addEventListener('apiBridgeReady', function () {
+    render();
   });
 
 })();

@@ -857,6 +857,7 @@
         initNotificationBell();
         initOnboarding();
         hidePageLoader();
+        document.dispatchEvent(new CustomEvent('apiBridgeReady'));
       }).catch(function () {
         hidePageLoader();
       });
