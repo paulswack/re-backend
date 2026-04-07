@@ -50,8 +50,24 @@ var ApiBridge = (function () {
 
     var loads = [
       API.getUsers().then(function (d) { localStorage.setItem(PREFIX + 'users', JSON.stringify(mapUsers(d))); }).catch(function () {}),
-      API.getTransactions().then(function (d) { localStorage.setItem(PREFIX + 'transactions', JSON.stringify(mapTransactions(d))); }).catch(function () {}),
-      API.getListings().then(function (d) { localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(d))); }).catch(function () {}),
+      API.getTransactions().then(function (d) {
+        var serverTxns = mapTransactions(d);
+        var serverIds = {};
+        serverTxns.forEach(function (t) { serverIds[t.id] = true; });
+        // Preserve any local-only transactions not yet synced to server
+        var existing = JSON.parse(localStorage.getItem(PREFIX + 'transactions') || '[]');
+        var localOnly = existing.filter(function (t) { return !serverIds[t.id] && !serverIds[t.server_id]; });
+        localStorage.setItem(PREFIX + 'transactions', JSON.stringify(serverTxns.concat(localOnly)));
+      }).catch(function () {}),
+      API.getListings().then(function (d) {
+        var serverLsts = mapListings(d);
+        var serverIds = {};
+        serverLsts.forEach(function (l) { serverIds[l.id] = true; });
+        // Preserve any local-only listings not yet synced to server
+        var existing = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
+        var localOnly = existing.filter(function (l) { return !serverIds[l.id] && !serverIds[l.server_id]; });
+        localStorage.setItem(PREFIX + 'listings', JSON.stringify(serverLsts.concat(localOnly)));
+      }).catch(function () {}),
       API.getSettings().then(function (d) { if (d) localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(d)); }).catch(function () {}),
       API.getAnnouncements().then(function (d) { localStorage.setItem(PREFIX + 'announcements', JSON.stringify(mapAnnouncements(d))); }).catch(function () {}),
       API.getChecklistTemplates().then(function (d) { localStorage.setItem(PREFIX + 'checklist_templates', JSON.stringify(mapTemplates(d))); }).catch(function () {}),

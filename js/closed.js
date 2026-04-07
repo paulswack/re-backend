@@ -387,4 +387,9 @@
   // ---- Init ----
   render();
 
+  // Re-render after bridge loads so closed deals from server are visible
+  document.addEventListener('apiBridgeReady', function () {
+    render();
+  });
+
 })();
