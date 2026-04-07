@@ -67,6 +67,23 @@
     localStorage.setItem(PREFIX + 'txn_notes', JSON.stringify(data));
   }
 
+  function getKeyDates() {
+    try { return JSON.parse(localStorage.getItem(PREFIX + 'txn_key_dates') || '{}'); } catch (e) { return {}; }
+  }
+
+  function saveKeyDates(data) {
+    localStorage.setItem(PREFIX + 'txn_key_dates', JSON.stringify(data));
+  }
+
+  var DEFAULT_KEY_DATES = [
+    { label: 'Earnest Money Due' },
+    { label: 'Inspection Deadline' },
+    { label: 'Appraisal Deadline' },
+    { label: 'Loan Contingency Removal' },
+    { label: 'Seller Disclosure Deadline' },
+    { label: 'HOA Document Review' }
+  ];
+
   function getCalendarEvents() {
     try { return JSON.parse(localStorage.getItem(PREFIX + 'calendar_events') || '[]'); } catch (e) { return []; }
   }
@@ -754,6 +771,72 @@
     }
     html += '</div>';
 
+    // Key Dates & Contingencies Card
+    var allKeyDates = getKeyDates();
+    if (!allKeyDates[selectedTxnId]) {
+      allKeyDates[selectedTxnId] = DEFAULT_KEY_DATES.map(function (d) {
+        return { id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,6), label: d.label, date: '', status: 'pending' };
+      });
+      saveKeyDates(allKeyDates);
+    }
+    var keyDates = allKeyDates[selectedTxnId];
+    var kdToday = new Date(); kdToday.setHours(0,0,0,0);
+
+    html += '<div class="parties-card">';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between">';
+    html += '<span>Key Dates &amp; Contingencies</span>';
+    var kdDone = keyDates.filter(function(d){ return d.status === 'complete' || d.status === 'waived'; }).length;
+    html += '<span style="font-size:.75rem;font-weight:700;color:var(--indigo);background:var(--indigo-light);padding:2px 10px;border-radius:20px">' + kdDone + '/' + keyDates.length + ' done</span>';
+    html += '</div>';
+    html += '<div style="padding:0 0 4px 0">';
+
+    keyDates.forEach(function (kd, idx) {
+      var statusColor = kd.status === 'complete' ? 'var(--emerald)' : kd.status === 'waived' ? 'var(--gray-300)' : 'var(--amber)';
+      var statusIcon = kd.status === 'complete' ? '✓' : kd.status === 'waived' ? '—' : '○';
+
+      // Days remaining badge
+      var daysBadge = '';
+      if (kd.date && kd.status === 'pending') {
+        var kdDate = new Date(kd.date + 'T00:00:00');
+        var diff = Math.round((kdDate - kdToday) / 86400000);
+        if (diff < 0) {
+          daysBadge = '<span style="font-size:.68rem;font-weight:700;background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:10px;white-space:nowrap">' + Math.abs(diff) + 'd overdue</span>';
+        } else if (diff <= 3) {
+          daysBadge = '<span style="font-size:.68rem;font-weight:700;background:#FEF3C7;color:#D97706;padding:2px 7px;border-radius:10px;white-space:nowrap">' + diff + 'd left</span>';
+        } else {
+          daysBadge = '<span style="font-size:.68rem;font-weight:600;background:var(--gray-100);color:var(--gray-500);padding:2px 7px;border-radius:10px;white-space:nowrap">' + diff + 'd</span>';
+        }
+      }
+
+      var rowOpacity = kd.status !== 'pending' ? 'opacity:.55;' : '';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--gray-50);' + rowOpacity + '">';
+
+      // Status toggle button
+      html += '<button data-action="toggle-kd-status" data-kd-idx="' + idx + '" title="Click to change status" style="width:24px;height:24px;border-radius:50%;border:2px solid ' + statusColor + ';background:' + (kd.status === 'complete' ? statusColor : 'transparent') + ';color:' + (kd.status === 'complete' ? '#fff' : statusColor) + ';font-size:.72rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0">' + statusIcon + '</button>';
+
+      // Label (editable)
+      html += '<input type="text" class="kd-label" data-kd-idx="' + idx + '" value="' + escapeHtml(kd.label) + '" style="flex:1;font-size:.85rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:3px 6px;min-width:0;' + (kd.status !== 'pending' ? 'text-decoration:line-through;color:var(--gray-400);' : '') + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+
+      // Date input
+      html += '<input type="date" class="kd-date" data-kd-idx="' + idx + '" value="' + (kd.date || '') + '" style="font-size:.8rem;color:var(--gray-600);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:3px 6px;' + (kd.status !== 'pending' ? 'color:var(--gray-300);' : '') + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+
+      // Days badge
+      html += daysBadge;
+
+      // Remove button
+      html += '<button data-action="remove-kd" data-kd-idx="' + idx + '" style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.85rem;padding:2px 4px;flex-shrink:0" title="Remove">&times;</button>';
+
+      html += '</div>';
+    });
+
+    // Add date row
+    html += '<div style="padding:10px 20px;display:flex;gap:8px;align-items:center">';
+    html += '<input type="text" id="newKdLabel" placeholder="Add a date or contingency..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 12px;font-size:.82rem;outline:none">';
+    html += '<button class="btn btn-primary btn-sm" data-action="add-kd" style="font-size:.78rem;padding:6px 14px;white-space:nowrap">+ Add</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
     // Checklist Card
     var dealChecklists = getDealChecklists();
     var txnChecklist = dealChecklists[selectedTxnId];
@@ -966,6 +1049,20 @@
         Data.updateTransaction(selectedTxnId, update);
         showToast('Saved');
         renderDetail();
+      });
+    });
+
+    // Auto-save key date label and date inputs on blur
+    pageBody.querySelectorAll('.kd-label, .kd-date').forEach(function (inp) {
+      inp.addEventListener('blur', function () {
+        var idx = parseInt(this.getAttribute('data-kd-idx'));
+        var field = this.classList.contains('kd-label') ? 'label' : 'date';
+        var kdSave = getKeyDates();
+        if (kdSave[selectedTxnId] && kdSave[selectedTxnId][idx] !== undefined) {
+          kdSave[selectedTxnId][idx][field] = this.value.trim();
+          saveKeyDates(kdSave);
+          if (field === 'date') renderDetail();
+        }
       });
     });
 
@@ -1281,6 +1378,40 @@
           rmDc[selectedTxnId].items.splice(rmIdx, 1);
           saveDealChecklists(rmDc);
           showToast('Item removed');
+          renderDetail();
+        }
+        break;
+
+      case 'toggle-kd-status':
+        var kdIdx = parseInt(target.getAttribute('data-kd-idx'));
+        var kdAll = getKeyDates();
+        var kdArr = kdAll[selectedTxnId] || [];
+        if (kdArr[kdIdx]) {
+          var cycle = { pending: 'complete', complete: 'waived', waived: 'pending' };
+          kdArr[kdIdx].status = cycle[kdArr[kdIdx].status] || 'pending';
+          kdAll[selectedTxnId] = kdArr;
+          saveKeyDates(kdAll);
+          renderDetail();
+        }
+        break;
+
+      case 'add-kd':
+        var newKdInput = document.getElementById('newKdLabel');
+        var newKdLabel = newKdInput ? newKdInput.value.trim() : '';
+        if (!newKdLabel) { if (newKdInput) newKdInput.focus(); break; }
+        var addKdAll = getKeyDates();
+        if (!addKdAll[selectedTxnId]) addKdAll[selectedTxnId] = [];
+        addKdAll[selectedTxnId].push({ id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,6), label: newKdLabel, date: '', status: 'pending' });
+        saveKeyDates(addKdAll);
+        renderDetail();
+        break;
+
+      case 'remove-kd':
+        var rkIdx = parseInt(target.getAttribute('data-kd-idx'));
+        var rkAll = getKeyDates();
+        if (rkAll[selectedTxnId]) {
+          rkAll[selectedTxnId].splice(rkIdx, 1);
+          saveKeyDates(rkAll);
           renderDetail();
         }
         break;
