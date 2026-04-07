@@ -261,6 +261,9 @@
         // Create transaction with the selected type
         Data.addTransaction({
           address: listing.address,
+          city: listing.city,
+          state: listing.state,
+          zip: listing.zip,
           price: listing.price,
           agent: listing.agent,
           source: listing.source,
@@ -948,20 +951,23 @@
 
           // Status → Pending: ask representation type, then create transaction
           if (val === 'pending' && oldStatus !== 'pending') {
-            // Check if a transaction already exists for this address
+            // Only link to an existing transaction if it is still active/pending (not closed)
             var existingTxn = Data.getTransactions().find(function (t) {
-              return currentListing && t.address === currentListing.address;
+              return currentListing && t.address === currentListing.address && t.status !== 'closed';
             });
             if (existingTxn) {
-              // Transaction already exists, just update status
+              // Linked escrow exists — update both listing and transaction to pending
               Data.updateListing(selectedListingId, { status: 'pending' });
+              if (existingTxn.status !== 'pending') {
+                Data.updateTransaction(existingTxn.id, { status: 'pending' });
+              }
               addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
               notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
-              showToast('Saved');
+              showToast('Under contract — escrow updated in Current Escrows.');
               renderDetail();
               return;
             }
-            // Show representation modal
+            // No active escrow for this address — show representation modal
             showRepresentationModal(currentListing);
             return;
           }
