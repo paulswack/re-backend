@@ -573,18 +573,6 @@
     html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Description</span></div>';
     html += '<div style="padding:20px 24px">';
     html += '<div class="form-group"><textarea id="fDescription" rows="4" placeholder="Property description..." style="padding:12px 16px">' + escapeHtml(l ? l.description || '' : '') + '</textarea></div>';
-    // Checklist Template selector (listing templates only)
-    var _clTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'listing'; });
-    if (_clTemplates.length > 0) {
-      var existingChecklist = isEdit ? getDealChecklists()[editingId] : null;
-      html += '<div class="form-group"><label>Checklist Template</label><select id="fChecklistTemplate" style="padding:12px 16px">';
-      html += '<option value="">&mdash; None &mdash;</option>';
-      _clTemplates.forEach(function (tpl) {
-        var sel = existingChecklist && existingChecklist.templateId === tpl.id ? ' selected' : '';
-        html += '<option value="' + escapeHtml(tpl.id) + '"' + sel + '>' + escapeHtml(tpl.name) + ' (' + tpl.items.length + ' items)</option>';
-      });
-      html += '</select></div>';
-    }
     html += '</div></div>';
 
     // Save / Cancel buttons
@@ -1305,11 +1293,11 @@
         delete fLstParties[fListingId].seller;
         saveParties(fLstParties);
 
-        // Clone checklist template if selected
-        var fClTplId = (document.getElementById('fChecklistTemplate') || {}).value;
-        if (fClTplId) {
+        // Auto-apply listing checklist template if not already set
+        var _existingCl = getDealChecklists()[fListingId];
+        if (!_existingCl) {
           var allTemplates = loadChecklistTemplates();
-          var selectedTpl = allTemplates.find(function (t) { return t.id === fClTplId; });
+          var selectedTpl = allTemplates.filter(function (t) { return t.category === 'listing'; })[0];
           if (selectedTpl) {
             var dealChecklists = getDealChecklists();
             dealChecklists[fListingId] = {

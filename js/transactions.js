@@ -292,18 +292,6 @@
     '</select></div>';
     html += '</div>';
     html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
-    // Checklist Template selector (escrow templates only)
-    var _clTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
-    if (_clTemplates.length > 0) {
-      var existingChecklist = isEdit ? getDealChecklists()[editingId] : null;
-      html += '<div class="form-group"><label>Checklist Template</label><select id="fChecklistTemplate" style="padding:12px 16px">';
-      html += '<option value="">&mdash; None &mdash;</option>';
-      _clTemplates.forEach(function (tpl) {
-        var sel = existingChecklist && existingChecklist.templateId === tpl.id ? ' selected' : '';
-        html += '<option value="' + escapeHtml(tpl.id) + '"' + sel + '>' + escapeHtml(tpl.name) + ' (' + tpl.items.length + ' items)</option>';
-      });
-      html += '</select></div>';
-    }
     html += '</div></div>';
 
     // Buyer Info
@@ -1187,11 +1175,11 @@
         delete fParties[fTxnId].seller;
         saveParties(fParties);
 
-        // Clone checklist template if selected
-        var fClTplId = (document.getElementById('fChecklistTemplate') || {}).value;
-        if (fClTplId) {
+        // Auto-apply escrow checklist template if not already set
+        var _existingCl = getDealChecklists()[fTxnId];
+        if (!_existingCl) {
           var allTemplates = loadChecklistTemplates();
-          var selectedTpl = allTemplates.find(function (t) { return t.id === fClTplId; });
+          var selectedTpl = allTemplates.filter(function (t) { return t.category === 'escrow'; })[0];
           if (selectedTpl) {
             var dealChecklists = getDealChecklists();
             dealChecklists[fTxnId] = {
