@@ -750,6 +750,7 @@
         'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
     '</div>';
     html += '<div class="detail-header-actions">' +
+      (l.status !== 'sold' ? '<button class="btn btn-outline btn-sm" data-action="mark-under-contract" data-id="' + l.id + '" style="color:var(--amber-700,#92400E);border-color:var(--amber-400,#F59E0B);background:#FFFBEB;">Under Contract</button>' : '') +
       '<button class="btn btn-outline btn-sm" data-action="share-client" data-id="' + l.id + '" style="color:var(--indigo);border-color:var(--indigo);">Share with Client</button>' +
     '</div>';
     html += '</div>';
@@ -1049,6 +1050,12 @@
         viewMode = 'list';
         selectedListingId = null;
         render();
+        break;
+
+      case 'mark-under-contract':
+        var muc = target.getAttribute('data-id');
+        var mucListing = Data.getListings().find(function (l) { return l.id === muc; });
+        if (mucListing) showRepresentationModal(mucListing);
         break;
 
       case 'delete-listing':
