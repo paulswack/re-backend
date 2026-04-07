@@ -279,7 +279,8 @@
     html += '<div style="padding:20px 24px">';
     html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(t ? t.address : '') + '" placeholder="123 Main St, City, ST 12345" style="font-size:1rem;padding:12px 16px"></div>';
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
-    html += '<div class="form-group"><label>Price *</label><input type="number" id="fPrice" value="' + (t ? t.price : '') + '" placeholder="500000" min="0" style="font-size:1rem;padding:12px 16px"></div>';
+    var _fPriceVal = (t && t.price) ? '$' + parseFloat(t.price).toLocaleString('en-US') : '';
+    html += '<div class="form-group"><label>Price *</label><input type="text" id="fPrice" value="' + _fPriceVal + '" placeholder="$500,000" style="font-size:1rem;padding:12px 16px" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'"></div>';
     var _txnStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' + _txnStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t && t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
     html += '<div class="form-group"><label>Close Date</label><input type="date" id="fCloseDate" value="' + (t ? t.closeDate || '' : '') + '" style="padding:12px 16px"></div>';
@@ -1096,7 +1097,7 @@
 
       case 'form-save':
         var fAddr = (document.getElementById('fAddress') || {}).value.trim();
-        var fPrice = (document.getElementById('fPrice') || {}).value;
+        var fPrice = ((document.getElementById('fPrice') || {}).value || '').replace(/[^0-9.]/g, '');
         var fAgent = (document.getElementById('fAgent') || {}).value;
         if (!fAddr || !fPrice || !fAgent) { showToast('Please fill in address, price, and agent.', 'error'); break; }
 
