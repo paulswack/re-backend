@@ -279,21 +279,29 @@
       addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
       notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
 
-      // Create transaction with the selected type
-      Data.addTransaction({
-        address: listing.address,
-        city: listing.city,
-        state: listing.state,
-        zip: listing.zip,
-        price: listing.price,
-        agent: listing.agent,
-        source: listing.source,
-        type: selectedRep,
-        status: 'pending',
-        notes: 'Created from listing (' + selectedRep + ' representation)',
-        closeDate: ''
+      // If a non-closed transaction already exists for this address, update it
+      var linkedTxn = Data.getTransactions().find(function (t) {
+        return t.address === listing.address && t.status !== 'closed';
       });
-      showToast('Transaction created — ' + selectedRep + ' representation');
+      if (linkedTxn) {
+        Data.updateTransaction(linkedTxn.id, { status: 'pending', type: selectedRep });
+        showToast('Escrow updated — ' + selectedRep + ' representation');
+      } else {
+        Data.addTransaction({
+          address: listing.address,
+          city: listing.city,
+          state: listing.state,
+          zip: listing.zip,
+          price: listing.price,
+          agent: listing.agent,
+          source: listing.source,
+          type: selectedRep,
+          status: 'pending',
+          notes: 'Created from listing (' + selectedRep + ' representation)',
+          closeDate: ''
+        });
+        showToast('Transaction created — ' + selectedRep + ' representation');
+      }
       renderDetail();
     });
 
@@ -973,25 +981,9 @@
           var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
           var oldStatus = currentListing ? currentListing.status : '';
 
-          // Status → Pending: ask representation type, then create transaction
-          if (val === 'pending' && oldStatus !== 'pending') {
-            // Only link to an existing transaction if it is still active/pending (not closed)
-            var existingTxn = Data.getTransactions().find(function (t) {
-              return currentListing && t.address === currentListing.address && t.status !== 'closed';
-            });
-            if (existingTxn) {
-              // Linked escrow exists — update both listing and transaction to pending
-              Data.updateListing(selectedListingId, { status: 'pending' });
-              if (existingTxn.status !== 'pending') {
-                Data.updateTransaction(existingTxn.id, { status: 'pending' });
-              }
-              addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
-              notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
-              showToast('Under contract — escrow updated in Current Escrows.');
-              renderDetail();
-              return;
-            }
-            // No active escrow for this address — show representation modal
+          // Status → Pending: always show the representation modal
+          if (val === 'pending') {
+            if (!currentListing) return;
             showRepresentationModal(currentListing);
             return;
           }
