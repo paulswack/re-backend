@@ -412,8 +412,6 @@
       overlay.remove();
 
       Data.updateListing(selectedListingId, { status: 'pending' });
-      addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
-      notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
 
       var linkedTxn = Data.getTransactions().find(function (t) {
         return t.address === listing.address && t.status !== 'closed';
@@ -1137,8 +1135,6 @@
                 });
               }
             }
-            addUpdate(selectedListingId, 'sold', 'Sold!', 'The property has officially sold. Congratulations!', true);
-            notifyClientEmail(selectedListingId, 'Sold!', 'The property has officially sold. Congratulations!');
             showToast('Listing sold! Moved to Closed.');
             renderDetail();
             return;
