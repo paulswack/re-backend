@@ -89,17 +89,14 @@ var ApiBridge = (function () {
     return Promise.all(loads).then(function () {
       _loaded = true;
       // Transform agent goals array → { username: { closings, volume } } while _syncing is still true
-      if (_rawGoals.length > 0) {
-        var loadedUsers = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
-        var goalsMap = {};
-        _rawGoals.forEach(function (g) {
-          var u = loadedUsers.find(function (u) { return u.id === g.user_id; });
-          if (u) goalsMap[u.username] = { closings: g.closings_goal || 8, volume: g.volume_goal || 2000000 };
-        });
-        if (Object.keys(goalsMap).length > 0) {
-          localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(goalsMap));
-        }
-      }
+      var loadedUsers = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+      var goalsMap = {};
+      _rawGoals.forEach(function (g) {
+        var u = loadedUsers.find(function (u) { return u.id === g.user_id; });
+        if (u) goalsMap[u.username] = { closings: g.closings_goal || 8, volume: g.volume_goal || 2000000 };
+      });
+      // Always write (even {} to clear any stale array format from old bridge versions)
+      localStorage.setItem(PREFIX + 'agent_goals', JSON.stringify(goalsMap));
       _syncing = false;
       var user = API.getUser();
       if (user) {

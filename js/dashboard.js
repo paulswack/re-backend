@@ -586,6 +586,7 @@
     if (action === 'close-goals') { var m = document.getElementById('goalsModal'); if (m) m.remove(); }
     if (action === 'save-goals') {
       var ag = JSON.parse(localStorage.getItem('reb_agent_goals') || '{}');
+      if (Array.isArray(ag)) ag = {}; // guard against stale array format from old bridge
       ag[session.username] = { closings: parseInt(document.getElementById('goalClosings').value)||0, volume: parseInt(document.getElementById('goalVolume').value)||0 };
       localStorage.setItem('reb_agent_goals', JSON.stringify(ag));
       var m = document.getElementById('goalsModal'); if (m) m.remove();
