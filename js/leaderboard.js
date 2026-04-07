@@ -16,11 +16,30 @@
   });
 
   var pageBody = document.getElementById('pageBody');
+  var currentRange = 'year';
+
+  // ---- Filter transactions by date range ----
+  function filterByRange(txns) {
+    if (currentRange === 'all') return txns;
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = now.getMonth();
+    var quarter = Math.floor(month / 3);
+    return txns.filter(function (t) {
+      if (!t.closeDate) return false;
+      var d = new Date(t.closeDate);
+      if (isNaN(d.getTime())) return false;
+      if (currentRange === 'year') return d.getFullYear() === year;
+      if (currentRange === 'quarter') return d.getFullYear() === year && Math.floor(d.getMonth() / 3) === quarter;
+      if (currentRange === 'month') return d.getFullYear() === year && d.getMonth() === month;
+      return true;
+    });
+  }
 
   // ---- Build agent stats ----
   function getAgentStats() {
     var allTxns = Data.getTransactions();
-    var rangedTxns = allTxns;
+    var rangedTxns = filterByRange(allTxns);
     var listings = Data.getListings();
 
     var agentNames = {};
@@ -60,21 +79,17 @@
     var agents = getAgentStats();
     var filteredAgents = agents;
 
-    var totalClosed = agents.reduce(function (s, a) { return s + a.closedCount; }, 0);
-    var totalVolume = agents.reduce(function (s, a) { return s + a.volume; }, 0);
-    var totalActive = agents.reduce(function (s, a) { return s + a.activeCount + a.pendingCount; }, 0);
-    var topAgent = agents.length > 0 ? agents[0].name : '—';
     var maxVolume = filteredAgents.length > 0 ? Math.max.apply(null, filteredAgents.map(function (a) { return a.volume; })) : 1;
     var maxClosed = filteredAgents.length > 0 ? Math.max.apply(null, filteredAgents.map(function (a) { return a.closedCount; })) : 1;
 
     var html = '';
 
-    // Stats
-    html += '<div class="lb-stats-grid">';
-    html += lbStatCard('Active Agents', agents.length, 'green', '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>');
-    html += lbStatCard('Total Closed', totalClosed, 'navy', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>');
-    html += lbStatCard('Total Volume', Data.formatCurrency(totalVolume), 'gold', '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>');
-    html += lbStatCard('Active / Pending', totalActive, 'blue', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>');
+    // Time Filter
+    html += '<div class="lb-time-filter">';
+    ['all', 'year', 'quarter', 'month'].forEach(function (range) {
+      var labels = { all: 'All Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
+      html += '<button class="lb-filter-btn' + (currentRange === range ? ' active' : '') + '" data-range="' + range + '">' + labels[range] + '</button>';
+    });
     html += '</div>';
 
     if (agents.length === 0) {
@@ -83,6 +98,7 @@
       html += '<div style="font-weight:600;margin-bottom:4px">No agent data available yet</div>';
       html += '</div>';
       pageBody.innerHTML = html;
+      attachFilterListeners();
       return;
     }
 
@@ -232,6 +248,7 @@
     }
 
     pageBody.innerHTML = html;
+    attachFilterListeners();
   }
 
   function lbStatCard(label, value, color, svgPath) {
@@ -256,6 +273,15 @@
         '<div class="lb-row-value-num">' + valueText + '</div>' +
       '</div>' +
     '</div>';
+  }
+
+  function attachFilterListeners() {
+    pageBody.querySelectorAll('.lb-filter-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        currentRange = this.getAttribute('data-range');
+        render();
+      });
+    });
   }
 
   // ---- Init ----
