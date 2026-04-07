@@ -809,7 +809,10 @@
       }
 
       var rowOpacity = kd.status !== 'pending' ? 'opacity:.55;' : '';
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--gray-50);' + rowOpacity + '">';
+      html += '<div class="kd-row" draggable="true" data-kd-idx="' + idx + '" style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--gray-50);' + rowOpacity + 'cursor:default">';
+
+      // Drag handle
+      html += '<span class="kd-handle" style="cursor:grab;color:var(--gray-300);font-size:.85rem;flex-shrink:0;line-height:1;user-select:none" title="Drag to reorder">&#8942;&#8942;</span>';
 
       // Status toggle button
       html += '<button data-action="toggle-kd-status" data-kd-idx="' + idx + '" title="Click to change status" style="width:24px;height:24px;border-radius:50%;border:2px solid ' + statusColor + ';background:' + (kd.status === 'complete' ? statusColor : 'transparent') + ';color:' + (kd.status === 'complete' ? '#fff' : statusColor) + ';font-size:.72rem;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0">' + statusIcon + '</button>';
@@ -1048,6 +1051,41 @@
 
         Data.updateTransaction(selectedTxnId, update);
         showToast('Saved');
+        renderDetail();
+      });
+    });
+
+    // Drag-to-reorder key dates
+    var kdRows = pageBody.querySelectorAll('.kd-row');
+    var kdDragSrc = null;
+    kdRows.forEach(function (row) {
+      row.addEventListener('dragstart', function (e) {
+        kdDragSrc = parseInt(this.getAttribute('data-kd-idx'));
+        e.dataTransfer.effectAllowed = 'move';
+        this.style.opacity = '.4';
+      });
+      row.addEventListener('dragend', function () {
+        this.style.opacity = '';
+        pageBody.querySelectorAll('.kd-row').forEach(function (r) { r.style.background = ''; });
+      });
+      row.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        pageBody.querySelectorAll('.kd-row').forEach(function (r) { r.style.background = ''; });
+        this.style.background = 'var(--indigo-light)';
+      });
+      row.addEventListener('dragleave', function () { this.style.background = ''; });
+      row.addEventListener('drop', function (e) {
+        e.preventDefault();
+        this.style.background = '';
+        var dropIdx = parseInt(this.getAttribute('data-kd-idx'));
+        if (kdDragSrc === null || kdDragSrc === dropIdx) return;
+        var kdReorder = getKeyDates();
+        var arr = kdReorder[selectedTxnId] || [];
+        var moved = arr.splice(kdDragSrc, 1)[0];
+        arr.splice(dropIdx, 0, moved);
+        kdReorder[selectedTxnId] = arr;
+        saveKeyDates(kdReorder);
         renderDetail();
       });
     });
