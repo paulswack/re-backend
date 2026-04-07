@@ -16,39 +16,11 @@
   });
 
   var pageBody = document.getElementById('pageBody');
-  var currentRange = 'year';
-  var agentSearch = '';
-  var currentSort = 'volume'; // volume | closed | avgDeal | listings
-
-  // ---- Filter transactions by date range ----
-  function filterByRange(txns) {
-    if (currentRange === 'all') return txns;
-
-    var now = new Date();
-    var year = now.getFullYear();
-    var month = now.getMonth();
-    var quarter = Math.floor(month / 3);
-
-    return txns.filter(function (t) {
-      if (!t.closeDate) return false;
-      var d = new Date(t.closeDate);
-      if (isNaN(d.getTime())) return false;
-
-      if (currentRange === 'year') {
-        return d.getFullYear() === year;
-      } else if (currentRange === 'quarter') {
-        return d.getFullYear() === year && Math.floor(d.getMonth() / 3) === quarter;
-      } else if (currentRange === 'month') {
-        return d.getFullYear() === year && d.getMonth() === month;
-      }
-      return true;
-    });
-  }
 
   // ---- Build agent stats ----
   function getAgentStats() {
     var allTxns = Data.getTransactions();
-    var rangedTxns = filterByRange(allTxns);
+    var rangedTxns = allTxns;
     var listings = Data.getListings();
 
     var agentNames = {};
@@ -76,10 +48,6 @@
     });
 
     agents.sort(function (a, b) {
-      if (currentSort === 'closed') return b.closedCount - a.closedCount || b.volume - a.volume;
-      if (currentSort === 'avgDeal') return b.avgDeal - a.avgDeal;
-      if (currentSort === 'listings') return b.listingsCount - a.listingsCount;
-      // default: volume
       if (b.volume !== a.volume) return b.volume - a.volume;
       return b.closedCount - a.closedCount;
     });
@@ -90,11 +58,7 @@
   // ---- Render ----
   function render() {
     var agents = getAgentStats();
-
-    // Apply name filter
-    var filteredAgents = agentSearch
-      ? agents.filter(function (a) { return a.name.toLowerCase().indexOf(agentSearch.toLowerCase()) !== -1; })
-      : agents;
+    var filteredAgents = agents;
 
     var totalClosed = agents.reduce(function (s, a) { return s + a.closedCount; }, 0);
     var totalVolume = agents.reduce(function (s, a) { return s + a.volume; }, 0);
@@ -104,33 +68,6 @@
     var maxClosed = filteredAgents.length > 0 ? Math.max.apply(null, filteredAgents.map(function (a) { return a.closedCount; })) : 1;
 
     var html = '';
-
-    // Time Filter
-    html += '<div class="lb-time-filter">';
-    ['all', 'year', 'quarter', 'month'].forEach(function (range) {
-      var labels = { all: 'All Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
-      html += '<button class="lb-filter-btn' + (currentRange === range ? ' active' : '') + '" data-range="' + range + '">' + labels[range] + '</button>';
-    });
-    html += '</div>';
-
-    // Search + Sort controls
-    html += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px">';
-
-    // Search input
-    html += '<div style="position:relative;flex:1;min-width:180px;max-width:300px">';
-    html += '<svg viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:var(--gray-400);pointer-events:none"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>';
-    html += '<input id="lbAgentSearch" type="text" placeholder="Search agents..." value="' + agentSearch.replace(/"/g, '&quot;') + '" style="width:100%;padding:8px 10px 8px 34px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-800);background:var(--white);outline:none;box-sizing:border-box">';
-    html += '</div>';
-
-    // Sort dropdown
-    var sortLabels = { volume: 'Sort: Volume', closed: 'Sort: Units Closed', avgDeal: 'Sort: Avg Deal', listings: 'Sort: Active Listings' };
-    html += '<select id="lbSortSelect" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700);background:var(--white);cursor:pointer">';
-    ['volume', 'closed', 'avgDeal', 'listings'].forEach(function (s) {
-      html += '<option value="' + s + '"' + (currentSort === s ? ' selected' : '') + '>' + sortLabels[s] + '</option>';
-    });
-    html += '</select>';
-
-    html += '</div>';
 
     // Stats
     html += '<div class="lb-stats-grid">';
@@ -146,7 +83,6 @@
       html += '<div style="font-weight:600;margin-bottom:4px">No agent data available yet</div>';
       html += '</div>';
       pageBody.innerHTML = html;
-      attachFilterListeners();
       return;
     }
 
@@ -296,7 +232,6 @@
     }
 
     pageBody.innerHTML = html;
-    attachFilterListeners();
   }
 
   function lbStatCard(label, value, color, svgPath) {
@@ -321,38 +256,6 @@
         '<div class="lb-row-value-num">' + valueText + '</div>' +
       '</div>' +
     '</div>';
-  }
-
-  function attachFilterListeners() {
-    var btns = pageBody.querySelectorAll('.lb-filter-btn');
-    btns.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        currentRange = this.getAttribute('data-range');
-        render();
-      });
-    });
-
-    var searchInput = document.getElementById('lbAgentSearch');
-    if (searchInput) {
-      searchInput.addEventListener('input', function () {
-        agentSearch = this.value;
-        render();
-        // Restore focus and cursor position after re-render
-        var newInput = document.getElementById('lbAgentSearch');
-        if (newInput) {
-          newInput.focus();
-          newInput.setSelectionRange(newInput.value.length, newInput.value.length);
-        }
-      });
-    }
-
-    var sortSelect = document.getElementById('lbSortSelect');
-    if (sortSelect) {
-      sortSelect.addEventListener('change', function () {
-        currentSort = this.value;
-        render();
-      });
-    }
   }
 
   // ---- Init ----
