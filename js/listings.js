@@ -237,44 +237,68 @@
             '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Buyer Side Only</div>' +
             '<div style="font-size:.78rem;color:var(--gray-400);margin-top:2px">I represented the buyer on this property</div>' +
           '</button>' +
-          '<button data-rep="Dual" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--indigo);background:var(--indigo-light);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
-            '<div style="font-size:.92rem;font-weight:700;color:var(--indigo)">Both Sides (Dual Agent)</div>' +
+          '<button data-rep="Dual" style="padding:14px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);cursor:pointer;text-align:left;transition:all .15s;font-family:inherit">' +
+            '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">Both Sides (Dual Agent)</div>' +
             '<div style="font-size:.78rem;color:var(--gray-500);margin-top:2px">I represented both buyer and seller — no separate transaction needed</div>' +
           '</button>' +
         '</div>' +
-        '<button id="repCancelBtn" style="margin-top:14px;width:100%;padding:10px;border:none;background:none;color:var(--gray-400);font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>' +
+        '<button id="repSaveBtn" disabled style="margin-top:16px;width:100%;padding:12px;border:none;border-radius:10px;background:var(--indigo);color:#fff;font-size:.92rem;font-weight:700;cursor:not-allowed;opacity:.4;font-family:inherit;transition:opacity .15s">Save</button>' +
+        '<button id="repCancelBtn" style="margin-top:8px;width:100%;padding:10px;border:none;background:none;color:var(--gray-400);font-size:.82rem;cursor:pointer;font-family:inherit">Cancel</button>' +
       '</div>';
     document.body.appendChild(overlay);
 
-    // Handle clicks
-    overlay.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-rep]');
-      if (btn) {
-        var repType = btn.getAttribute('data-rep');
-        overlay.remove();
+    var selectedRep = null;
+    var repBtns = overlay.querySelectorAll('[data-rep]');
+    var saveBtn = overlay.querySelector('#repSaveBtn');
 
-        // Update listing to pending
-        Data.updateListing(selectedListingId, { status: 'pending' });
-        addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
-        notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
-
-        // Create transaction with the selected type
-        Data.addTransaction({
-          address: listing.address,
-          city: listing.city,
-          state: listing.state,
-          zip: listing.zip,
-          price: listing.price,
-          agent: listing.agent,
-          source: listing.source,
-          type: repType,
-          status: 'pending',
-          notes: 'Created from listing (' + repType + ' representation)',
-          closeDate: ''
+    // Selecting an option highlights it and enables Save
+    repBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectedRep = btn.getAttribute('data-rep');
+        repBtns.forEach(function (b) {
+          b.style.border = '1.5px solid var(--gray-200)';
+          b.style.background = 'var(--white)';
+          b.querySelector('div').style.color = 'var(--gray-800)';
         });
-        showToast('Transaction created — ' + repType + ' representation');
-        renderDetail();
-      }
+        btn.style.border = '2px solid var(--indigo)';
+        btn.style.background = 'var(--indigo-light)';
+        btn.querySelector('div').style.color = 'var(--indigo)';
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.cursor = 'pointer';
+      });
+    });
+
+    // Save confirms the selection
+    saveBtn.addEventListener('click', function () {
+      if (!selectedRep) return;
+      overlay.remove();
+
+      // Update listing to pending
+      Data.updateListing(selectedListingId, { status: 'pending' });
+      addUpdate(selectedListingId, 'under_contract', 'Under Contract', 'An offer has been accepted and the property is now under contract.', true);
+      notifyClientEmail(selectedListingId, 'Under Contract', 'An offer has been accepted and the property is now under contract.');
+
+      // Create transaction with the selected type
+      Data.addTransaction({
+        address: listing.address,
+        city: listing.city,
+        state: listing.state,
+        zip: listing.zip,
+        price: listing.price,
+        agent: listing.agent,
+        source: listing.source,
+        type: selectedRep,
+        status: 'pending',
+        notes: 'Created from listing (' + selectedRep + ' representation)',
+        closeDate: ''
+      });
+      showToast('Transaction created — ' + selectedRep + ' representation');
+      renderDetail();
+    });
+
+    // Cancel
+    overlay.addEventListener('click', function (e) {
       if (e.target.id === 'repCancelBtn' || e.target === overlay) {
         overlay.remove();
         // Reset the status dropdown back
