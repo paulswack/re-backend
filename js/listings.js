@@ -263,6 +263,7 @@
           address: listing.address,
           price: listing.price,
           agent: listing.agent,
+          source: listing.source,
           type: repType,
           status: 'pending',
           notes: 'Created from listing (' + repType + ' representation)',
