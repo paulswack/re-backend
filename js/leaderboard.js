@@ -259,7 +259,6 @@
 
     // Deal Sources Breakdown
     var allTxns = Data.getTransactions();
-    var allListings = Data.getListings();
     var sourceCounts = {};
     var sourceVolume = {};
 
@@ -269,10 +268,6 @@
       if (t.status === 'closed') {
         sourceVolume[src] = (sourceVolume[src] || 0) + (parseFloat(t.price) || 0);
       }
-    });
-    allListings.forEach(function (l) {
-      var src = l.source || 'Unknown';
-      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
     });
 
     var sourceKeys = Object.keys(sourceCounts).sort(function (a, b) { return sourceCounts[b] - sourceCounts[a]; });
