@@ -726,8 +726,14 @@
     var closedTxns = txns.filter(function (t) { return t.status === 'closed'; });
 
     // Agent-level access control
-    var taxSession = Auth.getSession();
-    var isLead = Auth.isPrivileged();
+    // Prefer in-memory API user (always correct after login) over reb_session (can be stale)
+    var apiUser = (typeof API !== 'undefined' && API.isLoggedIn()) ? API.getUser() : null;
+    var taxSession = apiUser ? {
+      username: apiUser.username,
+      displayName: apiUser.displayName,
+      role: apiUser.role
+    } : Auth.getSession();
+    var isLead = apiUser ? (apiUser.role === 'Team Lead') : Auth.isPrivileged();
 
     if (isLead && selectedTaxAgent && selectedTaxAgent !== 'all') {
       // Team Lead filtering by selected agent
@@ -1323,5 +1329,8 @@
 
   // ---- Init ----
   render();
+
+  // Re-render after bridge loads so role/session data is always fresh
+  document.addEventListener('apiBridgeReady', function () { render(); });
 
 })();
