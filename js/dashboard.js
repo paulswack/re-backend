@@ -27,7 +27,12 @@
   }
 
   function reloadData() {
-    session = Auth.getSession();
+    // Use in-memory API user when available — avoids stale reb_session from previous logins
+    var _apiUser = (typeof API !== 'undefined' && API.isLoggedIn()) ? API.getUser() : null;
+    session = _apiUser
+      ? { username: _apiUser.username, displayName: _apiUser.displayName, role: _apiUser.role }
+      : Auth.getSession();
+    isLead = _apiUser ? (_apiUser.role === 'Team Lead') : Auth.isPrivileged();
     txns = Data.getTransactions();
     listings = Data.getListings();
     users = JSON.parse(localStorage.getItem('reb_users') || '[]');
@@ -37,7 +42,6 @@
     activeListings = listings.filter(function (l) { return l.status === 'active'; });
     escrowCount = activeTxns.length + pendingTxns.length;
     stats = Data.getStats();
-    isLead = Auth.isPrivileged();
     closeRate = txns.length > 0 ? Math.round((closedTxns.length / txns.length) * 100) : 0;
 
     var hour = new Date().getHours();
