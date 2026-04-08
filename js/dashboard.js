@@ -71,7 +71,10 @@
       var vol = closed.reduce(function (s, t) { return s + (t.price || 0); }, 0);
       var active = txns.filter(function (t) { return t.agent === u.displayName && t.status !== 'closed'; });
       return { name: u.displayName, role: u.role, closings: countDeals(closed), volume: vol, active: active.length };
-    }).sort(function (a, b) { return b.volume - a.volume; });
+    }).sort(function (a, b) {
+      if (b.closings !== a.closings) return b.closings - a.closings;
+      return b.volume - a.volume;
+    });
   }
 
   // Initial load
@@ -141,17 +144,17 @@
     var s = '';
     s += widgetOpen('top5', 'Top 5 Agents', 'var(--amber)', '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>', '<a href="leaderboard.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">Full Rankings</a>');
     s += '<div class="dash-widget-body" style="padding:16px 20px">';
-    var maxVol = agentStats.length > 0 ? agentStats[0].volume : 1;
+    var maxClosings = agentStats.length > 0 ? agentStats[0].closings : 1;
     var medals = ['&#127942;', '&#129352;', '&#129353;'];
     var barColors = ['var(--amber)', 'var(--gray-400)', '#CD7F32', 'var(--indigo)', 'var(--violet)'];
     agentStats.slice(0, 5).forEach(function (a, i) {
-      var pct = maxVol > 0 ? Math.round((a.volume / maxVol) * 100) : 0;
+      var pct = maxClosings > 0 ? Math.round((a.closings / maxClosings) * 100) : 0;
       s += '<div style="margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">' +
           '<div class="agent-avatar ' + agentClass(a.name) + '" style="width:32px;height:32px;font-size:.7rem;">' + getInitials(a.name) + '</div>' +
           '<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:.85rem;font-weight:700;color:var(--gray-900)">' + a.name + '</span>' + (i < 3 ? '<span style="font-size:.85rem">' + medals[i] + '</span>' : '') + '</div>' +
           '<div style="font-size:.7rem;color:var(--gray-400)">' + a.closings + ' closed · ' + a.active + ' in escrow</div></div>' +
-          '<div style="text-align:right"><div style="font-size:.95rem;font-weight:800;color:var(--gray-900)">' + Data.formatCurrency(a.volume) + '</div></div></div>' +
+          '<div style="text-align:right"><div style="font-size:.95rem;font-weight:800;color:var(--gray-900)">' + a.closings + ' closed</div></div></div>' +
         '<div class="dash-goal-bar"><div class="dash-goal-fill" style="width:' + pct + '%;background:' + (barColors[i] || 'var(--gray-300)') + '"></div></div></div>';
     });
     s += '</div></div>';
