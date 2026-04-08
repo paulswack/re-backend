@@ -269,23 +269,16 @@
           <div class="card" style="margin-bottom:20px;">
             <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
               <div>
-                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Commission Income from Closings</h3>
-                <p style="font-size:.78rem;color:var(--gray-400);">Auto-calculated from closed transactions.</p>
+                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Income Entries</h3>
+                <p style="font-size:.78rem;color:var(--gray-400);">Referral fees, bonuses, and other manually added income.</p>
               </div>
-              <div id="incomeTotalBadge" style="font-size:1.1rem;font-weight:800;color:var(--emerald);"></div>
-            </div>
-            <div id="commissionList"></div>
-          </div>
-          <div class="card" style="margin-bottom:20px;">
-            <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
-              <div>
-                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Manual Income Entries</h3>
-                <p style="font-size:.78rem;color:var(--gray-400);">Referral fees, bonuses, and other income.</p>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div id="incomeTotalBadge" style="font-size:1.1rem;font-weight:800;color:var(--emerald);"></div>
+                <button class="btn btn-primary btn-sm" data-action="add-income">
+                  <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                  Add Income
+                </button>
               </div>
-              <button class="btn btn-primary btn-sm" data-action="add-income">
-                <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                Add Income
-              </button>
             </div>
             <div id="manualIncomeList"></div>
           </div>

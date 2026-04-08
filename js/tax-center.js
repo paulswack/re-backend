@@ -722,8 +722,6 @@
   function render() {
     var entries = getTaxEntries();
     var trips = getMileageTrips();
-    var txns = Data.getTransactions();
-    var closedTxns = txns.filter(function (t) { return t.status === 'closed'; });
 
     // Agent-level access control
     // Prefer in-memory API user (always correct after login) over reb_session (can be stale)
@@ -742,28 +740,16 @@
       if (selectedUser) {
         entries = entries.filter(function (e) { return e.username === selectedTaxAgent || (!e.username && selectedTaxAgent === 'admin'); });
         trips = trips.filter(function (t) { return t.username === selectedTaxAgent || (!t.username && selectedTaxAgent === 'admin'); });
-        closedTxns = closedTxns.filter(function (t) { return t.agent === selectedUser.displayName; });
       }
     } else if (!isLead) {
       // Regular agent only sees their own data
       entries = entries.filter(function (e) { return e.username === taxSession.username || (!e.username && taxSession.username === 'admin'); });
       trips = trips.filter(function (t) { return t.username === taxSession.username || (!t.username && taxSession.username === 'admin'); });
-      closedTxns = closedTxns.filter(function (t) { return t.agent === taxSession.displayName; });
     }
 
-    var commRate = settings.commissionRate;
-    var agentSplit = settings.agentSplit;
-
-    // Commission income
-    var grossCommission = closedTxns.reduce(function (sum, t) {
-      return sum + ((parseFloat(t.price) || 0) * commRate);
-    }, 0);
-    var agentCommission = grossCommission * agentSplit;
-
-    // Manual income
+    // Manual income only
     var incomeEntries = entries.filter(function (e) { return e.type === 'income'; });
-    var manualIncomeTotal = incomeEntries.reduce(function (sum, e) { return sum + (e.amount || 0); }, 0);
-    var totalIncome = agentCommission + manualIncomeTotal;
+    var totalIncome = incomeEntries.reduce(function (sum, e) { return sum + (e.amount || 0); }, 0);
 
     // Expenses
     var expenseEntries = entries.filter(function (e) { return e.type === 'expense'; });
@@ -806,10 +792,10 @@
       buildStatCard('violet', '<path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>', Data.formatCurrencyFull(ytdSavingsNeeded), 'YTD Savings Needed');
 
     // ========== OVERVIEW TAB ==========
-    renderOverview(entries, closedTxns, trips, commRate, agentSplit, totalIncome, totalExpenses, mileageDeduction, netProfit);
+    renderOverview(entries, trips, totalIncome, totalExpenses, mileageDeduction, netProfit);
 
     // ========== INCOME TAB ==========
-    renderIncome(closedTxns, incomeEntries, commRate, agentSplit, grossCommission, agentCommission);
+    renderIncome(incomeEntries);
 
     // ========== EXPENSES TAB ==========
     renderExpenses(expenseEntries, totalExpenses);
@@ -818,7 +804,7 @@
     renderMileage(trips, totalMiles, mileageDeduction);
 
     // ========== REPORTS TAB ==========
-    renderReports(entries, closedTxns, trips, commRate, agentSplit);
+    renderReports(entries, trips);
   }
 
   function buildStatCard(colorClass, svgPath, value, label) {
@@ -829,7 +815,7 @@
   }
 
   // ========== OVERVIEW ==========
-  function renderOverview(entries, closedTxns, trips, commRate, agentSplit, totalIncome, totalExpenses, mileageDeduction, netProfit) {
+  function renderOverview(entries, trips, totalIncome, totalExpenses, mileageDeduction, netProfit) {
     // Bar chart: last 6 months income vs expenses
     var now = new Date();
     var months = [];
@@ -844,16 +830,6 @@
       var key = m.year + '-' + m.month;
       monthlyIncome[key] = 0;
       monthlyExpense[key] = 0;
-    });
-
-    // Commission income by close date
-    closedTxns.forEach(function (t) {
-      if (!t.closeDate) return;
-      var d = new Date(t.closeDate);
-      var key = d.getFullYear() + '-' + d.getMonth();
-      if (monthlyIncome[key] !== undefined) {
-        monthlyIncome[key] += (parseFloat(t.price) || 0) * commRate * agentSplit;
-      }
     });
 
     entries.forEach(function (e) {
@@ -948,32 +924,9 @@
   }
 
   // ========== INCOME ==========
-  function renderIncome(closedTxns, incomeEntries, commRate, agentSplit, grossCommission, agentCommission) {
-    var ratePct = (commRate * 100).toFixed(commRate * 100 % 1 === 0 ? 0 : 2);
-    var splitPct = (agentSplit * 100).toFixed(0);
-
-    document.getElementById('incomeTotalBadge').textContent = '+' + Data.formatCurrencyFull(agentCommission);
-
-    var commList = document.getElementById('commissionList');
-    if (closedTxns.length === 0) {
-      commList.innerHTML = '<div class="empty-state" style="padding:40px 20px;"><h3>No closings yet</h3><p>Close transactions to see commission income.</p></div>';
-    } else {
-      commList.innerHTML = closedTxns.map(function (t) {
-        var gross = (parseFloat(t.price) || 0) * commRate;
-        var net = gross * agentSplit;
-        return '<div class="expense-row">' +
-          '<div class="expense-cat-dot" style="background:var(--emerald);"></div>' +
-          '<div style="flex:1;min-width:0;">' +
-            '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.address + '</div>' +
-            '<div style="font-size:.75rem;color:var(--gray-400);">' + (t.agent || '') + ' &middot; Closed ' + Data.formatDate(t.closeDate) + '</div>' +
-          '</div>' +
-          '<div style="text-align:right;">' +
-            '<div style="font-size:.92rem;font-weight:700;color:var(--emerald);">+' + Data.formatCurrencyFull(net) + '</div>' +
-            '<div style="font-size:.72rem;color:var(--gray-400);">' + ratePct + '% of ' + Data.formatCurrencyFull(t.price) + ' &times; ' + splitPct + '% split</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-    }
+  function renderIncome(incomeEntries) {
+    var manualTotal = incomeEntries.reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+    document.getElementById('incomeTotalBadge').textContent = '+' + Data.formatCurrencyFull(manualTotal);
 
     // Manual income
     var manualList = document.getElementById('manualIncomeList');
@@ -1003,19 +956,13 @@
     for (var i = 0; i < 12; i++) {
       var m = new Date(now.getFullYear(), i, 1);
       var key = now.getFullYear() + '-' + String(i + 1).padStart(2, '0');
-      var commInc = 0;
-      closedTxns.forEach(function (t) {
-        if (t.closeDate && t.closeDate.startsWith(key)) {
-          commInc += (parseFloat(t.price) || 0) * commRate * agentSplit;
-        }
-      });
       var manualInc = 0;
       incomeEntries.forEach(function (e) {
         if (e.date && e.date.startsWith(key)) {
           manualInc += (e.amount || 0);
         }
       });
-      monthData.push({ label: MONTH_NAMES[i], total: commInc + manualInc });
+      monthData.push({ label: MONTH_NAMES[i], total: manualInc });
     }
     var maxInc = Math.max.apply(null, monthData.map(function (m) { return m.total; })) || 1;
     byMonth.innerHTML = monthData.map(function (m) {
@@ -1213,18 +1160,14 @@
   }
 
   // ========== REPORTS ==========
-  function renderReports(entries, closedTxns, trips, commRate, agentSplit) {
+  function renderReports(entries, trips) {
     var year = parseInt(document.getElementById('reportYear').value);
 
     // Filter by year
     var yearEntries = entries.filter(function (e) { return e.date && e.date.startsWith(String(year)); });
-    var yearTxns = closedTxns.filter(function (t) { return t.closeDate && t.closeDate.startsWith(String(year)); });
     var yearTrips = trips.filter(function (t) { return t.date && t.date.startsWith(String(year)); });
 
-    var grossComm = yearTxns.reduce(function (s, t) { return s + ((parseFloat(t.price) || 0) * commRate); }, 0);
-    var agentComm = grossComm * agentSplit;
-    var manualIncome = yearEntries.filter(function (e) { return e.type === 'income'; }).reduce(function (s, e) { return s + (e.amount || 0); }, 0);
-    var totalIncome = agentComm + manualIncome;
+    var totalIncome = yearEntries.filter(function (e) { return e.type === 'income'; }).reduce(function (s, e) { return s + (e.amount || 0); }, 0);
 
     // Expenses by category
     var yearExpenses = yearEntries.filter(function (e) { return e.type === 'expense'; });
@@ -1245,8 +1188,7 @@
 
     // Schedule C Preview
     var schedC = document.getElementById('scheduleCPreview');
-    var rows = '<div class="sched-c-row"><div class="sched-c-label">Gross Commission Income</div><div class="sched-c-value">' + Data.formatCurrencyFull(agentComm) + '</div></div>';
-    rows += '<div class="sched-c-row"><div class="sched-c-label">Other Income (referrals, bonuses)</div><div class="sched-c-value">' + Data.formatCurrencyFull(manualIncome) + '</div></div>';
+    var rows = '<div class="sched-c-row"><div class="sched-c-label">Income (referrals, bonuses, other)</div><div class="sched-c-value">' + Data.formatCurrencyFull(totalIncome) + '</div></div>';
     rows += '<div class="sched-c-row total"><div class="sched-c-label">Total Gross Income</div><div class="sched-c-value" style="color:var(--emerald);">' + Data.formatCurrencyFull(totalIncome) + '</div></div>';
     rows += '<div style="height:16px;"></div>';
     rows += '<div style="font-size:.82rem;font-weight:700;color:var(--gray-500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Expenses</div>';

@@ -16,8 +16,8 @@
   var session, txns, listings, users, closedTxns, activeTxns, pendingTxns, activeListings;
   var escrowCount, stats, isLead, closeRate;
   var greeting, dateStr;
-  var taxEntries, myTaxEntries, myClosedTxnsForTax, expenses, totalExpenses;
-  var _dashCommRate, _dashTaxRate, commissionIncome;
+  var taxEntries, myTaxEntries, expenses, totalExpenses;
+  var _dashTaxRate, manualIncome;
   var allAgentGoals, myGoals, teamGoals, myClosings, myVolume;
   var agentStats;
 
@@ -50,12 +50,10 @@
 
     taxEntries = []; try { taxEntries = JSON.parse(localStorage.getItem('reb_tax_entries') || '[]'); } catch(e) {}
     myTaxEntries = isLead ? taxEntries : taxEntries.filter(function (e) { return session && (e.username === session.username || (!e.username && session.username === 'admin')); });
-    myClosedTxnsForTax = isLead ? closedTxns : closedTxns.filter(function (t) { return session && t.agent === session.displayName; });
     expenses = myTaxEntries.filter(function (e) { return e.type === 'expense'; });
     totalExpenses = expenses.reduce(function (s, e) { return s + (e.amount || 0); }, 0);
-    _dashCommRate = getAdminSetting('general.defaultCommissionRate', 0.03);
     _dashTaxRate = getAdminSetting('general.estimatedTaxRate', 0.25);
-    commissionIncome = myClosedTxnsForTax.reduce(function (s, t) { return s + ((t.price || 0) * _dashCommRate); }, 0);
+    manualIncome = myTaxEntries.filter(function (e) { return e.type === 'income'; }).reduce(function (s, e) { return s + (e.amount || 0); }, 0);
 
     allAgentGoals = JSON.parse(localStorage.getItem('reb_agent_goals') || '{}');
     if (Object.keys(allAgentGoals).length === 0) {
@@ -378,10 +376,10 @@
           '<div style="width:36px;height:36px;border-radius:10px;background:var(--indigo);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>' +
           '<div><div style="font-size:.85rem;font-weight:700;color:var(--gray-900)">Tax Snapshot</div><div style="font-size:.68rem;color:var(--gray-400)">YTD</div></div></div>' +
         '<div class="dash-tax-values">' +
-          taxCell(Data.formatCurrencyFull(commissionIncome), 'Income', 'var(--emerald)') +
+          taxCell(Data.formatCurrencyFull(manualIncome), 'Income', 'var(--emerald)') +
           taxCell(Data.formatCurrencyFull(totalExpenses), 'Expenses', 'var(--rose)') +
-          taxCell(Data.formatCurrencyFull(commissionIncome - totalExpenses), 'Net', commissionIncome - totalExpenses >= 0 ? 'var(--indigo)' : 'var(--rose)') +
-          taxCell(Data.formatCurrencyFull(Math.max(0, (commissionIncome - totalExpenses) * _dashTaxRate)), 'Est. Tax', 'var(--amber)') +
+          taxCell(Data.formatCurrencyFull(manualIncome - totalExpenses), 'Net', manualIncome - totalExpenses >= 0 ? 'var(--indigo)' : 'var(--rose)') +
+          taxCell(Data.formatCurrencyFull(Math.max(0, (manualIncome - totalExpenses) * _dashTaxRate)), 'Est. Tax', 'var(--amber)') +
         '</div>' +
         '<a href="tax-center.html" class="btn btn-outline btn-sm" style="font-size:.75rem;flex-shrink:0;border-color:var(--indigo);color:var(--indigo)">Details</a>' +
       '</div>';
