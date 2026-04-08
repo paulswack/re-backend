@@ -298,7 +298,7 @@
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
     var _fPriceVal = (t && t.price) ? '$' + parseFloat(t.price).toLocaleString('en-US') : '';
     html += '<div class="form-group"><label>Price *</label><input type="text" id="fPrice" value="' + _fPriceVal + '" placeholder="$500,000" style="font-size:1rem;padding:12px 16px" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'"></div>';
-    var _txnStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
+    var _txnStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]).filter(function (s) { return s.key !== 'active'; });
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' + _txnStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t && t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
     html += '<div class="form-group"><label>Close Date</label><input type="date" id="fCloseDate" value="' + (t ? t.closeDate || '' : '') + '" style="padding:12px 16px"></div>';
     html += '</div>';
