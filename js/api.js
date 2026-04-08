@@ -64,6 +64,13 @@ var API = (function () {
     _user = user;
     localStorage.setItem('reb_jwt', token);
     localStorage.setItem('reb_user_cache', JSON.stringify(user));
+    // Also update reb_session immediately so Auth.getSession() is never stale
+    localStorage.setItem('reb_session', JSON.stringify({
+      username: user.username,
+      displayName: user.displayName,
+      role: user.role,
+      loggedInAt: new Date().toISOString()
+    }));
   }
 
   function clearSession() {
