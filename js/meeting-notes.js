@@ -19,8 +19,10 @@
   var PREFIX = 'reb_';
   var STORAGE_KEY = PREFIX + 'meeting_notes';
   var pageBody = document.getElementById('pageBody');
-  var session = Auth.getSession();
-  var privileged = Auth.isPrivileged();
+  // Use in-memory API user when available to avoid stale reb_session
+  var _apiUser = (typeof API !== 'undefined' && API.isLoggedIn()) ? API.getUser() : null;
+  var session = _apiUser ? { username: _apiUser.username, displayName: _apiUser.displayName, role: _apiUser.role } : Auth.getSession();
+  var privileged = _apiUser ? (_apiUser.role === 'Team Lead') : Auth.isPrivileged();
 
   var viewMode = 'list';
   var selectedNoteId = null;
