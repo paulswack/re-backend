@@ -446,7 +446,8 @@
         localStorage.setItem('reb_txn_parties', JSON.stringify(allParties));
       }
 
-      renderDetail();
+      // Navigate to the new escrow in transactions
+      window.location.href = 'transactions.html?id=' + encodeURIComponent(txnId);
     }
 
     showStep1();
