@@ -47,7 +47,11 @@
     var rangedTxns = filterByRange(allTxns);
     var listings = Data.getListings();
 
+    // Seed from all team users so every agent (including team lead) always appears
     var agentNames = {};
+    var users = [];
+    try { users = JSON.parse(localStorage.getItem('reb_users') || '[]'); } catch (e) {}
+    users.forEach(function (u) { if (u.displayName && u.role !== 'Assistant') agentNames[u.displayName] = true; });
     allTxns.forEach(function (t) { if (t.agent) agentNames[t.agent] = true; });
     listings.forEach(function (l) { if (l.agent) agentNames[l.agent] = true; });
 
