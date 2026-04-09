@@ -49,15 +49,23 @@ var ApiBridge = (function () {
     if (_loaded) return Promise.resolve();
     _syncing = true;
 
+    // UUID format check — used to detect server-synced IDs vs local IDs
+    var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     var loads = [
       API.getUsers().then(function (d) { localStorage.setItem(PREFIX + 'users', JSON.stringify(mapUsers(d))); }).catch(function () {}),
       API.getTransactions().then(function (d) {
         var serverTxns = mapTransactions(d);
         var serverIds = {};
         serverTxns.forEach(function (t) { serverIds[t.id] = true; });
-        // Find local-only transactions and push them to the server
+        // Find local-only transactions and push them to the server.
+        // Only push records with a local-format ID and no server_id — records that
+        // have server_id (or a UUID-format ID) were previously synced and their
+        // absence from the server means they were intentionally deleted.
         var existing = JSON.parse(localStorage.getItem(PREFIX + 'transactions') || '[]');
-        var localOnly = existing.filter(function (t) { return !serverIds[t.id] && !serverIds[t.server_id]; });
+        var localOnly = existing.filter(function (t) {
+          return !serverIds[t.id] && !serverIds[t.server_id] && !t.server_id && !uuidRe.test(t.id);
+        });
         var pushPromises = localOnly.map(function (t) {
           return API.createTransaction({
             address: t.address, city: t.city || '', state: t.state || '', zip: t.zip || '',
@@ -80,12 +88,17 @@ var ApiBridge = (function () {
         var serverLsts = mapListings(d);
         var serverIds = {};
         serverLsts.forEach(function (l) { serverIds[l.id] = true; });
-        // Find local-only listings and push them to the server
+        // Find local-only listings and push them to the server.
+        // Only push records with a local-format ID and no server_id — records that
+        // have server_id (or a UUID-format ID) were previously synced and their
+        // absence from the server means they were intentionally deleted.
         var existing = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
         // Build map: server_id → local_id so we can migrate party data after overwrite
         var serverToLocalId = {};
         existing.forEach(function (l) { if (l.server_id) serverToLocalId[l.server_id] = l.id; });
-        var localOnly = existing.filter(function (l) { return !serverIds[l.id] && !serverIds[l.server_id]; });
+        var localOnly = existing.filter(function (l) {
+          return !serverIds[l.id] && !serverIds[l.server_id] && !l.server_id && !uuidRe.test(l.id);
+        });
         var pushPromises = localOnly.map(function (l) {
           return API.createListing({
             address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
