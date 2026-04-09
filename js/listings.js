@@ -1023,45 +1023,37 @@
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
 
-    // Seller Info Card
+    // Seller Info Card — always visible, inline-editable
     var detailParties = getParties();
     var rawDetailP = detailParties[selectedListingId] || {};
     var detailP = migratePartyData(rawDetailP);
-    var detailSellers = detailP.sellers.filter(function (s) { return s.name || s.phone || s.email; });
-    if (detailSellers.length > 0) {
-      html += '<div class="parties-card" style="margin-bottom:20px">';
-      html += '<div class="parties-card-header" style="display:flex;align-items:center;gap:10px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1)">';
-      html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-      html += '<span style="color:#BE185D">Seller / Owner Info</span>';
+    var detailSellers = detailP.sellers.length ? detailP.sellers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
+    var siInp = 'border:1.5px solid transparent;border-radius:6px;padding:5px 8px;font-family:inherit;font-size:.88rem;width:100%;background:transparent;transition:all .15s;';
+    var siFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
+    html += '<div class="parties-card" style="margin-bottom:20px">';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1)">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+    html += '<span style="color:#BE185D">Seller / Owner Info</span></div>';
+    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid #EC4899;color:#BE185D;border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:600;cursor:pointer">+ Add Seller</button>';
+    html += '</div>';
+    html += '<div id="detailSellersWrap" style="padding:16px 20px">';
+    detailSellers.forEach(function (s, idx) {
+      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin:10px 0"></div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end" data-seller-row="' + idx + '">';
+      html += '<div style="flex:1;min-width:150px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Name</div>';
+      html += '<input type="text" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Full name" style="' + siInp + 'font-weight:700;color:var(--gray-800);" ' + siFocus + '></div>';
+      html += '<div style="flex:1;min-width:130px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Phone</div>';
+      html += '<input type="tel" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="(555) 555-5555" style="' + siInp + '" ' + siFocus + '></div>';
+      html += '<div style="flex:2;min-width:170px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Email</div>';
+      html += '<input type="email" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="seller@email.com" style="' + siInp + '" ' + siFocus + '></div>';
+      if (idx > 0) {
+        html += '<div style="display:flex;align-items:flex-end;padding-bottom:4px"><button type="button" data-action="detail-remove-seller" data-sidx="' + idx + '" style="background:none;border:1px solid var(--gray-200);color:var(--rose);border-radius:6px;padding:4px 8px;font-size:.8rem;cursor:pointer" title="Remove">&times;</button></div>';
+      }
       html += '</div>';
-      html += '<div style="padding:16px 20px">';
-      detailSellers.forEach(function (s, idx) {
-        if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin-top:14px;padding-top:14px"></div>';
-        html += '<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">';
-        html += '<div style="flex:1;min-width:140px">';
-        html += '<div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Name</div>';
-        html += '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">' + escapeHtml(s.name || '—') + '</div>';
-        if (s.relationship && s.relationship !== 'Primary') {
-          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">' + escapeHtml(s.relationship) + '</div>';
-        }
-        html += '</div>';
-        if (s.phone) {
-          html += '<div style="flex:1;min-width:130px">';
-          html += '<div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Phone</div>';
-          html += '<a href="tel:' + escapeHtml(s.phone) + '" style="font-size:.92rem;font-weight:600;color:var(--indigo);text-decoration:none">' + escapeHtml(s.phone) + '</a>';
-          html += '</div>';
-        }
-        if (s.email) {
-          html += '<div style="flex:1;min-width:160px">';
-          html += '<div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Email</div>';
-          html += '<a href="mailto:' + escapeHtml(s.email) + '" style="font-size:.92rem;font-weight:600;color:var(--indigo);text-decoration:none">' + escapeHtml(s.email) + '</a>';
-          html += '</div>';
-        }
-        html += '</div>';
-      });
-      html += '</div>';
-      html += '</div>';
-    }
+    });
+    html += '</div>';
+    html += '</div>';
 
     // Linked Tasks (read-only display)
     if (tasks.length > 0) {
@@ -1279,6 +1271,30 @@
         }
       });
     });
+
+    // Auto-save seller info fields on blur
+    function saveDetailSellers() {
+      var allP = getParties();
+      if (!allP[selectedListingId]) allP[selectedListingId] = { sellers: [], contacts: {} };
+      var sellerMap = {};
+      pageBody.querySelectorAll('.detail-seller-field').forEach(function (f) {
+        var idx = f.getAttribute('data-sidx');
+        if (!sellerMap[idx]) sellerMap[idx] = {};
+        sellerMap[idx][f.getAttribute('data-sfield')] = f.value.trim();
+      });
+      var sellers = [];
+      Object.keys(sellerMap).sort(function (a, b) { return parseInt(a) - parseInt(b); }).forEach(function (idx) {
+        var e = sellerMap[idx];
+        sellers.push({ name: e.name || '', phone: e.phone || '', email: e.email || '', relationship: e.relationship || 'Primary' });
+      });
+      allP[selectedListingId].sellers = sellers;
+      saveParties(allP);
+      showToast('Saved');
+    }
+
+    pageBody.querySelectorAll('.detail-seller-field').forEach(function (f) {
+      f.addEventListener('blur', saveDetailSellers);
+    });
   }
 
   // ============================================================
@@ -1291,6 +1307,80 @@
     var action = target.getAttribute('data-action');
 
     switch (action) {
+
+      case 'detail-add-seller': {
+        var daSellersWrap = document.getElementById('detailSellersWrap');
+        if (!daSellersWrap) break;
+        var daExisting = daSellersWrap.querySelectorAll('[data-seller-row]');
+        var daNewIdx = daExisting.length;
+        var daSiInp = 'border:1.5px solid transparent;border-radius:6px;padding:5px 8px;font-family:inherit;font-size:.88rem;width:100%;background:transparent;transition:all .15s;';
+        var div = document.createElement('div');
+        div.innerHTML = '<div style="border-top:1px solid var(--gray-100);margin:10px 0"></div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end" data-seller-row="' + daNewIdx + '">' +
+          '<div style="flex:1;min-width:150px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Name</div>' +
+          '<input type="text" class="detail-seller-field" data-sidx="' + daNewIdx + '" data-sfield="name" value="" placeholder="Full name" style="' + daSiInp + 'font-weight:700;color:var(--gray-800);" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"></div>' +
+          '<div style="flex:1;min-width:130px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Phone</div>' +
+          '<input type="tel" class="detail-seller-field" data-sidx="' + daNewIdx + '" data-sfield="phone" value="" placeholder="(555) 555-5555" style="' + daSiInp + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"></div>' +
+          '<div style="flex:2;min-width:170px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Email</div>' +
+          '<input type="email" class="detail-seller-field" data-sidx="' + daNewIdx + '" data-sfield="email" value="" placeholder="seller@email.com" style="' + daSiInp + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"></div>' +
+          '<div style="display:flex;align-items:flex-end;padding-bottom:4px"><button type="button" data-action="detail-remove-seller" data-sidx="' + daNewIdx + '" style="background:none;border:1px solid var(--gray-200);color:var(--rose);border-radius:6px;padding:4px 8px;font-size:.8rem;cursor:pointer" title="Remove">&times;</button></div>' +
+          '</div>';
+        daSellersWrap.appendChild(div);
+        // attach blur save to new inputs
+        div.querySelectorAll('.detail-seller-field').forEach(function (f) {
+          f.addEventListener('blur', function () {
+            var allP = getParties();
+            if (!allP[selectedListingId]) allP[selectedListingId] = { sellers: [], contacts: {} };
+            var sellerMap = {};
+            document.querySelectorAll('.detail-seller-field').forEach(function (sf) {
+              var idx = sf.getAttribute('data-sidx');
+              if (!sellerMap[idx]) sellerMap[idx] = {};
+              sellerMap[idx][sf.getAttribute('data-sfield')] = sf.value.trim();
+            });
+            var sellers = [];
+            Object.keys(sellerMap).sort(function (a, b) { return parseInt(a) - parseInt(b); }).forEach(function (i) {
+              var entry = sellerMap[i];
+              sellers.push({ name: entry.name || '', phone: entry.phone || '', email: entry.email || '', relationship: entry.relationship || 'Primary' });
+            });
+            allP[selectedListingId].sellers = sellers;
+            saveParties(allP);
+            showToast('Saved');
+          });
+        });
+        div.querySelector('.detail-seller-field').focus();
+        break;
+      }
+
+      case 'detail-remove-seller': {
+        var drIdx = target.getAttribute('data-sidx');
+        var drWrap = document.getElementById('detailSellersWrap');
+        if (!drWrap) break;
+        var drRow = drWrap.querySelector('[data-seller-row="' + drIdx + '"]');
+        if (drRow) {
+          // Remove the separator div before it if any
+          var drPrev = drRow.previousElementSibling;
+          if (drPrev && drPrev.tagName === 'DIV' && !drPrev.hasAttribute('data-seller-row')) drPrev.remove();
+          drRow.remove();
+        }
+        // Re-save
+        var drAllP = getParties();
+        if (!drAllP[selectedListingId]) drAllP[selectedListingId] = { sellers: [], contacts: {} };
+        var drSellerMap = {};
+        drWrap.querySelectorAll('.detail-seller-field').forEach(function (f) {
+          var idx = f.getAttribute('data-sidx');
+          if (!drSellerMap[idx]) drSellerMap[idx] = {};
+          drSellerMap[idx][f.getAttribute('data-sfield')] = f.value.trim();
+        });
+        var drSellers = [];
+        Object.keys(drSellerMap).sort(function (a, b) { return parseInt(a) - parseInt(b); }).forEach(function (i) {
+          var entry = drSellerMap[i];
+          drSellers.push({ name: entry.name || '', phone: entry.phone || '', email: entry.email || '', relationship: entry.relationship || 'Primary' });
+        });
+        drAllP[selectedListingId].sellers = drSellers;
+        saveParties(drAllP);
+        showToast('Seller removed');
+        break;
+      }
 
       case 'add-listing':
         editingId = null;
