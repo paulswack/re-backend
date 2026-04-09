@@ -104,6 +104,8 @@
     document.getElementById('mUsername').value = editUser ? editUser.username : '';
     document.getElementById('mPassword').value = editUser ? editUser.password : '';
     document.getElementById('mRole').value = editUser ? editUser.role : 'Agent';
+    document.getElementById('mEmail').value = editUser ? (editUser.email || '') : '';
+    document.getElementById('mPhone').value = editUser ? (editUser.phone || '') : '';
 
     // Populate assigned-to dropdown with non-assistant users
     var assignSelect = document.getElementById('mAssignedTo');
@@ -141,6 +143,8 @@
     var password = document.getElementById('mPassword').value.trim();
     var role = document.getElementById('mRole').value;
     var assignedTo = role === 'Assistant' ? document.getElementById('mAssignedTo').value : '';
+    var email = document.getElementById('mEmail').value.trim();
+    var phone = document.getElementById('mPhone').value.trim();
 
     if (!displayName || !username || !password) {
       showToast('Please fill in all fields', 'error');
@@ -166,7 +170,9 @@
           display_name: displayName,
           password: password,
           role: role,
-          assigned_to: assignedTo || null
+          assigned_to: assignedTo || null,
+          email: email,
+          phone: phone
         }).then(function () {
           showToast('Member updated');
           // Refresh users from API
@@ -188,7 +194,9 @@
           password: password,
           display_name: displayName,
           role: role,
-          assigned_to: assignedTo || null
+          assigned_to: assignedTo || null,
+          email: email,
+          phone: phone
         }).then(function () {
           showToast('Member added — they can now log in!');
           return API.getUsers();
@@ -214,12 +222,14 @@
         users[idx].password = password;
         users[idx].role = role;
         users[idx].assignedTo = assignedTo;
+        users[idx].email = email;
+        users[idx].phone = phone;
         saveUsers(users);
         showToast('Member updated');
       } else {
         var exists = users.some(function (u) { return u.username === username; });
         if (exists) { showToast('Username already taken', 'error'); return; }
-        users.push({ username: username, password: password, displayName: displayName, role: role, assignedTo: assignedTo });
+        users.push({ username: username, password: password, displayName: displayName, role: role, assignedTo: assignedTo, email: email, phone: phone });
         saveUsers(users);
         showToast('Member added');
       }
