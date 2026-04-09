@@ -1546,22 +1546,7 @@
           source: (document.getElementById('fSource') || {}).value || ''
         };
 
-        var fListingId;
-        if (editingId) {
-          Data.updateListing(editingId, fData);
-          fListingId = editingId;
-          showToast('Listing updated.');
-        } else {
-          var fResult = Data.addListing(fData);
-          fListingId = fResult.id;
-          showToast('Listing created.');
-        }
-
-        // Save listing parties (sellers as array, contacts with split fields)
-        var fLstParties = getParties();
-        if (!fLstParties[fListingId]) fLstParties[fListingId] = { sellers: [], contacts: {} };
-
-        // Collect sellers array
+        // Collect sellers BEFORE creating listing so they can be sent atomically
         var fSellers = [];
         var fSellerFields = document.querySelectorAll('.party-field[data-ptype="seller"]');
         var fSellerMap = {};
@@ -1576,6 +1561,22 @@
             fSellers.push({ name: entry.name || '', phone: entry.phone || '', email: entry.email || '', relationship: entry.relationship || 'Primary' });
           }
         });
+
+        var fListingId;
+        if (editingId) {
+          Data.updateListing(editingId, fData);
+          fListingId = editingId;
+          showToast('Listing updated.');
+        } else {
+          // Pass sellers so they are included in the server POST atomically
+          var fResult = Data.addListing(fData, fSellers);
+          fListingId = fResult.id;
+          showToast('Listing created.');
+        }
+
+        // Save listing parties to localStorage
+        var fLstParties = getParties();
+        if (!fLstParties[fListingId]) fLstParties[fListingId] = { sellers: [], contacts: {} };
 
         // Collect contacts with split fields
         var fContacts = {};

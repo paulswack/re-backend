@@ -392,20 +392,26 @@
   }
 
   // ---- Server-synced CRUD for listings ----
-  function serverAddListing(item) {
+  function serverAddListing(item, sellers) {
     var result = listings.add(item);
     if (isServerMode()) {
+      var partyRows = (sellers || [])
+        .filter(function (s) { return s.name || s.phone || s.email; })
+        .map(function (s, i) {
+          return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
+        });
       API.createListing({
         address: item.address, city: item.city, state: item.state, zip: item.zip,
         status: item.status, price: item.price, agent_name: item.agent,
         beds: item.beds, baths: item.baths, sqft: item.sqft,
         description: item.description, source: item.source,
-        listing_date: item.listingDate, property_type: item.propertyType, metadata: {}
+        listing_date: item.listingDate, property_type: item.propertyType, metadata: {},
+        parties: partyRows.length > 0 ? partyRows : undefined
       }).then(function (serverItem) {
         var items = getCollection('listings');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
         if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('listings', items); }
-        // Migrate parties from local ID to server ID, then push to server
+        // Migrate local parties key from local ID to server ID
         if (result.id !== serverItem.id) {
           try {
             var partiesRaw = localStorage.getItem('reb_lst_parties');
@@ -414,14 +420,7 @@
               parties[serverItem.id] = parties[result.id];
               delete parties[result.id];
               localStorage.setItem('reb_lst_parties', JSON.stringify(parties));
-              // Now sync to server using the real server ID
-              var sellersToSync = (parties[serverItem.id].sellers || []).filter(function (s) { return s.name || s.phone || s.email; });
-              if (sellersToSync.length > 0) {
-                var partiesToSync = sellersToSync.map(function (s, i) {
-                  return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
-                });
-                API.updateListing(serverItem.id, { parties: partiesToSync }).catch(function (err) { console.error('Sync new listing parties error:', err); });
-              }
+            }
             }
           } catch (e) {}
         }
@@ -484,7 +483,7 @@
 
     // Listings — synced to server
     getListings:        listings.getAll,
-    addListing:         serverAddListing,
+    addListing:         function(item, sellers) { return serverAddListing(item, sellers); },
     updateListing:      serverUpdateListing,
     deleteListing:      serverDeleteListing,
     syncListingParties: syncListingParties,
