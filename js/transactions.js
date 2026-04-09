@@ -578,10 +578,6 @@
     var party = migratePartyData(txnParties);
     parties[selectedTxnId] = party;
 
-    var allNotes = getNotes();
-    var txnNotes = allNotes[selectedTxnId] || [];
-    // Sort notes newest first
-    txnNotes.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
 
     var tasks = Data.getTasks().filter(function (task) {
       return task.linkedId === selectedTxnId && task.linkedType === 'transaction';
@@ -944,29 +940,6 @@
     }
     html += '</div>';
 
-    // Notes (full width)
-    html += '<div class="notes-card">';
-    html += '<div class="notes-card-header">Activity &amp; Notes</div>';
-    html += '<div class="note-input-area">' +
-      '<textarea id="noteInput" placeholder="Add a note..."></textarea>' +
-      '<div class="note-input-actions">' +
-        '<button class="btn btn-primary btn-sm" data-action="add-note">Add Note</button>' +
-      '</div>' +
-    '</div>';
-    if (txnNotes.length === 0) {
-      html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400);font-style:italic;">No notes yet. Add your first note above.</div>';
-    } else {
-      txnNotes.forEach(function (note) {
-        html += '<div class="note-item">' +
-          '<div class="note-meta">' +
-            '<span class="note-author">' + escapeHtml(note.author) + '</span>' +
-            '<span class="note-time">' + relativeTime(note.timestamp) + '</span>' +
-          '</div>' +
-          '<div class="note-text">' + escapeHtml(note.text) + '</div>' +
-        '</div>';
-      });
-    }
-    html += '</div>';
 
     // Delete at bottom
     html += '<div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gray-100);margin-bottom:40px">' +
@@ -1168,13 +1141,9 @@
         if (confirm('Delete this escrow? This cannot be undone.')) {
           var delId = target.getAttribute('data-id');
           Data.deleteTransaction(delId);
-          // Clean up parties and notes
           var parties = getParties();
           delete parties[delId];
           saveParties(parties);
-          var notes = getNotes();
-          delete notes[delId];
-          saveNotes(notes);
           showToast('Transaction deleted.');
           viewMode = 'list';
           selectedTxnId = null;
@@ -1357,10 +1326,6 @@
       case 'dismiss-email-prompt':
         var emailModal = document.getElementById('emailPromptModal');
         if (emailModal) emailModal.parentNode.removeChild(emailModal);
-        break;
-
-      case 'add-note':
-        addNote();
         break;
 
       case 'attach-checklist':
@@ -1906,33 +1871,6 @@
     }
   }
 
-  // ============================================================
-  //  ADD NOTE
-  // ============================================================
-  function addNote() {
-    var input = document.getElementById('noteInput');
-    if (!input) return;
-    var text = input.value.trim();
-    if (!text) {
-      showToast('Please enter a note.', 'error');
-      return;
-    }
-
-    var session = Auth.getSession();
-    var allNotes = getNotes();
-    if (!allNotes[selectedTxnId]) allNotes[selectedTxnId] = [];
-
-    allNotes[selectedTxnId].push({
-      id: generateId(),
-      text: text,
-      author: session ? session.displayName : 'Unknown',
-      timestamp: new Date().toISOString()
-    });
-
-    saveNotes(allNotes);
-    showToast('Note added.');
-    renderDetail();
-  }
 
   // ============================================================
   //  ADD TASK
