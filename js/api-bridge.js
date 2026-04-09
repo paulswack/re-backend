@@ -82,6 +82,9 @@ var ApiBridge = (function () {
         serverLsts.forEach(function (l) { serverIds[l.id] = true; });
         // Find local-only listings and push them to the server
         var existing = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
+        // Build map: server_id → local_id so we can migrate party data after overwrite
+        var serverToLocalId = {};
+        existing.forEach(function (l) { if (l.server_id) serverToLocalId[l.server_id] = l.id; });
         var localOnly = existing.filter(function (l) { return !serverIds[l.id] && !serverIds[l.server_id]; });
         var pushPromises = localOnly.map(function (l) {
           return API.createListing({
@@ -90,11 +93,28 @@ var ApiBridge = (function () {
             beds: l.beds || null, baths: l.baths || null, sqft: l.sqft || null,
             source: l.source || '', listing_date: l.listingDate || null,
             property_type: l.propertyType || '', description: l.description || ''
+          }).then(function (created) {
+            // Track newly pushed listing so we can migrate its parties
+            if (created && created.id) serverToLocalId[created.id] = l.id;
           }).catch(function () {});
         });
         return Promise.all(pushPromises).then(function () {
           return localOnly.length > 0 ? API.getListings() : Promise.resolve(d);
         }).then(function (fresh) {
+          // Migrate listing parties from old local IDs to server UUIDs
+          try {
+            var lstParties = JSON.parse(localStorage.getItem(PREFIX + 'lst_parties') || '{}');
+            var migrated = false;
+            Object.keys(serverToLocalId).forEach(function (serverId) {
+              var localId = serverToLocalId[serverId];
+              if (localId && localId !== serverId && lstParties[localId]) {
+                lstParties[serverId] = lstParties[localId];
+                delete lstParties[localId];
+                migrated = true;
+              }
+            });
+            if (migrated) localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
+          } catch (e) {}
           localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(fresh)));
         });
       }).catch(function () {}),
