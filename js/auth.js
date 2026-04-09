@@ -399,17 +399,32 @@
     var sidebar = document.querySelector('.sidebar');
     if (!hamburger || !sidebar) return;
 
+    var overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      overlay.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+
     hamburger.addEventListener('click', function () {
-      sidebar.classList.toggle('open');
+      sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     });
 
-    // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function (e) {
-      if (sidebar.classList.contains('open') &&
-          !sidebar.contains(e.target) &&
-          !hamburger.contains(e.target)) {
-        sidebar.classList.remove('open');
-      }
+    overlay.addEventListener('click', closeSidebar);
+
+    sidebar.querySelectorAll('.nav-item').forEach(function (item) {
+      item.addEventListener('click', function () {
+        if (window.innerWidth <= 768) closeSidebar();
+      });
     });
   }
 

@@ -151,7 +151,17 @@
     .note-text { font-size: .88rem; color: var(--gray-600); line-height: 1.5; }
 
     @media (max-width: 768px) {
-      .lst-row-specs { display: none; }
+      .lst-row-specs, .lst-row-date { display: none; }
+      .detail-header-body { padding: 16px; }
+      .detail-blocks-row { flex-direction: column; }
+      .detail-block { border-right: none; border-bottom: 1px solid var(--gray-100); min-width: 0; }
+      .detail-block:last-child { border-bottom: none; }
+    }
+    @media (max-width: 480px) {
+      .lst-stats-grid { grid-template-columns: 1fr 1fr; }
+      .detail-header-address { font-size: 1.1rem; }
+      .detail-header-price { font-size: 1rem; }
+      .parties-card, .desc-card, .notes-card { border-radius: 8px; }
     }
   </style>
 </head>
