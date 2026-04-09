@@ -99,16 +99,8 @@
   //  LIST VIEW
   // ============================================================
   function renderList() {
-    var _apiUser = (typeof API !== 'undefined' && API.isLoggedIn()) ? API.getUser() : null;
-    var _session = _apiUser ? { displayName: _apiUser.displayName, role: _apiUser.role } : Auth.getSession();
-    var _isLead = _apiUser ? (_apiUser.role === 'Team Lead') : Auth.isPrivileged();
-
     var allTxns = Data.getTransactions();
-    var closedTxns = filterByRange(allTxns.filter(function (t) {
-      if (t.status !== 'closed') return false;
-      if (!_isLead && _session) return t.agent === _session.displayName;
-      return true;
-    }));
+    var closedTxns = filterByRange(allTxns.filter(function (t) { return t.status === 'closed'; }));
     // Ensure consistent descending sort by close date across all groups
     closedTxns.sort(function (a, b) { return (b.closeDate || '').localeCompare(a.closeDate || ''); });
 
