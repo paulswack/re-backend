@@ -504,6 +504,65 @@
     return h;
   }
 
+  function renderNotifications() {
+    var cfg = {};
+    try { cfg = JSON.parse(localStorage.getItem('reb_emailjs_config') || '{}'); } catch(e) {}
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Notifications</h2><p>Configure email deadline reminders via EmailJS</p></div>';
+
+    h += '<div class="as-card">';
+
+    // Enable toggle
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--gray-100);margin-bottom:16px">';
+    h += '<div><div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">Enable Email Notifications</div><div style="font-size:.75rem;color:var(--gray-400)">Send deadline reminder emails to agents</div></div>';
+    h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="notif-enabled"' + (cfg.enabled ? ' checked' : '') + ' style="width:16px;height:16px;accent-color:var(--indigo)"><span style="font-size:.82rem;color:var(--gray-600)">Enabled</span></label>';
+    h += '</div>';
+
+    // EmailJS fields
+    h += '<div class="form-row" style="grid-template-columns:1fr;gap:12px">';
+    h += '<div class="form-group"><label>EmailJS Public Key</label><input type="text" id="notif-publicKey" value="' + (cfg.publicKey || '') + '" placeholder="e.g. user_xxxxxxxxxxxxxxx" style="padding:10px 14px"></div>';
+    h += '<div class="form-group"><label>EmailJS Service ID</label><input type="text" id="notif-serviceId" value="' + (cfg.serviceId || '') + '" placeholder="e.g. service_xxxxxxx" style="padding:10px 14px"></div>';
+    h += '<div class="form-group"><label>EmailJS Template ID</label><input type="text" id="notif-templateId" value="' + (cfg.templateId || '') + '" placeholder="e.g. template_xxxxxxx" style="padding:10px 14px"></div>';
+    h += '</div>';
+
+    // Lead days checkboxes
+    var leadDays = cfg.leadDays || [1, 3, 7];
+    h += '<div style="margin-top:12px;margin-bottom:16px">';
+    h += '<div style="font-size:.8rem;font-weight:600;color:var(--gray-600);margin-bottom:8px">Send reminders before deadline:</div>';
+    h += '<div style="display:flex;gap:16px;flex-wrap:wrap">';
+    [1, 3, 7].forEach(function(d) {
+      var checked = leadDays.indexOf(d) !== -1;
+      h += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer">';
+      h += '<input type="checkbox" class="notif-lead-day" data-days="' + d + '"' + (checked ? ' checked' : '') + ' style="width:15px;height:15px;accent-color:var(--indigo)">';
+      h += '<span style="font-size:.85rem;color:var(--gray-700)">' + d + ' day' + (d > 1 ? 's' : '') + ' before</span>';
+      h += '</label>';
+    });
+    h += '</div></div>';
+
+    // Save button
+    h += '<div style="display:flex;justify-content:flex-end">';
+    h += '<button class="btn btn-primary btn-sm" data-action="save-notifications">Save Notifications Settings</button>';
+    h += '</div>';
+
+    h += '</div>'; // as-card
+
+    // Setup guide
+    h += '<div class="as-card" style="background:#F0F9FF;border:1px solid #BAE6FD;margin-top:16px">';
+    h += '<div style="font-size:.85rem;font-weight:700;color:#0369A1;margin-bottom:8px">Setup Guide</div>';
+    h += '<div style="font-size:.82rem;color:#0C4A6E;line-height:1.6">';
+    h += '1. Create a free account at <a href="https://emailjs.com" target="_blank" style="color:#0369A1;font-weight:600">emailjs.com</a><br>';
+    h += '2. Create a service (Gmail, Outlook, etc.) and copy the <strong>Service ID</strong><br>';
+    h += '3. Create an email template and copy the <strong>Template ID</strong><br>';
+    h += '4. Copy your <strong>Public Key</strong> from the Account section<br>';
+    h += '5. In your template, use these variables:<br>';
+    h += '<code style="display:inline-block;background:#E0F2FE;padding:6px 10px;border-radius:6px;font-size:.78rem;margin-top:6px">{{to_email}} &nbsp; {{to_name}} &nbsp; {{subject}} &nbsp; {{deadlines_list}} &nbsp; {{app_url}}</code>';
+    h += '</div>';
+    h += '</div>';
+
+    h += '</div>'; // as-section
+    return h;
+  }
+
   function renderChecklists() {
     var templates = loadChecklistTemplates();
     var h = '<div class="as-section">';
@@ -594,7 +653,8 @@
     { key: 'clientPortal', label: 'Client Portal', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' },
     { key: 'goals', label: 'Goals', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>' },
     { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' },
-    { key: 'marketing', label: 'Marketing Activities', icon: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' }
+    { key: 'marketing', label: 'Marketing Activities', icon: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' },
+    { key: 'notifications', label: 'Notifications', icon: '<path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>' }
   ];
 
   var activeTab = 'general';
@@ -757,6 +817,7 @@
       case 'announcements': return renderAnnouncements();
       case 'checklists': return renderChecklists();
       case 'marketing': return renderMarketing();
+      case 'notifications': return renderNotifications();
       default: return '';
     }
   }
@@ -1781,6 +1842,28 @@
       localStorage.removeItem(MKT_CONFIG_KEY);
       showToast('Marketing activities reset to defaults');
       render();
+      return;
+    }
+
+    // ---- Notifications ----
+    if (action === 'save-notifications') {
+      var notifCfg = {};
+      try { notifCfg = JSON.parse(localStorage.getItem('reb_emailjs_config') || '{}'); } catch(e) {}
+      var enabledEl = document.getElementById('notif-enabled');
+      var pkEl = document.getElementById('notif-publicKey');
+      var svcEl = document.getElementById('notif-serviceId');
+      var tplEl = document.getElementById('notif-templateId');
+      notifCfg.enabled = enabledEl ? enabledEl.checked : false;
+      notifCfg.publicKey = pkEl ? pkEl.value.trim() : '';
+      notifCfg.serviceId = svcEl ? svcEl.value.trim() : '';
+      notifCfg.templateId = tplEl ? tplEl.value.trim() : '';
+      var selDays = [];
+      document.querySelectorAll('.notif-lead-day:checked').forEach(function(cb) {
+        selDays.push(parseInt(cb.getAttribute('data-days'), 10));
+      });
+      notifCfg.leadDays = selDays.length ? selDays : [1, 3, 7];
+      localStorage.setItem('reb_emailjs_config', JSON.stringify(notifCfg));
+      showToast('Notification settings saved');
       return;
     }
 

@@ -426,6 +426,11 @@
         if (window.innerWidth <= 768) closeSidebar();
       });
     });
+
+    // Check deadline notifications on page load
+    if (typeof checkDeadlineNotifications === 'function') {
+      checkDeadlineNotifications();
+    }
   }
 
   // ---- Settings dropdown ----

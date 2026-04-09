@@ -786,26 +786,50 @@
     html += '</div>';
     html += '<div style="padding:0 0 4px 0">';
 
+    // Closing Date anchor row (read-only, pulled from t.closeDate)
+    if (t.closeDate) {
+      var cdDate = new Date(t.closeDate + 'T00:00:00');
+      var cdDiff = Math.round((cdDate - kdToday) / 86400000);
+      var cdLabel = cdDiff < 0 ? (Math.abs(cdDiff) + ' days ago') : (cdDiff === 0 ? 'Today!' : cdDiff + ' days');
+      var cdBadgeColor = cdDiff < 0 ? '#DC2626' : cdDiff <= 3 ? '#D97706' : '#6366F1';
+      var cdBadgeBg = cdDiff < 0 ? '#FEE2E2' : cdDiff <= 3 ? '#FEF3C7' : '#EEF2FF';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 20px;background:#EEF2FF;border-bottom:2px solid #C7D2FE">';
+      html += '<span style="font-size:.75rem;font-weight:800;color:#4338CA;text-transform:uppercase;letter-spacing:.3px;flex:1">&#127942; Closing Date</span>';
+      html += '<span style="font-size:.85rem;font-weight:700;color:#3730A3">' + t.closeDate + '</span>';
+      html += '<span style="font-size:.72rem;font-weight:700;background:' + cdBadgeBg + ';color:' + cdBadgeColor + ';padding:3px 10px;border-radius:20px;white-space:nowrap">' + cdLabel + '</span>';
+      html += '</div>';
+    }
+
     keyDates.forEach(function (kd, idx) {
       var statusColor = kd.status === 'complete' ? 'var(--emerald)' : kd.status === 'waived' ? 'var(--gray-300)' : 'var(--amber)';
       var statusIcon = kd.status === 'complete' ? '✓' : kd.status === 'waived' ? '—' : '○';
 
-      // Days remaining badge
+      // Days remaining badge + left border color
       var daysBadge = '';
-      if (kd.date && kd.status === 'pending') {
+      var leftBorderColor = 'var(--gray-200)';
+      if (kd.status === 'complete') {
+        leftBorderColor = 'var(--emerald)';
+      } else if (kd.status === 'waived') {
+        leftBorderColor = 'var(--gray-200)';
+      } else if (kd.date) {
         var kdDate = new Date(kd.date + 'T00:00:00');
         var diff = Math.round((kdDate - kdToday) / 86400000);
         if (diff < 0) {
-          daysBadge = '<span style="font-size:.68rem;font-weight:700;background:#FEE2E2;color:#DC2626;padding:2px 7px;border-radius:10px;white-space:nowrap">' + Math.abs(diff) + 'd overdue</span>';
+          leftBorderColor = '#DC2626';
+          daysBadge = '<span style="font-size:.72rem;font-weight:800;background:#FEE2E2;color:#DC2626;padding:3px 9px;border-radius:20px;white-space:nowrap">' + Math.abs(diff) + 'd overdue</span>';
         } else if (diff <= 3) {
-          daysBadge = '<span style="font-size:.68rem;font-weight:700;background:#FEF3C7;color:#D97706;padding:2px 7px;border-radius:10px;white-space:nowrap">' + diff + 'd left</span>';
+          leftBorderColor = '#D97706';
+          daysBadge = '<span style="font-size:.72rem;font-weight:800;background:#FEF3C7;color:#D97706;padding:3px 9px;border-radius:20px;white-space:nowrap">' + diff + 'd left</span>';
+        } else if (diff <= 7) {
+          leftBorderColor = '#F59E0B';
+          daysBadge = '<span style="font-size:.72rem;font-weight:700;background:#FFFBEB;color:#92400E;padding:3px 9px;border-radius:20px;white-space:nowrap">' + diff + 'd</span>';
         } else {
-          daysBadge = '<span style="font-size:.68rem;font-weight:600;background:var(--gray-100);color:var(--gray-500);padding:2px 7px;border-radius:10px;white-space:nowrap">' + diff + 'd</span>';
+          daysBadge = '<span style="font-size:.72rem;font-weight:600;background:var(--gray-100);color:var(--gray-500);padding:3px 9px;border-radius:20px;white-space:nowrap">' + diff + 'd</span>';
         }
       }
 
       var rowOpacity = kd.status !== 'pending' ? 'opacity:.55;' : '';
-      html += '<div class="kd-row" draggable="true" data-kd-idx="' + idx + '" style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--gray-50);' + rowOpacity + 'cursor:default">';
+      html += '<div class="kd-row" draggable="true" data-kd-idx="' + idx + '" style="display:flex;align-items:center;gap:10px;padding:10px 16px 10px 0;border-bottom:1px solid var(--gray-50);border-left:4px solid ' + leftBorderColor + ';padding-left:16px;' + rowOpacity + 'cursor:default">';
 
       // Drag handle
       html += '<span class="kd-handle" style="cursor:grab;color:var(--gray-300);font-size:.85rem;flex-shrink:0;line-height:1;user-select:none" title="Drag to reorder">&#8942;&#8942;</span>';
@@ -821,6 +845,15 @@
 
       // Days badge
       html += daysBadge;
+
+      // Notify bell toggle
+      var notifyOn = !!kd.notify;
+      var bellColor = notifyOn ? '#F59E0B' : 'var(--gray-300)';
+      var bellFill = notifyOn ? '#F59E0B' : 'none';
+      var bellStroke = notifyOn ? '#F59E0B' : 'var(--gray-300)';
+      html += '<button data-action="toggle-kd-notify" data-kd-idx="' + idx + '" title="' + (notifyOn ? 'Notifications on' : 'Enable notifications') + '" style="background:none;border:none;cursor:pointer;padding:2px 4px;flex-shrink:0;display:flex;align-items:center">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="' + (notifyOn ? bellColor : 'none') + '" stroke="' + bellStroke + '" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>' +
+        '</button>';
 
       // Remove button
       html += '<button data-action="remove-kd" data-kd-idx="' + idx + '" style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.85rem;padding:2px 4px;flex-shrink:0" title="Remove">&times;</button>';
@@ -1398,13 +1431,21 @@
         }
         break;
 
+      case 'toggle-kd-notify':
+        var nIdx = parseInt(target.getAttribute('data-kd-idx'), 10);
+        var allKdN = getKeyDates();
+        allKdN[selectedTxnId][nIdx].notify = !allKdN[selectedTxnId][nIdx].notify;
+        saveKeyDates(allKdN);
+        renderDetail();
+        break;
+
       case 'add-kd':
         var newKdInput = document.getElementById('newKdLabel');
         var newKdLabel = newKdInput ? newKdInput.value.trim() : '';
         if (!newKdLabel) { if (newKdInput) newKdInput.focus(); break; }
         var addKdAll = getKeyDates();
         if (!addKdAll[selectedTxnId]) addKdAll[selectedTxnId] = [];
-        addKdAll[selectedTxnId].push({ id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,6), label: newKdLabel, date: '', status: 'pending' });
+        addKdAll[selectedTxnId].push({ id: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,6), label: newKdLabel, date: '', status: 'pending', notify: false });
         saveKeyDates(addKdAll);
         renderDetail();
         break;

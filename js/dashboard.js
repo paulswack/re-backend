@@ -176,6 +176,72 @@
     return s;
   };
 
+  WIDGETS.upcomingDeadlines = function () {
+    var s = '';
+    s += widgetOpen('upcomingDeadlines', 'Upcoming Deadlines', 'var(--rose)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 5h-2v6l5.25 3.15.75-1.23-4-2.42V7z"/>',  '<a href="transactions.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">Escrows</a>');
+
+    var PREFIX = 'reb_';
+    var allKdMap = {};
+    try { allKdMap = JSON.parse(localStorage.getItem(PREFIX + 'txn_key_dates') || '{}'); } catch(e) {}
+    var today = new Date(); today.setHours(0,0,0,0);
+    var deadlineItems = [];
+    activeTxns.concat(pendingTxns).forEach(function(t) {
+      var kds = allKdMap[t.id] || [];
+      // Also add close date
+      if (t.closeDate) {
+        var cd = new Date(t.closeDate + 'T00:00:00');
+        var cdiff = Math.round((cd - today) / 86400000);
+        deadlineItems.push({ txnId: t.id, address: t.address.split(',')[0], label: 'Closing Date', date: t.closeDate, diff: cdiff, agent: t.agent, isClose: true });
+      }
+      kds.forEach(function(kd) {
+        if (kd.status === 'complete' || kd.status === 'waived') return;
+        if (!kd.date) return;
+        var d = new Date(kd.date + 'T00:00:00');
+        var diff = Math.round((d - today) / 86400000);
+        if (diff <= 14) {
+          deadlineItems.push({ txnId: t.id, address: t.address.split(',')[0], label: kd.label, date: kd.date, diff: diff, agent: t.agent });
+        }
+      });
+    });
+    deadlineItems.sort(function(a, b) { return a.diff - b.diff; });
+
+    if (deadlineItems.length === 0) {
+      s += '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No upcoming deadlines in the next 14 days.</div>';
+    } else {
+      deadlineItems.slice(0, 8).forEach(function(item) {
+        var dotColor = item.diff < 0 ? '#DC2626' : item.diff <= 3 ? '#D97706' : item.diff <= 7 ? '#F59E0B' : (item.isClose ? '#6366F1' : 'var(--gray-300)');
+        var badgeText, badgeBg, badgeColor;
+        if (item.diff < 0) {
+          badgeText = Math.abs(item.diff) + ' days overdue';
+          badgeBg = '#FEE2E2'; badgeColor = '#DC2626';
+        } else if (item.diff === 0) {
+          badgeText = 'Today';
+          badgeBg = '#FEE2E2'; badgeColor = '#DC2626';
+        } else if (item.diff === 1) {
+          badgeText = 'Tomorrow';
+          badgeBg = '#FEF3C7'; badgeColor = '#D97706';
+        } else {
+          badgeText = item.diff + ' days';
+          badgeBg = 'var(--gray-100)'; badgeColor = 'var(--gray-500)';
+        }
+        s += '<a href="transactions.html?id=' + encodeURIComponent(item.txnId) + '" class="list-row" style="text-decoration:none;padding:9px 20px;cursor:pointer;align-items:center">';
+        s += '<span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;display:inline-block"></span>';
+        s += '<div style="flex:1;min-width:0;margin-left:2px">';
+        s += '<div style="font-size:.83rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.label + '</div>';
+        s += '<div style="font-size:.7rem;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.address + '</div>';
+        s += '</div>';
+        s += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">';
+        s += '<span style="font-size:.7rem;font-weight:700;background:' + badgeBg + ';color:' + badgeColor + ';padding:2px 8px;border-radius:20px;white-space:nowrap">' + badgeText + '</span>';
+        s += '<span style="font-size:.7rem;color:var(--gray-400);white-space:nowrap">' + (item.agent || '') + '</span>';
+        s += '</div>';
+        s += '</a>';
+      });
+    }
+
+    s += '</div>';
+    return s;
+  };
+
   WIDGETS.announcements = function () {
     var s = '';
     s += widgetOpen('announcements', 'Announcements', 'var(--rose)', '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>', null);
@@ -316,7 +382,7 @@
   var DEFAULT_LAYOUT = {
     col1: ['goals', 'recentClosed', 'currentEscrows'],
     col2: ['top5', 'activeListings', 'volumeSummary'],
-    col3: ['reviews', 'announcements']
+    col3: ['upcomingDeadlines', 'reviews', 'announcements']
   };
 
   function loadLayout() {
