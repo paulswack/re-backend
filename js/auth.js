@@ -1091,14 +1091,15 @@
 
     var isLead = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
 
-    // Show wizard modal for new users on dashboard who haven't completed it
+    // Only show onboarding to Team Lead / Admin
+    if (!isLead) return;
+
+    // Show wizard modal for new team leads on dashboard who haven't completed it
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
     if (currentPage === 'dashboard.html' && !localStorage.getItem(ONBOARDING_DONE_KEY)) {
       showOnboardingWizard(isLead);
       return;
     }
-
-    if (!isLead) return;
 
     var raw = localStorage.getItem(ONBOARDING_KEY);
     if (raw) {
