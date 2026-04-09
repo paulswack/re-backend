@@ -766,6 +766,76 @@
       }).join('');
     }
 
+    // Active listings with open house scheduling
+    function renderActiveRows(items) {
+      var ohUsers = getUsers().filter(function (u) { return u.role !== 'Assistant'; });
+
+      return items.map(function (l) {
+        var cls = agentClass(l.agent);
+        var specsText = [];
+        if (l.beds) specsText.push(l.beds + ' bd');
+        if (l.baths) specsText.push(l.baths + ' ba');
+        if (l.sqft) specsText.push(Number(l.sqft).toLocaleString() + ' sqft');
+
+        var oh = l.openHouse || null;
+
+        // Open house strip content
+        var ohStripHtml;
+        if (oh && oh.date) {
+          var timeDisplay = '';
+          if (oh.time) {
+            var tp = oh.time.split(':');
+            var h = parseInt(tp[0]), m = tp[1];
+            timeDisplay = ' at ' + (h === 0 ? 12 : h > 12 ? h - 12 : h) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+          }
+          ohStripHtml =
+            '<span style="font-size:.7rem;font-weight:700;color:#fff;background:var(--emerald);padding:2px 8px;border-radius:20px;flex-shrink:0">Open House</span>' +
+            '<span style="font-size:.8rem;font-weight:600;color:var(--gray-700)">' + escapeHtml(oh.agent || '') + '</span>' +
+            '<span style="font-size:.78rem;color:var(--gray-400)">' + oh.date + timeDisplay + '</span>' +
+            '<div style="flex:1"></div>' +
+            '<button class="btn btn-outline btn-sm" data-action="toggle-oh-form" data-id="' + l.id + '" style="padding:2px 8px;font-size:.72rem">Edit</button>' +
+            '<button class="btn btn-outline btn-sm" data-action="remove-oh" data-id="' + l.id + '" style="padding:2px 8px;font-size:.72rem;color:var(--rose);border-color:var(--rose)">Remove</button>';
+        } else {
+          ohStripHtml =
+            '<button class="btn btn-outline btn-sm" data-action="toggle-oh-form" data-id="' + l.id + '" style="padding:2px 10px;font-size:.75rem;color:var(--indigo);border-color:var(--indigo)">+ Open House</button>';
+        }
+
+        // Inline form (pre-filled if editing)
+        var formOpts = '<option value="">Select agent...</option>' + ohUsers.map(function (u) {
+          return '<option value="' + escapeHtml(u.displayName) + '"' + (oh && oh.agent === u.displayName ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>';
+        }).join('');
+
+        var ohFormHtml =
+          '<div id="oh-form-' + l.id + '" style="display:none;padding:8px 20px 12px;background:var(--gray-50);border-top:1px solid var(--gray-100);border-bottom:1px solid var(--gray-50)">' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+              '<select id="oh-agent-' + l.id + '" style="padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;color:var(--gray-800)">' + formOpts + '</select>' +
+              '<input type="date" id="oh-date-' + l.id + '" value="' + (oh && oh.date ? oh.date : '') + '" style="padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem">' +
+              '<input type="time" id="oh-time-' + l.id + '" value="' + (oh && oh.time ? oh.time : '') + '" style="padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem">' +
+              '<button class="btn btn-primary btn-sm" data-action="save-oh" data-id="' + l.id + '" style="padding:6px 14px">Save</button>' +
+              '<button class="btn btn-outline btn-sm" data-action="toggle-oh-form" data-id="' + l.id + '" style="padding:6px 10px">Cancel</button>' +
+            '</div>' +
+          '</div>';
+
+        return (
+          '<div class="list-row" data-action="open-detail" data-id="' + l.id + '" style="border-bottom:none">' +
+            '<div class="lst-row-address"><div class="lst-row-address-text">' + escapeHtml(l.address) + '</div></div>' +
+            '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
+            '<div class="lst-row-agent">' +
+              '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(l.agent) + '</div>' +
+              '<div class="lst-row-agent-name">' + escapeHtml(l.agent || '—') + '</div>' +
+            '</div>' +
+            '<div class="lst-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
+            '<div class="lst-row-status">' + Data.statusBadge(l.status) + '</div>' +
+            '<div class="lst-row-date">' + Data.formatDate(l.listingDate) + '</div>' +
+          '</div>' +
+          '<div style="padding:6px 20px;border-bottom:1px solid var(--gray-50);display:flex;align-items:center;gap:8px;min-height:36px;background:#fff">' +
+            ohStripHtml +
+          '</div>' +
+          ohFormHtml
+        );
+      }).join('');
+    }
+
     // Coming Soon
     var csBody = document.getElementById('lstComingSoonBody');
     var csEmpty = document.getElementById('lstComingSoonEmpty');
@@ -781,7 +851,7 @@
     var actEmpty = document.getElementById('lstActiveEmpty');
     var actCount = document.getElementById('activeCount');
     if (actBody) {
-      actBody.innerHTML = renderRows(activeList);
+      actBody.innerHTML = renderActiveRows(activeList);
       if (actEmpty) actEmpty.style.display = activeList.length === 0 ? 'block' : 'none';
       if (actCount) actCount.textContent = '(' + activeList.length + ')';
     }
@@ -1167,6 +1237,37 @@
         selectedListingId = target.getAttribute('data-id');
         viewMode = 'detail';
         render();
+        break;
+
+      case 'toggle-oh-form':
+        e.stopPropagation();
+        var ohToggleId = target.getAttribute('data-id');
+        var ohFormEl = document.getElementById('oh-form-' + ohToggleId);
+        if (ohFormEl) ohFormEl.style.display = ohFormEl.style.display === 'none' ? '' : 'none';
+        break;
+
+      case 'save-oh':
+        e.stopPropagation();
+        var ohSaveId = target.getAttribute('data-id');
+        var ohAgentEl = document.getElementById('oh-agent-' + ohSaveId);
+        var ohDateEl = document.getElementById('oh-date-' + ohSaveId);
+        var ohTimeEl = document.getElementById('oh-time-' + ohSaveId);
+        if (!ohAgentEl || !ohDateEl || !ohAgentEl.value || !ohDateEl.value) {
+          showToast('Please select an agent and date.', 'error');
+          break;
+        }
+        Data.updateListing(ohSaveId, { openHouse: { agent: ohAgentEl.value, date: ohDateEl.value, time: ohTimeEl ? ohTimeEl.value : '' } });
+        showToast('Open house scheduled!');
+        renderList();
+        break;
+
+      case 'remove-oh':
+        e.stopPropagation();
+        if (confirm('Remove this open house?')) {
+          Data.updateListing(target.getAttribute('data-id'), { openHouse: null });
+          showToast('Open house removed.');
+          renderList();
+        }
         break;
 
       case 'back-to-list':
