@@ -405,6 +405,18 @@
         var items = getCollection('listings');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
         if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('listings', items); }
+        // Immediately migrate listing parties from local ID to server ID
+        if (result.id !== serverItem.id) {
+          try {
+            var partiesRaw = localStorage.getItem('reb_lst_parties');
+            var parties = partiesRaw ? JSON.parse(partiesRaw) : {};
+            if (parties[result.id]) {
+              parties[serverItem.id] = parties[result.id];
+              delete parties[result.id];
+              localStorage.setItem('reb_lst_parties', JSON.stringify(parties));
+            }
+          } catch (e) {}
+        }
       }).catch(function (err) { console.error('Sync add listing error:', err); });
     }
     return result;

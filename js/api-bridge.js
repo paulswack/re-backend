@@ -105,6 +105,7 @@ var ApiBridge = (function () {
           try {
             var lstParties = JSON.parse(localStorage.getItem(PREFIX + 'lst_parties') || '{}');
             var migrated = false;
+            // Pass 1: migrate by known ID mapping
             Object.keys(serverToLocalId).forEach(function (serverId) {
               var localId = serverToLocalId[serverId];
               if (localId && localId !== serverId && lstParties[localId]) {
@@ -113,6 +114,20 @@ var ApiBridge = (function () {
                 migrated = true;
               }
             });
+            // Pass 2: heuristic rescue — if exactly 1 orphaned party entry with seller data
+            // and exactly 1 server listing with no parties, they must match
+            var freshMapped = mapListings(fresh);
+            var freshIdSet = {};
+            freshMapped.forEach(function (l) { freshIdSet[l.id] = true; });
+            var orphanedKeys = Object.keys(lstParties).filter(function (k) {
+              return !freshIdSet[k] && lstParties[k] && lstParties[k].sellers && lstParties[k].sellers.some(function (s) { return s.name || s.phone || s.email; });
+            });
+            var unmatchedIds = freshMapped.map(function (l) { return l.id; }).filter(function (id) { return !lstParties[id]; });
+            if (orphanedKeys.length === 1 && unmatchedIds.length === 1) {
+              lstParties[unmatchedIds[0]] = lstParties[orphanedKeys[0]];
+              delete lstParties[orphanedKeys[0]];
+              migrated = true;
+            }
             if (migrated) localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
           } catch (e) {}
           localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(fresh)));
