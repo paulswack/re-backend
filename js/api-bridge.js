@@ -114,19 +114,28 @@ var ApiBridge = (function () {
                 migrated = true;
               }
             });
-            // Pass 2: heuristic rescue — if exactly 1 orphaned party entry with seller data
-            // and exactly 1 server listing with no parties, they must match
+            // Pass 2: heuristic rescue — if exactly 1 orphaned party entry with seller data,
+            // assign it to the most recently created listing that has no party data yet
+            // (local IDs are base36 timestamps; server IDs are UUIDs with 4+ hyphens)
+            var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             var freshMapped = mapListings(fresh);
             var freshIdSet = {};
             freshMapped.forEach(function (l) { freshIdSet[l.id] = true; });
             var orphanedKeys = Object.keys(lstParties).filter(function (k) {
-              return !freshIdSet[k] && lstParties[k] && lstParties[k].sellers && lstParties[k].sellers.some(function (s) { return s.name || s.phone || s.email; });
+              return !freshIdSet[k] && lstParties[k] && lstParties[k].sellers &&
+                lstParties[k].sellers.some(function (s) { return s.name || s.phone || s.email; });
             });
-            var unmatchedIds = freshMapped.map(function (l) { return l.id; }).filter(function (id) { return !lstParties[id]; });
-            if (orphanedKeys.length === 1 && unmatchedIds.length === 1) {
-              lstParties[unmatchedIds[0]] = lstParties[orphanedKeys[0]];
-              delete lstParties[orphanedKeys[0]];
-              migrated = true;
+            if (orphanedKeys.length === 1) {
+              // Find listings without any party data, pick most recently created
+              var noPartyListings = freshMapped.filter(function (l) { return !lstParties[l.id]; });
+              noPartyListings.sort(function (a, b) {
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+              });
+              if (noPartyListings.length > 0) {
+                lstParties[noPartyListings[0].id] = lstParties[orphanedKeys[0]];
+                delete lstParties[orphanedKeys[0]];
+                migrated = true;
+              }
             }
             if (migrated) localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
           } catch (e) {}
