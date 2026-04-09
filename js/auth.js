@@ -216,7 +216,7 @@
     isPrivileged: function () {
       var session = Auth.getSession();
       if (!session) return false;
-      return session.role === 'Team Lead';
+      return session.role === 'Team Lead' || session.role === 'Admin';
     },
 
     isDemo: function () {

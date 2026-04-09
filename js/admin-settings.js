@@ -188,6 +188,7 @@
     teamRoles: {
       roles: [
         { key: 'Team Lead', canSeeTaxCenter: true, canDeleteTransactions: true, canSharePortal: true },
+        { key: 'Admin', canSeeTaxCenter: true, canDeleteTransactions: true, canSharePortal: true },
         { key: 'Broker Associate', canSeeTaxCenter: true, canDeleteTransactions: false, canSharePortal: true },
         { key: 'Agent', canSeeTaxCenter: true, canDeleteTransactions: false, canSharePortal: true },
         { key: 'Assistant', canSeeTaxCenter: false, canDeleteTransactions: false, canSharePortal: false }
@@ -1394,7 +1395,7 @@
     roles.forEach(function (r, i) {
       h += '<div class="as-card">';
       h += '<div class="as-card-title-row"><span class="as-card-title">' + escHtml(r.key) + '</span>' +
-        (r.key !== 'Team Lead' ? '<button class="as-remove-btn" data-action="remove-role" data-index="' + i + '" title="Remove role">&times;</button>' : '') +
+        (r.key !== 'Team Lead' && r.key !== 'Admin' ? '<button class="as-remove-btn" data-action="remove-role" data-index="' + i + '" title="Remove role">&times;</button>' : '') +
       '</div>';
       h += toggleRow('Can see Tax Center', r.canSeeTaxCenter, 'toggle-role-perm', i + ':canSeeTaxCenter');
       h += toggleRow('Can delete transactions', r.canDeleteTransactions, 'toggle-role-perm', i + ':canDeleteTransactions');
@@ -1848,7 +1849,7 @@
     }
     if (action === 'remove-role') {
       var role = settings.teamRoles.roles[index];
-      if (role && role.key === 'Team Lead') { showToast('Cannot remove Team Lead role', 'error'); return; }
+      if (role && (role.key === 'Team Lead' || role.key === 'Admin')) { showToast('Cannot remove ' + role.key + ' role', 'error'); return; }
       settings.teamRoles.roles.splice(index, 1);
       saveSettings(settings);
       render();

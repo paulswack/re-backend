@@ -83,7 +83,7 @@ var API = (function () {
   function getToken() { return _token; }
   function getUser() { return _user; }
   function isLoggedIn() { return !!_token && !!_user; }
-  function isPrivileged() { return _user && _user.role === 'Team Lead'; }
+  function isPrivileged() { return _user && (_user.role === 'Team Lead' || _user.role === 'Admin'); }
 
   function register(data) {
     return post('/auth/register', data).then(function (res) {
