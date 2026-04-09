@@ -208,138 +208,136 @@
   //  DETAIL VIEW
   // ============================================================
   function renderDetail() {
+    window.scrollTo(0, 0);
     var txns = Data.getTransactions();
     var t = txns.find(function (x) { return x.id === selectedTxnId; });
-    if (!t) {
-      viewMode = 'list';
-      renderList();
-      return;
-    }
+    if (!t) { viewMode = 'list'; renderList(); return; }
 
     var parties = getParties();
-    var txnParties = parties[selectedTxnId] || { buyer: {}, seller: {} };
-    var buyer = txnParties.buyer || {};
-    var seller = txnParties.seller || {};
+    var txnParties = parties[selectedTxnId] || {};
+    var buyers = Array.isArray(txnParties.buyers) ? txnParties.buyers : (txnParties.buyer && txnParties.buyer.name ? [txnParties.buyer] : []);
+    var sellers = Array.isArray(txnParties.sellers) ? txnParties.sellers : (txnParties.seller && txnParties.seller.name ? [txnParties.seller] : []);
 
-    var allNotes = getNotes();
-    var txnNotes = allNotes[selectedTxnId] || [];
-    txnNotes.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+    var users = JSON.parse(localStorage.getItem('reb_users') || '[]');
+    var leadSources = getAdminSetting('leadSources', ['Zillow', 'Realtor.com', 'Referral', 'Cold Call', 'Door Knock', 'Social Media', 'Open House', 'Other']);
 
-    var commission = (parseFloat(t.price) || 0) * COMMISSION_RATE;
+    var iStyle = 'width:100%;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;transition:border-color .15s';
+    var lStyle = 'display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px';
 
     var html = '';
 
     // Back button
     html += '<button class="detail-back-btn" data-action="back-to-list">' +
       '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      'Back to Closed Deals' +
-    '</button>';
+      'Back to Closed Deals</button>';
 
-    // Commission highlight banner
-    // Header Card — editable
-    html += '<div class="detail-header-card">';
-    html += '<div class="detail-header-accent"></div>';
-    html += '<div class="detail-header-body">';
-
-    html += '<div class="detail-header-top">';
-    html += '<div style="flex:1;min-width:0">' +
-      '<input type="text" class="closed-edit-field" data-field="address" value="' + escapeHtml(t.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;border:1.5px solid transparent;border-radius:8px;padding:4px 8px;width:100%;background:transparent;transition:all .15s" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
-    '</div>';
-    html += '<div style="display:flex;align-items:center;gap:8px">' +
-      '<span class="badge" style="background:#ECFDF5;color:#065F46;font-weight:700;padding:6px 14px;font-size:.82rem;">Closed</span>' +
-    '</div>';
+    // ---- Hero banner ----
+    html += '<div style="background:linear-gradient(135deg,#064E3B,#065F46);border-radius:16px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden">';
+    html += '<div style="position:absolute;top:-30px;right:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.04)"></div>';
+    html += '<div style="position:absolute;bottom:-20px;right:60px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.04)"></div>';
+    // Status badge
+    html += '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border-radius:20px;padding:4px 12px;margin-bottom:14px">';
+    html += '<span style="width:7px;height:7px;border-radius:50%;background:#6EE7B7;display:inline-block"></span>';
+    html += '<span style="font-size:.75rem;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase">Closed</span></div>';
+    // Address
+    html += '<div style="font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:16px;letter-spacing:-.3px;line-height:1.25">' + escapeHtml(t.address || '—') + '</div>';
+    // Key metrics row
+    html += '<div style="display:flex;gap:24px;flex-wrap:wrap">';
+    html += '<div><div style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Sale Price</div>' +
+      '<div style="font-size:1.3rem;font-weight:800;color:#fff">' + Data.formatCurrencyFull(t.price) + '</div></div>';
+    html += '<div><div style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Close Date</div>' +
+      '<div style="font-size:1rem;font-weight:700;color:#fff">' + (t.closeDate ? Data.formatDate(t.closeDate) : '—') + '</div></div>';
+    html += '<div><div style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Agent</div>' +
+      '<div style="font-size:1rem;font-weight:700;color:#fff">' + escapeHtml(t.agent || '—') + '</div></div>';
+    html += '<div><div style="font-size:.7rem;font-weight:600;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Type</div>' +
+      '<div style="font-size:1rem;font-weight:700;color:#fff">' + escapeHtml(t.type || '—') + '</div></div>';
     html += '</div>';
+    html += '</div>'; // hero banner
 
-    // Editable detail blocks
-    html += '<div class="detail-blocks-row">';
+    // ---- Edit card ----
+    html += '<div class="card" style="margin-bottom:16px">';
+    html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100);font-size:.92rem;font-weight:700;color:var(--gray-800)">Edit Details</div>';
+    html += '<div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">';
+
+    // Address
+    html += '<div style="grid-column:1/-1"><label style="' + lStyle + '">Address</label>' +
+      '<input type="text" class="closed-edit-field" data-field="address" value="' + escapeHtml(t.address || '') + '" style="' + iStyle + '"></div>';
 
     // Agent
-    var users = JSON.parse(localStorage.getItem('reb_users') || '[]');
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Closed By</div>' +
-      '<select class="closed-edit-field" data-field="agent" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:600;color:var(--gray-800);background:#fff;margin-top:4px">';
+    html += '<div><label style="' + lStyle + '">Agent</label>' +
+      '<select class="closed-edit-field" data-field="agent" style="' + iStyle + '">';
     users.forEach(function (u) {
-      html += '<option value="' + escapeHtml(u.displayName || u.username) + '"' + ((u.displayName || u.username) === t.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName || u.username) + '</option>';
+      var name = u.displayName || u.username;
+      html += '<option value="' + escapeHtml(name) + '"' + (name === t.agent ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
     });
     html += '</select></div>';
 
     // Close Date
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Close Date</div>' +
-      '<input type="date" class="closed-edit-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--gray-800);margin-top:4px">' +
-    '</div>';
+    html += '<div><label style="' + lStyle + '">Close Date</label>' +
+      '<input type="date" class="closed-edit-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="' + iStyle + '"></div>';
 
     // Sale Price
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Sale Price</div>' +
-      '<input type="number" class="closed-edit-field" data-field="price" value="' + (t.price || 0) + '" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;font-weight:700;color:var(--gray-800);margin-top:4px;width:140px">' +
-    '</div>';
+    html += '<div><label style="' + lStyle + '">Sale Price</label>' +
+      '<input type="number" class="closed-edit-field" data-field="price" value="' + (t.price || '') + '" style="' + iStyle + '"></div>';
 
-    // Source
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Source</div>' +
-      '<input type="text" class="closed-edit-field" data-field="source" value="' + escapeHtml(t.source || '') + '" placeholder="Referral, Zillow, etc." style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--gray-800);margin-top:4px">' +
-    '</div>';
+    // Source — dropdown
+    html += '<div><label style="' + lStyle + '">Lead Source</label>' +
+      '<select class="closed-edit-field" data-field="source" style="' + iStyle + '">' +
+      '<option value="">Select source...</option>';
+    leadSources.forEach(function (s) {
+      html += '<option value="' + escapeHtml(s) + '"' + (s === t.source ? ' selected' : '') + '>' + escapeHtml(s) + '</option>';
+    });
+    html += '</select></div>';
 
     // Type
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Transaction Type</div>' +
-      '<select class="closed-edit-field" data-field="type" style="border:1.5px solid var(--gray-200);border-radius:8px;padding:6px 10px;font-size:.85rem;color:var(--gray-800);background:#fff;margin-top:4px">' +
+    html += '<div><label style="' + lStyle + '">Transaction Type</label>' +
+      '<select class="closed-edit-field" data-field="type" style="' + iStyle + '">' +
         '<option value="Buyer"' + (t.type === 'Buyer' ? ' selected' : '') + '>Buyer</option>' +
         '<option value="Seller"' + (t.type === 'Seller' ? ' selected' : '') + '>Seller</option>' +
         '<option value="Dual"' + (t.type === 'Dual' ? ' selected' : '') + '>Dual</option>' +
-      '</select>' +
-    '</div>';
+      '</select></div>';
 
-    html += '</div>'; // detail-blocks-row
+    html += '</div>'; // grid
 
-    // Action buttons
-    html += '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">';
+    html += '<div style="padding:0 20px 20px;display:flex;gap:8px;flex-wrap:wrap">';
     html += '<button class="btn btn-primary btn-sm" data-action="save-closed-edit" data-id="' + t.id + '">Save Changes</button>';
     html += '<button class="btn btn-outline btn-sm" data-action="reopen-txn" data-id="' + t.id + '" style="color:var(--indigo);border-color:var(--indigo)">Move to Pending</button>';
     html += '<button class="btn btn-outline btn-sm" data-action="delete-txn" data-id="' + t.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete</button>';
     html += '</div>';
+    html += '</div>'; // edit card
 
-    html += '</div>'; // detail-header-body
-    html += '</div>'; // detail-header-card
+    // ---- Buyer / Seller ----
+    var hasBuyers = buyers.some(function (b) { return b.name || b.phone || b.email; });
+    var hasSellers = sellers.some(function (s) { return s.name || s.phone || s.email; });
 
-    // Buyer / Seller Info Card
-    var hasBuyer = buyer.name || buyer.phone || buyer.email;
-    var hasSeller = seller.name || seller.phone || seller.email;
+    if (hasBuyers || hasSellers) {
+      html += '<div class="card" style="margin-bottom:16px">';
+      html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100);font-size:.92rem;font-weight:700;color:var(--gray-800)">Parties</div>';
+      html += '<div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px">';
 
-    if (hasBuyer || hasSeller) {
-      html += '<div class="parties-card">';
-      html += '<div class="parties-card-header">Buyer &amp; Seller Information</div>';
-      html += '<div class="parties-grid">';
-
-      // Buyer
-      html += '<div class="party-section">';
-      html += '<div class="party-label" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:var(--indigo)"></span>Buyer</div>';
-      if (hasBuyer) {
-        if (buyer.name) html += '<div style="font-size:.92rem;font-weight:700;color:var(--gray-900);margin-bottom:4px">' + escapeHtml(buyer.name) + '</div>';
-        if (buyer.phone) html += '<div style="font-size:.82rem;color:var(--gray-500)">' + escapeHtml(buyer.phone) + '</div>';
-        if (buyer.email) html += '<div style="font-size:.82rem;color:var(--gray-500)">' + escapeHtml(buyer.email) + '</div>';
-      } else {
-        html += '<div style="font-size:.85rem;color:var(--gray-400);font-style:italic">No buyer info</div>';
+      function partyBlock(label, color, people) {
+        var s = '<div><div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">' +
+          '<span style="width:8px;height:8px;border-radius:50%;background:' + color + '"></span>' +
+          '<span style="font-size:.78rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px">' + label + '</span></div>';
+        var filled = people.filter(function (p) { return p.name || p.phone || p.email; });
+        if (filled.length === 0) {
+          s += '<div style="font-size:.85rem;color:var(--gray-400);font-style:italic">No info on file</div>';
+        } else {
+          filled.forEach(function (p) {
+            s += '<div style="margin-bottom:10px">';
+            if (p.name) s += '<div style="font-size:.9rem;font-weight:700;color:var(--gray-900)">' + escapeHtml(p.name) + '</div>';
+            if (p.phone) s += '<div style="font-size:.8rem;color:var(--gray-500)">' + escapeHtml(p.phone) + '</div>';
+            if (p.email) s += '<div style="font-size:.8rem;color:var(--gray-500)">' + escapeHtml(p.email) + '</div>';
+            s += '</div>';
+          });
+        }
+        return s + '</div>';
       }
-      html += '</div>';
 
-      // Seller
-      html += '<div class="party-section">';
-      html += '<div class="party-label" style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:#EC4899"></span>Seller</div>';
-      if (hasSeller) {
-        if (seller.name) html += '<div style="font-size:.92rem;font-weight:700;color:var(--gray-900);margin-bottom:4px">' + escapeHtml(seller.name) + '</div>';
-        if (seller.phone) html += '<div style="font-size:.82rem;color:var(--gray-500)">' + escapeHtml(seller.phone) + '</div>';
-        if (seller.email) html += '<div style="font-size:.82rem;color:var(--gray-500)">' + escapeHtml(seller.email) + '</div>';
-      } else {
-        html += '<div style="font-size:.85rem;color:var(--gray-400);font-style:italic">No seller info</div>';
-      }
-      html += '</div>';
-
-      html += '</div>'; // parties-grid
-      html += '</div>'; // parties-card
+      html += partyBlock('Buyer', 'var(--indigo)', buyers);
+      html += partyBlock('Seller', '#EC4899', sellers);
+      html += '</div></div>';
     }
-
 
     pageBody.innerHTML = html;
   }
@@ -362,6 +360,7 @@
       case 'open-detail':
         selectedTxnId = target.getAttribute('data-id');
         viewMode = 'detail';
+        window.scrollTo(0, 0);
         render();
         break;
 
