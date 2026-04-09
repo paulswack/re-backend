@@ -102,7 +102,10 @@
     document.getElementById('editUsername').value = editUser ? editUser.username : '';
     document.getElementById('mDisplayName').value = editUser ? editUser.displayName : '';
     document.getElementById('mUsername').value = editUser ? editUser.username : '';
-    document.getElementById('mPassword').value = editUser ? editUser.password : '';
+    document.getElementById('mPassword').value = '';
+    document.getElementById('mPassword').placeholder = editUser ? 'Leave blank to keep current password' : 'Create a password';
+    document.getElementById('mPassword').required = !editUser;
+    document.getElementById('mPasswordLabel').textContent = editUser ? 'Password (optional)' : 'Password';
     document.getElementById('mRole').value = editUser ? editUser.role : 'Agent';
     document.getElementById('mEmail').value = editUser ? (editUser.email || '') : '';
     document.getElementById('mPhone').value = editUser ? (editUser.phone || '') : '';
@@ -146,8 +149,12 @@
     var email = document.getElementById('mEmail').value.trim();
     var phone = document.getElementById('mPhone').value.trim();
 
-    if (!displayName || !username || !password) {
-      showToast('Please fill in all fields', 'error');
+    if (!displayName || !username) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+    if (!editUsername && !password) {
+      showToast('Password is required for new members', 'error');
       return;
     }
 
@@ -166,14 +173,15 @@
           showToast('User not found', 'error');
           return;
         }
-        API.updateUser(editUser.id, {
+        var updatePayload = {
           display_name: displayName,
-          password: password,
           role: role,
           assigned_to: assignedTo || null,
           email: email,
           phone: phone
-        }).then(function () {
+        };
+        if (password) updatePayload.password = password;
+        API.updateUser(editUser.id, updatePayload).then(function () {
           showToast('Member updated');
           // Refresh users from API
           return API.getUsers();
@@ -219,7 +227,7 @@
         var idx = users.findIndex(function (u) { return u.username === editUsername; });
         if (idx === -1) { showToast('User not found', 'error'); return; }
         users[idx].displayName = displayName;
-        users[idx].password = password;
+        if (password) users[idx].password = password;
         users[idx].role = role;
         users[idx].assignedTo = assignedTo;
         users[idx].email = email;
