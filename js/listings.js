@@ -1028,6 +1028,11 @@
     var rawDetailP = detailParties[selectedListingId] || {};
     var detailP = migratePartyData(rawDetailP);
     var detailSellers = detailP.sellers.length ? detailP.sellers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
+    // Auto-push local seller data to server every time detail is opened so all users see it
+    var _localSellersToSync = detailP.sellers.filter(function (s) { return s.name || s.phone || s.email; });
+    if (_localSellersToSync.length > 0) {
+      Data.syncListingParties(selectedListingId, _localSellersToSync);
+    }
     var siInp = 'border:1.5px solid transparent;border-radius:6px;padding:5px 8px;font-family:inherit;font-size:.88rem;width:100%;background:transparent;transition:all .15s;';
     var siFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
     html += '<div class="parties-card" style="margin-bottom:20px">';
