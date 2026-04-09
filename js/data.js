@@ -421,7 +421,6 @@
               delete parties[result.id];
               localStorage.setItem('reb_lst_parties', JSON.stringify(parties));
             }
-            }
           } catch (e) {}
         }
       }).catch(function (err) { console.error('Sync add listing error:', err); });
