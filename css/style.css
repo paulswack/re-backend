@@ -1750,3 +1750,75 @@ tr:hover { background: var(--gray-50); }
   /* Profile page avatar scales */
   #profileAvatar { width: 80px !important; height: 80px !important; font-size: 1.5rem !important; }
 }
+
+/* ============================================================
+   Flatpickr Date Picker — RE Back Office theme
+   ============================================================ */
+.flatpickr-calendar {
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,34,66,.15);
+  border: 1px solid var(--gray-200);
+  font-family: inherit;
+  overflow: hidden;
+}
+.flatpickr-months {
+  background: var(--indigo);
+  border-radius: 14px 14px 0 0;
+  padding: 6px 0;
+}
+.flatpickr-months .flatpickr-month,
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  color: #fff;
+  fill: #fff;
+}
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg { fill: var(--gold-light); }
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  font-size: .95rem;
+}
+.flatpickr-current-month input.cur-year {
+  color: #fff;
+  font-weight: 700;
+  font-size: .95rem;
+}
+.flatpickr-weekdays { background: var(--indigo-light); }
+span.flatpickr-weekday {
+  background: var(--indigo-light);
+  color: var(--indigo);
+  font-weight: 700;
+  font-size: .75rem;
+}
+.flatpickr-day {
+  border-radius: 8px;
+  font-size: .85rem;
+  color: var(--gray-800);
+}
+.flatpickr-day:hover {
+  background: var(--indigo-light);
+  border-color: var(--indigo-light);
+  color: var(--indigo);
+}
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+  font-weight: 700;
+}
+.flatpickr-day.today {
+  border-color: var(--indigo);
+  color: var(--indigo);
+  font-weight: 700;
+}
+.flatpickr-day.today:hover {
+  background: var(--indigo-light);
+}
+.flatpickr-day.today.selected { color: #fff; }
+.flatpickr-innerContainer { padding: 4px 6px 0; }
+/* Alt input (the friendly display field) */
+.flatpickr-input.flatpickr-mobile { display: block; }
+input.flatpickr-input[readonly] { cursor: pointer; background: #fff; }
