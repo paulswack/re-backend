@@ -103,7 +103,19 @@ function reviewRequestEmail(clientName, agentName, reviewUrl, address) {
   };
 }
 
-function deadlineReminderEmail(agentName, deadlines) {
+function deadlineReminderEmail(agentName, deadlines, overrides, branding) {
+  overrides = overrides || {};
+  branding = branding || {};
+  var brandColor = branding.brandColor || '#002242';
+  var fromName = branding.fromName || 'RE Back Office';
+  var heading = overrides.heading || 'Deadline Reminder';
+  var body = overrides.body || 'You have upcoming deadlines that need your attention.';
+  var buttonLabel = overrides.buttonLabel || 'View Escrows';
+  var buttonUrl = overrides.buttonUrl || 'https://app.eliteregbackoffice.com/transactions.html';
+  var subject = overrides.subject || (deadlines.length === 1
+    ? `Deadline Reminder: ${deadlines[0].label} — ${deadlines[0].address}`
+    : `${deadlines.length} Upcoming Deadlines — RE Back Office`);
+
   var rows = deadlines.map(function(d) {
     var urgency = d.diff < 0 ? '#DC2626' : d.diff <= 3 ? '#D97706' : '#6366F1';
     var dueLabel = d.diff < 0
@@ -126,21 +138,19 @@ function deadlineReminderEmail(agentName, deadlines) {
   }).join('');
 
   return {
-    subject: deadlines.length === 1
-      ? `Deadline Reminder: ${deadlines[0].label} — ${deadlines[0].address}`
-      : `${deadlines.length} Upcoming Deadlines — RE Back Office`,
+    subject: subject,
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:580px;margin:0 auto;padding:32px 24px;">
         <div style="text-align:center;margin-bottom:24px;">
-          <div style="display:inline-block;background:#002242;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;">RE Back Office</div>
+          <div style="display:inline-block;background:${brandColor};color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;">${fromName}</div>
         </div>
-        <h2 style="color:#1E293B;font-size:20px;margin-bottom:6px;">Deadline Reminder</h2>
-        <p style="color:#64748B;font-size:15px;line-height:1.6;margin-bottom:20px;">Hi ${agentName}, here are your upcoming deadlines that need attention:</p>
+        <h2 style="color:#1E293B;font-size:20px;margin-bottom:6px;">${heading}</h2>
+        <p style="color:#64748B;font-size:15px;line-height:1.6;margin-bottom:20px;">Hi ${agentName}, ${body}</p>
         <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:24px;">
           ${rows}
         </div>
         <div style="text-align:center;margin-bottom:24px;">
-          <a href="https://app.eliteregbackoffice.com/transactions.html" style="display:inline-block;background:#002242;color:#fff;padding:12px 32px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;">View Escrows</a>
+          <a href="${buttonUrl}" style="display:inline-block;background:${brandColor};color:#fff;padding:12px 32px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;">${buttonLabel}</a>
         </div>
         <p style="color:#94A3B8;font-size:12px;text-align:center;">You're receiving this because you have deadlines enabled on your escrows in RE Back Office.</p>
       </div>

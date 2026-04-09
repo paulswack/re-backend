@@ -39,6 +39,10 @@
 
   function sendDeadlineEmail(toEmail, agentName, deadlines, logKeys) {
     var token = getToken();
+    var savedTpls = {};
+    try { savedTpls = JSON.parse(localStorage.getItem('reb_email_templates') || '{}'); } catch(e) {}
+    var tplOverrides = savedTpls.deadlineReminder || {};
+    var branding = savedTpls._branding || {};
     console.log('[Notifications] Sending deadline email to', toEmail, 'for', deadlines.length, 'item(s)');
     fetch('/api/email/deadline-reminder', {
       method: 'POST',
@@ -46,7 +50,7 @@
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify({ to: toEmail, agentName: agentName, deadlines: deadlines })
+      body: JSON.stringify({ to: toEmail, agentName: agentName, deadlines: deadlines, overrides: tplOverrides, branding: branding })
     }).then(function(res) {
       return res.json();
     }).then(function(data) {

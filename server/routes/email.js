@@ -26,11 +26,11 @@ router.post('/review-request', requireAuth, async (req, res) => {
 
 // POST /api/email/deadline-reminder — send deadline reminders to an agent
 router.post('/deadline-reminder', async (req, res) => {
-  const { to, agentName, deadlines } = req.body;
+  const { to, agentName, deadlines, overrides, branding } = req.body;
   if (!to || !deadlines || !deadlines.length) {
     return res.status(400).json({ error: 'to, agentName, and deadlines required' });
   }
-  const content = deadlineReminderEmail(agentName || 'Agent', deadlines);
+  const content = deadlineReminderEmail(agentName || 'Agent', deadlines, overrides, branding);
   const result = await sendEmail({ to, ...content });
   res.json({ success: true, sent: !!result });
 });

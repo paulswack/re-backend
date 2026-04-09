@@ -504,6 +504,166 @@
     return h;
   }
 
+  function buildEmailPreview(vals, brandColor) {
+    return '<div style="background:#F8FAFC;padding:16px">' +
+      '<div style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">' +
+        '<div style="background:' + (brandColor||'#002242') + ';padding:14px 20px;text-align:center">' +
+          '<span style="color:#fff;font-weight:700;font-size:13px">' + escHtml(vals.fromName || 'RE Back Office') + '</span>' +
+        '</div>' +
+        '<div style="padding:20px">' +
+          '<div style="font-size:15px;font-weight:700;color:#1E293B;margin-bottom:8px">' + escHtml(vals.heading || '') + '</div>' +
+          '<div style="font-size:13px;color:#64748B;line-height:1.6;margin-bottom:16px">' + escHtml(vals.body || '') + '</div>' +
+          (vals.buttonLabel ? '<div style="text-align:center"><span style="display:inline-block;background:' + (brandColor||'#002242') + ';color:#fff;padding:9px 20px;border-radius:6px;font-weight:700;font-size:12px">' + escHtml(vals.buttonLabel) + '</span></div>' : '') +
+        '</div>' +
+        '<div style="padding:12px 20px;text-align:center;border-top:1px solid #F1F5F9">' +
+          '<span style="font-size:11px;color:#94A3B8">Sent from RE Back Office</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderEmailTemplates() {
+    var savedTpls = {};
+    try { savedTpls = JSON.parse(localStorage.getItem('reb_email_templates') || '{}'); } catch(e) {}
+
+    var TEMPLATES = [
+      {
+        id: 'deadlineReminder',
+        name: 'Deadline Reminder',
+        desc: 'Sent to agents when a key date is approaching',
+        trigger: 'Auto — when agent logs in and has deadlines within your configured lead days',
+        defaults: {
+          subject: 'Deadline Reminder — RE Back Office',
+          heading: 'Deadline Reminder',
+          body: 'You have upcoming deadlines that need your attention. Log in to take action.',
+          buttonLabel: 'View Escrows',
+          buttonUrl: 'https://app.eliteregbackoffice.com/transactions.html'
+        }
+      },
+      {
+        id: 'welcome',
+        name: 'Welcome',
+        desc: 'Sent when a new team member is added',
+        trigger: 'Auto — when a new agent account is created',
+        defaults: {
+          subject: 'Welcome to RE Back Office!',
+          heading: 'Welcome to the team!',
+          body: 'Your account is all set up. You can now start tracking listings, managing escrows, and growing your business.',
+          buttonLabel: 'Go to Dashboard',
+          buttonUrl: 'https://app.eliteregbackoffice.com/dashboard.html'
+        }
+      },
+      {
+        id: 'passwordReset',
+        name: 'Password Reset',
+        desc: 'Sent when a team lead resets an agent\'s password',
+        trigger: 'Manual — when you reset an agent\'s password from the Team page',
+        defaults: {
+          subject: 'Your password has been reset — RE Back Office',
+          heading: 'Password Reset',
+          body: 'Your password has been reset by your Team Lead. Your temporary password is shown below. Please log in and change it from your Profile page.',
+          buttonLabel: 'Sign In',
+          buttonUrl: 'https://app.eliteregbackoffice.com/login.html'
+        }
+      },
+      {
+        id: 'dealUpdate',
+        name: 'Client Deal Update',
+        desc: 'Sent to clients when an agent posts a milestone update',
+        trigger: 'Manual — when an agent sends a milestone update from inside an escrow',
+        defaults: {
+          subject: 'Update on your transaction',
+          heading: 'Transaction Update',
+          body: 'Here\'s the latest update on your transaction from your agent.',
+          buttonLabel: 'View Portal',
+          buttonUrl: 'https://app.eliteregbackoffice.com'
+        }
+      },
+      {
+        id: 'reviewRequest',
+        name: 'Review Request',
+        desc: 'Sent to clients asking for a review after closing',
+        trigger: 'Manual — when an agent sends a review request from the Reviews page',
+        defaults: {
+          subject: 'We\'d love your feedback!',
+          heading: 'How was your experience?',
+          body: 'Congratulations on your recent transaction! Your agent would really appreciate a quick review — it only takes a minute.',
+          buttonLabel: 'Leave a Review',
+          buttonUrl: ''
+        }
+      }
+    ];
+
+    var branding = savedTpls._branding || {};
+
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Email Templates</h2><p>Customize the look and content of every automated email sent from RE Back Office</p></div>';
+
+    // Global branding card
+    h += '<div class="as-card" style="margin-bottom:20px">';
+    h += '<div class="as-card-title">Global Branding</div>';
+    h += '<div class="as-card-subtitle">Applied to all emails</div>';
+    h += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px">';
+    h += '<div class="form-group"><label>From Name</label><input type="text" id="tpl-fromName" value="' + escHtml(branding.fromName || 'RE Back Office') + '" placeholder="RE Back Office"></div>';
+    h += '<div class="form-group"><label>Brand Color</label><div style="display:flex;gap:8px;align-items:center"><input type="color" id="tpl-brandColor" value="' + (branding.brandColor || '#002242') + '" style="width:48px;height:38px;padding:2px;border:1.5px solid var(--gray-200);border-radius:8px;cursor:pointer"><input type="text" id="tpl-brandColorHex" value="' + (branding.brandColor || '#002242') + '" style="flex:1" placeholder="#002242"></div></div>';
+    h += '<div class="form-group"><label>App URL</label><input type="text" id="tpl-appUrl" value="' + escHtml(branding.appUrl || 'https://app.eliteregbackoffice.com') + '" placeholder="https://..."></div>';
+    h += '</div>';
+    h += '<div style="display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" data-action="save-branding">Save Branding</button></div>';
+    h += '</div>';
+
+    // Template cards
+    TEMPLATES.forEach(function(tpl) {
+      var saved = savedTpls[tpl.id] || {};
+      var vals = {
+        subject: saved.subject !== undefined ? saved.subject : tpl.defaults.subject,
+        heading: saved.heading !== undefined ? saved.heading : tpl.defaults.heading,
+        body: saved.body !== undefined ? saved.body : tpl.defaults.body,
+        buttonLabel: saved.buttonLabel !== undefined ? saved.buttonLabel : tpl.defaults.buttonLabel,
+        buttonUrl: saved.buttonUrl !== undefined ? saved.buttonUrl : tpl.defaults.buttonUrl
+      };
+      var brandColor = branding.brandColor || '#002242';
+
+      h += '<div class="as-card" style="margin-bottom:20px">';
+      // Header
+      h += '<div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:16px">';
+      h += '<div>';
+      h += '<div style="font-size:.95rem;font-weight:700;color:var(--gray-900)">' + tpl.name + '</div>';
+      h += '<div style="font-size:.78rem;color:var(--gray-500);margin-top:2px">' + tpl.desc + '</div>';
+      h += '<div style="font-size:.72rem;color:var(--indigo);background:var(--indigo-light);padding:2px 8px;border-radius:10px;display:inline-block;margin-top:6px">' + tpl.trigger + '</div>';
+      h += '</div>';
+      h += '</div>';
+
+      // Two-column: edit left, preview right
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">';
+
+      // Edit column
+      h += '<div>';
+      h += '<div class="form-group" style="margin-bottom:10px"><label style="font-size:.75rem">Subject Line</label><input type="text" class="tpl-field" data-tpl="' + tpl.id + '" data-field="subject" value="' + escHtml(vals.subject) + '" style="padding:8px 12px;font-size:.85rem"></div>';
+      h += '<div class="form-group" style="margin-bottom:10px"><label style="font-size:.75rem">Email Heading</label><input type="text" class="tpl-field" data-tpl="' + tpl.id + '" data-field="heading" value="' + escHtml(vals.heading) + '" style="padding:8px 12px;font-size:.85rem"></div>';
+      h += '<div class="form-group" style="margin-bottom:10px"><label style="font-size:.75rem">Body Text</label><textarea class="tpl-field" data-tpl="' + tpl.id + '" data-field="body" rows="3" style="padding:8px 12px;font-size:.85rem;resize:vertical">' + escHtml(vals.body) + '</textarea></div>';
+      h += '<div class="form-row" style="grid-template-columns:1fr 1fr;margin-bottom:10px">';
+      h += '<div class="form-group"><label style="font-size:.75rem">Button Label</label><input type="text" class="tpl-field" data-tpl="' + tpl.id + '" data-field="buttonLabel" value="' + escHtml(vals.buttonLabel) + '" style="padding:8px 12px;font-size:.85rem"></div>';
+      h += '<div class="form-group"><label style="font-size:.75rem">Button URL</label><input type="text" class="tpl-field" data-tpl="' + tpl.id + '" data-field="buttonUrl" value="' + escHtml(vals.buttonUrl) + '" placeholder="https://..." style="padding:8px 12px;font-size:.85rem"></div>';
+      h += '</div>';
+      h += '<button class="btn btn-primary btn-sm" data-action="save-email-template" data-tpl-id="' + tpl.id + '">Save Template</button>';
+      h += '</div>';
+
+      // Preview column
+      h += '<div>';
+      h += '<div style="font-size:.72rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Live Preview</div>';
+      h += '<div id="tpl-preview-' + tpl.id + '" style="border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:13px">';
+      h += buildEmailPreview(vals, brandColor);
+      h += '</div>';
+      h += '</div>';
+
+      h += '</div>'; // grid
+      h += '</div>'; // as-card
+    });
+
+    h += '</div>';
+    return h;
+  }
+
   function renderNotifications() {
     var cfg = {};
     try { cfg = JSON.parse(localStorage.getItem('reb_notif_config') || '{}'); } catch(e) {}
@@ -645,7 +805,8 @@
     { key: 'goals', label: 'Goals', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>' },
     { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' },
     { key: 'marketing', label: 'Marketing Activities', icon: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' },
-    { key: 'notifications', label: 'Notifications', icon: '<path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>' }
+    { key: 'notifications', label: 'Notifications', icon: '<path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>' },
+    { key: 'emailTemplates', label: 'Email Templates', icon: '<path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>' }
   ];
 
   var activeTab = 'general';
@@ -809,6 +970,7 @@
       case 'checklists': return renderChecklists();
       case 'marketing': return renderMarketing();
       case 'notifications': return renderNotifications();
+      case 'emailTemplates': return renderEmailTemplates();
       default: return '';
     }
   }
@@ -1836,6 +1998,37 @@
       return;
     }
 
+    // ---- Email Templates ----
+    if (action === 'save-branding') {
+      var tpls = {};
+      try { tpls = JSON.parse(localStorage.getItem('reb_email_templates') || '{}'); } catch(e) {}
+      tpls._branding = {
+        fromName: (document.getElementById('tpl-fromName') || {}).value || 'RE Back Office',
+        brandColor: (document.getElementById('tpl-brandColor') || {}).value || '#002242',
+        appUrl: (document.getElementById('tpl-appUrl') || {}).value || ''
+      };
+      localStorage.setItem('reb_email_templates', JSON.stringify(tpls));
+      showToast('Branding saved');
+      return;
+    }
+
+    if (action === 'save-email-template') {
+      var tplId = btn.getAttribute('data-tpl-id');
+      var tpls = {};
+      try { tpls = JSON.parse(localStorage.getItem('reb_email_templates') || '{}'); } catch(e) {}
+      var card = btn.closest('.as-card');
+      var tplVals = {};
+      if (card) {
+        card.querySelectorAll('.tpl-field').forEach(function(f) {
+          tplVals[f.getAttribute('data-field')] = f.value;
+        });
+      }
+      tpls[tplId] = tplVals;
+      localStorage.setItem('reb_email_templates', JSON.stringify(tpls));
+      showToast('Template saved');
+      return;
+    }
+
     // ---- Notifications ----
     if (action === 'save-notifications') {
       var notifCfg = {};
@@ -2318,5 +2511,32 @@
       return;
     }
   }, true);
+
+  // ---- Input event: live email template preview + brand color sync ----
+  document.addEventListener('input', function(e) {
+    // Brand color picker <-> hex sync
+    var colorPicker = document.getElementById('tpl-brandColor');
+    var colorHex = document.getElementById('tpl-brandColorHex');
+    if (colorPicker && colorHex) {
+      if (e.target === colorPicker) colorHex.value = colorPicker.value;
+      if (e.target === colorHex) colorPicker.value = colorHex.value;
+    }
+
+    // Live email template preview
+    var field = e.target.closest ? e.target.closest('.tpl-field') : null;
+    if (!field) return;
+    var tplId = field.getAttribute('data-tpl');
+    var preview = document.getElementById('tpl-preview-' + tplId);
+    if (!preview) return;
+    var card = field.closest('.as-card');
+    if (!card) return;
+    var vals = {};
+    card.querySelectorAll('.tpl-field').forEach(function(f) {
+      vals[f.getAttribute('data-field')] = f.value;
+    });
+    var branding = {};
+    try { branding = (JSON.parse(localStorage.getItem('reb_email_templates') || '{}'))._branding || {}; } catch(e) {}
+    preview.innerHTML = buildEmailPreview(vals, branding.brandColor || '#002242');
+  });
 
 })();
