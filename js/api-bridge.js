@@ -55,19 +55,48 @@ var ApiBridge = (function () {
         var serverTxns = mapTransactions(d);
         var serverIds = {};
         serverTxns.forEach(function (t) { serverIds[t.id] = true; });
-        // Preserve any local-only transactions not yet synced to server
+        // Find local-only transactions and push them to the server
         var existing = JSON.parse(localStorage.getItem(PREFIX + 'transactions') || '[]');
         var localOnly = existing.filter(function (t) { return !serverIds[t.id] && !serverIds[t.server_id]; });
-        localStorage.setItem(PREFIX + 'transactions', JSON.stringify(serverTxns.concat(localOnly)));
+        var pushPromises = localOnly.map(function (t) {
+          return API.createTransaction({
+            address: t.address, city: t.city || '', state: t.state || '', zip: t.zip || '',
+            type: t.type || 'Buyer', status: t.status || 'pending',
+            price: t.price || 0, agent_name: t.agent || '', source: t.source || '',
+            close_date: t.closeDate || null, notes: t.notes || ''
+          }).then(function (created) {
+            if (created && created.id) t.server_id = created.id;
+          }).catch(function () {});
+        });
+        return Promise.all(pushPromises).then(function () {
+          // Re-fetch after push so everyone sees the full list
+          return localOnly.length > 0 ? API.getTransactions() : Promise.resolve(d);
+        }).then(function (fresh) {
+          var finalTxns = mapTransactions(fresh);
+          localStorage.setItem(PREFIX + 'transactions', JSON.stringify(finalTxns));
+        });
       }).catch(function () {}),
       API.getListings().then(function (d) {
         var serverLsts = mapListings(d);
         var serverIds = {};
         serverLsts.forEach(function (l) { serverIds[l.id] = true; });
-        // Preserve any local-only listings not yet synced to server
+        // Find local-only listings and push them to the server
         var existing = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
         var localOnly = existing.filter(function (l) { return !serverIds[l.id] && !serverIds[l.server_id]; });
-        localStorage.setItem(PREFIX + 'listings', JSON.stringify(serverLsts.concat(localOnly)));
+        var pushPromises = localOnly.map(function (l) {
+          return API.createListing({
+            address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
+            status: l.status || 'active', price: l.price || 0, agent_name: l.agent || '',
+            beds: l.beds || null, baths: l.baths || null, sqft: l.sqft || null,
+            source: l.source || '', listing_date: l.listingDate || null,
+            property_type: l.propertyType || '', description: l.description || ''
+          }).catch(function () {});
+        });
+        return Promise.all(pushPromises).then(function () {
+          return localOnly.length > 0 ? API.getListings() : Promise.resolve(d);
+        }).then(function (fresh) {
+          localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(fresh)));
+        });
       }).catch(function () {}),
       API.getSettings().then(function (d) { if (d) localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(d)); }).catch(function () {}),
       API.getAnnouncements().then(function (d) { localStorage.setItem(PREFIX + 'announcements', JSON.stringify(mapAnnouncements(d))); }).catch(function () {}),
