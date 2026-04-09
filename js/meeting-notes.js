@@ -341,17 +341,6 @@
     html += '</div>';
     html += '</div>';
 
-    // AI Recording placeholder
-    html += '<div class="lb-card" style="margin-bottom:20px;border:2px dashed var(--gray-200);background:var(--gray-50)">';
-    html += '<div style="padding:28px;text-align:center">';
-    html += '<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--violet));display:flex;align-items:center;justify-content:center;margin:0 auto 14px">';
-    html += '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>';
-    html += '</div>';
-    html += '<div style="font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:4px">AI Meeting Recording</div>';
-    html += '<div style="font-size:.85rem;color:var(--gray-400);max-width:360px;margin:0 auto;line-height:1.5">Record your 1-on-1 meetings and let AI automatically generate notes and action items. Coming soon with the full platform launch.</div>';
-    html += '<button class="btn btn-outline btn-sm" style="margin-top:16px;color:var(--indigo);border-color:var(--indigo);cursor:default;opacity:.7">Coming Soon</button>';
-    html += '</div></div>';
-
     pageBody.innerHTML = html;
 
     var newInput = document.getElementById('newActionItem');
