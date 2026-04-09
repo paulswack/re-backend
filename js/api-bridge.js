@@ -176,6 +176,20 @@ var ApiBridge = (function () {
               }
             });
             localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
+
+            // Pass 4: push local party data to server for listings where server has none yet
+            // This syncs data entered before server-sync was implemented
+            fresh.forEach(function (l) {
+              if ((!l.listing_parties || l.listing_parties.length === 0) && lstParties[l.id]) {
+                var localSellers = (lstParties[l.id].sellers || []).filter(function (s) { return s.name || s.phone || s.email; });
+                if (localSellers.length > 0) {
+                  var partiesToPush = localSellers.map(function (s, i) {
+                    return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
+                  });
+                  API.updateListing(l.id, { parties: partiesToPush }).catch(function () {});
+                }
+              }
+            });
           } catch (e) {}
           localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(fresh)));
         });

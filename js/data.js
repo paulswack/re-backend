@@ -405,7 +405,7 @@
         var items = getCollection('listings');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
         if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('listings', items); }
-        // Immediately migrate listing parties from local ID to server ID
+        // Migrate parties from local ID to server ID, then push to server
         if (result.id !== serverItem.id) {
           try {
             var partiesRaw = localStorage.getItem('reb_lst_parties');
@@ -414,6 +414,14 @@
               parties[serverItem.id] = parties[result.id];
               delete parties[result.id];
               localStorage.setItem('reb_lst_parties', JSON.stringify(parties));
+              // Now sync to server using the real server ID
+              var sellersToSync = (parties[serverItem.id].sellers || []).filter(function (s) { return s.name || s.phone || s.email; });
+              if (sellersToSync.length > 0) {
+                var partiesToSync = sellersToSync.map(function (s, i) {
+                  return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
+                });
+                API.updateListing(serverItem.id, { parties: partiesToSync }).catch(function (err) { console.error('Sync new listing parties error:', err); });
+              }
             }
           } catch (e) {}
         }

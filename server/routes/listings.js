@@ -78,15 +78,29 @@ router.put('/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await getSupabase()
-      .from('listings')
-      .update(fields)
-      .eq('id', req.params.id)
-      .eq('team_id', req.user.teamId)
-      .select()
-      .single();
-
-    if (error) throw error;
+    let data;
+    // Only run the listing update if there are actual fields to change
+    if (Object.keys(fields).length > 0) {
+      const result = await getSupabase()
+        .from('listings')
+        .update(fields)
+        .eq('id', req.params.id)
+        .eq('team_id', req.user.teamId)
+        .select()
+        .single();
+      if (result.error) throw result.error;
+      data = result.data;
+    } else {
+      // parties-only update — fetch the listing to return it
+      const result = await getSupabase()
+        .from('listings')
+        .select('*')
+        .eq('id', req.params.id)
+        .eq('team_id', req.user.teamId)
+        .single();
+      if (result.error) throw result.error;
+      data = result.data;
+    }
 
     if (parties) {
       await getSupabase().from('listing_parties').delete().eq('listing_id', req.params.id);
