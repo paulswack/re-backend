@@ -506,29 +506,22 @@
 
   function renderNotifications() {
     var cfg = {};
-    try { cfg = JSON.parse(localStorage.getItem('reb_emailjs_config') || '{}'); } catch(e) {}
+    try { cfg = JSON.parse(localStorage.getItem('reb_notif_config') || '{}'); } catch(e) {}
     var h = '<div class="as-section">';
-    h += '<div class="as-section-header"><h2>Notifications</h2><p>Configure email deadline reminders via EmailJS</p></div>';
+    h += '<div class="as-section-header"><h2>Notifications</h2><p>Automatic email deadline reminders sent directly to agents</p></div>';
 
     h += '<div class="as-card">';
 
     // Enable toggle
     h += '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:1px solid var(--gray-100);margin-bottom:16px">';
-    h += '<div><div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">Enable Email Notifications</div><div style="font-size:.75rem;color:var(--gray-400)">Send deadline reminder emails to agents</div></div>';
+    h += '<div><div style="font-size:.88rem;font-weight:600;color:var(--gray-800)">Enable Email Notifications</div><div style="font-size:.75rem;color:var(--gray-400)">Sends deadline reminder emails to each agent automatically when they log in</div></div>';
     h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="notif-enabled"' + (cfg.enabled ? ' checked' : '') + ' style="width:16px;height:16px;accent-color:var(--indigo)"><span style="font-size:.82rem;color:var(--gray-600)">Enabled</span></label>';
-    h += '</div>';
-
-    // EmailJS fields
-    h += '<div class="form-row" style="grid-template-columns:1fr;gap:12px">';
-    h += '<div class="form-group"><label>EmailJS Public Key</label><input type="text" id="notif-publicKey" value="' + (cfg.publicKey || '') + '" placeholder="e.g. user_xxxxxxxxxxxxxxx" style="padding:10px 14px"></div>';
-    h += '<div class="form-group"><label>EmailJS Service ID</label><input type="text" id="notif-serviceId" value="' + (cfg.serviceId || '') + '" placeholder="e.g. service_xxxxxxx" style="padding:10px 14px"></div>';
-    h += '<div class="form-group"><label>EmailJS Template ID</label><input type="text" id="notif-templateId" value="' + (cfg.templateId || '') + '" placeholder="e.g. template_xxxxxxx" style="padding:10px 14px"></div>';
     h += '</div>';
 
     // Lead days checkboxes
     var leadDays = cfg.leadDays || [1, 3, 7];
-    h += '<div style="margin-top:12px;margin-bottom:16px">';
-    h += '<div style="font-size:.8rem;font-weight:600;color:var(--gray-600);margin-bottom:8px">Send reminders before deadline:</div>';
+    h += '<div style="margin-bottom:16px">';
+    h += '<div style="font-size:.8rem;font-weight:600;color:var(--gray-600);margin-bottom:8px">Send reminders this many days before a deadline:</div>';
     h += '<div style="display:flex;gap:16px;flex-wrap:wrap">';
     [1, 3, 7].forEach(function(d) {
       var checked = leadDays.indexOf(d) !== -1;
@@ -541,21 +534,19 @@
 
     // Save button
     h += '<div style="display:flex;justify-content:flex-end">';
-    h += '<button class="btn btn-primary btn-sm" data-action="save-notifications">Save Notifications Settings</button>';
+    h += '<button class="btn btn-primary btn-sm" data-action="save-notifications">Save Settings</button>';
     h += '</div>';
 
     h += '</div>'; // as-card
 
-    // Setup guide
-    h += '<div class="as-card" style="background:#F0F9FF;border:1px solid #BAE6FD;margin-top:16px">';
-    h += '<div style="font-size:.85rem;font-weight:700;color:#0369A1;margin-bottom:8px">Setup Guide</div>';
-    h += '<div style="font-size:.82rem;color:#0C4A6E;line-height:1.6">';
-    h += '1. Create a free account at <a href="https://emailjs.com" target="_blank" style="color:#0369A1;font-weight:600">emailjs.com</a><br>';
-    h += '2. Create a service (Gmail, Outlook, etc.) and copy the <strong>Service ID</strong><br>';
-    h += '3. Create an email template and copy the <strong>Template ID</strong><br>';
-    h += '4. Copy your <strong>Public Key</strong> from the Account section<br>';
-    h += '5. In your template, use these variables:<br>';
-    h += '<code style="display:inline-block;background:#E0F2FE;padding:6px 10px;border-radius:6px;font-size:.78rem;margin-top:6px">{{to_email}} &nbsp; {{to_name}} &nbsp; {{subject}} &nbsp; {{deadlines_list}} &nbsp; {{app_url}}</code>';
+    // Info box
+    h += '<div class="as-card" style="background:#F0FDF4;border:1px solid #BBF7D0;margin-top:16px">';
+    h += '<div style="font-size:.85rem;font-weight:700;color:#15803D;margin-bottom:8px">How it works</div>';
+    h += '<div style="font-size:.82rem;color:#166534;line-height:1.7">';
+    h += '&bull; Emails are sent automatically via Resend (already configured on your server)<br>';
+    h += '&bull; Each agent gets one email per day covering all their upcoming deadlines<br>';
+    h += '&bull; Closing dates always trigger reminders &mdash; for other dates, turn on the bell icon on each key date inside an escrow<br>';
+    h += '&bull; Make sure each agent has an email address saved in <strong>Admin Settings &rarr; Team</strong>';
     h += '</div>';
     h += '</div>';
 
@@ -1848,21 +1839,15 @@
     // ---- Notifications ----
     if (action === 'save-notifications') {
       var notifCfg = {};
-      try { notifCfg = JSON.parse(localStorage.getItem('reb_emailjs_config') || '{}'); } catch(e) {}
+      try { notifCfg = JSON.parse(localStorage.getItem('reb_notif_config') || '{}'); } catch(e) {}
       var enabledEl = document.getElementById('notif-enabled');
-      var pkEl = document.getElementById('notif-publicKey');
-      var svcEl = document.getElementById('notif-serviceId');
-      var tplEl = document.getElementById('notif-templateId');
       notifCfg.enabled = enabledEl ? enabledEl.checked : false;
-      notifCfg.publicKey = pkEl ? pkEl.value.trim() : '';
-      notifCfg.serviceId = svcEl ? svcEl.value.trim() : '';
-      notifCfg.templateId = tplEl ? tplEl.value.trim() : '';
       var selDays = [];
       document.querySelectorAll('.notif-lead-day:checked').forEach(function(cb) {
         selDays.push(parseInt(cb.getAttribute('data-days'), 10));
       });
       notifCfg.leadDays = selDays.length ? selDays : [1, 3, 7];
-      localStorage.setItem('reb_emailjs_config', JSON.stringify(notifCfg));
+      localStorage.setItem('reb_notif_config', JSON.stringify(notifCfg));
       showToast('Notification settings saved');
       return;
     }

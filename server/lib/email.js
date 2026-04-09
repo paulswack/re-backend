@@ -103,4 +103,49 @@ function reviewRequestEmail(clientName, agentName, reviewUrl, address) {
   };
 }
 
-module.exports = { sendEmail, welcomeEmail, passwordResetEmail, dealUpdateEmail, reviewRequestEmail };
+function deadlineReminderEmail(agentName, deadlines) {
+  var rows = deadlines.map(function(d) {
+    var urgency = d.diff < 0 ? '#DC2626' : d.diff <= 3 ? '#D97706' : '#6366F1';
+    var dueLabel = d.diff < 0
+      ? Math.abs(d.diff) + ' day' + (Math.abs(d.diff) === 1 ? '' : 's') + ' OVERDUE'
+      : d.diff === 0 ? 'DUE TODAY'
+      : d.diff === 1 ? 'Due Tomorrow'
+      : 'Due in ' + d.diff + ' days';
+    return `
+      <div style="padding:14px 20px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;gap:16px">
+        <div style="width:4px;min-height:40px;border-radius:2px;background:${urgency};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;color:#1E293B">${d.label}</div>
+          <div style="font-size:12px;color:#64748B;margin-top:2px">${d.address}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:12px;font-weight:700;color:${urgency};white-space:nowrap">${dueLabel}</div>
+          <div style="font-size:11px;color:#94A3B8;margin-top:2px">${d.date}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return {
+    subject: deadlines.length === 1
+      ? `Deadline Reminder: ${deadlines[0].label} — ${deadlines[0].address}`
+      : `${deadlines.length} Upcoming Deadlines — RE Back Office`,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:580px;margin:0 auto;padding:32px 24px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-block;background:#002242;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;">RE Back Office</div>
+        </div>
+        <h2 style="color:#1E293B;font-size:20px;margin-bottom:6px;">Deadline Reminder</h2>
+        <p style="color:#64748B;font-size:15px;line-height:1.6;margin-bottom:20px;">Hi ${agentName}, here are your upcoming deadlines that need attention:</p>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:24px;">
+          ${rows}
+        </div>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://app.eliteregbackoffice.com/transactions.html" style="display:inline-block;background:#002242;color:#fff;padding:12px 32px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;">View Escrows</a>
+        </div>
+        <p style="color:#94A3B8;font-size:12px;text-align:center;">You're receiving this because you have deadlines enabled on your escrows in RE Back Office.</p>
+      </div>
+    `
+  };
+}
+
+module.exports = { sendEmail, welcomeEmail, passwordResetEmail, dealUpdateEmail, reviewRequestEmail, deadlineReminderEmail };

@@ -1,6 +1,6 @@
 const express = require('express');
 const { requireAuth } = require('../lib/auth');
-const { sendEmail, dealUpdateEmail, reviewRequestEmail } = require('../lib/email');
+const { sendEmail, dealUpdateEmail, reviewRequestEmail, deadlineReminderEmail } = require('../lib/email');
 
 const router = express.Router();
 
@@ -20,6 +20,17 @@ router.post('/review-request', requireAuth, async (req, res) => {
   if (!to || !reviewUrl) return res.status(400).json({ error: 'Recipient email and review URL required' });
 
   const content = reviewRequestEmail(clientName || 'Client', agentName || 'Your Agent', reviewUrl, address);
+  const result = await sendEmail({ to, ...content });
+  res.json({ success: true, sent: !!result });
+});
+
+// POST /api/email/deadline-reminder — send deadline reminders to an agent
+router.post('/deadline-reminder', async (req, res) => {
+  const { to, agentName, deadlines } = req.body;
+  if (!to || !deadlines || !deadlines.length) {
+    return res.status(400).json({ error: 'to, agentName, and deadlines required' });
+  }
+  const content = deadlineReminderEmail(agentName || 'Agent', deadlines);
   const result = await sendEmail({ to, ...content });
   res.json({ success: true, sent: !!result });
 });
