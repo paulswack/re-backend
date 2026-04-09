@@ -1262,6 +1262,7 @@
       case 'open-detail':
         selectedListingId = target.getAttribute('data-id');
         viewMode = 'detail';
+        window.scrollTo(0, 0);
         render();
         break;
 
