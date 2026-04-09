@@ -277,8 +277,9 @@
       '<input type="date" class="closed-edit-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="' + iStyle + '"></div>';
 
     // Sale Price
+    var priceDisplay = t.price ? '$' + parseInt(t.price, 10).toLocaleString('en-US') : '';
     html += '<div><label style="' + lStyle + '">Sale Price</label>' +
-      '<input type="number" class="closed-edit-field" data-field="price" value="' + (t.price || '') + '" style="' + iStyle + '"></div>';
+      '<input type="text" class="closed-edit-field" data-field="price" value="' + priceDisplay + '" placeholder="$0" style="' + iStyle + '" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'"></div>';
 
     // Source — dropdown
     html += '<div><label style="' + lStyle + '">Lead Source</label>' +
@@ -377,7 +378,7 @@
         fields.forEach(function (f) {
           var field = f.getAttribute('data-field');
           var val = f.value;
-          if (field === 'price') val = parseFloat(val) || 0;
+          if (field === 'price') val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
           updates[field] = val;
         });
         Data.updateTransaction(editId, updates);
