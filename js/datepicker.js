@@ -17,6 +17,17 @@
       monthSelectorType: 'static',
       animate: true,
       onReady: function(_, __, fp) {
+        // Copy styling from the original input to the altInput so it matches surrounding fields
+        if (fp.altInput && fp.input) {
+          fp.altInput.className = fp.input.className;
+          var origStyle = fp.input.getAttribute('style');
+          if (origStyle) fp.altInput.setAttribute('style', origStyle);
+          // Copy focus/blur handlers for border-color transitions
+          var origFocus = fp.input.getAttribute('onfocus');
+          var origBlur = fp.input.getAttribute('onblur');
+          if (origFocus) fp.altInput.setAttribute('onfocus', origFocus);
+          if (origBlur) fp.altInput.setAttribute('onblur', origBlur);
+        }
         // Add close button for better UX
         var btn = document.createElement('button');
         btn.type = 'button';
