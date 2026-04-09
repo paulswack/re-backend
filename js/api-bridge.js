@@ -151,6 +151,31 @@ var ApiBridge = (function () {
               }
             }
             if (migrated) localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
+
+            // Pass 3: pull server-side listing_parties into reb_lst_parties
+            // This is the source of truth — overwrites local data for any listing
+            // that has server-stored parties, ensuring all users see the same info
+            fresh.forEach(function (l) {
+              if (l.listing_parties && l.listing_parties.length > 0) {
+                var sellers = l.listing_parties
+                  .filter(function (p) { return p.party_type === 'seller'; })
+                  .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
+                  .map(function (p) {
+                    return {
+                      name: p.name || '',
+                      phone: p.phone || '',
+                      email: p.email || '',
+                      relationship: (p.metadata && p.metadata.relationship) || 'Primary'
+                    };
+                  });
+                if (sellers.length > 0) {
+                  if (!lstParties[l.id]) lstParties[l.id] = { sellers: [], contacts: {} };
+                  lstParties[l.id].sellers = sellers;
+                  migrated = true;
+                }
+              }
+            });
+            localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
           } catch (e) {}
           localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(fresh)));
         });

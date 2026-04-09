@@ -444,6 +444,18 @@
     return result;
   }
 
+  function syncListingParties(listingId, sellers) {
+    if (!isServerMode()) return;
+    var item = listings.getAll().find(function (i) { return i.id === listingId; });
+    var apiId = (item && item.server_id) || listingId;
+    var parties = (sellers || [])
+      .filter(function (s) { return s.name || s.phone || s.email; })
+      .map(function (s, i) {
+        return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
+      });
+    API.updateListing(apiId, { parties: parties }).catch(function (err) { console.error('Sync listing parties error:', err); });
+  }
+
   function serverDeleteListing(id) {
     var item = listings.getAll().find(function (i) { return i.id === id; });
     var apiId = (item && item.server_id) || id;
@@ -463,10 +475,11 @@
     deleteTransaction:  serverDeleteTransaction,
 
     // Listings — synced to server
-    getListings:    listings.getAll,
-    addListing:     serverAddListing,
-    updateListing:  serverUpdateListing,
-    deleteListing:  serverDeleteListing,
+    getListings:        listings.getAll,
+    addListing:         serverAddListing,
+    updateListing:      serverUpdateListing,
+    deleteListing:      serverDeleteListing,
+    syncListingParties: syncListingParties,
 
     // Tasks (local only for now)
     getTasks:    tasks.getAll,

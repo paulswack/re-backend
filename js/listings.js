@@ -1289,6 +1289,7 @@
       });
       allP[selectedListingId].sellers = sellers;
       saveParties(allP);
+      Data.syncListingParties(selectedListingId, sellers);
       showToast('Saved');
     }
 
@@ -1586,6 +1587,7 @@
         // Clean up old format keys
         delete fLstParties[fListingId].seller;
         saveParties(fLstParties);
+        Data.syncListingParties(fListingId, fSellers);
 
         // Auto-apply listing checklist template if not already set
         var _existingCl = getDealChecklists()[fListingId];
