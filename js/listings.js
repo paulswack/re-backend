@@ -1023,6 +1023,45 @@
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
 
+    // Seller Info Card
+    var detailParties = getParties();
+    var rawDetailP = detailParties[selectedListingId] || {};
+    var detailP = migratePartyData(rawDetailP);
+    var detailSellers = detailP.sellers.filter(function (s) { return s.name || s.phone || s.email; });
+    if (detailSellers.length > 0) {
+      html += '<div class="parties-card" style="margin-bottom:20px">';
+      html += '<div class="parties-card-header" style="display:flex;align-items:center;gap:10px;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1)">';
+      html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+      html += '<span style="color:#BE185D">Seller / Owner Info</span>';
+      html += '</div>';
+      html += '<div style="padding:16px 20px">';
+      detailSellers.forEach(function (s, idx) {
+        if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin-top:14px;padding-top:14px"></div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">';
+        html += '<div style="flex:1;min-width:140px">';
+        html += '<div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Name</div>';
+        html += '<div style="font-size:.92rem;font-weight:700;color:var(--gray-800)">' + escapeHtml(s.name || '—') + '</div>';
+        if (s.relationship && s.relationship !== 'Primary') {
+          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">' + escapeHtml(s.relationship) + '</div>';
+        }
+        html += '</div>';
+        if (s.phone) {
+          html += '<div style="flex:1;min-width:130px">';
+          html += '<div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Phone</div>';
+          html += '<a href="tel:' + escapeHtml(s.phone) + '" style="font-size:.92rem;font-weight:600;color:var(--indigo);text-decoration:none">' + escapeHtml(s.phone) + '</a>';
+          html += '</div>';
+        }
+        if (s.email) {
+          html += '<div style="flex:1;min-width:160px">';
+          html += '<div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Email</div>';
+          html += '<a href="mailto:' + escapeHtml(s.email) + '" style="font-size:.92rem;font-weight:600;color:var(--indigo);text-decoration:none">' + escapeHtml(s.email) + '</a>';
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div>';
+    }
 
     // Linked Tasks (read-only display)
     if (tasks.length > 0) {
