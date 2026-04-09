@@ -427,10 +427,12 @@
       });
     });
 
-    // Check deadline notifications on page load
-    if (typeof checkDeadlineNotifications === 'function') {
-      checkDeadlineNotifications();
-    }
+    // Check deadline notifications after data has loaded
+    setTimeout(function() {
+      if (typeof checkDeadlineNotifications === 'function') {
+        checkDeadlineNotifications();
+      }
+    }, 3000);
   }
 
   // ---- Settings dropdown ----
