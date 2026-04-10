@@ -34,6 +34,17 @@ router.post('/toggle', requireAuth, async (req, res) => {
     const { user_id, activity_id, period_type, period_key } = req.body;
     const targetUserId = user_id || req.user.userId;
 
+    // If toggling for another user, verify they belong to the same team
+    if (targetUserId !== req.user.userId) {
+      const { data: teamCheck } = await getSupabase()
+        .from('users')
+        .select('id')
+        .eq('id', targetUserId)
+        .eq('team_id', req.user.teamId)
+        .single();
+      if (!teamCheck) return res.status(403).json({ error: 'Access denied' });
+    }
+
     // Check if exists
     const { data: existing } = await getSupabase()
       .from('marketing_activities')

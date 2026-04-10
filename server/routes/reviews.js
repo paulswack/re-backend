@@ -95,10 +95,27 @@ router.delete('/requests/:id', requireAuth, async (req, res) => {
 // REVIEW SCORES
 // ==========================================
 
+// Helper: verify a user_id belongs to the requesting user's team
+async function verifyTeamMember(supabase, userId, teamId) {
+  const { data } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', userId)
+    .eq('team_id', teamId)
+    .single();
+  return !!data;
+}
+
 // GET /api/reviews/scores — get scores for a user
 router.get('/scores', requireAuth, async (req, res) => {
   try {
     const userId = req.query.user_id || req.user.userId;
+
+    // Ensure target user belongs to the same team
+    if (userId !== req.user.userId) {
+      const ok = await verifyTeamMember(getSupabase(), userId, req.user.teamId);
+      if (!ok) return res.status(403).json({ error: 'Access denied' });
+    }
 
     const { data, error } = await getSupabase()
       .from('review_scores')
@@ -119,6 +136,12 @@ router.post('/scores', requireAuth, async (req, res) => {
   try {
     const { user_id, platform, review_count, avg_rating, goal } = req.body;
     const targetUserId = user_id || req.user.userId;
+
+    // Ensure target user belongs to the same team
+    if (targetUserId !== req.user.userId) {
+      const ok = await verifyTeamMember(getSupabase(), targetUserId, req.user.teamId);
+      if (!ok) return res.status(403).json({ error: 'Access denied' });
+    }
 
     const { data, error } = await getSupabase()
       .from('review_scores')
@@ -144,6 +167,18 @@ router.post('/scores', requireAuth, async (req, res) => {
 // DELETE /api/reviews/scores/:id
 router.delete('/scores/:id', requireAuth, async (req, res) => {
   try {
+    // Fetch record first to verify it belongs to a user on this team
+    const { data: score } = await getSupabase()
+      .from('review_scores')
+      .select('user_id')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!score) return res.status(404).json({ error: 'Not found' });
+
+    const ok = await verifyTeamMember(getSupabase(), score.user_id, req.user.teamId);
+    if (!ok) return res.status(403).json({ error: 'Access denied' });
+
     const { error } = await getSupabase()
       .from('review_scores')
       .delete()
@@ -166,6 +201,12 @@ router.get('/links', requireAuth, async (req, res) => {
   try {
     const userId = req.query.user_id || req.user.userId;
 
+    // Ensure target user belongs to the same team
+    if (userId !== req.user.userId) {
+      const ok = await verifyTeamMember(getSupabase(), userId, req.user.teamId);
+      if (!ok) return res.status(403).json({ error: 'Access denied' });
+    }
+
     const { data, error } = await getSupabase()
       .from('review_links')
       .select('*')
@@ -185,6 +226,12 @@ router.post('/links', requireAuth, async (req, res) => {
   try {
     const { user_id, platform, url, is_default } = req.body;
     const targetUserId = user_id || req.user.userId;
+
+    // Ensure target user belongs to the same team
+    if (targetUserId !== req.user.userId) {
+      const ok = await verifyTeamMember(getSupabase(), targetUserId, req.user.teamId);
+      if (!ok) return res.status(403).json({ error: 'Access denied' });
+    }
 
     const { data, error } = await getSupabase()
       .from('review_links')
@@ -208,6 +255,18 @@ router.post('/links', requireAuth, async (req, res) => {
 // DELETE /api/reviews/links/:id
 router.delete('/links/:id', requireAuth, async (req, res) => {
   try {
+    // Fetch record first to verify it belongs to a user on this team
+    const { data: link } = await getSupabase()
+      .from('review_links')
+      .select('user_id')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!link) return res.status(404).json({ error: 'Not found' });
+
+    const ok = await verifyTeamMember(getSupabase(), link.user_id, req.user.teamId);
+    if (!ok) return res.status(403).json({ error: 'Access denied' });
+
     const { error } = await getSupabase()
       .from('review_links')
       .delete()

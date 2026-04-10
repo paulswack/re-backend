@@ -88,10 +88,24 @@ router.post('/', requireAuth, requireLead, async (req, res) => {
 // PUT /api/users/:id
 router.put('/:id', requireAuth, async (req, res) => {
   try {
+    const isPrivileged = req.user.role === 'Team Lead' || req.user.role === 'Admin';
+    const isSelf = req.params.id === req.user.userId;
+
+    // Agents can only update their own profile
+    if (!isSelf && !isPrivileged) {
+      return res.status(403).json({ error: 'You can only update your own profile' });
+    }
+
     const fields = { ...req.body };
     delete fields.id;
     delete fields.team_id;
     delete fields.password_hash;
+
+    // Non-privileged users cannot change their own role or active status
+    if (!isPrivileged) {
+      delete fields.role;
+      delete fields.is_active;
+    }
 
     // If password is being changed, hash it
     if (fields.password) {
