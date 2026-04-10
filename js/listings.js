@@ -605,11 +605,11 @@
   //  LIST VIEW
   // ============================================================
   function renderList() {
-    // Silently refresh listings from server so all users always see latest data
+    // Silently refresh listings from server so all users always see latest data.
+    // Call renderListRows (not render/renderList) to avoid re-triggering refreshListings.
     if (typeof ApiBridge !== 'undefined' && ApiBridge.refreshListings) {
       ApiBridge.refreshListings().then(function () {
-        // Re-render only if still on list view (don't interrupt navigation)
-        if (viewMode === 'list') render();
+        if (viewMode === 'list') renderListRows();
       });
     }
     var listings = Data.getListings();

@@ -532,9 +532,11 @@ var ApiBridge = (function () {
     });
   }
 
+  var _refreshActive = false;
   // Lightweight re-fetch of just listings + parties — call when listing list view opens
   function refreshListings() {
-    if (!isServerMode()) return Promise.resolve();
+    if (!isServerMode() || _refreshActive) return Promise.resolve();
+    _refreshActive = true;
     var uuidRe2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return API.getListings().then(function (d) {
       try {
@@ -565,7 +567,8 @@ var ApiBridge = (function () {
         var combined = localOnly.length > 0 ? serverMapped.concat(localOnly) : serverMapped;
         localStorage.setItem(PREFIX + 'listings', JSON.stringify(combined));
       } catch (e) {}
-    }).catch(function () {});
+      _refreshActive = false;
+    }).catch(function () { _refreshActive = false; });
   }
 
   return {
