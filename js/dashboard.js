@@ -461,7 +461,7 @@
     if (isMobile) {
       // Mobile: single flat column, top5 and goals pinned first, rest follow layout order
       var allWidgetIds = layout.col1.concat(layout.col2).concat(layout.col3);
-      var mobileFirst = ['top5', 'goals'];
+      var mobileFirst = ['top5', 'goals', 'volumeSummary'];
       var mobileRest = allWidgetIds.filter(function(id) { return mobileFirst.indexOf(id) === -1; });
       var mobileOrder = mobileFirst.concat(mobileRest);
       h += '<div class="dash-col" data-col="0">';
