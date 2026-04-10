@@ -114,6 +114,8 @@ var ApiBridge = (function () {
         return Promise.all(pushPromises).then(function () {
           return localOnly.length > 0 ? API.getListings() : Promise.resolve(d);
         }).then(function (fresh) {
+          // freshMapped declared here so it's accessible both inside and after the try block
+          var freshMapped = mapListings(fresh);
           // Migrate listing parties from old local IDs to server UUIDs
           try {
             var lstParties = JSON.parse(localStorage.getItem(PREFIX + 'lst_parties') || '{}');
@@ -131,7 +133,6 @@ var ApiBridge = (function () {
             // assign it to the most recently created listing that has no party data yet
             // (local IDs are base36 timestamps; server IDs are UUIDs with 4+ hyphens)
             var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            var freshMapped = mapListings(fresh);
             var freshIdSet = {};
             freshMapped.forEach(function (l) { freshIdSet[l.id] = true; });
             var orphanedKeys = Object.keys(lstParties).filter(function (k) {
@@ -191,7 +192,19 @@ var ApiBridge = (function () {
               }
             });
           } catch (e) {}
-          localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(fresh)));
+          localStorage.setItem(PREFIX + 'listings', JSON.stringify(freshMapped));
+          // Re-preserve any localOnly listings that failed to push to server.
+          // A failed push means the listing is not in freshMapped — it would be
+          // wiped from localStorage above. Add those items back so they survive
+          // the refresh and get retried on the next loadAll.
+          var pushedLocalIds = {};
+          Object.keys(serverToLocalId).forEach(function (sid) { pushedLocalIds[serverToLocalId[sid]] = true; });
+          var failedLocal = localOnly.filter(function (l) { return !pushedLocalIds[l.id]; });
+          if (failedLocal.length > 0) {
+            var currentLst = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
+            failedLocal.forEach(function (l) { currentLst.push(l); });
+            localStorage.setItem(PREFIX + 'listings', JSON.stringify(currentLst));
+          }
         });
       }).catch(function () {}),
       API.getSettings().then(function (d) { if (d) localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(d)); }).catch(function () {}),
