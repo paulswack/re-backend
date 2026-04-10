@@ -67,7 +67,7 @@ router.post('/', requireAuth, async (req, res) => {
     res.status(201).json(data);
   } catch (err) {
     console.error('POST listing error:', err);
-    res.status(500).json({ error: 'Failed to create listing' });
+    res.status(500).json({ error: 'Failed to create listing', detail: err.message || err.code || String(err) });
   }
 });
 

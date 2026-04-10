@@ -406,7 +406,7 @@
         agent_name: item.agent, agent_id: item.agentId || null,
         beds: item.beds, baths: item.baths, sqft: item.sqft,
         description: item.description, source: item.source,
-        listing_date: item.listingDate, property_type: item.propertyType || '', metadata: {},
+        listing_date: item.listingDate, property_type: item.propertyType || '',
         parties: partyRows.length > 0 ? partyRows : undefined
       }).then(function (serverItem) {
         var items = getCollection('listings');
@@ -427,7 +427,8 @@
       }).catch(function (err) {
         console.error('Sync add listing error:', err);
         if (typeof showToast === 'function') {
-          showToast('Warning: listing saved locally but failed to sync to server. Try logging out and back in.', 'error');
+          var detail = (err && (err.detail || err.error || err.message)) ? ' (' + (err.detail || err.error || err.message) + ')' : '';
+          showToast('Listing saved locally but failed to sync to server' + detail, 'error');
         }
       });
     }
