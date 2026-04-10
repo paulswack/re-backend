@@ -769,9 +769,11 @@
         if (l.baths) specsText.push(l.baths + ' ba');
         if (l.sqft) specsText.push(Number(l.sqft).toLocaleString() + ' sqft');
 
+        var addrSub = [l.city, l.state, l.zip].filter(Boolean).join(', ');
         return '<div class="list-row" data-action="open-detail" data-id="' + l.id + '">' +
           '<div class="lst-row-address">' +
             '<div class="lst-row-address-text">' + escapeHtml(l.address) + '</div>' +
+            (addrSub ? '<div style="font-size:.75rem;color:var(--gray-400);margin-top:1px">' + escapeHtml(addrSub) + '</div>' : '') +
           '</div>' +
           '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
           '<div class="lst-row-agent">' +
@@ -863,7 +865,8 @@
 
         return (
           '<div class="list-row" data-action="open-detail" data-id="' + l.id + '" style="border-bottom:none">' +
-            '<div class="lst-row-address"><div class="lst-row-address-text">' + escapeHtml(l.address) + '</div></div>' +
+            '<div class="lst-row-address"><div class="lst-row-address-text">' + escapeHtml(l.address) + '</div>' +
+            (addrSub ? '<div style="font-size:.75rem;color:var(--gray-400);margin-top:1px">' + escapeHtml(addrSub) + '</div>' : '') + '</div>' +
             '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
             '<div class="lst-row-agent">' +
               '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(l.agent) + '</div>' +
@@ -965,7 +968,12 @@
     html += '<div class="detail-header-top">';
     html += '<div style="flex:1;min-width:0">' +
       '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
-      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:2px;' + inpStyle + '" ' +
+      '<div style="display:flex;gap:6px;margin-top:3px">' +
+        '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="font-size:.85rem;color:var(--gray-600);flex:2;' + inpStyle + '" ' + inpFocus + '>' +
+        '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="font-size:.85rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>' +
+        '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="font-size:.85rem;color:var(--gray-600);flex:1;' + inpStyle + '" ' + inpFocus + '>' +
+      '</div>' +
+      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:4px;' + inpStyle + '" ' +
         'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
         'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
     '</div>';
@@ -1047,9 +1055,12 @@
     var rawDetailP = detailParties[selectedListingId] || {};
     var detailP = migratePartyData(rawDetailP);
     var detailSellers = detailP.sellers.length ? detailP.sellers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
-    // Auto-push local seller data to server every time detail is opened so all users see it
+    // Only push seller data if this is a local (unsynced) listing — server listings already
+    // have authoritative party data. Pushing from multiple browsers simultaneously causes
+    // a DELETE+INSERT race that duplicates records.
+    var _detailUuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     var _localSellersToSync = detailP.sellers.filter(function (s) { return s.name || s.phone || s.email; });
-    if (_localSellersToSync.length > 0) {
+    if (_localSellersToSync.length > 0 && !_detailUuidRe.test(selectedListingId)) {
       Data.syncListingParties(selectedListingId, _localSellersToSync);
     }
     var siInp = 'border:1.5px solid transparent;border-radius:6px;padding:5px 8px;font-family:inherit;font-size:.88rem;width:100%;background:transparent;transition:all .15s;';
