@@ -604,11 +604,14 @@ var ApiBridge = (function () {
     if (!isServerMode()) return Promise.resolve();
     interceptWrites();
     return loadAll().then(function () {
-      // Also load settings-stored data
+      // Load settings-stored data under _syncing guard so the writes don't
+      // trigger interceptWrites() and immediately push back to the server.
+      _syncing = true;
       try {
         var settings = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
         loadSettingsData(settings);
       } catch (e) {}
+      _syncing = false;
     });
   }
 
