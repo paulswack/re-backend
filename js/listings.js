@@ -593,6 +593,13 @@
   //  LIST VIEW
   // ============================================================
   function renderList() {
+    // Silently refresh listings from server so all users always see latest data
+    if (typeof ApiBridge !== 'undefined' && ApiBridge.refreshListings) {
+      ApiBridge.refreshListings().then(function () {
+        // Re-render only if still on list view (don't interrupt navigation)
+        if (viewMode === 'list') render();
+      });
+    }
     var listings = Data.getListings();
 
     // Build stats

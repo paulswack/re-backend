@@ -518,9 +518,36 @@ var ApiBridge = (function () {
     });
   }
 
+  // Lightweight re-fetch of just listings + parties — call when listing list view opens
+  function refreshListings() {
+    if (!isServerMode()) return Promise.resolve();
+    return API.getListings().then(function (d) {
+      try {
+        var lstParties = JSON.parse(localStorage.getItem(PREFIX + 'lst_parties') || '{}');
+        d.forEach(function (l) {
+          if (l.listing_parties && l.listing_parties.length > 0) {
+            var sellers = l.listing_parties
+              .filter(function (p) { return p.party_type === 'seller'; })
+              .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
+              .map(function (p) {
+                return { name: p.name || '', phone: p.phone || '', email: p.email || '', relationship: (p.metadata && p.metadata.relationship) || 'Primary' };
+              });
+            if (sellers.length > 0) {
+              if (!lstParties[l.id]) lstParties[l.id] = { sellers: [], contacts: {} };
+              lstParties[l.id].sellers = sellers;
+            }
+          }
+        });
+        localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
+        localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(d)));
+      } catch (e) {}
+    }).catch(function () {});
+  }
+
   return {
     init: init,
     loadAll: loadAll,
-    isServerMode: isServerMode
+    isServerMode: isServerMode,
+    refreshListings: refreshListings
   };
 })();
