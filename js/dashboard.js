@@ -456,17 +456,32 @@
 
     h += '<div class="dash-grid" id="dashGrid">';
 
-    // Render columns based on layout
-    var colKeys = ['col1', 'col2', 'col3'];
-    colKeys.forEach(function (colKey, colIdx) {
-      h += '<div class="dash-col" data-col="' + colIdx + '">';
-      layout[colKey].forEach(function (widgetId) {
-        if (WIDGETS[widgetId]) {
-          h += WIDGETS[widgetId]();
-        }
+    var isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      // Mobile: single flat column, top5 and goals pinned first, rest follow layout order
+      var allWidgetIds = layout.col1.concat(layout.col2).concat(layout.col3);
+      var mobileFirst = ['top5', 'goals'];
+      var mobileRest = allWidgetIds.filter(function(id) { return mobileFirst.indexOf(id) === -1; });
+      var mobileOrder = mobileFirst.concat(mobileRest);
+      h += '<div class="dash-col" data-col="0">';
+      mobileOrder.forEach(function(widgetId) {
+        if (WIDGETS[widgetId]) h += WIDGETS[widgetId]();
       });
       h += '</div>';
-    });
+    } else {
+      // Desktop: render 3-column layout
+      var colKeys = ['col1', 'col2', 'col3'];
+      colKeys.forEach(function (colKey, colIdx) {
+        h += '<div class="dash-col" data-col="' + colIdx + '">';
+        layout[colKey].forEach(function (widgetId) {
+          if (WIDGETS[widgetId]) {
+            h += WIDGETS[widgetId]();
+          }
+        });
+        h += '</div>';
+      });
+    }
 
     h += '</div>'; // grid
 
