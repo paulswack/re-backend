@@ -103,7 +103,7 @@ var ApiBridge = (function () {
           return API.createListing({
             address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
             status: l.status || 'active', price: l.price || 0,
-            agent_name: l.agent || '', agent_id: l.agentId || null,
+            agent_name: l.agent || '',
             beds: l.beds || null, baths: l.baths || null, sqft: l.sqft || null,
             source: l.source || '', listing_date: l.listingDate || null,
             property_type: l.propertyType || '', description: l.description || ''

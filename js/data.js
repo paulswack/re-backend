@@ -403,7 +403,7 @@
       API.createListing({
         address: item.address, city: item.city || '', state: item.state || '', zip: item.zip || '',
         status: item.status, price: item.price,
-        agent_name: item.agent, agent_id: item.agentId || null,
+        agent_name: item.agent,
         beds: item.beds, baths: item.baths, sqft: item.sqft,
         description: item.description, source: item.source,
         listing_date: item.listingDate, property_type: item.propertyType || '',
@@ -448,7 +448,6 @@
       if (updates.status !== undefined) mapped.status = updates.status;
       if (updates.price !== undefined) mapped.price = updates.price;
       if (updates.agent !== undefined) mapped.agent_name = updates.agent;
-      if (updates.agentId !== undefined) mapped.agent_id = updates.agentId || null;
       if (updates.beds !== undefined) mapped.beds = updates.beds;
       if (updates.baths !== undefined) mapped.baths = updates.baths;
       if (updates.sqft !== undefined) mapped.sqft = updates.sqft;
