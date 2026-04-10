@@ -103,9 +103,17 @@ router.put('/:id', requireAuth, async (req, res) => {
     }
 
     if (parties) {
+      // Deduplicate by name+phone+email before inserting to prevent race-condition duplicates
+      const seen = new Set();
+      const dedupedParties = parties.filter(p => {
+        const key = `${p.party_type}|${(p.name||'').trim().toLowerCase()}|${(p.phone||'').trim()}|${(p.email||'').trim()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       await getSupabase().from('listing_parties').delete().eq('listing_id', req.params.id);
-      if (parties.length > 0) {
-        const partyRows = parties.map(p => ({ ...p, listing_id: req.params.id }));
+      if (dedupedParties.length > 0) {
+        const partyRows = dedupedParties.map(p => ({ ...p, listing_id: req.params.id }));
         await getSupabase().from('listing_parties').insert(partyRows);
       }
     }

@@ -159,6 +159,7 @@ var ApiBridge = (function () {
             // that has server-stored parties, ensuring all users see the same info
             fresh.forEach(function (l) {
               if (l.listing_parties && l.listing_parties.length > 0) {
+                var seenKeys = {};
                 var sellers = l.listing_parties
                   .filter(function (p) { return p.party_type === 'seller'; })
                   .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
@@ -169,6 +170,12 @@ var ApiBridge = (function () {
                       email: p.email || '',
                       relationship: (p.metadata && p.metadata.relationship) || 'Primary'
                     };
+                  })
+                  .filter(function (s) {
+                    var k = (s.name + '|' + s.phone + '|' + s.email).toLowerCase();
+                    if (seenKeys[k]) return false;
+                    seenKeys[k] = true;
+                    return true;
                   });
                 if (sellers.length > 0) {
                   if (!lstParties[l.id]) lstParties[l.id] = { sellers: [], contacts: {} };
@@ -543,11 +550,18 @@ var ApiBridge = (function () {
         var lstParties = JSON.parse(localStorage.getItem(PREFIX + 'lst_parties') || '{}');
         d.forEach(function (l) {
           if (l.listing_parties && l.listing_parties.length > 0) {
+            var seenKeys2 = {};
             var sellers = l.listing_parties
               .filter(function (p) { return p.party_type === 'seller'; })
               .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
               .map(function (p) {
                 return { name: p.name || '', phone: p.phone || '', email: p.email || '', relationship: (p.metadata && p.metadata.relationship) || 'Primary' };
+              })
+              .filter(function (s) {
+                var k = (s.name + '|' + s.phone + '|' + s.email).toLowerCase();
+                if (seenKeys2[k]) return false;
+                seenKeys2[k] = true;
+                return true;
               });
             if (sellers.length > 0) {
               if (!lstParties[l.id]) lstParties[l.id] = { sellers: [], contacts: {} };
