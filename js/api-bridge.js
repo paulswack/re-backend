@@ -500,6 +500,66 @@ var ApiBridge = (function () {
           try { API.updateSettings({ _notifications: JSON.parse(value) }).catch(function () {}); } catch (e) {}
         }, 2000);
       }
+
+      // Transaction notes
+      if (key === PREFIX + 'txn_notes') {
+        debounceSync('txn_notes', function () {
+          try { API.updateSettings({ _txn_notes: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 1000);
+      }
+
+      // Transaction key dates (deadlines)
+      if (key === PREFIX + 'txn_key_dates') {
+        debounceSync('txn_key_dates', function () {
+          try { API.updateSettings({ _txn_key_dates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 1000);
+      }
+
+      // Calendar events
+      if (key === PREFIX + 'calendar_events') {
+        debounceSync('calendar_events', function () {
+          try { API.updateSettings({ _calendar_events: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 2000);
+      }
+
+      // Listing notes
+      if (key === PREFIX + 'listing_notes') {
+        debounceSync('listing_notes', function () {
+          try { API.updateSettings({ _listing_notes: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 1000);
+      }
+
+      // Notification config (team-wide settings)
+      if (key === PREFIX + 'notif_config') {
+        debounceSync('notif_config', function () {
+          try { API.updateSettings({ _notif_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 2000);
+      }
+
+      // Notification sent log (prevents duplicate emails across devices)
+      if (key === PREFIX + 'notif_sent') {
+        debounceSync('notif_sent', function () {
+          try { API.updateSettings({ _notif_sent: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 2000);
+      }
+
+      // Tax settings (per-user — stored as { username: settings } on server)
+      if (key === PREFIX + 'tax_settings') {
+        debounceSync('tax_settings', function () {
+          try {
+            var sess = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}');
+            var uname = sess.username || (API.getUser() && API.getUser().username);
+            if (!uname) return;
+            var existing = {};
+            try {
+              var adminSettings = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
+              existing = adminSettings._tax_settings || {};
+            } catch (e) {}
+            existing[uname] = JSON.parse(value);
+            API.updateSettings({ _tax_settings: existing }).catch(function () {});
+          } catch (e) {}
+        }, 2000);
+      }
     };
   }
 
@@ -514,7 +574,10 @@ var ApiBridge = (function () {
       '_deal_checklists:deal_checklists', '_txn_updates:txn_updates', '_lst_updates:lst_updates',
       '_txn_parties:txn_parties', '_lst_parties:lst_parties', '_portal_links:portal_links',
       '_portal_config:portal_config', '_marketing_config:marketing_config',
-      '_profiles:profiles', '_notifications:notifications'
+      '_profiles:profiles', '_notifications:notifications',
+      '_txn_notes:txn_notes', '_txn_key_dates:txn_key_dates',
+      '_calendar_events:calendar_events', '_listing_notes:listing_notes',
+      '_notif_config:notif_config', '_notif_sent:notif_sent'
     ];
     keys.forEach(function (k) {
       var parts = k.split(':');
@@ -524,6 +587,16 @@ var ApiBridge = (function () {
         localStorage.setItem(PREFIX + localKey, JSON.stringify(settings[settingsKey]));
       }
     });
+    // Tax settings are per-user — stored as { username: settings } on server
+    if (settings._tax_settings) {
+      try {
+        var sess = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}');
+        var uname = sess.username || (API.getUser() && API.getUser().username);
+        if (uname && settings._tax_settings[uname]) {
+          localStorage.setItem(PREFIX + 'tax_settings', JSON.stringify(settings._tax_settings[uname]));
+        }
+      } catch (e) {}
+    }
   }
 
   // ---- Initialize ----
