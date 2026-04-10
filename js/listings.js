@@ -209,8 +209,9 @@
     var opts = '<option value="">Select agent...</option>';
     users.forEach(function (u) {
       var name = u.displayName || u.username;
-      var sel = (name === selectedVal) ? ' selected' : '';
-      opts += '<option value="' + escapeHtml(name) + '"' + sel + '>' + escapeHtml(name) + '</option>';
+      // selectedVal may be a UUID (server listing) or display name (local listing) — match both
+      var sel = (u.id === selectedVal || name === selectedVal) ? ' selected' : '';
+      opts += '<option value="' + escapeHtml(u.id) + '" data-name="' + escapeHtml(name) + '"' + sel + '>' + escapeHtml(name) + '</option>';
     });
     selectEl.innerHTML = opts;
   }
@@ -484,7 +485,12 @@
     html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Property Information</span></div>';
     html += '<div style="padding:20px 24px">';
 
-    html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(l ? l.address : '') + '" placeholder="123 Main St, City, ST 12345" style="font-size:1rem;padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(l ? l.address : '') + '" placeholder="123 Main St" style="font-size:1rem;padding:12px 16px"></div>';
+    html += '<div class="form-row" style="grid-template-columns:2fr 1fr 1fr">';
+    html += '<div class="form-group"><label>City</label><input type="text" id="fCity" value="' + escapeHtml(l ? l.city || '' : '') + '" placeholder="Santa Barbara" style="padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>State</label><input type="text" id="fState" value="' + escapeHtml(l ? l.state || '' : '') + '" placeholder="CA" maxlength="2" style="padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Zip</label><input type="text" id="fZip" value="' + escapeHtml(l ? l.zip || '' : '') + '" placeholder="93101" maxlength="10" style="padding:12px 16px"></div>';
+    html += '</div>';
 
     var _fPriceVal = (l && l.price) ? '$' + parseFloat(l.price).toLocaleString('en-US') : '';
     html += '<div class="form-group"><label>Price *</label><input type="text" id="fPrice" value="' + _fPriceVal + '" placeholder="$500,000" style="font-size:1rem;padding:12px 16px" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'"></div>';
@@ -496,10 +502,16 @@
     html += '</div>';
 
     var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
-    html += '<div class="form-row" style="grid-template-columns:1fr 1fr">';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' +
       _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
     '</select></div>';
+    html += '<div class="form-group"><label>Property Type</label><select id="fPropertyType" style="padding:12px 16px">';
+    html += '<option value="">Select type...</option>';
+    ['Single Family','Condo','Townhouse','Multi-Family','Land','Commercial','Other'].forEach(function(pt) {
+      html += '<option value="' + pt + '"' + (l && l.propertyType === pt ? ' selected' : '') + '>' + pt + '</option>';
+    });
+    html += '</select></div>';
     html += '<div class="form-group"><label>Listing Date</label><input type="date" id="fDate" value="' + (l ? l.listingDate || '' : '') + '" style="padding:12px 16px"></div>';
     html += '</div>';
     var _lstLeadSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
@@ -586,7 +598,7 @@
     html += '</div>'; // max-width wrapper
 
     pageBody.innerHTML = html;
-    populateAgentSelect(document.getElementById('fAgent'), l ? l.agent || '' : '');
+    populateAgentSelect(document.getElementById('fAgent'), l ? (l.agentId || l.agent || '') : '');
   }
 
   // ============================================================
@@ -1559,13 +1571,23 @@
       case 'form-save':
         var fAddr = (document.getElementById('fAddress') || {}).value.trim();
         var fPrice = ((document.getElementById('fPrice') || {}).value || '').replace(/[^0-9.]/g, '');
-        var fAgent = (document.getElementById('fAgent') || {}).value;
+        var fAgentEl = document.getElementById('fAgent');
+        var fAgentId = fAgentEl ? fAgentEl.value : '';
+        var fAgentName = (fAgentEl && fAgentEl.selectedOptions && fAgentEl.selectedOptions[0])
+          ? (fAgentEl.selectedOptions[0].getAttribute('data-name') || fAgentId)
+          : fAgentId;
+        var fAgent = fAgentName || fAgentId;
         if (!fAddr || !fPrice || !fAgent) { showToast('Please fill in address, price, and agent.', 'error'); break; }
 
         var fData = {
           address: fAddr,
+          city: (document.getElementById('fCity') || {}).value ? (document.getElementById('fCity').value.trim()) : '',
+          state: (document.getElementById('fState') || {}).value ? (document.getElementById('fState').value.trim()) : '',
+          zip: (document.getElementById('fZip') || {}).value ? (document.getElementById('fZip').value.trim()) : '',
           price: parseFloat(fPrice),
-          agent: fAgent,
+          agent: fAgentName,
+          agentId: fAgentId || undefined,
+          propertyType: (document.getElementById('fPropertyType') || {}).value || '',
           beds: (document.getElementById('fBeds') || {}).value ? parseInt(document.getElementById('fBeds').value) : null,
           baths: (document.getElementById('fBaths') || {}).value ? parseFloat(document.getElementById('fBaths').value) : null,
           sqft: (document.getElementById('fSqft') || {}).value ? parseInt(document.getElementById('fSqft').value) : null,

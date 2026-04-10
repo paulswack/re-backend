@@ -29,7 +29,7 @@ var ApiBridge = (function () {
   }
   function mapListings(lsts) {
     return lsts.map(function (l) {
-      return { id: l.id, address: l.address, city: l.city, state: l.state, zip: l.zip, status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id, beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description, source: l.source, listingDate: l.listing_date, propertyType: l.property_type, createdAt: l.created_at };
+      return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '', status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id, beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description, source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '', createdAt: l.created_at };
     });
   }
   function mapAnnouncements(anns) {
@@ -102,7 +102,8 @@ var ApiBridge = (function () {
         var pushPromises = localOnly.map(function (l) {
           return API.createListing({
             address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
-            status: l.status || 'active', price: l.price || 0, agent_name: l.agent || '',
+            status: l.status || 'active', price: l.price || 0,
+            agent_name: l.agent || '', agent_id: l.agentId || null,
             beds: l.beds || null, baths: l.baths || null, sqft: l.sqft || null,
             source: l.source || '', listing_date: l.listingDate || null,
             property_type: l.propertyType || '', description: l.description || ''
@@ -534,6 +535,7 @@ var ApiBridge = (function () {
   // Lightweight re-fetch of just listings + parties — call when listing list view opens
   function refreshListings() {
     if (!isServerMode()) return Promise.resolve();
+    var uuidRe2 = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return API.getListings().then(function (d) {
       try {
         var lstParties = JSON.parse(localStorage.getItem(PREFIX + 'lst_parties') || '{}');
@@ -552,7 +554,16 @@ var ApiBridge = (function () {
           }
         });
         localStorage.setItem(PREFIX + 'lst_parties', JSON.stringify(lstParties));
-        localStorage.setItem(PREFIX + 'listings', JSON.stringify(mapListings(d)));
+        // Merge server listings with any local-only listings that haven't synced yet
+        var serverMapped = mapListings(d);
+        var serverIds = {};
+        serverMapped.forEach(function (l) { serverIds[l.id] = true; });
+        var existing = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
+        var localOnly = existing.filter(function (l) {
+          return !serverIds[l.id] && !serverIds[l.server_id] && !l.server_id && !uuidRe2.test(l.id);
+        });
+        var combined = localOnly.length > 0 ? serverMapped.concat(localOnly) : serverMapped;
+        localStorage.setItem(PREFIX + 'listings', JSON.stringify(combined));
       } catch (e) {}
     }).catch(function () {});
   }

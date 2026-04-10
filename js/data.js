@@ -401,11 +401,12 @@
           return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
         });
       API.createListing({
-        address: item.address, city: item.city, state: item.state, zip: item.zip,
-        status: item.status, price: item.price, agent_name: item.agent,
+        address: item.address, city: item.city || '', state: item.state || '', zip: item.zip || '',
+        status: item.status, price: item.price,
+        agent_name: item.agent, agent_id: item.agentId || null,
         beds: item.beds, baths: item.baths, sqft: item.sqft,
         description: item.description, source: item.source,
-        listing_date: item.listingDate, property_type: item.propertyType, metadata: {},
+        listing_date: item.listingDate, property_type: item.propertyType || '', metadata: {},
         parties: partyRows.length > 0 ? partyRows : undefined
       }).then(function (serverItem) {
         var items = getCollection('listings');
@@ -423,7 +424,12 @@
             }
           } catch (e) {}
         }
-      }).catch(function (err) { console.error('Sync add listing error:', err); });
+      }).catch(function (err) {
+        console.error('Sync add listing error:', err);
+        if (typeof showToast === 'function') {
+          showToast('Warning: listing saved locally but failed to sync to server. Try logging out and back in.', 'error');
+        }
+      });
     }
     return result;
   }
@@ -435,9 +441,13 @@
       var apiId = (item && item.server_id) || id;
       var mapped = {};
       if (updates.address !== undefined) mapped.address = updates.address;
+      if (updates.city !== undefined) mapped.city = updates.city;
+      if (updates.state !== undefined) mapped.state = updates.state;
+      if (updates.zip !== undefined) mapped.zip = updates.zip;
       if (updates.status !== undefined) mapped.status = updates.status;
       if (updates.price !== undefined) mapped.price = updates.price;
       if (updates.agent !== undefined) mapped.agent_name = updates.agent;
+      if (updates.agentId !== undefined) mapped.agent_id = updates.agentId || null;
       if (updates.beds !== undefined) mapped.beds = updates.beds;
       if (updates.baths !== undefined) mapped.baths = updates.baths;
       if (updates.sqft !== undefined) mapped.sqft = updates.sqft;
