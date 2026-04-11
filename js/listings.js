@@ -1138,10 +1138,9 @@
         });
       }
 
-      var today = new Date(); today.setHours(0,0,0,0);
       html += '<div id="clItemList" style="padding:4px 20px 4px">';
       clSorted.forEach(function (item) {
-        var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < today;
+        var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
         html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
         // Drag handle
         html += '<div class="cl-drag" title="Drag to reorder" style="cursor:grab;color:var(--gray-300);font-size:1.1rem;flex-shrink:0;line-height:1;padding:0 2px;user-select:none">&#8801;</div>';
@@ -1151,7 +1150,7 @@
         html += '<div style="flex:1;min-width:0">';
         html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3">' + escapeHtml(item.label) + '</div>';
         html += '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
-        html += '<input type="date" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" title="Due date" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:2px 6px;font-size:.72rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-400)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + ';flex-shrink:0">';
+        html += '<input type="text" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Date &amp; time" title="Due date &amp; time" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:2px 6px;font-size:.72rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-400)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + ';flex-shrink:0;width:160px;cursor:pointer">';
         html += '<input type="text" data-action="set-checklist-note" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add a note..." style="border:1.5px solid var(--gray-200);border-radius:6px;padding:2px 7px;font-size:.72rem;color:var(--gray-500);background:var(--white);min-width:80px;flex:1">';
         if (item.completed && item.completedBy) {
           html += '<span style="font-size:.72rem;color:var(--gray-400);white-space:nowrap">Done by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</span>';
@@ -1242,6 +1241,7 @@
     pageBody.innerHTML = html;
 
     initChecklistDrag();
+    initChecklistPickers();
 
     // Show/hide detail textarea based on milestone selection
     var milestoneSelect = document.getElementById('updateMilestone');
@@ -1880,6 +1880,41 @@
       }, 600);
     }
   });
+
+  // Checklist date+time pickers (custom flatpickr — day of week + time)
+  function initChecklistPickers() {
+    if (typeof flatpickr === 'undefined') return;
+    document.querySelectorAll('[data-action="set-checklist-date"]').forEach(function (input) {
+      if (input._flatpickr) return;
+      flatpickr(input, {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        altInput: true,
+        altFormat: 'D, M j, Y h:iK',
+        allowInput: false,
+        disableMobile: false,
+        minuteIncrement: 15,
+        monthSelectorType: 'static',
+        onReady: function (_, __, fp) {
+          if (fp.altInput) {
+            fp.altInput.style.cssText = fp.input.getAttribute('style') || '';
+            fp.altInput.setAttribute('data-action', 'set-checklist-date');
+          }
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'Done';
+          btn.style.cssText = 'display:block;width:calc(100% - 24px);margin:8px 12px 4px;padding:8px;background:var(--indigo,#6366F1);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit';
+          btn.addEventListener('click', function () { fp.close(); });
+          fp.calendarContainer.appendChild(btn);
+        },
+        onChange: function (selectedDates, dateStr) {
+          // Fire change event on original input so the save handler picks it up
+          var ev = new Event('change', { bubbles: true });
+          this.element.dispatchEvent(ev);
+        }
+      });
+    });
+  }
 
   // Checklist drag-and-drop reordering
   function initChecklistDrag() {
