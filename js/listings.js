@@ -1125,17 +1125,39 @@
       html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
       html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
       html += '</div></div>';
-      html += '<div style="padding:12px 20px">';
-      lstChecklist.items.forEach(function (item, idx) {
-        html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '" style="margin-top:3px;cursor:pointer;width:16px;height:16px;accent-color:var(--emerald)">';
+
+      // Sort items by dueDate — dated items first (ascending), undated items last
+      var hasDates = lstChecklist.items.some(function (i) { return i.dueDate; });
+      var clSorted = lstChecklist.items.slice();
+      if (hasDates) {
+        clSorted.sort(function (a, b) {
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        });
+      }
+
+      var today = new Date(); today.setHours(0,0,0,0);
+      html += '<div id="clItemList" style="padding:4px 20px 4px">';
+      clSorted.forEach(function (item) {
+        var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < today;
+        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
+        // Drag handle
+        html += '<div class="cl-drag" title="Drag to reorder" style="cursor:grab;color:var(--gray-300);font-size:1.1rem;flex-shrink:0;line-height:1;padding:0 2px;user-select:none">&#8801;</div>';
+        // Checkbox
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="margin:0;cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)">';
+        // Label
         html += '<div style="flex:1;min-width:0">';
-        html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(item.label) + '</div>';
+        html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3">' + escapeHtml(item.label) + '</div>';
         if (item.completed && item.completedBy) {
-          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
+          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:1px">Done by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
         }
         html += '</div>';
-        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.8rem;padding:2px 4px;line-height:1" data-action="remove-checklist-item" data-item-idx="' + idx + '" title="Remove">&times;</button>';
+        // Due date input
+        html += '<input type="date" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" title="Due date" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:3px 7px;font-size:.75rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-500)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + ';width:116px;flex-shrink:0">';
+        // Remove button
+        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.85rem;padding:2px 4px;line-height:1;flex-shrink:0" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" title="Remove">&times;</button>';
         html += '</div>';
       });
       // Add new item input
@@ -1154,11 +1176,10 @@
           templateId: autoTpl.id,
           templateName: autoTpl.name,
           items: autoTpl.items.map(function (item) {
-            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null };
+            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null, dueDate: null };
           })
         };
         saveDealChecklists(dc);
-        // Re-render to show the auto-attached checklist
         render();
         return;
       } else {
@@ -1217,6 +1238,8 @@
     '</div>';
 
     pageBody.innerHTML = html;
+
+    initChecklistDrag();
 
     // Show/hide detail textarea based on milestone selection
     var milestoneSelect = document.getElementById('updateMilestone');
@@ -1769,7 +1792,8 @@
             label: newLabel,
             completed: false,
             completedBy: null,
-            completedAt: null
+            completedAt: null,
+            dueDate: null
           });
           saveDealChecklists(addDc);
           showToast('Item added');
@@ -1778,10 +1802,10 @@
         break;
 
       case 'remove-checklist-item':
-        var rmIdx = parseInt(target.getAttribute('data-item-idx'));
+        var rmId = target.getAttribute('data-item-id');
         var rmDc = getDealChecklists();
-        if (rmDc[selectedListingId] && rmDc[selectedListingId].items[rmIdx] !== undefined) {
-          rmDc[selectedListingId].items.splice(rmIdx, 1);
+        if (rmDc[selectedListingId]) {
+          rmDc[selectedListingId].items = rmDc[selectedListingId].items.filter(function (i) { return i.id !== rmId; });
           saveDealChecklists(rmDc);
           showToast('Item removed');
           renderDetail();
@@ -1794,25 +1818,82 @@
   document.addEventListener('change', function (e) {
     var clTarget = e.target.closest('[data-action="toggle-checklist-item"]');
     if (clTarget && selectedListingId) {
-      var itemIdx = parseInt(clTarget.getAttribute('data-item-idx'));
+      var itemId = clTarget.getAttribute('data-item-id');
       var dcls = getDealChecklists();
       var cl = dcls[selectedListingId];
-      if (cl && cl.items[itemIdx]) {
-        var session = Auth.getSession();
-        if (clTarget.checked) {
-          cl.items[itemIdx].completed = true;
-          cl.items[itemIdx].completedBy = session ? session.displayName : 'Unknown';
-          cl.items[itemIdx].completedAt = new Date().toISOString();
-        } else {
-          cl.items[itemIdx].completed = false;
-          cl.items[itemIdx].completedBy = null;
-          cl.items[itemIdx].completedAt = null;
+      if (cl) {
+        var clItem = cl.items.find(function (i) { return i.id === itemId; });
+        if (clItem) {
+          var session = Auth.getSession();
+          if (clTarget.checked) {
+            clItem.completed = true;
+            clItem.completedBy = session ? session.displayName : 'Unknown';
+            clItem.completedAt = new Date().toISOString();
+          } else {
+            clItem.completed = false;
+            clItem.completedBy = null;
+            clItem.completedAt = null;
+          }
+          saveDealChecklists(dcls);
+          renderDetail();
         }
-        saveDealChecklists(dcls);
-        renderDetail();
+      }
+    }
+
+    // Checklist due date change
+    var dateTarget = e.target.closest('[data-action="set-checklist-date"]');
+    if (dateTarget && selectedListingId) {
+      var dateItemId = dateTarget.getAttribute('data-item-id');
+      var dateVal = dateTarget.value || null;
+      var dateDc = getDealChecklists();
+      if (dateDc[selectedListingId]) {
+        var dateItem = dateDc[selectedListingId].items.find(function (i) { return i.id === dateItemId; });
+        if (dateItem) {
+          dateItem.dueDate = dateVal;
+          saveDealChecklists(dateDc);
+          renderDetail();
+        }
       }
     }
   });
+
+  // Checklist drag-and-drop reordering
+  function initChecklistDrag() {
+    var list = document.getElementById('clItemList');
+    if (!list) return;
+    var dragging = null;
+
+    list.querySelectorAll('.cl-item').forEach(function (el) {
+      el.addEventListener('dragstart', function (e) {
+        dragging = el;
+        setTimeout(function () { el.style.opacity = '0.4'; }, 0);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', function () {
+        el.style.opacity = '';
+        dragging = null;
+        // Persist new order to localStorage
+        var newOrder = Array.from(list.querySelectorAll('.cl-item')).map(function (n) { return n.getAttribute('data-item-id'); });
+        var dcDrag = getDealChecklists();
+        if (dcDrag[selectedListingId]) {
+          var idMap = {};
+          dcDrag[selectedListingId].items.forEach(function (i) { idMap[i.id] = i; });
+          dcDrag[selectedListingId].items = newOrder.map(function (id) { return idMap[id]; }).filter(Boolean);
+          saveDealChecklists(dcDrag);
+        }
+      });
+      el.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        if (!dragging || dragging === el) return;
+        var rect = el.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) {
+          list.insertBefore(dragging, el);
+        } else {
+          list.insertBefore(dragging, el.nextSibling);
+        }
+      });
+    });
+  }
 
   // ============================================================
   //  SEND CLIENT UPDATE
