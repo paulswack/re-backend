@@ -1147,15 +1147,16 @@
         html += '<div class="cl-drag" title="Drag to reorder" style="cursor:grab;color:var(--gray-300);font-size:1.1rem;flex-shrink:0;line-height:1;padding:0 2px;user-select:none">&#8801;</div>';
         // Checkbox
         html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="margin:0;cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)">';
-        // Label
+        // Label + date together
         html += '<div style="flex:1;min-width:0">';
         html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3">' + escapeHtml(item.label) + '</div>';
+        html += '<div style="margin-top:4px">';
+        html += '<input type="date" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" title="Due date" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:2px 6px;font-size:.72rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-400)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + '">';
         if (item.completed && item.completedBy) {
-          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:1px">Done by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
+          html += '<span style="font-size:.72rem;color:var(--gray-400);margin-left:8px">Done by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</span>';
         }
         html += '</div>';
-        // Due date input
-        html += '<input type="date" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" title="Due date" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:3px 7px;font-size:.75rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-500)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + ';width:116px;flex-shrink:0">';
+        html += '</div>';
         // Remove button
         html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.85rem;padding:2px 4px;line-height:1;flex-shrink:0" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" title="Remove">&times;</button>';
         html += '</div>';
