@@ -1150,10 +1150,11 @@
         // Label + date together
         html += '<div style="flex:1;min-width:0">';
         html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3">' + escapeHtml(item.label) + '</div>';
-        html += '<div style="margin-top:4px">';
-        html += '<input type="date" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" title="Due date" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:2px 6px;font-size:.72rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-400)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + '">';
+        html += '<div style="margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+        html += '<input type="date" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" title="Due date" style="border:1.5px solid ' + (overdue ? 'var(--rose)' : 'var(--gray-200)') + ';border-radius:6px;padding:2px 6px;font-size:.72rem;color:' + (overdue ? 'var(--rose)' : 'var(--gray-400)') + ';background:' + (overdue ? '#FFF5F5' : 'var(--white)') + ';flex-shrink:0">';
+        html += '<input type="text" data-action="set-checklist-note" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add a note..." style="border:1.5px solid var(--gray-200);border-radius:6px;padding:2px 7px;font-size:.72rem;color:var(--gray-500);background:var(--white);min-width:80px;flex:1">';
         if (item.completed && item.completedBy) {
-          html += '<span style="font-size:.72rem;color:var(--gray-400);margin-left:8px">Done by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</span>';
+          html += '<span style="font-size:.72rem;color:var(--gray-400);white-space:nowrap">Done by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</span>';
         }
         html += '</div>';
         html += '</div>';
@@ -1177,7 +1178,7 @@
           templateId: autoTpl.id,
           templateName: autoTpl.name,
           items: autoTpl.items.map(function (item) {
-            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null, dueDate: null };
+            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null, dueDate: null, note: '' };
           })
         };
         saveDealChecklists(dc);
@@ -1794,7 +1795,8 @@
             completed: false,
             completedBy: null,
             completedAt: null,
-            dueDate: null
+            dueDate: null,
+            note: ''
           });
           saveDealChecklists(addDc);
           showToast('Item added');
@@ -1855,6 +1857,27 @@
           renderDetail();
         }
       }
+    }
+  });
+
+  // Checklist note change (debounced — don't re-render on every keystroke)
+  var _noteDebounce = {};
+  document.addEventListener('input', function (e) {
+    var noteTarget = e.target.closest('[data-action="set-checklist-note"]');
+    if (noteTarget && selectedListingId) {
+      var noteItemId = noteTarget.getAttribute('data-item-id');
+      var noteVal = noteTarget.value;
+      clearTimeout(_noteDebounce[noteItemId]);
+      _noteDebounce[noteItemId] = setTimeout(function () {
+        var noteDc = getDealChecklists();
+        if (noteDc[selectedListingId]) {
+          var noteItem = noteDc[selectedListingId].items.find(function (i) { return i.id === noteItemId; });
+          if (noteItem) {
+            noteItem.note = noteVal;
+            saveDealChecklists(noteDc);
+          }
+        }
+      }, 600);
     }
   });
 
