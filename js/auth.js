@@ -1083,16 +1083,8 @@
   var ONBOARDING_DONE_KEY = PREFIX + 'onboarding_done';
 
   function initOnboarding() {
-    if (Auth.isDemo()) return;
-
-    // Check both API and localStorage auth
-    var isLoggedIn = (typeof API !== 'undefined' && API.isLoggedIn()) || Auth.isLoggedIn();
-    if (!isLoggedIn) return;
-
-    // Only show onboarding to the Team Lead (account owner), not admins or agents
-    var session = Auth.getSession();
-    var isLead = session && session.role === 'Team Lead';
-    if (!isLead) return;
+    // Onboarding/setup popups have been disabled for all roles
+    return;
 
     // Show wizard modal for new team leads on dashboard who haven't completed it
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
