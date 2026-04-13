@@ -269,6 +269,7 @@ var ApiBridge = (function () {
     var origSetItem = localStorage.setItem.bind(localStorage);
 
     localStorage.setItem = function (key, value) {
+      var prevValue = localStorage.getItem(key);
       origSetItem(key, value);
       if (_syncing) return;
 
@@ -541,6 +542,77 @@ var ApiBridge = (function () {
         debounceSync('notif_sent', function () {
           try { API.updateSettings({ _notif_sent: JSON.parse(value) }).catch(function () {}); } catch (e) {}
         }, 2000);
+      }
+
+      // Listings — diff old vs new and push changes to server
+      if (key === PREFIX + 'listings') {
+        var capturedPrevLst = prevValue;
+        var capturedNextLst = value;
+        debounceSync('listings', function () {
+          try {
+            var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            var prev = []; try { prev = JSON.parse(capturedPrevLst || '[]'); } catch (e) {}
+            var next = JSON.parse(capturedNextLst);
+            var prevMap = {}, nextMap = {};
+            prev.forEach(function (l) { prevMap[l.id] = l; });
+            next.forEach(function (l) { nextMap[l.id] = l; });
+            // Deletions: UUID in prev, not in next
+            Object.keys(prevMap).forEach(function (id) {
+              if (uuidRe.test(id) && !nextMap[id]) {
+                API.deleteListing(id).catch(function () {});
+              }
+            });
+            // Updates: UUID in next, changed vs prev
+            next.forEach(function (l) {
+              if (!uuidRe.test(l.id)) return; // local-only IDs handled by loadAll
+              var p = prevMap[l.id];
+              if (!p || JSON.stringify(p) !== JSON.stringify(l)) {
+                API.updateListing(l.id, {
+                  status: l.status, price: l.price,
+                  address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
+                  agent_name: l.agent || '', beds: l.beds || null, baths: l.baths || null,
+                  sqft: l.sqft || null, description: l.description || '', source: l.source || '',
+                  listing_date: l.listingDate || null, property_type: l.propertyType || ''
+                }).catch(function () {});
+              }
+            });
+          } catch (e) {}
+        }, 1500);
+      }
+
+      // Transactions — diff old vs new and push changes to server
+      if (key === PREFIX + 'transactions') {
+        var capturedPrevTxn = prevValue;
+        var capturedNextTxn = value;
+        debounceSync('transactions', function () {
+          try {
+            var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            var prev = []; try { prev = JSON.parse(capturedPrevTxn || '[]'); } catch (e) {}
+            var next = JSON.parse(capturedNextTxn);
+            var prevMap = {}, nextMap = {};
+            prev.forEach(function (t) { prevMap[t.id] = t; });
+            next.forEach(function (t) { nextMap[t.id] = t; });
+            // Deletions: UUID in prev, not in next
+            Object.keys(prevMap).forEach(function (id) {
+              if (uuidRe.test(id) && !nextMap[id]) {
+                API.deleteTransaction(id).catch(function () {});
+              }
+            });
+            // Updates: UUID in next, changed vs prev
+            next.forEach(function (t) {
+              if (!uuidRe.test(t.id)) return; // local-only IDs handled by loadAll
+              var p = prevMap[t.id];
+              if (!p || JSON.stringify(p) !== JSON.stringify(t)) {
+                API.updateTransaction(t.id, {
+                  status: t.status, price: t.price,
+                  address: t.address, city: t.city || '', state: t.state || '', zip: t.zip || '',
+                  type: t.type || 'Buyer', agent_name: t.agent || '', source: t.source || '',
+                  close_date: t.closeDate || null, notes: t.notes || ''
+                }).catch(function () {});
+              }
+            });
+          } catch (e) {}
+        }, 1500);
       }
 
       // Tax settings (per-user — stored as { username: settings } on server)
