@@ -268,7 +268,7 @@ input, select, textarea, button { font-family: inherit; }
   transition: box-shadow .15s, transform .15s;
 }
 
-.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+@media (hover: hover) { .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); } }
 
 .stat-icon {
   width: 52px; height: 52px;
@@ -785,7 +785,7 @@ tr:hover { background: var(--gray-50); }
   transition: box-shadow .15s, transform .15s;
 }
 
-.dash-stat:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+@media (hover: hover) { .dash-stat:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); } }
 
 .dash-stat-icon {
   width: 52px; height: 52px;
