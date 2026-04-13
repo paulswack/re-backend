@@ -889,18 +889,58 @@
       html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
       html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
       html += '</div></div>';
-      html += '<div style="padding:12px 20px">';
+      html += '<div id="clItemList" style="padding:4px 20px 4px">';
       txnChecklist.items.forEach(function (item, idx) {
-        html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '" style="margin-top:3px;cursor:pointer;width:16px;height:16px;accent-color:var(--emerald)">';
+        var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
+        var dateColor = overdue ? 'var(--rose)' : 'var(--gray-500)';
+        var dateBg = overdue ? '#FFF5F5' : 'var(--gray-50)';
+        var dateBorder = overdue ? 'var(--rose)' : 'var(--gray-200)';
+
+        html += '<div class="cl-item" data-item-idx="' + idx + '" style="display:flex;align-items:flex-start;gap:8px;padding:11px 0;border-bottom:1px solid var(--gray-100)">';
+
+        // Drag handle
+        html += '<div class="cl-drag" title="Drag to reorder" style="cursor:grab;color:var(--gray-300);font-size:1.1rem;flex-shrink:0;line-height:1;margin-top:2px;padding:0 2px;user-select:none">&#8801;</div>';
+
+        // Checkbox
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '" style="margin:3px 0 0;cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)">';
+
+        // Body
         html += '<div style="flex:1;min-width:0">';
-        html += '<div style="font-size:.88rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(item.label) + '</div>';
+        html += '<div style="font-size:.9rem;font-weight:500;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.4">' + escapeHtml(item.label) + '</div>';
+
+        // Pill row
+        html += '<div style="display:flex;align-items:center;gap:5px;margin-top:7px;flex-wrap:wrap">';
+
+        // Date pill
+        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:' + dateBg + ';border:1.5px solid ' + dateBorder + ';border-radius:20px;padding:4px 10px;flex-shrink:0">';
+        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="' + dateColor + '" style="flex-shrink:0"><path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>';
+        html += '<input type="text" data-action="set-checklist-date" data-item-idx="' + idx + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Due date" title="Due date &amp; time" style="border:none;background:transparent;padding:0;font-size:.78rem;color:' + dateColor + ';width:105px;outline:none;cursor:pointer;font-family:inherit">';
+        html += '</div>';
+
+        // Vendor pill
+        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:20px;padding:4px 10px;flex-shrink:0">';
+        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="var(--gray-400)" style="flex-shrink:0"><path d="M20 7h-4V5c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V9c0-1.11-.89-2-2-2zM10 5h4v2h-4V5z"/></svg>';
+        html += '<input type="text" data-action="set-checklist-vendor" data-item-idx="' + idx + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor" style="border:none;background:transparent;padding:0;font-size:.78rem;color:var(--gray-600);width:130px;outline:none;font-family:inherit">';
+        html += '</div>';
+
+        // Note pill
+        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:20px;padding:4px 10px;flex:1;min-width:80px">';
+        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="var(--gray-400)" style="flex-shrink:0"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+        html += '<input type="text" data-action="set-checklist-note" data-item-idx="' + idx + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add a note..." style="border:none;background:transparent;padding:0;font-size:.78rem;color:var(--gray-600);flex:1;min-width:0;outline:none;font-family:inherit">';
+        html += '</div>';
+
+        html += '</div>'; // pill row
+
         if (item.completed && item.completedBy) {
-          html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
+          html += '<div style="margin-top:5px;font-size:.72rem;color:var(--gray-400);display:flex;align-items:center;gap:4px">';
+          html += '<svg viewBox="0 0 24 24" width="9" height="9" fill="var(--emerald)"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
+          html += 'Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt);
+          html += '</div>';
         }
-        html += '</div>';
-        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:.8rem;padding:2px 4px;line-height:1" data-action="remove-checklist-item" data-item-idx="' + idx + '" title="Remove">&times;</button>';
-        html += '</div>';
+
+        html += '</div>'; // body
+        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:1rem;padding:3px 5px;line-height:1;flex-shrink:0;border-radius:4px;margin-top:1px" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-idx="' + idx + '" title="Remove">&times;</button>';
+        html += '</div>'; // cl-item
       });
       // Add new item input
       html += '<div style="display:flex;gap:8px;padding:10px 0;align-items:center">';
@@ -918,7 +958,7 @@
           templateId: autoTpl.id,
           templateName: autoTpl.name,
           items: autoTpl.items.map(function (item) {
-            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null };
+            return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null, dueDate: null, vendor: '', note: '' };
           })
         };
         saveDealChecklists(dc);
@@ -980,6 +1020,8 @@
     '</div>';
 
     pageBody.innerHTML = html;
+
+    initChecklistPickers();
 
     // Show/hide detail textarea based on milestone selection
     var milestoneSelect = document.getElementById('updateMilestone');
@@ -1399,7 +1441,10 @@
             label: newLabel,
             completed: false,
             completedBy: null,
-            completedAt: null
+            completedAt: null,
+            dueDate: null,
+            vendor: '',
+            note: ''
           });
           saveDealChecklists(addDc);
           showToast('Item added');
@@ -1531,6 +1576,66 @@
       Data.updateTask(taskId, { status: 'todo', completedAt: null });
     }
     renderDetail();
+  });
+
+  // Checklist date pickers
+  function initChecklistPickers() {
+    if (typeof flatpickr === 'undefined') return;
+    document.querySelectorAll('[data-action="set-checklist-date"]').forEach(function (input) {
+      if (input._flatpickr) return;
+      flatpickr(input, {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        altInput: true,
+        altFormat: 'D, M j, Y h:iK',
+        allowInput: false,
+        disableMobile: false,
+        minuteIncrement: 15,
+        monthSelectorType: 'static',
+        onReady: function (_, __, fp) {
+          if (fp.altInput) {
+            fp.altInput.style.cssText = fp.input.getAttribute('style') || '';
+            fp.altInput.setAttribute('data-action', 'set-checklist-date');
+          }
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'Done';
+          btn.style.cssText = 'display:block;width:calc(100% - 24px);margin:8px 12px 4px;padding:8px;background:var(--indigo,#6366F1);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit';
+          btn.addEventListener('click', function () { fp.close(); });
+          fp.calendarContainer.appendChild(btn);
+        },
+        onChange: function (selectedDates, dateStr) {
+          var itemIdx = parseInt(this.element.getAttribute('data-item-idx'));
+          var dcls = getDealChecklists();
+          var cl = dcls[selectedTxnId];
+          if (cl && cl.items[itemIdx] !== undefined) {
+            cl.items[itemIdx].dueDate = dateStr || null;
+            saveDealChecklists(dcls);
+          }
+        }
+      });
+    });
+  }
+
+  // Checklist vendor/note input (debounced)
+  var _clDebounce = {};
+  document.addEventListener('input', function (e) {
+    var noteTarget = e.target.closest('[data-action="set-checklist-note"]');
+    var vendorTarget = e.target.closest('[data-action="set-checklist-vendor"]');
+    var clInput = noteTarget || vendorTarget;
+    if (!clInput || !selectedTxnId) return;
+    var field = noteTarget ? 'note' : 'vendor';
+    var itemIdx = parseInt(clInput.getAttribute('data-item-idx'));
+    var val = clInput.value;
+    if (_clDebounce[itemIdx + field]) clearTimeout(_clDebounce[itemIdx + field]);
+    _clDebounce[itemIdx + field] = setTimeout(function () {
+      var dcls = getDealChecklists();
+      var cl = dcls[selectedTxnId];
+      if (cl && cl.items[itemIdx] !== undefined) {
+        cl.items[itemIdx][field] = val;
+        saveDealChecklists(dcls);
+      }
+    }, 600);
   });
 
   // Close modals on overlay click
