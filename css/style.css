@@ -822,6 +822,30 @@ tr:hover { background: var(--gray-50); }
 .dash-stat-delta.up { color: var(--emerald); }
 .dash-stat-delta.neutral { color: var(--gray-400); }
 
+/* Dashboard top 3 stat cards — force 3 columns on mobile */
+@media (max-width: 768px) {
+  .dash-stats-row {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  .dash-stats-row .dash-stat {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 8px;
+    gap: 6px;
+  }
+  .dash-stats-row .dash-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  .dash-stats-row .dash-stat-icon svg { width: 18px; height: 18px; }
+  .dash-stats-row .dash-stat-value { font-size: 1.4rem; }
+  .dash-stats-row .dash-stat-label { font-size: .7rem; margin-top: 1px; }
+  .dash-stats-row .dash-stat-delta { display: none; }
+}
+
 /* Dashboard grid */
 .dash-grid {
   display: grid;
