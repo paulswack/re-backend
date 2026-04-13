@@ -142,9 +142,9 @@
 
         // Headshot / avatar
         if (hasPhoto) {
-          html += '<div style="width:76px;height:76px;border-radius:50%;overflow:hidden;margin-bottom:8px;border:2px solid ' + ringColor + '"><img src="' + profile.photo + '" style="width:100%;height:100%;object-fit:cover"></div>';
+          html += '<div class="top3-avatar-wrap" style="width:76px;height:76px;border-radius:50%;overflow:hidden;margin-bottom:8px;border:2px solid ' + ringColor + '"><img src="' + profile.photo + '" style="width:100%;height:100%;object-fit:cover"></div>';
         } else {
-          html += '<div class="agent-avatar ' + cls + '" style="display:flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px;border:2px solid ' + ringColor + '">' + getInitials(a.name) + '</div>';
+          html += '<div class="agent-avatar top3-avatar-wrap ' + cls + '" style="display:flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px;border:2px solid ' + ringColor + '">' + getInitials(a.name) + '</div>';
         }
 
         // Name
