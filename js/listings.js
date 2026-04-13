@@ -864,20 +864,22 @@
           : '';
 
         return (
-          '<div class="list-row" data-action="open-detail" data-id="' + l.id + '" style="border-bottom:none">' +
-            '<div class="lst-row-address"><div class="lst-row-address-text">' + escapeHtml(l.address) + '</div>' +
-            (addrSub ? '<div style="font-size:.75rem;color:var(--gray-400);margin-top:1px">' + escapeHtml(addrSub) + '</div>' : '') + '</div>' +
-            '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
-            '<div class="lst-row-agent">' +
-              '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(l.agent) + '</div>' +
-              '<div class="lst-row-agent-name">' + escapeHtml(l.agent || '—') + '</div>' +
+          '<div data-action="open-detail" data-id="' + l.id + '" style="cursor:pointer;border-bottom:1px solid var(--gray-50)">' +
+            '<div class="list-row" style="border-bottom:none">' +
+              '<div class="lst-row-address"><div class="lst-row-address-text">' + escapeHtml(l.address) + '</div>' +
+              (addrSub ? '<div style="font-size:.75rem;color:var(--gray-400);margin-top:1px">' + escapeHtml(addrSub) + '</div>' : '') + '</div>' +
+              '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
+              '<div class="lst-row-agent">' +
+                '<div class="agent-avatar ' + cls + '" style="width:28px;height:28px;font-size:.62rem;">' + getInitials(l.agent) + '</div>' +
+                '<div class="lst-row-agent-name">' + escapeHtml(l.agent || '—') + '</div>' +
+              '</div>' +
+              '<div class="lst-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
+              '<div class="lst-row-status">' + Data.statusBadge(l.status) + '</div>' +
+              '<div class="lst-row-date">' + Data.formatDate(l.listingDate) + '</div>' +
             '</div>' +
-            '<div class="lst-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
-            '<div class="lst-row-status">' + Data.statusBadge(l.status) + '</div>' +
-            '<div class="lst-row-date">' + Data.formatDate(l.listingDate) + '</div>' +
-          '</div>' +
-          '<div style="padding:6px 20px 8px;border-bottom:1px solid var(--gray-50);background:#fff;display:flex;flex-direction:column">' +
-            ohListHtml + addBtn +
+            '<div style="padding:6px 20px 8px;background:#fff;display:flex;flex-direction:column">' +
+              ohListHtml + addBtn +
+            '</div>' +
           '</div>' +
           ohFormHtml
         );
