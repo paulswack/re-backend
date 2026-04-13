@@ -1704,6 +1704,9 @@
     modalTitle.textContent = 'Edit Escrow';
 
     document.getElementById('txnAddress').value = t.address || '';
+    document.getElementById('txnCity').value = t.city || '';
+    document.getElementById('txnState').value = t.state || '';
+    document.getElementById('txnZip').value = t.zip || '';
     document.getElementById('txnPrice').value = t.price || '';
     populateAgentSelect(document.getElementById('txnAgent'), t.agent || '');
     document.getElementById('txnStatus').value = t.status || 'active';
@@ -1750,8 +1753,15 @@
       return;
     }
 
+    var city = (document.getElementById('txnCity') || {}).value ? document.getElementById('txnCity').value.trim() : '';
+    var state = (document.getElementById('txnState') || {}).value ? document.getElementById('txnState').value.trim() : '';
+    var zip = (document.getElementById('txnZip') || {}).value ? document.getElementById('txnZip').value.trim() : '';
+
     var data = {
       address: address,
+      city: city,
+      state: state,
+      zip: zip,
       price: parseFloat(price),
       agent: agent,
       status: status,

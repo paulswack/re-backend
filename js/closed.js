@@ -181,8 +181,9 @@
         deals.forEach(function (t) {
           html += '<div class="list-row" data-action="open-detail" data-id="' + t.id + '" style="padding:10px 20px;cursor:pointer">';
           html += '<div style="flex:1;min-width:0">';
-          html += '<div style="font-size:.82rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml((t.address || '').split(',')[0]) + '</div>';
-          html += '<div style="font-size:.68rem;color:var(--gray-400)">' + Data.formatDate(t.closeDate) + '</div>';
+          var cAddrSub = [t.city, t.state, t.zip].filter(Boolean).join(', ');
+          html += '<div style="font-size:.82rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(t.address || '—') + '</div>';
+          html += '<div style="font-size:.68rem;color:var(--gray-400)">' + (cAddrSub ? escapeHtml(cAddrSub) + ' &middot; ' : '') + Data.formatDate(t.closeDate) + '</div>';
           html += '</div>';
           html += '<div style="font-size:.82rem;font-weight:700;color:var(--gray-900);flex-shrink:0">' + Data.formatCurrency(t.price) + '</div>';
           html += '</div>';
@@ -261,7 +262,15 @@
 
     // Address
     html += '<div style="grid-column:1/-1"><label style="' + lStyle + '">Address</label>' +
-      '<input type="text" class="closed-edit-field" data-field="address" value="' + escapeHtml(t.address || '') + '" style="' + iStyle + '"></div>';
+      '<input type="text" class="closed-edit-field" data-field="address" value="' + escapeHtml(t.address || '') + '" placeholder="123 Main St" style="' + iStyle + '"></div>';
+
+    // City / State / Zip
+    html += '<div><label style="' + lStyle + '">City</label>' +
+      '<input type="text" class="closed-edit-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="Santa Barbara" style="' + iStyle + '"></div>';
+    html += '<div><label style="' + lStyle + '">State</label>' +
+      '<input type="text" class="closed-edit-field" data-field="state" value="' + escapeHtml(t.state || '') + '" placeholder="CA" maxlength="2" style="' + iStyle + '"></div>';
+    html += '<div><label style="' + lStyle + '">Zip</label>' +
+      '<input type="text" class="closed-edit-field" data-field="zip" value="' + escapeHtml(t.zip || '') + '" placeholder="93101" maxlength="10" style="' + iStyle + '"></div>';
 
     // Agent
     html += '<div><label style="' + lStyle + '">Agent</label>' +
