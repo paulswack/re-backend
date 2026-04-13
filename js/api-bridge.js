@@ -348,17 +348,47 @@ var ApiBridge = (function () {
         }, 2000);
       }
 
-      // Tax Entries
+      // Tax Entries — stored per-user as { username: [entries] } so agents don't overwrite each other
       if (key === PREFIX + 'tax_entries') {
+        var capturedTaxVal = value;
         debounceSync('tax_entries', function () {
-          try { API.updateSettings({ _tax_entries: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try {
+            var sess = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}');
+            var uname = sess.username || (API.getUser() && API.getUser().username);
+            if (!uname) return;
+            var allEntries = JSON.parse(capturedTaxVal);
+            var myEntries = allEntries.filter(function (e) { return e.username === uname || (!e.username && uname === 'admin'); });
+            var dict = {};
+            try {
+              var s = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
+              dict = s._tax_entries || {};
+              if (Array.isArray(dict)) dict = {};
+            } catch (e) {}
+            dict[uname] = myEntries;
+            API.updateSettings({ _tax_entries: dict }).catch(function () {});
+          } catch (e) {}
         }, 2000);
       }
 
-      // Mileage
+      // Mileage — stored per-user as { username: [entries] } so agents don't overwrite each other
       if (key === PREFIX + 'mileage') {
+        var capturedMileVal = value;
         debounceSync('mileage', function () {
-          try { API.updateSettings({ _mileage: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try {
+            var sess = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}');
+            var uname = sess.username || (API.getUser() && API.getUser().username);
+            if (!uname) return;
+            var allTrips = JSON.parse(capturedMileVal);
+            var myTrips = allTrips.filter(function (t) { return t.username === uname || (!t.username && uname === 'admin'); });
+            var dict = {};
+            try {
+              var s = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
+              dict = s._mileage || {};
+              if (Array.isArray(dict)) dict = {};
+            } catch (e) {}
+            dict[uname] = myTrips;
+            API.updateSettings({ _mileage: dict }).catch(function () {});
+          } catch (e) {}
         }, 2000);
       }
 
@@ -638,8 +668,31 @@ var ApiBridge = (function () {
   // ---- Load settings-stored data back into localStorage ----
   function loadSettingsData(settings) {
     if (!settings) return;
+    // Tax entries — stored per-user dict on server, flatten to array for localStorage
+    if (settings._tax_entries !== undefined && settings._tax_entries !== null) {
+      try {
+        var taxData = settings._tax_entries;
+        var flatTax = Array.isArray(taxData) ? taxData : [];
+        if (!Array.isArray(taxData)) {
+          Object.keys(taxData).forEach(function (u) { (taxData[u] || []).forEach(function (e) { flatTax.push(e); }); });
+        }
+        localStorage.setItem(PREFIX + 'tax_entries', JSON.stringify(flatTax));
+      } catch (e) {}
+    }
+    // Mileage — stored per-user dict on server, flatten to array for localStorage
+    if (settings._mileage !== undefined && settings._mileage !== null) {
+      try {
+        var mileData = settings._mileage;
+        var flatMile = Array.isArray(mileData) ? mileData : [];
+        if (!Array.isArray(mileData)) {
+          Object.keys(mileData).forEach(function (u) { (mileData[u] || []).forEach(function (e) { flatMile.push(e); }); });
+        }
+        localStorage.setItem(PREFIX + 'mileage', JSON.stringify(flatMile));
+      } catch (e) {}
+    }
+
     var keys = [
-      '_tax_entries:tax_entries', '_mileage:mileage', '_marketing:marketing',
+      '_marketing:marketing',
       '_bold100:bold100', '_review_requests:review_requests', '_review_scorecard:review_scorecard',
       '_review_links:review_links', '_review_templates:review_templates',
       '_agent_goals:agent_goals', '_checklist_templates:checklist_templates',
@@ -682,6 +735,23 @@ var ApiBridge = (function () {
       try {
         var settings = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
         loadSettingsData(settings);
+      } catch (e) {}
+      // Merge user-table profile data into reb_profiles — this runs AFTER loadSettingsData
+      // so that photos/info saved via API.updateUser are authoritative and visible on all computers.
+      try {
+        var loadedUsers = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+        var mergedProfiles = JSON.parse(localStorage.getItem(PREFIX + 'profiles') || '{}');
+        loadedUsers.forEach(function (u) {
+          if (!u.username) return;
+          if (!mergedProfiles[u.username]) mergedProfiles[u.username] = {};
+          // User-table photo overrides settings blob (it's the authoritative save path)
+          if (u.profile && u.profile.photo) mergedProfiles[u.username].photo = u.profile.photo;
+          // Fill in other fields only if not already set by settings blob
+          if (u.displayName && !mergedProfiles[u.username].displayName) mergedProfiles[u.username].displayName = u.displayName;
+          if (u.phone && !mergedProfiles[u.username].phone) mergedProfiles[u.username].phone = u.phone;
+          if (u.email && !mergedProfiles[u.username].email) mergedProfiles[u.username].email = u.email;
+        });
+        localStorage.setItem(PREFIX + 'profiles', JSON.stringify(mergedProfiles));
       } catch (e) {}
       _syncing = false;
     });
