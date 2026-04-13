@@ -198,10 +198,37 @@
   }
 
   // ---- Checklist helpers ----
+  var DEFAULT_CHECKLIST_TEMPLATES = [
+    {
+      id: 'tpl-buyer-closing', name: 'Buyer Closing Checklist', category: 'escrow',
+      items: [
+        { id: 'i1', label: 'Earnest money deposited' }, { id: 'i2', label: 'Home inspection scheduled' },
+        { id: 'i3', label: 'Home inspection complete' }, { id: 'i4', label: 'Repair negotiations' },
+        { id: 'i5', label: 'Appraisal ordered' }, { id: 'i6', label: 'Appraisal complete' },
+        { id: 'i7', label: 'Loan approved' }, { id: 'i8', label: 'Clear to close' },
+        { id: 'i9', label: 'Final walkthrough' }, { id: 'i10', label: 'Closing day' }
+      ]
+    },
+    {
+      id: 'tpl-seller-closing', name: 'Seller Closing Checklist', category: 'escrow',
+      items: [
+        { id: 'i11', label: 'Listing agreement signed' }, { id: 'i12', label: 'Disclosure documents prepared' },
+        { id: 'i13', label: 'Accept offer' }, { id: 'i14', label: 'Inspection access scheduled' },
+        { id: 'i15', label: 'Repair negotiations' }, { id: 'i16', label: 'Appraisal access' },
+        { id: 'i17', label: 'Review closing statement' }, { id: 'i18', label: 'Closing day' }
+      ]
+    }
+  ];
+
   function loadChecklistTemplates() {
     var stored = localStorage.getItem(PREFIX + 'checklist_templates');
-    if (!stored) return [];
-    try { return JSON.parse(stored); } catch (e) { return []; }
+    if (!stored) return DEFAULT_CHECKLIST_TEMPLATES.slice();
+    try {
+      var parsed = JSON.parse(stored);
+      // Fall back to defaults if stored value is empty or has no items in any template
+      if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_CHECKLIST_TEMPLATES.slice();
+      return parsed;
+    } catch (e) { return DEFAULT_CHECKLIST_TEMPLATES.slice(); }
   }
 
   function getDealChecklists() {

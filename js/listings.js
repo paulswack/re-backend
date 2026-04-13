@@ -175,10 +175,27 @@
   }
 
   // ---- Checklist helpers ----
+  var DEFAULT_CHECKLIST_TEMPLATES = [
+    {
+      id: 'tpl-new-listing', name: 'New Listing Checklist', category: 'listing',
+      items: [
+        { id: 'i19', label: 'Listing agreement signed' }, { id: 'i20', label: 'Pre-listing prep complete' },
+        { id: 'i21', label: 'Professional photos scheduled' }, { id: 'i22', label: 'Photos received & approved' },
+        { id: 'i23', label: 'Sign installed' }, { id: 'i24', label: 'MLS listing live' },
+        { id: 'i25', label: 'Lockbox placed' }, { id: 'i26', label: 'Open house scheduled' },
+        { id: 'i27', label: 'Marketing materials distributed' }
+      ]
+    }
+  ];
+
   function loadChecklistTemplates() {
     var stored = localStorage.getItem(PREFIX + 'checklist_templates');
-    if (!stored) return [];
-    try { return JSON.parse(stored); } catch (e) { return []; }
+    if (!stored) return DEFAULT_CHECKLIST_TEMPLATES.slice();
+    try {
+      var parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_CHECKLIST_TEMPLATES.slice();
+      return parsed;
+    } catch (e) { return DEFAULT_CHECKLIST_TEMPLATES.slice(); }
   }
 
   function getDealChecklists() {
