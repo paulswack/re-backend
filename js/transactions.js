@@ -657,7 +657,15 @@
     html += '<div class="detail-header-top">';
     html += '<div style="flex:1;min-width:0">' +
       '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(t.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
-      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(t.price) + '" data-raw="' + (t.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:2px;' + inpStyle + '" ' +
+      '<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:6px">' +
+        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">City</label>' +
+        '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="City" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
+        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">State</label>' +
+        '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(t.state || '') + '" placeholder="CA" maxlength="2" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
+        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Zip</label>' +
+        '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(t.zip || '') + '" placeholder="93101" maxlength="10" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
+      '</div>' +
+      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(t.price) + '" data-raw="' + (t.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:8px;' + inpStyle + '" ' +
         'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
         'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
     '</div>';
