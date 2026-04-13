@@ -572,9 +572,11 @@
       if (baths) specsText.push(baths + ' ba');
       if (sqft) specsText.push(Number(sqft).toLocaleString() + ' sqft');
 
+      var addrSub = [t.city, t.state, t.zip].filter(Boolean).join(', ');
       return '<div class="list-row" data-action="open-detail" data-id="' + t.id + '">' +
         '<div class="lst-row-address">' +
           '<div class="lst-row-address-text">' + escapeHtml(t.address) + '</div>' +
+          (addrSub ? '<div style="font-size:.75rem;color:var(--gray-400);margin-top:1px">' + escapeHtml(addrSub) + '</div>' : '') +
         '</div>' +
         '<div class="lst-row-specs">' + (specsText.length > 0 ? specsText.join(' / ') : '—') + '</div>' +
         '<div class="lst-row-agent">' +
