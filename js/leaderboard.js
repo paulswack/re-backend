@@ -124,7 +124,8 @@
         return b.volume - a.volume;
       }).slice(0, 3);
 
-      html += '<div style="display:flex;justify-content:center;gap:20px;margin-bottom:20px;flex-wrap:wrap" class="top3-podium">';
+      var rankNames = ['first', 'second', 'third'];
+      html += '<div class="top3-podium">';
 
       top3.forEach(function (a, i) {
         var cls = agentClass(a.name);
@@ -135,25 +136,18 @@
         var profile = user ? (profiles[user.username] || {}) : {};
         var hasPhoto = profile && profile.photo;
 
-        html += '<div class="top3-circle" style="border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 20px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:2px solid ' + ringColor + '">';
+        html += '<div class="top3-circle top3-' + rankNames[i] + '" style="border-color:' + ringColor + '">';
+        html += '<div class="top3-trophy">' + trophy + '</div>';
 
-        // Trophy
-        html += '<div style="font-size:1.8rem;margin-bottom:6px">' + trophy + '</div>';
-
-        // Headshot / avatar
         if (hasPhoto) {
-          html += '<div class="top3-avatar-wrap" style="width:76px;height:76px;border-radius:50%;overflow:hidden;margin-bottom:8px;border:2px solid ' + ringColor + '"><img src="' + profile.photo + '" style="width:100%;height:100%;object-fit:cover"></div>';
+          html += '<div class="top3-avatar-wrap" style="border-color:' + ringColor + '"><img src="' + profile.photo + '" style="width:100%;height:100%;object-fit:cover"></div>';
         } else {
-          html += '<div class="agent-avatar top3-avatar-wrap ' + cls + '" style="display:flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px;border:2px solid ' + ringColor + '">' + getInitials(a.name) + '</div>';
+          html += '<div class="agent-avatar top3-avatar-wrap ' + cls + '" style="border-color:' + ringColor + '">' + getInitials(a.name) + '</div>';
         }
 
-        // Name
-        html += '<div style="font-size:.88rem;font-weight:700;color:var(--gray-900);line-height:1.2;padding:0 20px">' + a.name + '</div>';
-        // Closed count — primary stat
-        html += '<div style="font-size:1rem;font-weight:800;color:var(--gray-900);margin-top:4px">' + a.closedCount + ' closed</div>';
-        // Volume — secondary stat
-        html += '<div style="font-size:.72rem;color:var(--gray-400);margin-top:2px">' + Data.formatCurrency(a.volume) + '</div>';
-
+        html += '<div class="top3-name">' + a.name + '</div>';
+        html += '<div class="top3-stat-primary">' + a.closedCount + ' closed</div>';
+        html += '<div class="top3-stat-secondary">' + Data.formatCurrency(a.volume) + '</div>';
         html += '</div>';
       });
 
