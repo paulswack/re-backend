@@ -1525,6 +1525,14 @@
       var raw = localStorage.getItem(PREFIX + 'admin_settings');
       if (!raw) return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
       var saved = JSON.parse(raw);
+      // Migrate: ensure pre_listing status exists in listings.statuses
+      if (saved.listings && Array.isArray(saved.listings.statuses)) {
+        var hasPreListing = saved.listings.statuses.some(function (s) { return s.key === 'pre_listing'; });
+        if (!hasPreListing) {
+          saved.listings.statuses.unshift({ key: 'pre_listing', label: 'Pre-Listing', color: '#7C3AED' });
+          localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(saved));
+        }
+      }
       // Merge with defaults for any missing keys
       var merged = JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
       Object.keys(saved).forEach(function (k) {
