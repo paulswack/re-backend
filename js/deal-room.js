@@ -75,8 +75,9 @@
 
   function sectionHd(key, label, count) {
     return '<div class="dr-section-hd dr-section-hd--' + key + '">' +
-      escapeHtml(label) +
-      '<span class="dr-section-hd-count">' + count + '</span>' +
+      '<div class="dr-section-hd-label">' + escapeHtml(label) + '<span class="dr-section-hd-count">' + count + '</span></div>' +
+      '<div class="dr-section-hd-col">Agent</div>' +
+      '<div class="dr-section-hd-col dr-section-hd-col--price">Price</div>' +
     '</div>';
   }
 
@@ -85,80 +86,64 @@
     var specs = [];
     if (l.beds)  specs.push(l.beds + ' bd');
     if (l.baths) specs.push(l.baths + ' ba');
-    var agentFirst = escapeHtml((l.agent || '').split(' ')[0]);
-    var subParts = [addrSub, specs.join(' · '), agentFirst].filter(Boolean);
+    var subParts = [addrSub, specs.join(' · ')].filter(Boolean);
     var subHtml = subParts.map(function (p, i) {
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
     }).join('');
-    // inject avatar before agent name
-    if (l.agent) {
-      var lastDot = subHtml.lastIndexOf('<span class="dr-dot">·</span>' + escapeHtml(agentFirst));
-      if (lastDot !== -1) {
-        subHtml = subHtml.slice(0, lastDot) + '<span class="dr-dot">·</span>' + avatarHtml(l.agent, 16) + ' ' + escapeHtml(agentFirst);
-      }
-    }
     var statusKey = l.status || 'active';
     return '<div class="dr-row dr-row--' + statusKey + '" data-goto="listings.html?id=' + encodeURIComponent(l.id) + '">' +
-      '<div class="dr-row-top">' +
-        '<span class="dr-row-address">' + escapeHtml(l.address || '—') + '</span>' +
-        '<span class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</span>' +
+      '<div class="dr-row-main">' +
+        '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
+        (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
       '</div>' +
-      '<div class="dr-row-bottom">' +
-        '<span class="dr-row-sub">' + subHtml + '</span>' +
-        '<div class="dr-row-right">' +
-          (l.listingDate ? '<span class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</span>' : '') +
-        '</div>' +
+      '<div class="dr-row-agent-col">' +
+        avatarHtml(l.agent, 22) +
+        '<span class="dr-row-agent-name">' + escapeHtml((l.agent || '—').split(' ')[0]) + '</span>' +
+      '</div>' +
+      '<div class="dr-row-price-col">' +
+        '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
+        (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
       '</div>' +
     '</div>';
   }
 
   function escrowRow(t) {
-    var addrSub = [t.city, t.state, t.zip].filter(Boolean).join(', ');
+    var addrSub = [t.city, t.state].filter(Boolean).join(', ');
     var matchLst = (window._drAllListings || []).find(function (l) { return l.address === t.address; });
-    var specs = [];
     var beds  = t.beds  || (matchLst ? matchLst.beds  : null);
     var baths = t.baths || (matchLst ? matchLst.baths : null);
+    var specs = [];
     if (beds)  specs.push(beds + ' bd');
     if (baths) specs.push(baths + ' ba');
-
-    var days = daysUntil(t.closeDate);
-    var urgency = '', urgencyColor = 'var(--gray-400)';
-    if (days !== null) {
-      if (days < 0)        { urgency = Math.abs(days) + 'd ago'; urgencyColor = 'var(--emerald)'; }
-      else if (days === 0) { urgency = 'Today!';  urgencyColor = 'var(--rose)'; }
-      else if (days <= 7)  { urgency = days + 'd left'; urgencyColor = 'var(--rose)'; }
-      else if (days <= 21) { urgency = days + 'd left'; urgencyColor = '#B86B00'; }
-      else                 { urgency = days + 'd left'; }
-    }
-
-    var agentFirst = escapeHtml((t.agent || '').split(' ')[0]);
-    var subPieces = [addrSub, specs.join(' · '), (t.type || '')].filter(Boolean);
-    if (t.agent) subPieces.push('__AGENT__');
-    var subHtml = subPieces.map(function (p, i) {
-      if (p === '__AGENT__') return (i > 0 ? '<span class="dr-dot">·</span>' : '') + avatarHtml(t.agent, 16) + ' ' + agentFirst;
+    var subParts = [addrSub, specs.join(' · ')].filter(Boolean);
+    var subHtml = subParts.map(function (p, i) {
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
     }).join('');
 
-    var urgencyClass = '';
+    var days = daysUntil(t.closeDate);
+    var urgency = '', urgencyClass = '';
     if (days !== null) {
-      if (days < 0)        urgencyClass = 'dr-urgency--ok';
-      else if (days <= 7)  urgencyClass = 'dr-urgency--hot';
-      else if (days <= 21) urgencyClass = 'dr-urgency--warn';
-      else                 urgencyClass = 'dr-urgency--ok';
+      if (days < 0)        { urgency = Math.abs(days) + 'd ago'; urgencyClass = 'dr-urgency--ok'; }
+      else if (days === 0) { urgency = 'Today!';  urgencyClass = 'dr-urgency--hot'; }
+      else if (days <= 7)  { urgency = days + 'd left'; urgencyClass = 'dr-urgency--hot'; }
+      else if (days <= 21) { urgency = days + 'd left'; urgencyClass = 'dr-urgency--warn'; }
+      else                 { urgency = days + 'd left'; urgencyClass = 'dr-urgency--ok'; }
     }
 
     var statusKey = t.status || 'active';
     return '<div class="dr-row dr-row--' + statusKey + '" data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '">' +
-      '<div class="dr-row-top">' +
-        '<span class="dr-row-address">' + escapeHtml(t.address || '—') + '</span>' +
-        '<span class="dr-row-price">' + Data.formatCurrencyFull(t.price) + '</span>' +
+      '<div class="dr-row-main">' +
+        '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
+        (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
       '</div>' +
-      '<div class="dr-row-bottom">' +
-        '<span class="dr-row-sub">' + subHtml + '</span>' +
-        '<div class="dr-row-right">' +
-          (t.closeDate ? '<span class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</span>' : '') +
-          (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
-        '</div>' +
+      '<div class="dr-row-agent-col">' +
+        avatarHtml(t.agent, 22) +
+        '<span class="dr-row-agent-name">' + escapeHtml((t.agent || '—').split(' ')[0]) + '</span>' +
+      '</div>' +
+      '<div class="dr-row-price-col">' +
+        '<div class="dr-row-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
+        (t.closeDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</div>' : '') +
+        (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
       '</div>' +
     '</div>';
   }
