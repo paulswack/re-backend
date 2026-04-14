@@ -159,6 +159,7 @@
     filtered.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
 
     var sections = [
+      { key: 'pre_listing', label: 'Pre-Listing' },
       { key: 'coming_soon', label: 'Coming Soon' },
       { key: 'active',      label: 'Active' },
       { key: 'pending',     label: 'Pending' }

@@ -521,7 +521,7 @@
     html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (l ? l.sqft || '' : '') + '" placeholder="1800" min="0" style="padding:12px 16px"></div>';
     html += '</div>';
 
-    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
+    var _lstFormStatuses = getAdminSetting('listings.statuses', [{ key: 'pre_listing', label: 'Pre-Listing' }, { key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
     html += '<div class="form-group"><label>Status</label><select id="fStatus" style="padding:12px 16px">' +
       _lstFormStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l && l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
@@ -1044,7 +1044,7 @@
     '</div>';
 
     // Status
-    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
+    var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'pre_listing', label: 'Pre-Listing' }, { key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     html += '<div class="detail-block">' +
       '<div class="detail-block-label">Status</div>' +
       '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +

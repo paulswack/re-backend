@@ -119,6 +119,9 @@
       opacity: .7;
     }
     .dr-section-hd-col--price { text-align: right; }
+    /* Pre-Listing */
+    .dr-section-hd--pre_listing { background: #F5F3FF; color: #7C3AED; }
+    .dr-section-hd--pre_listing .dr-section-hd-count { background: #DDD6FE; color: #7C3AED; }
     /* Coming Soon */
     .dr-section-hd--coming_soon { background: #EEF2FF; color: #3B5BDB; }
     .dr-section-hd--coming_soon .dr-section-hd-count { background: #BAC8FF; color: #3B5BDB; }
@@ -149,6 +152,7 @@
     }
     .dr-row:last-child { border-bottom: none; }
 
+    .dr-row--pre_listing:hover  { background: #FAF5FF; border-left-color: #A78BFA; }
     .dr-row--coming_soon:hover { background: #F5F7FF; border-left-color: #7C8FDD; }
     .dr-row--active:hover      { background: #F2FAF5; border-left-color: #52B47A; }
     .dr-row--pending:hover     { background: #FFFBF2; border-left-color: #F0A030; }
@@ -217,6 +221,7 @@
       font-weight: 800;
       white-space: nowrap;
     }
+    .dr-row--pre_listing  .dr-row-price { color: #7C3AED; }
     .dr-row--coming_soon .dr-row-price { color: #3B5BDB; }
     .dr-row--active      .dr-row-price { color: #1A7F4B; }
     .dr-row--pending     .dr-row-price { color: #B86B00; }

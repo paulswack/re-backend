@@ -124,8 +124,9 @@
     },
     listings: {
       statuses: [
-        { key: 'active', label: 'Active', color: '#3B82F6' },
-        { key: 'new', label: 'New', color: '#8B5CF6' },
+        { key: 'pre_listing', label: 'Pre-Listing', color: '#7C3AED' },
+        { key: 'coming_soon', label: 'Coming Soon', color: '#3B5BDB' },
+        { key: 'active', label: 'Active', color: '#1A7F4B' },
         { key: 'pending', label: 'Pending', color: '#F59E0B' },
         { key: 'sold', label: 'Sold', color: '#10B981' }
       ],
