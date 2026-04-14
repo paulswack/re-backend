@@ -6,7 +6,7 @@
   <title>Deal Room — RE Back Office</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* ---- Deal Room Styles ---- */
+    /* ---- Deal Room Layout ---- */
     .dr-stats-strip {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -16,78 +16,163 @@
     @media (max-width: 900px) { .dr-stats-strip { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px) { .dr-stats-strip { grid-template-columns: 1fr 1fr; gap: 10px; } }
 
-    .dr-filter-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-
-    .dr-search-wrap {
-      flex: 1;
-      min-width: 200px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #fff;
-      border: 1.5px solid var(--gray-200);
-      border-radius: 10px;
-      padding: 9px 14px;
-    }
-    .dr-search-wrap:focus-within {
-      border-color: var(--indigo);
-    }
-
-    .dr-filter-tabs {
-      display: flex;
-      gap: 4px;
-      background: var(--gray-100);
-      border-radius: 10px;
-      padding: 3px;
-    }
-    .dr-tab {
-      padding: 7px 16px;
-      border: none;
-      background: transparent;
-      border-radius: 8px;
-      font-size: .82rem;
-      font-weight: 600;
-      color: var(--gray-500);
-      cursor: pointer;
-      font-family: inherit;
-      transition: all .15s;
-      white-space: nowrap;
-    }
-    .dr-tab:hover { color: var(--gray-800); }
-    .dr-tab-active {
-      background: #fff;
-      color: var(--indigo);
-      box-shadow: 0 1px 4px rgba(0,0,0,.10);
-    }
-
-    .dr-grid {
+    .dr-columns {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 18px;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
     }
-    @media (max-width: 600px) { .dr-grid { grid-template-columns: 1fr; gap: 12px; } }
+    @media (max-width: 860px) { .dr-columns { grid-template-columns: 1fr; } }
 
-    .dr-card {
-      background: #fff;
+    /* ---- Panel (card container) ---- */
+    .dr-panel {
+      background: var(--white);
       border-radius: var(--radius-lg);
       border: 1px solid var(--gray-100);
       box-shadow: var(--shadow-sm);
       overflow: hidden;
-      transition: box-shadow .18s, transform .18s;
     }
-    .dr-card:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
+
+    .dr-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      gap: 10px;
     }
-    .dr-card:active {
-      transform: translateY(0);
+    .dr-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: .92rem;
+      font-weight: 800;
+      color: var(--gray-800);
     }
+    .dr-panel-title svg { width: 17px; height: 17px; fill: currentColor; flex-shrink: 0; }
+    .dr-panel-count {
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--gray-100);
+      color: var(--gray-500);
+    }
+    .dr-panel-search {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 6px 10px;
+      flex: 1;
+      max-width: 200px;
+    }
+    .dr-panel-search:focus-within { border-color: var(--indigo); background: #fff; }
+    .dr-panel-search input {
+      border: none; outline: none; background: transparent;
+      font-size: .78rem; color: var(--gray-700); width: 100%; font-family: inherit;
+    }
+
+    /* ---- Section header inside panel ---- */
+    .dr-section-hd {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px 7px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--gray-500);
+    }
+    .dr-section-hd-count {
+      font-size: .68rem;
+      font-weight: 700;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      border-radius: 20px;
+      padding: 1px 7px;
+    }
+
+    /* ---- Compact row ---- */
+    .dr-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--gray-50);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .dr-row:last-child { border-bottom: none; }
+    .dr-row:hover { background: var(--gray-50); }
+
+    .dr-row-addr {
+      flex: 1;
+      min-width: 0;
+    }
+    .dr-row-addr-main {
+      font-size: .83rem;
+      font-weight: 600;
+      color: var(--gray-800);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dr-row-addr-sub {
+      font-size: .72rem;
+      color: var(--gray-400);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dr-row-agent {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      width: 110px;
+      flex-shrink: 0;
+    }
+    .dr-row-agent-name {
+      font-size: .74rem;
+      color: var(--gray-500);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dr-row-price {
+      font-size: .83rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      text-align: right;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .dr-row-meta {
+      width: 70px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+    .dr-row-date {
+      font-size: .72rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+    }
+
+    /* ---- Empty state ---- */
+    .dr-empty {
+      padding: 36px 20px;
+      text-align: center;
+      color: var(--gray-400);
+      font-size: .85rem;
+    }
+    .dr-empty svg { fill: var(--gray-200); margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -132,14 +217,11 @@
         <button class="hamburger" id="hamburger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="topbar-title">
           <h1>Deal Room</h1>
-          <p>All active listings and escrows in one place.</p>
+          <p>All active listings and escrows at a glance.</p>
         </div>
         <div class="topbar-actions"></div>
       </div>
-
-      <div class="page-body" id="pageBody">
-        <!-- Content rendered by JS -->
-      </div>
+      <div class="page-body" id="pageBody"></div>
     </main>
   </div>
 
