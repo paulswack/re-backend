@@ -117,28 +117,6 @@
     return s;
   };
 
-  WIDGETS.recentClosed = function () {
-    var s = '';
-    s += widgetOpen('recentClosed', 'Recent Closed', 'var(--emerald)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>', '<a href="closed.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">View All</a>');
-    if (closedTxns.length === 0) { s += '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No closed deals yet.</div>'; }
-    else { closedTxns.slice(0, 4).forEach(function (t) { s += agentRow(t); }); }
-    s += '</div>';
-    return s;
-  };
-
-  WIDGETS.currentEscrows = function () {
-    var s = '';
-    s += widgetOpen('currentEscrows', 'Current Escrows (' + escrowCount + ')', 'var(--indigo)', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>', '<a href="transactions.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">View All</a>');
-    if (escrowCount === 0) { s += '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No active escrows.</div>'; }
-    else { activeTxns.concat(pendingTxns).slice(0, 4).forEach(function (t) {
-      s += '<a href="transactions.html?id=' + encodeURIComponent(t.id) + '" class="list-row" style="text-decoration:none;padding:10px 20px;cursor:pointer">' +
-        '<div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800)">' + t.address.split(',')[0] + '</div>' +
-        '<div style="font-size:.7rem;color:var(--gray-400)">' + t.agent + '</div></div>' +
-        '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:.85rem;font-weight:700">' + Data.formatCurrency(t.price) + '</span>' + Data.statusBadge(t.status) + '</div></a>';
-    }); }
-    s += '</div>';
-    return s;
-  };
 
   WIDGETS.top5 = function () {
     var s = '';
@@ -161,86 +139,6 @@
     return s;
   };
 
-  WIDGETS.activeListings = function () {
-    var s = '';
-    s += widgetOpen('activeListings', 'Active Listings', 'var(--amber)', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>', '<a href="listings.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">View All</a>');
-    if (activeListings.length === 0) { s += '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No active listings.</div>'; }
-    else { activeListings.slice(0, 4).forEach(function (l) {
-      s += '<a href="listings.html?id=' + encodeURIComponent(l.id) + '" class="list-row" style="text-decoration:none;padding:10px 20px;cursor:pointer">' +
-        '<div style="width:44px;height:32px;border-radius:6px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gray-300)"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>' +
-        '<div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + l.address.split(',')[0] + '</div>' +
-        '<div style="font-size:.7rem;color:var(--gray-400)">' + (l.beds||'—') + ' bd · ' + (l.baths||'—') + ' ba · ' + (l.sqft ? l.sqft.toLocaleString()+' sqft' : '') + '</div></div>' +
-        '<span style="font-size:.88rem;font-weight:700">' + Data.formatCurrency(l.price) + '</span></a>';
-    }); }
-    s += '</div>';
-    return s;
-  };
-
-  WIDGETS.upcomingDeadlines = function () {
-    var s = '';
-    s += widgetOpen('upcomingDeadlines', 'Upcoming Deadlines', 'var(--rose)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 5h-2v6l5.25 3.15.75-1.23-4-2.42V7z"/>',  '<a href="transactions.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">Escrows</a>');
-
-    var PREFIX = 'reb_';
-    var allKdMap = {};
-    try { allKdMap = JSON.parse(localStorage.getItem(PREFIX + 'txn_key_dates') || '{}'); } catch(e) {}
-    var today = new Date(); today.setHours(0,0,0,0);
-    var deadlineItems = [];
-    activeTxns.concat(pendingTxns).forEach(function(t) {
-      var kds = allKdMap[t.id] || [];
-      // Also add close date
-      if (t.closeDate) {
-        var cd = new Date(t.closeDate + 'T00:00:00');
-        var cdiff = Math.round((cd - today) / 86400000);
-        deadlineItems.push({ txnId: t.id, address: t.address.split(',')[0], label: 'Closing Date', date: t.closeDate, diff: cdiff, agent: t.agent, isClose: true });
-      }
-      kds.forEach(function(kd) {
-        if (kd.status === 'complete' || kd.status === 'waived') return;
-        if (!kd.date) return;
-        var d = new Date(kd.date + 'T00:00:00');
-        var diff = Math.round((d - today) / 86400000);
-        if (diff <= 14) {
-          deadlineItems.push({ txnId: t.id, address: t.address.split(',')[0], label: kd.label, date: kd.date, diff: diff, agent: t.agent });
-        }
-      });
-    });
-    deadlineItems.sort(function(a, b) { return a.diff - b.diff; });
-
-    if (deadlineItems.length === 0) {
-      s += '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:.85rem">No upcoming deadlines in the next 14 days.</div>';
-    } else {
-      deadlineItems.slice(0, 8).forEach(function(item) {
-        var dotColor = item.diff < 0 ? '#DC2626' : item.diff <= 3 ? '#D97706' : item.diff <= 7 ? '#F59E0B' : (item.isClose ? '#6366F1' : 'var(--gray-300)');
-        var badgeText, badgeBg, badgeColor;
-        if (item.diff < 0) {
-          badgeText = Math.abs(item.diff) + ' days overdue';
-          badgeBg = '#FEE2E2'; badgeColor = '#DC2626';
-        } else if (item.diff === 0) {
-          badgeText = 'Today';
-          badgeBg = '#FEE2E2'; badgeColor = '#DC2626';
-        } else if (item.diff === 1) {
-          badgeText = 'Tomorrow';
-          badgeBg = '#FEF3C7'; badgeColor = '#D97706';
-        } else {
-          badgeText = item.diff + ' days';
-          badgeBg = 'var(--gray-100)'; badgeColor = 'var(--gray-500)';
-        }
-        s += '<a href="transactions.html?id=' + encodeURIComponent(item.txnId) + '" class="list-row" style="text-decoration:none;padding:9px 20px;cursor:pointer;align-items:center">';
-        s += '<span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;display:inline-block"></span>';
-        s += '<div style="flex:1;min-width:0;margin-left:2px">';
-        s += '<div style="font-size:.83rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.label + '</div>';
-        s += '<div style="font-size:.7rem;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + item.address + '</div>';
-        s += '</div>';
-        s += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">';
-        s += '<span style="font-size:.7rem;font-weight:700;background:' + badgeBg + ';color:' + badgeColor + ';padding:2px 8px;border-radius:20px;white-space:nowrap">' + badgeText + '</span>';
-        s += '<span style="font-size:.7rem;color:var(--gray-400);white-space:nowrap">' + (item.agent || '') + '</span>';
-        s += '</div>';
-        s += '</a>';
-      });
-    }
-
-    s += '</div>';
-    return s;
-  };
 
   WIDGETS.announcements = function () {
     var s = '';
@@ -380,9 +278,9 @@
   // DEFAULT LAYOUT & LAYOUT PERSISTENCE
   // ============================================================
   var DEFAULT_LAYOUT = {
-    col1: ['goals', 'recentClosed', 'currentEscrows'],
-    col2: ['top5', 'activeListings', 'volumeSummary'],
-    col3: ['upcomingDeadlines', 'reviews', 'announcements']
+    col1: ['goals', 'volumeSummary'],
+    col2: ['top5', 'reviews'],
+    col3: ['announcements']
   };
 
   function loadLayout() {
@@ -434,8 +332,6 @@
     // STAT CARDS
     h += '<div class="stats-grid dash-stats-row" style="margin-bottom:28px">';
     h += dashStat('Total Closed', closedTxns.length, '#ECFDF5', 'var(--emerald)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>', closeRate + '% close rate', 'up');
-    h += dashStat('Current Escrows', escrowCount, '#EEF2FF', 'var(--indigo)', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>', activeTxns.length + ' active · ' + pendingTxns.length + ' pending', 'neutral');
-    h += dashStat('Active Listings', activeListings.length, '#FFFBEB', 'var(--amber)', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>', Data.formatCurrency(activeListings.reduce(function(s,l){return s+(l.price||0)},0)) + ' total value', 'up');
     h += '</div>';
 
     // TAX STRIP (agents only)
