@@ -101,7 +101,7 @@
     /* ---- Section header — 3-col grid matching rows ---- */
     .dr-section-hd {
       display: grid;
-      grid-template-columns: 1fr 106px 96px;
+      grid-template-columns: 1fr 140px 96px;
       align-items: center;
       padding: 6px 18px 6px 17px;
       border-bottom: 1px solid var(--gray-100);
@@ -139,7 +139,7 @@
     /* ---- Row — 3-col grid ---- */
     .dr-row {
       display: grid;
-      grid-template-columns: 1fr 106px 96px;
+      grid-template-columns: 1fr 140px 96px;
       align-items: center;
       padding: 10px 18px 10px 17px;
       border-bottom: 1px solid var(--gray-100);
@@ -191,6 +191,21 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    /* Rep badge */
+    .dr-rep-badge {
+      font-size: .6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .dr-rep-badge--buyer  { background: #EEF2FF; color: #3B5BDB; }
+    .dr-rep-badge--seller { background: #E6F5EE; color: #1A7F4B; }
+    .dr-rep-badge--dual   { background: #F3F0FF; color: #6741D9; }
 
     /* Col 3: price + date/badge */
     .dr-row-price-col {

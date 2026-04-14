@@ -139,6 +139,7 @@
       '<div class="dr-row-agent-col">' +
         avatarHtml(t.agent, 22) +
         '<span class="dr-row-agent-name">' + escapeHtml((t.agent || '—').split(' ')[0]) + '</span>' +
+        (t.type ? '<span class="dr-rep-badge dr-rep-badge--' + t.type.toLowerCase() + '">' + escapeHtml(t.type) + '</span>' : '') +
       '</div>' +
       '<div class="dr-row-price-col">' +
         '<div class="dr-row-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
