@@ -91,7 +91,7 @@
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
     }).join('');
     var statusKey = l.status || 'active';
-    return '<div class="dr-row dr-row--' + statusKey + '" data-goto="listings.html?id=' + encodeURIComponent(l.id) + '">' +
+    return '<div class="dr-row dr-row--' + statusKey + '" data-goto="listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -131,7 +131,7 @@
     }
 
     var statusKey = t.status || 'active';
-    return '<div class="dr-row dr-row--' + statusKey + '" data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '">' +
+    return '<div class="dr-row dr-row--' + statusKey + '" data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -190,8 +190,11 @@
           'Listings' +
           '<span class="dr-panel-count">' + all.length + '</span>' +
         '</div>' +
-        '<div class="dr-panel-search">' + SEARCH_ICON +
-          '<input type="text" id="lstSearch" placeholder="Search…" value="' + escapeHtml(_lstSearch) + '">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<div class="dr-panel-search">' + SEARCH_ICON +
+            '<input type="text" id="lstSearch" placeholder="Search…" value="' + escapeHtml(_lstSearch) + '">' +
+          '</div>' +
+          '<a href="listings.html?action=new&from=dealRoom" class="dr-add-btn">+ Add Listing</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +
@@ -238,8 +241,11 @@
           'Current Escrows' +
           '<span class="dr-panel-count">' + all.length + '</span>' +
         '</div>' +
-        '<div class="dr-panel-search">' + SEARCH_ICON +
-          '<input type="text" id="txnSearch" placeholder="Search…" value="' + escapeHtml(_txnSearch) + '">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<div class="dr-panel-search">' + SEARCH_ICON +
+            '<input type="text" id="txnSearch" placeholder="Search…" value="' + escapeHtml(_txnSearch) + '">' +
+          '</div>' +
+          '<a href="transactions.html?action=new&from=dealRoom" class="dr-add-btn">+ Add Escrow</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +

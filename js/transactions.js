@@ -19,18 +19,20 @@
   // ---- State ----
   var viewMode = 'list';       // 'list' or 'detail'
   var selectedTxnId = null;
+  var fromDealRoom = false;
 
   // Deep-link: open specific transaction from URL param
   (function () {
     var params = new URLSearchParams(window.location.search);
     var deepId = params.get('id');
+    if (params.get('from') === 'dealRoom') fromDealRoom = true;
     if (deepId) {
       selectedTxnId = deepId;
       viewMode = 'detail';
-      // Clean URL without reload
-      if (window.history.replaceState) {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
+    }
+    if (params.get('action') === 'new') viewMode = 'form';
+    if (window.history.replaceState) {
+      window.history.replaceState({}, '', window.location.pathname);
     }
   })();
   var editingId = null;
@@ -310,7 +312,7 @@
     var contacts = party.contacts;
 
     var html = '';
-    html += '<button class="detail-back-btn" data-action="form-cancel"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (isEdit ? 'Back to Escrow' : 'Back to Escrows') + '</button>';
+    html += '<button class="detail-back-btn" data-action="form-cancel"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (isEdit ? 'Back to Escrow' : fromDealRoom ? 'Back to Deal Room' : 'Back to Escrows') + '</button>';
 
     html += '<div style="max-width:800px">';
     html += '<h2 style="font-size:1.3rem;font-weight:800;color:var(--gray-900);margin-bottom:24px">' + (isEdit ? 'Edit Escrow' : 'New Escrow') + '</h2>';
@@ -642,7 +644,7 @@
     // Back button
     html += '<button class="detail-back-btn" data-action="back-to-list">' +
       '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      'Back to Escrows' +
+      (fromDealRoom ? 'Back to Deal Room' : 'Back to Escrows') +
     '</button>';
 
     // Inline-editable input style
@@ -1238,6 +1240,7 @@
         break;
 
       case 'back-to-list':
+        if (fromDealRoom) { window.location.href = 'deal-room.html'; return; }
         viewMode = 'list';
         selectedTxnId = null;
         render();
@@ -1305,6 +1308,11 @@
           viewMode = 'detail';
           selectedTxnId = editingId;
           editingId = null;
+          render();
+          return;
+        } else if (fromDealRoom) {
+          window.location.href = 'deal-room.html';
+          return;
         } else {
           viewMode = 'list';
         }
