@@ -127,62 +127,99 @@
       padding: 1px 7px;
     }
 
-    /* ---- Row ---- */
+    /* ---- Row — 2-line layout ---- */
     .dr-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
       padding: 11px 18px 11px 14px;
-      border-bottom: 1px solid var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
       cursor: pointer;
-      transition: background .13s;
+      transition: background .12s;
       border-left: 3px solid transparent;
     }
     .dr-row:last-child { border-bottom: none; }
 
-    /* Hover colors per section */
-    .dr-row--coming_soon:hover { background: #F5F7FF; border-left-color: #BAC8FF; }
-    .dr-row--active:hover      { background: #F2FAF5; border-left-color: #A3D9B3; }
-    .dr-row--pending:hover     { background: #FFFBF2; border-left-color: #FFD280; }
+    .dr-row--coming_soon:hover { background: #F5F7FF; border-left-color: #7C8FDD; }
+    .dr-row--active:hover      { background: #F2FAF5; border-left-color: #52B47A; }
+    .dr-row--pending:hover     { background: #FFFBF2; border-left-color: #F0A030; }
 
-    .dr-row-addr { flex: 1; min-width: 0; }
-    .dr-row-addr-main {
-      font-size: .84rem; font-weight: 600; color: var(--gray-800);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    /* Top line: address (left) + price (right) */
+    .dr-row-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 3px;
     }
-    .dr-row-addr-sub {
-      font-size: .72rem; color: var(--gray-400); margin-top: 1px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .dr-row-address {
+      font-size: .87rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-
-    .dr-row-agent {
-      display: flex; align-items: center; gap: 6px;
-      width: 108px; flex-shrink: 0;
-    }
-    .dr-row-agent-name {
-      font-size: .75rem; font-weight: 500; color: var(--gray-500);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-
     .dr-row-price {
-      font-size: .84rem; font-weight: 700;
-      text-align: right; flex-shrink: 0; white-space: nowrap;
+      font-size: .87rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
-    /* Price color per section */
     .dr-row--coming_soon .dr-row-price { color: #3B5BDB; }
-    .dr-row--active      .dr-row-price { color: var(--emerald); }
+    .dr-row--active      .dr-row-price { color: #1A7F4B; }
     .dr-row--pending     .dr-row-price { color: #B86B00; }
 
-    .dr-row-meta { width: 72px; flex-shrink: 0; text-align: right; }
-    .dr-row-date { font-size: .71rem; color: var(--gray-400); white-space: nowrap; }
+    /* Bottom line: details (left) + date/meta (right) */
+    .dr-row-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .dr-row-sub {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      font-size: .74rem;
+      color: var(--gray-400);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dr-row-sub .dr-dot { margin: 0 3px; opacity: .5; }
+    .dr-row-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .dr-row-date {
+      font-size: .72rem;
+      color: var(--gray-400);
+      white-space: nowrap;
+    }
+    .dr-urgency {
+      font-size: .68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .dr-urgency--hot   { background: #FEE2E2; color: #B91C1C; }
+    .dr-urgency--warn  { background: #FFF4E0; color: #B86B00; }
+    .dr-urgency--ok    { background: #E6F5EE; color: #1A7F4B; }
 
     /* ---- Empty state ---- */
     .dr-empty {
-      padding: 40px 20px; text-align: center;
-      color: var(--gray-400); font-size: .85rem;
+      padding: 44px 20px;
+      text-align: center;
+      color: var(--gray-400);
     }
-    .dr-empty svg { fill: var(--gray-200); margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
-    .dr-empty-title { font-size: .9rem; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; }
+    .dr-empty svg { fill: var(--gray-200); margin: 0 auto 12px; display: block; }
+    .dr-empty-title { font-size: .92rem; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; }
+    .dr-empty-sub   { font-size: .8rem; }
   </style>
 </head>
 <body>

@@ -81,24 +81,33 @@
   }
 
   function listingRow(l) {
-    var addrSub = [l.city, l.state, l.zip].filter(Boolean).join(', ');
+    var addrSub = [l.city, l.state].filter(Boolean).join(', ');
     var specs = [];
     if (l.beds)  specs.push(l.beds + ' bd');
     if (l.baths) specs.push(l.baths + ' ba');
+    var agentFirst = escapeHtml((l.agent || '').split(' ')[0]);
+    var subParts = [addrSub, specs.join(' · '), agentFirst].filter(Boolean);
+    var subHtml = subParts.map(function (p, i) {
+      return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
+    }).join('');
+    // inject avatar before agent name
+    if (l.agent) {
+      var lastDot = subHtml.lastIndexOf('<span class="dr-dot">·</span>' + escapeHtml(agentFirst));
+      if (lastDot !== -1) {
+        subHtml = subHtml.slice(0, lastDot) + '<span class="dr-dot">·</span>' + avatarHtml(l.agent, 16) + ' ' + escapeHtml(agentFirst);
+      }
+    }
     var statusKey = l.status || 'active';
     return '<div class="dr-row dr-row--' + statusKey + '" data-goto="listings.html?id=' + encodeURIComponent(l.id) + '">' +
-      '<div class="dr-row-addr">' +
-        '<div class="dr-row-addr-main">' + escapeHtml(l.address) + '</div>' +
-        (addrSub ? '<div class="dr-row-addr-sub">' + escapeHtml(addrSub) + '</div>' : '') +
-        (specs.length ? '<div class="dr-row-addr-sub">' + escapeHtml(specs.join(' · ')) + '</div>' : '') +
+      '<div class="dr-row-top">' +
+        '<span class="dr-row-address">' + escapeHtml(l.address || '—') + '</span>' +
+        '<span class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</span>' +
       '</div>' +
-      '<div class="dr-row-agent">' +
-        avatarHtml(l.agent, 24) +
-        '<div class="dr-row-agent-name">' + escapeHtml((l.agent || '').split(' ')[0]) + '</div>' +
-      '</div>' +
-      '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
-      '<div class="dr-row-meta">' +
-        (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
+      '<div class="dr-row-bottom">' +
+        '<span class="dr-row-sub">' + subHtml + '</span>' +
+        '<div class="dr-row-right">' +
+          (l.listingDate ? '<span class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</span>' : '') +
+        '</div>' +
       '</div>' +
     '</div>';
   }
@@ -122,22 +131,34 @@
       else                 { urgency = days + 'd left'; }
     }
 
-    var sub2 = specs.length ? specs.join(' · ') + (t.type ? ' · ' + t.type : '') : (t.type || '');
+    var agentFirst = escapeHtml((t.agent || '').split(' ')[0]);
+    var subPieces = [addrSub, specs.join(' · '), (t.type || '')].filter(Boolean);
+    if (t.agent) subPieces.push('__AGENT__');
+    var subHtml = subPieces.map(function (p, i) {
+      if (p === '__AGENT__') return (i > 0 ? '<span class="dr-dot">·</span>' : '') + avatarHtml(t.agent, 16) + ' ' + agentFirst;
+      return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
+    }).join('');
+
+    var urgencyClass = '';
+    if (days !== null) {
+      if (days < 0)        urgencyClass = 'dr-urgency--ok';
+      else if (days <= 7)  urgencyClass = 'dr-urgency--hot';
+      else if (days <= 21) urgencyClass = 'dr-urgency--warn';
+      else                 urgencyClass = 'dr-urgency--ok';
+    }
+
     var statusKey = t.status || 'active';
     return '<div class="dr-row dr-row--' + statusKey + '" data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '">' +
-      '<div class="dr-row-addr">' +
-        '<div class="dr-row-addr-main">' + escapeHtml(t.address) + '</div>' +
-        (addrSub ? '<div class="dr-row-addr-sub">' + escapeHtml(addrSub) + '</div>' : '') +
-        (sub2 ? '<div class="dr-row-addr-sub">' + escapeHtml(sub2) + '</div>' : '') +
+      '<div class="dr-row-top">' +
+        '<span class="dr-row-address">' + escapeHtml(t.address || '—') + '</span>' +
+        '<span class="dr-row-price">' + Data.formatCurrencyFull(t.price) + '</span>' +
       '</div>' +
-      '<div class="dr-row-agent">' +
-        avatarHtml(t.agent, 24) +
-        '<div class="dr-row-agent-name">' + escapeHtml((t.agent || '').split(' ')[0]) + '</div>' +
-      '</div>' +
-      '<div class="dr-row-price">' + Data.formatCurrencyFull(t.price) + '</div>' +
-      '<div class="dr-row-meta">' +
-        (t.closeDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</div>' : '') +
-        (urgency ? '<div style="font-size:.7rem;font-weight:700;color:' + urgencyColor + ';margin-top:1px">' + escapeHtml(urgency) + '</div>' : '') +
+      '<div class="dr-row-bottom">' +
+        '<span class="dr-row-sub">' + subHtml + '</span>' +
+        '<div class="dr-row-right">' +
+          (t.closeDate ? '<span class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</span>' : '') +
+          (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
+        '</div>' +
       '</div>' +
     '</div>';
   }
