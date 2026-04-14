@@ -29,7 +29,7 @@ var ApiBridge = (function () {
   }
   function mapListings(lsts) {
     return lsts.map(function (l) {
-      return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '', status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id, beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description, source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '', createdAt: l.created_at };
+      return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '', status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id, beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description, source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '', createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
     });
   }
   function mapAnnouncements(anns) {
@@ -793,11 +793,29 @@ var ApiBridge = (function () {
         var serverIds = {};
         serverMapped.forEach(function (l) { serverIds[l.id] = true; });
         var existing = JSON.parse(localStorage.getItem(PREFIX + 'listings') || '[]');
+        // Build lookup of existing local listings by ID and server_id
+        var existingById = {};
+        existing.forEach(function (l) {
+          existingById[l.id] = l;
+          if (l.server_id) existingById[l.server_id] = l;
+        });
+        // For each server listing, prefer the local version if it was updated more recently
+        var mergedServer = serverMapped.map(function (s) {
+          var local = existingById[s.id];
+          if (local && local.updatedAt && s.updatedAt && new Date(local.updatedAt) > new Date(s.updatedAt)) {
+            return local; // local is newer (e.g., user just changed status) — keep it
+          }
+          return s;
+        });
         var localOnly = existing.filter(function (l) {
           return !serverIds[l.id] && !serverIds[l.server_id] && !l.server_id && !uuidRe2.test(l.id);
         });
-        var combined = localOnly.length > 0 ? serverMapped.concat(localOnly) : serverMapped;
-        localStorage.setItem(PREFIX + 'listings', JSON.stringify(combined));
+        var combined = localOnly.length > 0 ? mergedServer.concat(localOnly) : mergedServer;
+        // Use _syncing guard so the setItem interceptor doesn't treat this server write
+        // as a user change and schedule a sync that would revert the user's edits.
+        _syncing = true;
+        try { localStorage.setItem(PREFIX + 'listings', JSON.stringify(combined)); } catch (e) {}
+        _syncing = false;
       } catch (e) {}
       _refreshActive = false;
     }).catch(function () { _refreshActive = false; });
