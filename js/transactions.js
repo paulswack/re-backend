@@ -1080,14 +1080,14 @@
     // Auto-save inline editable transaction fields
     var ieFields = pageBody.querySelectorAll('.ie-field');
     ieFields.forEach(function (field) {
-      var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
+      var eventType = (field.tagName === 'SELECT' || field.type === 'date') ? 'change' : 'blur';
       field.addEventListener(eventType, function () {
         var self = this;
         var fieldName = self.getAttribute('data-field');
         var val = self.value;
 
-        // For selects, run synchronously (no tab-order concern)
-        if (field.tagName === 'SELECT') {
+        // For selects and date inputs, run synchronously (no tab-order concern)
+        if (field.tagName === 'SELECT' || field.type === 'date') {
           // Check if status is changing to 'closed'
           if (fieldName === 'status' && val === 'closed') {
             var currentTxn = Data.getTransactions().find(function (x) { return x.id === selectedTxnId; });
@@ -1126,13 +1126,19 @@
             }
           }
 
+          if (fieldName === 'closeDate' && val) {
+            var closingDetail = 'Closing has been scheduled for ' + Data.formatDate(val) + '.';
+            addUpdate(selectedTxnId, 'closing_scheduled', 'Closing Date Scheduled', closingDetail, true);
+            notifyClientEmail('transaction', selectedTxnId, 'Closing Date Scheduled', closingDetail);
+          }
+
           Data.updateTransaction(selectedTxnId, update);
           showToast('Saved');
           renderDetail();
           return;
         }
 
-        // For text/number/date inputs, defer save so Tab focus transfer completes first
+        // For text/number inputs, defer save so Tab focus transfer completes first
         setTimeout(function () {
           if (fieldName === 'price') {
             val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
@@ -1142,12 +1148,6 @@
 
           var update = {};
           update[fieldName] = val;
-
-          if (fieldName === 'closeDate' && val) {
-            var closingDetail = 'Closing has been scheduled for ' + Data.formatDate(val) + '.';
-            addUpdate(selectedTxnId, 'closing_scheduled', 'Closing Date Scheduled', closingDetail, true);
-            notifyClientEmail('transaction', selectedTxnId, 'Closing Date Scheduled', closingDetail);
-          }
 
           Data.updateTransaction(selectedTxnId, update);
           showToast('Saved');

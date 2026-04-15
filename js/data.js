@@ -369,6 +369,9 @@
       var apiId = (item && item.server_id) || id;
       var mapped = {};
       if (updates.address !== undefined) mapped.address = updates.address;
+      if (updates.city !== undefined) mapped.city = updates.city;
+      if (updates.state !== undefined) mapped.state = updates.state;
+      if (updates.zip !== undefined) mapped.zip = updates.zip;
       if (updates.type !== undefined) mapped.type = updates.type;
       if (updates.status !== undefined) mapped.status = updates.status;
       if (updates.price !== undefined) mapped.price = updates.price;

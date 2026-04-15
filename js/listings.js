@@ -1331,14 +1331,14 @@
     // Auto-save inline editable fields
     var ieFields = pageBody.querySelectorAll('.ie-field');
     ieFields.forEach(function (field) {
-      var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
+      var eventType = (field.tagName === 'SELECT' || field.type === 'date') ? 'change' : 'blur';
       field.addEventListener(eventType, function () {
         var self = this;
         var fieldName = self.getAttribute('data-field');
         var val = self.value;
 
-        // For selects, run synchronously (no tab-order concern)
-        if (field.tagName === 'SELECT') {
+        // For selects and date inputs, run synchronously (no tab-order concern)
+        if (field.tagName === 'SELECT' || field.type === 'date') {
           if (fieldName === 'status') {
             var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
             var oldStatus = currentListing ? currentListing.status : '';
