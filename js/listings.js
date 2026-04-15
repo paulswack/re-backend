@@ -1333,72 +1333,78 @@
     ieFields.forEach(function (field) {
       var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
       field.addEventListener(eventType, function () {
-        var fieldName = this.getAttribute('data-field');
-        var val = this.value;
-        if (fieldName === 'price') {
-          val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
-          this.setAttribute('data-raw', val);
-          this.value = Data.formatCurrency(val);
-        }
-        if (fieldName === 'beds') val = val ? parseInt(val) : null;
-        if (fieldName === 'baths') val = val ? parseFloat(val) : null;
-        if (fieldName === 'sqft') val = val ? parseInt(val) : null;
+        var self = this;
+        var fieldName = self.getAttribute('data-field');
+        var val = self.value;
 
-        // Handle status change business logic
-        if (fieldName === 'status') {
-          var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
-          var oldStatus = currentListing ? currentListing.status : '';
-
-          // Status → Pending: always show the representation modal
-          if (val === 'pending') {
-            if (!currentListing) return;
-            showRepresentationModal(currentListing);
-            return;
-          }
-
-          // Status → Sold: mark listing as sold, and close linked transaction if exists
-          if (val === 'sold' && oldStatus !== 'sold') {
-            Data.updateListing(selectedListingId, { status: 'sold' });
-            if (currentListing) {
-              var linkedTxn = Data.getTransactions().find(function (t) {
-                return t.address === currentListing.address && t.status !== 'closed';
-              });
-              if (linkedTxn) {
-                Data.updateTransaction(linkedTxn.id, {
-                  status: 'closed',
-                  closeDate: linkedTxn.closeDate || new Date().toISOString().split('T')[0]
-                });
-              } else {
-                // No linked transaction — create a closed one directly
-                Data.addTransaction({
-                  address: currentListing.address,
-                  city: currentListing.city,
-                  state: currentListing.state,
-                  zip: currentListing.zip,
-                  price: currentListing.price,
-                  agent: currentListing.agent,
-                  source: currentListing.source,
-                  type: 'Seller',
-                  status: 'closed',
-                  notes: 'Created from listing (sold)',
-                  closeDate: new Date().toISOString().split('T')[0]
-                });
-              }
-            }
-            showToast('Listing sold! Moved to Closed.');
-            renderDetail();
-            return;
-          }
-        }
-
-        var update = {};
-        update[fieldName] = val;
-        Data.updateListing(selectedListingId, update);
-        showToast('Saved');
-        // Re-render for selects to update display, but not for text fields (cursor issue)
+        // For selects, run synchronously (no tab-order concern)
         if (field.tagName === 'SELECT') {
+          if (fieldName === 'status') {
+            var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
+            var oldStatus = currentListing ? currentListing.status : '';
+
+            if (val === 'pending') {
+              if (!currentListing) return;
+              showRepresentationModal(currentListing);
+              return;
+            }
+
+            if (val === 'sold' && oldStatus !== 'sold') {
+              Data.updateListing(selectedListingId, { status: 'sold' });
+              if (currentListing) {
+                var linkedTxn = Data.getTransactions().find(function (t) {
+                  return t.address === currentListing.address && t.status !== 'closed';
+                });
+                if (linkedTxn) {
+                  Data.updateTransaction(linkedTxn.id, {
+                    status: 'closed',
+                    closeDate: linkedTxn.closeDate || new Date().toISOString().split('T')[0]
+                  });
+                } else {
+                  Data.addTransaction({
+                    address: currentListing.address,
+                    city: currentListing.city,
+                    state: currentListing.state,
+                    zip: currentListing.zip,
+                    price: currentListing.price,
+                    agent: currentListing.agent,
+                    source: currentListing.source,
+                    type: 'Seller',
+                    status: 'closed',
+                    notes: 'Created from listing (sold)',
+                    closeDate: new Date().toISOString().split('T')[0]
+                  });
+                }
+              }
+              showToast('Listing sold! Moved to Closed.');
+              renderDetail();
+              return;
+            }
+          }
+          var update = {};
+          update[fieldName] = val;
+          Data.updateListing(selectedListingId, update);
+          showToast('Saved');
           renderDetail();
+          return;
         }
+
+        // For text/number inputs, defer the save so Tab focus transfer completes first
+        setTimeout(function () {
+          if (fieldName === 'price') {
+            val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
+            self.setAttribute('data-raw', val);
+            self.value = Data.formatCurrency(val);
+          }
+          if (fieldName === 'beds') val = val ? parseInt(val) : null;
+          if (fieldName === 'baths') val = val ? parseFloat(val) : null;
+          if (fieldName === 'sqft') val = val ? parseInt(val) : null;
+
+          var update = {};
+          update[fieldName] = val;
+          Data.updateListing(selectedListingId, update);
+          showToast('Saved');
+        }, 0);
       });
     });
 

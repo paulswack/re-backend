@@ -1082,63 +1082,76 @@
     ieFields.forEach(function (field) {
       var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
       field.addEventListener(eventType, function () {
-        var fieldName = this.getAttribute('data-field');
-        var val = this.value;
-        if (fieldName === 'price') {
-          val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
-          this.setAttribute('data-raw', val);
-          this.value = Data.formatCurrency(val);
-        }
+        var self = this;
+        var fieldName = self.getAttribute('data-field');
+        var val = self.value;
 
-        // Check if status is changing to 'closed'
-        if (fieldName === 'status' && val === 'closed') {
-          var currentTxn = Data.getTransactions().find(function (x) { return x.id === selectedTxnId; });
-          if (currentTxn && currentTxn.status !== 'closed') {
-            // Set close date to today if not already set
-            var updates = { status: 'closed' };
-            if (!currentTxn.closeDate) {
-              updates.closeDate = new Date().toISOString().split('T')[0];
+        // For selects, run synchronously (no tab-order concern)
+        if (field.tagName === 'SELECT') {
+          // Check if status is changing to 'closed'
+          if (fieldName === 'status' && val === 'closed') {
+            var currentTxn = Data.getTransactions().find(function (x) { return x.id === selectedTxnId; });
+            if (currentTxn && currentTxn.status !== 'closed') {
+              var updates = { status: 'closed' };
+              if (!currentTxn.closeDate) {
+                updates.closeDate = new Date().toISOString().split('T')[0];
+              }
+              Data.updateTransaction(selectedTxnId, updates);
+              var linkedListing = Data.getListings().find(function (l) {
+                return l.address === currentTxn.address && l.status !== 'sold';
+              });
+              if (linkedListing) {
+                Data.updateListing(linkedListing.id, { status: 'sold' });
+              }
+              addUpdate(selectedTxnId, 'closing_complete', 'Closing Complete!', 'Your transaction has officially closed. Congratulations!', true);
+              notifyClientEmail('transaction', selectedTxnId, 'Closing Complete!', 'Your transaction has officially closed. Congratulations!');
+              showToast('Deal closed! Moved to Closed section.');
+              setTimeout(function () {
+                viewMode = 'list';
+                selectedTxnId = null;
+                render();
+              }, 800);
+              return;
             }
-            Data.updateTransaction(selectedTxnId, updates);
-            // Also mark linked listing as sold
-            var linkedListing = Data.getListings().find(function (l) {
-              return l.address === currentTxn.address && l.status !== 'sold';
-            });
-            if (linkedListing) {
-              Data.updateListing(linkedListing.id, { status: 'sold' });
+          }
+
+          var update = {};
+          update[fieldName] = val;
+
+          if (fieldName === 'status') {
+            var statusLabels = { active: 'Active', pending: 'Pending' };
+            if (statusLabels[val]) {
+              addUpdate(selectedTxnId, 'status', 'Status Changed to ' + statusLabels[val], '', true);
+              notifyClientEmail('transaction', selectedTxnId, 'Status Changed to ' + statusLabels[val], '');
             }
-            addUpdate(selectedTxnId, 'closing_complete', 'Closing Complete!', 'Your transaction has officially closed. Congratulations!', true);
-            notifyClientEmail('transaction', selectedTxnId, 'Closing Complete!', 'Your transaction has officially closed. Congratulations!');
-            showToast('Deal closed! Moved to Closed section.');
-            setTimeout(function () {
-              viewMode = 'list';
-              selectedTxnId = null;
-              render();
-            }, 800);
-            return;
           }
+
+          Data.updateTransaction(selectedTxnId, update);
+          showToast('Saved');
+          renderDetail();
+          return;
         }
 
-        var update = {};
-        update[fieldName] = val;
-
-        // Auto-generate client updates for key field changes
-        if (fieldName === 'status') {
-          var statusLabels = { active: 'Active', pending: 'Pending' };
-          if (statusLabels[val]) {
-            addUpdate(selectedTxnId, 'status', 'Status Changed to ' + statusLabels[val], '', true);
-            notifyClientEmail('transaction', selectedTxnId, 'Status Changed to ' + statusLabels[val], '');
+        // For text/number/date inputs, defer save so Tab focus transfer completes first
+        setTimeout(function () {
+          if (fieldName === 'price') {
+            val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
+            self.setAttribute('data-raw', val);
+            self.value = Data.formatCurrency(val);
           }
-        }
-        if (fieldName === 'closeDate' && val) {
-          var closingDetail = 'Closing has been scheduled for ' + Data.formatDate(val) + '.';
-          addUpdate(selectedTxnId, 'closing_scheduled', 'Closing Date Scheduled', closingDetail, true);
-          notifyClientEmail('transaction', selectedTxnId, 'Closing Date Scheduled', closingDetail);
-        }
 
-        Data.updateTransaction(selectedTxnId, update);
-        showToast('Saved');
-        renderDetail();
+          var update = {};
+          update[fieldName] = val;
+
+          if (fieldName === 'closeDate' && val) {
+            var closingDetail = 'Closing has been scheduled for ' + Data.formatDate(val) + '.';
+            addUpdate(selectedTxnId, 'closing_scheduled', 'Closing Date Scheduled', closingDetail, true);
+            notifyClientEmail('transaction', selectedTxnId, 'Closing Date Scheduled', closingDetail);
+          }
+
+          Data.updateTransaction(selectedTxnId, update);
+          showToast('Saved');
+        }, 0);
       });
     });
 
