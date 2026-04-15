@@ -41,8 +41,20 @@ router.get('/:id', requireAuth, async (req, res) => {
 
     // Non-privileged users can only view their own deals
     const role = req.user.role;
-    if (role !== 'Team Lead' && role !== 'Admin' && data.agent_id && data.agent_id !== req.user.userId) {
-      return res.status(403).json({ error: 'You can only view your own deals' });
+    if (role !== 'Team Lead' && role !== 'Admin') {
+      let isOwner = false;
+      if (data.agent_id) {
+        isOwner = data.agent_id === req.user.userId;
+      } else if (data.agent_name) {
+        // Fallback: match by name for deals without agent_id
+        const { data: me } = await getSupabase().from('users').select('display_name').eq('id', req.user.userId).single();
+        isOwner = me && me.display_name && me.display_name.toLowerCase() === data.agent_name.toLowerCase();
+      } else {
+        isOwner = true; // No agent assigned — allow access
+      }
+      if (!isOwner) {
+        return res.status(403).json({ error: 'You can only view your own deals' });
+      }
     }
 
     res.json(data);

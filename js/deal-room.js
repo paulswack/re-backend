@@ -80,24 +80,70 @@
     });
   }
 
+  // ---- Build name<->id lookups from team members ----
+  var _nameToId = {};   // displayName → user id
+  var _idToName = {};   // user id → displayName
+
+  function buildAgentLookups() {
+    _nameToId = {};
+    _idToName = {};
+    _teamMembers.forEach(function (m) {
+      if (m.displayName) {
+        _nameToId[m.displayName.toLowerCase()] = m.id;
+        _idToName[m.id] = m.displayName;
+      }
+    });
+  }
+
+  // Match a deal to a user id — use agentId if set, otherwise match agent name
+  function dealAgentId(deal) {
+    if (deal.agentId) return deal.agentId;
+    if (deal.agent) return _nameToId[deal.agent.toLowerCase()] || null;
+    return null;
+  }
+
+  // Get the current user's display name for name-based matching
+  var _currentUserName = '';
+  function refreshCurrentUserName() {
+    var session = Auth.getSession();
+    _currentUserName = session ? (session.displayName || '').toLowerCase() : '';
+  }
+
+  // Check if a deal belongs to a specific user id
+  function dealBelongsTo(deal, userId) {
+    var did = dealAgentId(deal);
+    if (did) return did === userId;
+    // If we still can't resolve, try direct name match against the target user's name
+    var targetName = _idToName[userId];
+    if (targetName && deal.agent) {
+      return deal.agent.toLowerCase() === targetName.toLowerCase();
+    }
+    return false;
+  }
+
+  // Check if a deal belongs to the current user
+  function dealIsMine(deal) {
+    if (_currentUserId && dealBelongsTo(deal, _currentUserId)) return true;
+    // Fallback: match on current user's display name
+    if (_currentUserName && deal.agent && deal.agent.toLowerCase() === _currentUserName) return true;
+    return false;
+  }
+
   // ---- Filter data by selected agent ----
   function filterByAgent(items) {
     if (_selectedAgentId === '__all__') return items;
     if (_selectedAgentId === '__mine__') {
-      // Show only current user's deals
-      if (!_currentUserId) return items;
-      return items.filter(function (d) { return d.agentId === _currentUserId; });
+      return items.filter(function (d) { return dealIsMine(d); });
     }
-    // Specific agent selected
-    return items.filter(function (d) { return d.agentId === _selectedAgentId; });
+    // Specific agent selected — match by id or name
+    return items.filter(function (d) { return dealBelongsTo(d, _selectedAgentId); });
   }
 
   // ---- Check if current user can open a specific deal ----
   function canOpenDeal(deal) {
     if (_isPrivileged) return true;
     // Non-privileged users can only open their own deals
-    if (!_currentUserId) return false;
-    return deal.agentId === _currentUserId;
+    return dealIsMine(deal);
   }
 
   // ---- Agent filter dropdown HTML ----
@@ -330,6 +376,8 @@
   // ---- Main Render ----
   function render() {
     loadTeamMembers();
+    buildAgentLookups();
+    refreshCurrentUserName();
 
     var allListings = Data.getListings();
     var allTxns     = Data.getTransactions();
