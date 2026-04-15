@@ -38,6 +38,13 @@ router.get('/:id', requireAuth, async (req, res) => {
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Transaction not found' });
+
+    // Non-privileged users can only view their own deals
+    const role = req.user.role;
+    if (role !== 'Team Lead' && role !== 'Admin' && data.agent_id && data.agent_id !== req.user.userId) {
+      return res.status(403).json({ error: 'You can only view your own deals' });
+    }
+
     res.json(data);
   } catch (err) {
     console.error('GET transaction error:', err);

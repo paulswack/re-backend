@@ -1,6 +1,7 @@
 /* ============================================================
    RE Back Office — Deal Room
    Two-column view: Listings (left) | Current Escrows (right)
+   Agent filter dropdown with role-based access control
    ============================================================ */
 
 (function () {
@@ -19,6 +20,13 @@
 
   var _lstSearch = '';
   var _txnSearch = '';
+  var _selectedAgentId = '__mine__'; // default: current user's deals
+
+  // ---- Current user info ----
+  var _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
+  var _currentUserId = _currentUser ? _currentUser.id : null;
+  var _isPrivileged = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
+  var _teamMembers = [];
 
   // ---- Helpers ----
   function escapeHtml(s) {
@@ -63,6 +71,66 @@
     } catch(e) { return null; }
   }
 
+  // ---- Load team members for dropdown ----
+  function loadTeamMembers() {
+    var users = JSON.parse(localStorage.getItem(PREFIX + 'users') || '[]');
+    _teamMembers = users.filter(function (u) { return u.role !== 'Assistant'; });
+    _teamMembers.sort(function (a, b) {
+      return (a.displayName || '').localeCompare(b.displayName || '');
+    });
+  }
+
+  // ---- Filter data by selected agent ----
+  function filterByAgent(items) {
+    if (_selectedAgentId === '__all__') return items;
+    if (_selectedAgentId === '__mine__') {
+      // Show only current user's deals
+      if (!_currentUserId) return items;
+      return items.filter(function (d) { return d.agentId === _currentUserId; });
+    }
+    // Specific agent selected
+    return items.filter(function (d) { return d.agentId === _selectedAgentId; });
+  }
+
+  // ---- Check if current user can open a specific deal ----
+  function canOpenDeal(deal) {
+    if (_isPrivileged) return true;
+    // Non-privileged users can only open their own deals
+    if (!_currentUserId) return false;
+    return deal.agentId === _currentUserId;
+  }
+
+  // ---- Agent filter dropdown HTML ----
+  function agentFilterHtml() {
+    var session = Auth.getSession();
+    var myName = session ? session.displayName : 'My Deals';
+
+    var html = '<div class="dr-agent-filter">';
+    html += '<label for="drAgentFilter">Agent:</label>';
+    html += '<select id="drAgentFilter">';
+
+    // Default option: current user's deals
+    html += '<option value="__mine__"' + (_selectedAgentId === '__mine__' ? ' selected' : '') + '>' + escapeHtml(myName) + ' (My Deals)</option>';
+
+    // Team Stats option — visible to everyone
+    html += '<option value="__all__"' + (_selectedAgentId === '__all__' ? ' selected' : '') + '>Team Stats (All Agents)</option>';
+
+    // Individual team members — only show for privileged users
+    if (_isPrivileged && _teamMembers.length > 1) {
+      html += '<optgroup label="Individual Agents">';
+      _teamMembers.forEach(function (m) {
+        // Skip current user (already shown as "My Deals")
+        if (m.id === _currentUserId) return;
+        html += '<option value="' + escapeHtml(m.id) + '"' + (_selectedAgentId === m.id ? ' selected' : '') + '>' + escapeHtml(m.displayName) + '</option>';
+      });
+      html += '</optgroup>';
+    }
+
+    html += '</select>';
+    html += '</div>';
+    return html;
+  }
+
   // ---- Stats ----
   function statTile(label, value, iconPath, color) {
     return '<div class="stat-card">' +
@@ -91,7 +159,10 @@
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
     }).join('');
     var statusKey = l.status || 'active';
-    return '<div class="dr-row dr-row--' + statusKey + '" data-goto="listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom">' +
+    var canOpen = canOpenDeal(l);
+    var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
+    var gotoAttr = canOpen ? ' data-goto="listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom"' : '';
+    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -131,7 +202,10 @@
     }
 
     var statusKey = t.status || 'active';
-    return '<div class="dr-row dr-row--' + statusKey + '" data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom">' +
+    var canOpen = canOpenDeal(t);
+    var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
+    var gotoAttr = canOpen ? ' data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom"' : '';
+    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -228,7 +302,7 @@
 
     if (!totalShown) {
       rowsHtml = '<div class="dr-empty">' +
-        '<svg viewBox="0 0 24 24" width="38" height="38"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>' +
+        '<svg viewBox="0 0 24 24" width="38" height="38"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.89 2-2V5c0-1.1-.89-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>' +
         '<div class="dr-empty-title">' + (q ? 'No escrows match' : 'No active escrows') + '</div>' +
         '<div>' + (q ? 'Try a different search' : 'Add escrows to see them here') + '</div>' +
       '</div>';
@@ -238,7 +312,7 @@
       '<div class="dr-panel-accent"></div>' +
       '<div class="dr-panel-header">' +
         '<div class="dr-panel-title">' +
-          '<div class="dr-panel-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></div>' +
+          '<div class="dr-panel-icon"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.89 2-2V5c0-1.1-.89-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg></div>' +
           'Current Escrows' +
           '<span class="dr-panel-count">' + all.length + '</span>' +
         '</div>' +
@@ -255,8 +329,14 @@
 
   // ---- Main Render ----
   function render() {
-    var listings = Data.getListings();
-    var txns     = Data.getTransactions();
+    loadTeamMembers();
+
+    var allListings = Data.getListings();
+    var allTxns     = Data.getTransactions();
+
+    // Apply agent filter
+    var listings = filterByAgent(allListings);
+    var txns     = filterByAgent(allTxns);
 
     var activeLst = listings.filter(function (l) { return l.status !== 'sold'; });
     var activeTxn = txns.filter(function (t) { return t.status !== 'closed'; });
@@ -269,6 +349,9 @@
 
     var html = '';
 
+    // Agent filter dropdown
+    html += agentFilterHtml();
+
     // Stats strip
     html += '<div class="dr-stats-strip">';
     html += statTile('Pipeline Volume', '$' + Math.round(totalVol).toLocaleString(),
@@ -276,19 +359,28 @@
     html += statTile('Active Listings', activeLst.length,
       'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z', 'blue');
     html += statTile('Active Escrows', activeTxn.length,
-      'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z', 'emerald');
+      'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.89 2-2V5c0-1.1-.89-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z', 'emerald');
     html += statTile('Closing in 30 Days', closingSoon,
       'M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z', 'amber');
     html += '</div>';
 
     // Two columns
-    window._drAllListings = listings; // shared for escrow spec lookup
+    window._drAllListings = allListings; // shared for escrow spec lookup
     html += '<div class="dr-columns">';
     html += renderListingsPanel(listings);
     html += renderEscrowsPanel(txns);
     html += '</div>';
 
     pageBody.innerHTML = html;
+
+    // Agent filter listener
+    var agentFilter = document.getElementById('drAgentFilter');
+    if (agentFilter) {
+      agentFilter.addEventListener('change', function () {
+        _selectedAgentId = this.value;
+        render();
+      });
+    }
 
     // Search listeners
     var lstSearch = document.getElementById('lstSearch');
@@ -303,7 +395,7 @@
       if (_txnSearch) txnSearch.setSelectionRange(_txnSearch.length, _txnSearch.length);
     }
 
-    // Row click → navigate to detail
+    // Row click → navigate to detail (only if user has permission)
     pageBody.querySelectorAll('.dr-row[data-goto]').forEach(function (row) {
       row.addEventListener('click', function () {
         window.location.href = this.getAttribute('data-goto');
@@ -313,6 +405,12 @@
 
   // ---- Init ----
   render();
-  document.addEventListener('apiBridgeReady', function () { render(); });
+  document.addEventListener('apiBridgeReady', function () {
+    // Re-read current user after bridge loads
+    _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
+    _currentUserId = _currentUser ? _currentUser.id : null;
+    _isPrivileged = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
+    render();
+  });
 
 })();
