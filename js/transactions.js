@@ -323,7 +323,12 @@
     html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="var(--indigo)"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
     html += '<span style="font-size:.92rem;font-weight:700;color:var(--indigo)">Property Information</span></div>';
     html += '<div style="padding:20px 24px">';
-    html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(t ? t.address : '') + '" placeholder="123 Main St, City, ST 12345" style="font-size:1rem;padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Address *</label><input type="text" id="fAddress" value="' + escapeHtml(t ? t.address : '') + '" placeholder="123 Main St" style="font-size:1rem;padding:12px 16px"></div>';
+    html += '<div class="form-row" style="grid-template-columns:2fr 1fr 1fr">';
+    html += '<div class="form-group"><label>City</label><input type="text" id="fCity" value="' + escapeHtml(t ? t.city || '' : '') + '" placeholder="Santa Barbara" style="padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>State</label><input type="text" id="fState" value="' + escapeHtml(t ? t.state || '' : '') + '" placeholder="CA" maxlength="2" style="padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Zip</label><input type="text" id="fZip" value="' + escapeHtml(t ? t.zip || '' : '') + '" placeholder="93101" maxlength="10" style="padding:12px 16px"></div>';
+    html += '</div>';
     html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
     var _fPriceVal = (t && t.price) ? '$' + parseFloat(t.price).toLocaleString('en-US') : '';
     html += '<div class="form-group"><label>Price *</label><input type="text" id="fPrice" value="' + _fPriceVal + '" placeholder="$500,000" style="font-size:1rem;padding:12px 16px" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'"></div>';
@@ -1190,16 +1195,28 @@
       });
     });
 
-    // Auto-save key date label and date inputs on blur
-    pageBody.querySelectorAll('.kd-label, .kd-date').forEach(function (inp) {
+    // Auto-save key date label and date inputs
+    pageBody.querySelectorAll('.kd-label').forEach(function (inp) {
       inp.addEventListener('blur', function () {
+        var self = this;
+        setTimeout(function () {
+          var idx = parseInt(self.getAttribute('data-kd-idx'));
+          var kdSave = getKeyDates();
+          if (kdSave[selectedTxnId] && kdSave[selectedTxnId][idx] !== undefined) {
+            kdSave[selectedTxnId][idx].label = self.value.trim();
+            saveKeyDates(kdSave);
+          }
+        }, 0);
+      });
+    });
+    pageBody.querySelectorAll('.kd-date').forEach(function (inp) {
+      inp.addEventListener('change', function () {
         var idx = parseInt(this.getAttribute('data-kd-idx'));
-        var field = this.classList.contains('kd-label') ? 'label' : 'date';
         var kdSave = getKeyDates();
         if (kdSave[selectedTxnId] && kdSave[selectedTxnId][idx] !== undefined) {
-          kdSave[selectedTxnId][idx][field] = this.value.trim();
+          kdSave[selectedTxnId][idx].date = this.value.trim();
           saveKeyDates(kdSave);
-          if (field === 'date') renderDetail();
+          renderDetail();
         }
       });
     });
@@ -1351,6 +1368,9 @@
 
         var fData = {
           address: fAddr,
+          city: (document.getElementById('fCity') || {}).value ? document.getElementById('fCity').value.trim() : '',
+          state: (document.getElementById('fState') || {}).value ? document.getElementById('fState').value.trim() : '',
+          zip: (document.getElementById('fZip') || {}).value ? document.getElementById('fZip').value.trim() : '',
           price: parseFloat(fPrice),
           agent: fAgent,
           status: (document.getElementById('fStatus') || {}).value || 'active',

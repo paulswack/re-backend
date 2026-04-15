@@ -513,6 +513,13 @@ var ApiBridge = (function () {
         }, 2000);
       }
 
+      // Email templates
+      if (key === PREFIX + 'email_templates') {
+        debounceSync('email_templates', function () {
+          try { API.updateSettings({ _email_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 2000);
+      }
+
       // Checklist templates
       if (key === PREFIX + 'checklist_templates') {
         debounceSync('checklist_templates', function () {
@@ -760,7 +767,8 @@ var ApiBridge = (function () {
       '_profiles:profiles', '_notifications:notifications',
       '_txn_notes:txn_notes', '_txn_key_dates:txn_key_dates',
       '_calendar_events:calendar_events', '_listing_notes:listing_notes',
-      '_notif_config:notif_config', '_notif_sent:notif_sent'
+      '_notif_config:notif_config', '_notif_sent:notif_sent',
+      '_email_templates:email_templates'
     ];
     keys.forEach(function (k) {
       var parts = k.split(':');
