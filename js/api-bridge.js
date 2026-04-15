@@ -82,6 +82,64 @@ var ApiBridge = (function () {
         }).then(function (fresh) {
           var finalTxns = mapTransactions(fresh);
           localStorage.setItem(PREFIX + 'transactions', JSON.stringify(finalTxns));
+
+          // Pull server-side transaction_parties into reb_txn_parties
+          try {
+            var txnParties = JSON.parse(localStorage.getItem(PREFIX + 'txn_parties') || '{}');
+            fresh.forEach(function (t) {
+              if (t.transaction_parties && t.transaction_parties.length > 0) {
+                var seenKeys = {};
+                var buyers = t.transaction_parties
+                  .filter(function (p) { return p.party_type === 'buyer'; })
+                  .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
+                  .map(function (p) {
+                    return { name: p.name || '', phone: p.phone || '', email: p.email || '', relationship: (p.metadata && p.metadata.relationship) || 'Primary' };
+                  })
+                  .filter(function (b) {
+                    var k = ('buyer|' + b.name + '|' + b.phone + '|' + b.email).toLowerCase();
+                    if (seenKeys[k]) return false;
+                    seenKeys[k] = true;
+                    return true;
+                  });
+                var sellers = t.transaction_parties
+                  .filter(function (p) { return p.party_type === 'seller'; })
+                  .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
+                  .map(function (p) {
+                    return { name: p.name || '', phone: p.phone || '', email: p.email || '', relationship: (p.metadata && p.metadata.relationship) || 'Primary' };
+                  })
+                  .filter(function (s) {
+                    var k = ('seller|' + s.name + '|' + s.phone + '|' + s.email).toLowerCase();
+                    if (seenKeys[k]) return false;
+                    seenKeys[k] = true;
+                    return true;
+                  });
+                if (buyers.length > 0 || sellers.length > 0) {
+                  if (!txnParties[t.id]) txnParties[t.id] = { buyers: [], sellers: [], contacts: {} };
+                  if (buyers.length > 0) txnParties[t.id].buyers = buyers;
+                  if (sellers.length > 0) txnParties[t.id].sellers = sellers;
+                }
+              }
+            });
+            localStorage.setItem(PREFIX + 'txn_parties', JSON.stringify(txnParties));
+
+            // Push local party data to server for transactions where server has none yet
+            fresh.forEach(function (t) {
+              if ((!t.transaction_parties || t.transaction_parties.length === 0) && txnParties[t.id]) {
+                var localBuyers = (txnParties[t.id].buyers || []).filter(function (b) { return b.name || b.phone || b.email; });
+                var localSellers = (txnParties[t.id].sellers || []).filter(function (s) { return s.name || s.phone || s.email; });
+                if (localBuyers.length > 0 || localSellers.length > 0) {
+                  var partiesToPush = [];
+                  localBuyers.forEach(function (b, i) {
+                    partiesToPush.push({ party_type: 'buyer', name: b.name || '', phone: b.phone || '', email: b.email || '', sort_order: i, metadata: { relationship: b.relationship || 'Primary' } });
+                  });
+                  localSellers.forEach(function (s, i) {
+                    partiesToPush.push({ party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } });
+                  });
+                  API.updateTransaction(t.id, { parties: partiesToPush }).catch(function () {});
+                }
+              }
+            });
+          } catch (e) {}
         });
       }).catch(function () {}),
       API.getListings().then(function (d) {

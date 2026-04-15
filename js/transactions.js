@@ -1209,22 +1209,33 @@
     iePartyFields.forEach(function (field) {
       var eventType = (field.tagName === 'SELECT') ? 'change' : 'blur';
       field.addEventListener(eventType, function () {
-        var partyType = this.getAttribute('data-party');
-        var pfield = this.getAttribute('data-pfield');
-        var idx = parseInt(this.getAttribute('data-idx') || '0');
-        var val = this.value.trim();
+        var self = this;
+        var partyType = self.getAttribute('data-party');
+        var pfield = self.getAttribute('data-pfield');
+        var idx = parseInt(self.getAttribute('data-idx') || '0');
+        var val = self.value.trim();
 
-        var allParties = getParties();
-        if (!allParties[selectedTxnId]) allParties[selectedTxnId] = { buyers: [], sellers: [], contacts: {} };
-        var partyData = migratePartyData(allParties[selectedTxnId]);
-        var arr = partyType === 'buyer' ? partyData.buyers : partyData.sellers;
+        // Defer for text inputs so Tab focus transfer completes first
+        var doSave = function () {
+          var allParties = getParties();
+          if (!allParties[selectedTxnId]) allParties[selectedTxnId] = { buyers: [], sellers: [], contacts: {} };
+          var partyData = migratePartyData(allParties[selectedTxnId]);
+          var arr = partyType === 'buyer' ? partyData.buyers : partyData.sellers;
 
-        while (arr.length <= idx) arr.push({ name: '', phone: '', email: '', relationship: 'Primary' });
-        arr[idx][pfield] = val;
+          while (arr.length <= idx) arr.push({ name: '', phone: '', email: '', relationship: 'Primary' });
+          arr[idx][pfield] = val;
 
-        allParties[selectedTxnId] = partyData;
-        saveParties(allParties);
-        showToast('Saved');
+          allParties[selectedTxnId] = partyData;
+          saveParties(allParties);
+          Data.syncTransactionParties(selectedTxnId, partyData.buyers, partyData.sellers);
+          showToast('Saved');
+        };
+
+        if (field.tagName === 'SELECT') {
+          doSave();
+        } else {
+          setTimeout(doSave, 0);
+        }
       });
     });
   }
@@ -1412,6 +1423,7 @@
         delete fParties[fTxnId].buyer;
         delete fParties[fTxnId].seller;
         saveParties(fParties);
+        Data.syncTransactionParties(fTxnId, fBuyers, fSellers);
 
         // Auto-apply escrow checklist template if not already set
         var _existingCl = getDealChecklists()[fTxnId];

@@ -98,21 +98,43 @@ router.put('/:id', requireAuth, async (req, res) => {
     delete fields.id;
     delete fields.team_id;
 
-    const { data, error } = await getSupabase()
-      .from('transactions')
-      .update(fields)
-      .eq('id', req.params.id)
-      .eq('team_id', req.user.teamId)
-      .select()
-      .single();
-
-    if (error) throw error;
+    let data;
+    // Only run the transaction update if there are actual fields to change
+    if (Object.keys(fields).length > 0) {
+      const result = await getSupabase()
+        .from('transactions')
+        .update(fields)
+        .eq('id', req.params.id)
+        .eq('team_id', req.user.teamId)
+        .select()
+        .single();
+      if (result.error) throw result.error;
+      data = result.data;
+    } else {
+      // parties-only update — fetch the transaction to return it
+      const result = await getSupabase()
+        .from('transactions')
+        .select('*')
+        .eq('id', req.params.id)
+        .eq('team_id', req.user.teamId)
+        .single();
+      if (result.error) throw result.error;
+      data = result.data;
+    }
 
     // Replace parties if provided
     if (parties) {
+      // Deduplicate by type+name+phone+email before inserting
+      const seen = new Set();
+      const dedupedParties = parties.filter(p => {
+        const key = `${p.party_type}|${(p.name||'').trim().toLowerCase()}|${(p.phone||'').trim()}|${(p.email||'').trim()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       await getSupabase().from('transaction_parties').delete().eq('transaction_id', req.params.id);
-      if (parties.length > 0) {
-        const partyRows = parties.map(p => ({ ...p, transaction_id: req.params.id }));
+      if (dedupedParties.length > 0) {
+        const partyRows = dedupedParties.map(p => ({ ...p, transaction_id: req.params.id }));
         await getSupabase().from('transaction_parties').insert(partyRows);
       }
     }

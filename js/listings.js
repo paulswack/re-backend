@@ -1430,7 +1430,9 @@
     }
 
     pageBody.querySelectorAll('.detail-seller-field').forEach(function (f) {
-      f.addEventListener('blur', saveDetailSellers);
+      f.addEventListener('blur', function () {
+        setTimeout(saveDetailSellers, 0);
+      });
     });
   }
 

@@ -472,6 +472,22 @@
     API.updateListing(apiId, { parties: parties }).catch(function (err) { console.error('Sync listing parties error:', err); });
   }
 
+  function syncTransactionParties(txnId, buyers, sellers) {
+    if (!isServerMode()) return;
+    var item = txns.getAll().find(function (i) { return i.id === txnId; });
+    var apiId = (item && item.server_id) || txnId;
+    var parties = [];
+    (buyers || []).filter(function (b) { return b.name || b.phone || b.email; })
+      .forEach(function (b, i) {
+        parties.push({ party_type: 'buyer', name: b.name || '', phone: b.phone || '', email: b.email || '', sort_order: i, metadata: { relationship: b.relationship || 'Primary' } });
+      });
+    (sellers || []).filter(function (s) { return s.name || s.phone || s.email; })
+      .forEach(function (s, i) {
+        parties.push({ party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } });
+      });
+    API.updateTransaction(apiId, { parties: parties }).catch(function (err) { console.error('Sync transaction parties error:', err); });
+  }
+
   function serverDeleteListing(id) {
     var item = listings.getAll().find(function (i) { return i.id === id; });
     var apiId = (item && item.server_id) || id;
@@ -496,6 +512,7 @@
     updateListing:      serverUpdateListing,
     deleteListing:      serverDeleteListing,
     syncListingParties: syncListingParties,
+    syncTransactionParties: syncTransactionParties,
 
     // Tasks (local only for now)
     getTasks:    tasks.getAll,
