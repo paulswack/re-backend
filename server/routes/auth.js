@@ -107,11 +107,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
-    // Find user
+    const trimmedUsername = username.trim();
+
+    // Find user (case-insensitive username match)
     const { data: user, error } = await getSupabase()
       .from('users')
       .select('*, teams(*)')
-      .eq('username', username)
+      .ilike('username', trimmedUsername)
       .eq('is_active', true)
       .single();
 

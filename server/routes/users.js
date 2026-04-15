@@ -50,13 +50,14 @@ router.post('/', requireAuth, requireLead, async (req, res) => {
       return res.status(400).json({ error: 'Username, password, and display name are required' });
     }
 
+    const normalizedUsername = username.trim().toLowerCase();
     const password_hash = await bcrypt.hash(password, 10);
 
     const { data, error } = await getSupabase()
       .from('users')
       .insert({
         team_id: req.user.teamId,
-        username,
+        username: normalizedUsername,
         password_hash,
         display_name,
         role: role || 'Agent',
