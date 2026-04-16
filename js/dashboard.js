@@ -106,8 +106,8 @@
         listings: agentListings.length
       };
     }).sort(function (a, b) {
-      if (b.volume !== a.volume) return b.volume - a.volume;
-      return b.closings - a.closings;
+      if (b.closings !== a.closings) return b.closings - a.closings;
+      return b.volume - a.volume;
     });
   }
 
