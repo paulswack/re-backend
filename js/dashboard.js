@@ -118,13 +118,6 @@
     renderDashboard();
   });
 
-  // Announcements
-  var announcements = JSON.parse(localStorage.getItem('reb_announcements') || '[]');
-  if (announcements.length === 0) {
-    announcements = [{ id: 'a1', text: 'Welcome to RE Back Office!', author: 'System', timestamp: new Date().toISOString() }];
-    localStorage.setItem('reb_announcements', JSON.stringify(announcements));
-  }
-
   var DRAG_HANDLE_SVG = '<svg viewBox="0 0 16 16"><circle cx="5" cy="3" r="1.5"/><circle cx="11" cy="3" r="1.5"/><circle cx="5" cy="8" r="1.5"/><circle cx="11" cy="8" r="1.5"/><circle cx="5" cy="13" r="1.5"/><circle cx="11" cy="13" r="1.5"/></svg>';
 
   // ============================================================
@@ -295,22 +288,6 @@
     return s;
   };
 
-  // ---- Announcements ----
-  WIDGETS.announcements = function () {
-    var s = widgetOpen('announcements', 'Announcements', 'var(--rose)', '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>', null);
-    s += '<div class="dash-widget-body" style="padding:14px 20px">';
-    if (isLead) {
-      s += '<div style="display:flex;gap:8px;margin-bottom:14px"><input type="text" id="announcementInput" placeholder="Post an announcement..." style="flex:1;padding:9px 14px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;font-family:inherit"><button class="btn btn-primary btn-sm" data-action="post-announcement">Post</button></div>';
-    }
-    announcements.slice(0, 5).forEach(function (a) {
-      s += '<div style="padding:10px 0;border-bottom:1px solid var(--gray-50)">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:.82rem;font-weight:700;color:var(--gray-700)">' + a.author + '</span><span style="font-size:.68rem;color:var(--gray-400)">' + timeAgo(a.timestamp) + '</span></div>' +
-        '<div style="font-size:.85rem;color:var(--gray-600);line-height:1.5">' + a.text + '</div></div>';
-    });
-    s += '</div></div>';
-    return s;
-  };
-
   // ---- Volume Summary ----
   WIDGETS.volumeSummary = function () {
     return '<div class="dash-widget" data-widget-id="volumeSummary" draggable="true">' +
@@ -421,9 +398,9 @@
   // LAYOUT
   // ============================================================
   var DEFAULT_LAYOUT = {
-    col1: ['goals', 'upcomingClosings', 'dealSources'],
+    col1: ['goals', 'upcomingClosings'],
     col2: ['teamRankings'],
-    col3: ['volumeSummary', 'announcements', 'reviews']
+    col3: ['volumeSummary', 'dealSources', 'reviews']
   };
 
   function loadLayout() {
@@ -490,7 +467,7 @@
 
     if (isMobile) {
       var allWidgetIds = layout.col1.concat(layout.col2).concat(layout.col3);
-      var mobileFirst = ['teamRankings', 'goals', 'upcomingClosings'];
+      var mobileFirst = ['teamRankings', 'goals', 'upcomingClosings', 'volumeSummary'];
       var mobileRest = allWidgetIds.filter(function(id) { return mobileFirst.indexOf(id) === -1; });
       var mobileOrder = mobileFirst.concat(mobileRest);
       h += '<div class="dash-col" data-col="0">';
@@ -612,15 +589,6 @@
     var btn = e.target.closest('[data-action]');
     if (!btn) return;
     var action = btn.getAttribute('data-action');
-
-    if (action === 'post-announcement') {
-      var input = document.getElementById('announcementInput');
-      if (!input || !input.value.trim()) { showToast('Type something first.', 'error'); return; }
-      var anns = JSON.parse(localStorage.getItem('reb_announcements') || '[]');
-      anns.unshift({ id: Date.now().toString(36), text: input.value.trim(), author: session.displayName, timestamp: new Date().toISOString() });
-      localStorage.setItem('reb_announcements', JSON.stringify(anns));
-      reloadData(); renderDashboard(); showToast('Posted!');
-    }
 
     if (action === 'toggle-edit-mode') {
       var gridEl = document.getElementById('dashGrid');
