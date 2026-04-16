@@ -237,14 +237,19 @@
         var diff = Math.round((d - now) / 86400000);
         var urgClass = diff <= 3 ? 'dr-urgency--hot' : (diff <= 10 ? 'dr-urgency--warn' : 'dr-urgency--ok');
         var urgText = diff === 0 ? 'Today!' : (diff === 1 ? 'Tomorrow' : diff + 'd');
-        s += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
+        var isMine = session && t.agent === session.displayName;
+        var canOpen = isLead || isMine;
+        var rowTag = canOpen ? 'a' : 'div';
+        var rowHref = canOpen ? ' href="transactions.html?id=' + encodeURIComponent(t.id) + '&from=dashboard"' : '';
+        var rowStyle = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50);text-decoration:none;color:inherit;transition:background .12s;border-radius:6px;padding-left:4px;padding-right:4px;' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85');
+        s += '<' + rowTag + rowHref + ' style="' + rowStyle + '"' + (canOpen ? ' onmouseover="this.style.background=\'var(--gray-50)\'" onmouseout="this.style.background=\'transparent\'"' : '') + '>';
         s += '<span class="dr-urgency ' + urgClass + '" style="min-width:42px;text-align:center">' + urgText + '</span>';
         s += '<div style="flex:1;min-width:0">';
         s += '<div style="font-size:.85rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (t.address || '—').split(',')[0] + '</div>';
         s += '<div style="font-size:.7rem;color:var(--gray-400)">' + (t.agent || '—') + '</div>';
         s += '</div>';
         s += '<div style="text-align:right"><div style="font-size:.85rem;font-weight:700;color:var(--gray-900)">' + Data.formatCurrencyFull(t.price) + '</div></div>';
-        s += '</div>';
+        s += '</' + rowTag + '>';
       });
     }
 
