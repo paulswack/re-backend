@@ -293,19 +293,7 @@
     return s;
   };
 
-  // ---- Volume Summary ----
-  WIDGETS.volumeSummary = function () {
-    return '<div class="dash-widget" data-widget-id="volumeSummary" draggable="true">' +
-      '<div class="dash-widget-header"><div class="dash-widget-header-left">' +
-        '<div class="dash-widget-drag">' + DRAG_HANDLE_SVG + '</div>' +
-        '<h3 class="dash-widget-title">Volume Summary</h3></div></div>' +
-      '<div class="dash-widget-body" style="padding:14px 20px">' +
-        sumRow('Closed Volume', Data.formatCurrencyFull(stats.totalVolume), 'var(--emerald)') +
-        sumRow('Escrow Volume', Data.formatCurrencyFull(activeTxns.concat(pendingTxns).reduce(function(s,t){return s+(t.price||0)},0)), 'var(--indigo)') +
-        sumRow('Listing Value', Data.formatCurrencyFull(activeListings.reduce(function(s,l){return s+(l.price||0)},0)), 'var(--amber)') +
-        sumRow('Avg Deal Size', Data.formatCurrencyFull(stats.avgDeal), 'var(--violet)') +
-      '</div></div>';
-  };
+  // Volume Summary removed — volumes now shown in stat cards at top
 
   // ---- Review Tracker ----
   WIDGETS.reviews = function () {
@@ -405,7 +393,7 @@
   var DEFAULT_LAYOUT = {
     col1: ['goals', 'upcomingClosings'],
     col2: ['teamRankings'],
-    col3: ['volumeSummary', 'dealSources', 'reviews']
+    col3: ['dealSources', 'reviews']
   };
 
   function loadLayout() {
@@ -449,9 +437,12 @@
     }
 
     h += '<div class="stats-grid dash-stats-row" style="margin-bottom:28px">';
-    h += dashStat('Total Closed', closedTxns.length, '#ECFDF5', 'var(--emerald)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>', closeRate + '% close rate', 'up');
-    h += dashStat('In Escrow', escrowCount, '#EEF2FF', 'var(--indigo)', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>', activeTxns.length + ' active / ' + pendingTxns.length + ' pending', 'up');
-    h += dashStat('Active Listings', activeListings.length, '#FFF8EE', 'var(--amber)', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>', Data.formatCurrency(activeListings.reduce(function(s,l){return s+(l.price||0)},0)) + ' value', 'up');
+    var closedVol = closedTxns.reduce(function(s,t){return s+(t.price||0)},0);
+    var escrowVol = activeTxns.concat(pendingTxns).reduce(function(s,t){return s+(t.price||0)},0);
+    var listingVol = activeListings.reduce(function(s,l){return s+(l.price||0)},0);
+    h += dashStat('Total Closed', closedTxns.length, '#ECFDF5', 'var(--emerald)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>', closeRate + '% close rate', 'up', Data.formatCurrencyFull(closedVol));
+    h += dashStat('In Escrow', escrowCount, '#EEF2FF', 'var(--indigo)', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>', activeTxns.length + ' active / ' + pendingTxns.length + ' pending', 'up', Data.formatCurrencyFull(escrowVol));
+    h += dashStat('Active Listings', activeListings.length, '#FFF8EE', 'var(--amber)', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>', Data.formatCurrency(activeListings.reduce(function(s,l){return s+(l.price||0)},0)) + ' value', 'up', Data.formatCurrencyFull(listingVol));
     h += '</div>';
 
     if (!isLead) {
@@ -474,7 +465,7 @@
 
     if (isMobile) {
       var allWidgetIds = layout.col1.concat(layout.col2).concat(layout.col3);
-      var mobileFirst = ['teamRankings', 'goals', 'upcomingClosings', 'volumeSummary'];
+      var mobileFirst = ['teamRankings', 'goals', 'upcomingClosings'];
       var mobileRest = allWidgetIds.filter(function(id) { return mobileFirst.indexOf(id) === -1; });
       var mobileOrder = mobileFirst.concat(mobileRest);
       h += '<div class="dash-col" data-col="0">';
@@ -646,9 +637,10 @@
   });
 
   // HELPERS
-  function dashStat(label, value, bg, color, path, delta, deltaType) {
+  function dashStat(label, value, bg, color, path, delta, deltaType, volume) {
     return '<div class="dash-stat"><div class="dash-stat-icon" style="background:' + bg + ';color:' + color + '"><svg viewBox="0 0 24 24">' + path + '</svg></div>' +
       '<div><div class="dash-stat-value">' + value + '</div><div class="dash-stat-label">' + label + '</div>' +
+      (volume ? '<div style="font-size:.82rem;font-weight:700;color:' + color + ';margin-top:2px">' + volume + '</div>' : '') +
       '<div class="dash-stat-delta ' + deltaType + '">&#8593; ' + delta + '</div></div></div>';
   }
 
@@ -661,10 +653,6 @@
 
   function taxCell(val, label, color) {
     return '<div class="dash-tax-cell"><div class="dash-tax-cell-value" style="color:' + color + '">' + val + '</div><div class="dash-tax-cell-label">' + label + '</div></div>';
-  }
-
-  function sumRow(label, val, color) {
-    return '<div class="dash-summary-row"><span class="dash-summary-label">' + label + '</span><span class="dash-summary-value" style="color:' + color + '">' + val + '</span></div>';
   }
 
   function timeAgo(ts) {
