@@ -343,6 +343,11 @@
       _leadSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t && t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
     '</select></div>';
     html += '</div>';
+    html += '<div class="form-row" style="grid-template-columns:1fr 1fr 1fr">';
+    html += '<div class="form-group"><label>Beds</label><input type="number" id="fBeds" value="' + (t && t.beds ? t.beds : '') + '" placeholder="—" min="0" style="padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Baths</label><input type="number" id="fBaths" value="' + (t && t.baths ? t.baths : '') + '" placeholder="—" min="0" step="0.5" style="padding:12px 16px"></div>';
+    html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (t && t.sqft ? t.sqft : '') + '" placeholder="—" min="0" style="padding:12px 16px"></div>';
+    html += '</div>';
     html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
     html += '</div></div>';
 
@@ -720,6 +725,18 @@
         '<option value=""' + (!t.source ? ' selected' : '') + '>—</option>' +
         _detailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
       '</select>' +
+    '</div>';
+    html += '<div class="detail-block">' +
+      '<div class="detail-block-label">Beds</div>' +
+      '<input type="number" class="ie-field" data-field="beds" value="' + (t.beds || '') + '" placeholder="—" min="0" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
+    '</div>';
+    html += '<div class="detail-block">' +
+      '<div class="detail-block-label">Baths</div>' +
+      '<input type="number" class="ie-field" data-field="baths" value="' + (t.baths || '') + '" placeholder="—" min="0" step="0.5" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
+    '</div>';
+    html += '<div class="detail-block">' +
+      '<div class="detail-block-label">Sq Ft</div>' +
+      '<input type="number" class="ie-field" data-field="sqft" value="' + (t.sqft || '') + '" placeholder="—" min="0" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
     '</div>';
     html += '</div>'; // detail-blocks-row
 
@@ -1150,6 +1167,9 @@
             self.setAttribute('data-raw', val);
             self.value = Data.formatCurrency(val);
           }
+          if (fieldName === 'beds') val = val ? parseInt(val) : null;
+          if (fieldName === 'baths') val = val ? parseFloat(val) : null;
+          if (fieldName === 'sqft') val = val ? parseInt(val) : null;
 
           var update = {};
           update[fieldName] = val;
@@ -1399,7 +1419,10 @@
           status: (document.getElementById('fStatus') || {}).value || 'active',
           closeDate: (document.getElementById('fCloseDate') || {}).value || '',
           notes: (document.getElementById('fNotes') || {}).value.trim(),
-          source: (document.getElementById('fSource') || {}).value || ''
+          source: (document.getElementById('fSource') || {}).value || '',
+          beds: (document.getElementById('fBeds') || {}).value ? parseInt(document.getElementById('fBeds').value) : null,
+          baths: (document.getElementById('fBaths') || {}).value ? parseFloat(document.getElementById('fBaths').value) : null,
+          sqft: (document.getElementById('fSqft') || {}).value ? parseInt(document.getElementById('fSqft').value) : null
         };
 
         var fTxnId;

@@ -379,6 +379,9 @@
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.closeDate !== undefined) mapped.close_date = updates.closeDate;
       if (updates.notes !== undefined) mapped.notes = updates.notes;
+      if (updates.beds !== undefined) mapped.beds = updates.beds;
+      if (updates.baths !== undefined) mapped.baths = updates.baths;
+      if (updates.sqft !== undefined) mapped.sqft = updates.sqft;
       API.updateTransaction(apiId, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
     }
     return result;
