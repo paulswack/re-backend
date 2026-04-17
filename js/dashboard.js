@@ -406,7 +406,11 @@
         var allPresent = validIds.every(function (id) { return allIds.indexOf(id) !== -1; });
         if (allValid && allPresent && allIds.length === validIds.length) return saved;
       }
-    } catch (e) {}
+      // Stale or invalid layout — clear it so default takes effect
+      localStorage.removeItem('reb_dash_layout');
+    } catch (e) {
+      localStorage.removeItem('reb_dash_layout');
+    }
     return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   }
 

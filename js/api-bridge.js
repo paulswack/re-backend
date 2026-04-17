@@ -521,6 +521,13 @@ var ApiBridge = (function () {
         }, 2000);
       }
 
+      // Dashboard layout
+      if (key === PREFIX + 'dash_layout') {
+        debounceSync('dash_layout', function () {
+          try { API.updateSettings({ _dash_layout: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        }, 2000);
+      }
+
       // Checklist templates
       if (key === PREFIX + 'checklist_templates') {
         debounceSync('checklist_templates', function () {
@@ -769,7 +776,7 @@ var ApiBridge = (function () {
       '_txn_notes:txn_notes', '_txn_key_dates:txn_key_dates',
       '_calendar_events:calendar_events', '_listing_notes:listing_notes',
       '_notif_config:notif_config', '_notif_sent:notif_sent',
-      '_email_templates:email_templates'
+      '_email_templates:email_templates', '_dash_layout:dash_layout'
     ];
     keys.forEach(function (k) {
       var parts = k.split(':');
