@@ -1319,14 +1319,7 @@
       });
     }
 
-    // State field: auto-advance to Zip when 2 chars entered
-    var stateField = pageBody.querySelector('.ie-field[data-field="state"]');
-    var zipField   = pageBody.querySelector('.ie-field[data-field="zip"]');
-    if (stateField && zipField) {
-      stateField.addEventListener('input', function () {
-        if (this.value.length >= 2) zipField.focus();
-      });
-    }
+    // State field maxlength enforced by HTML attribute — no auto-advance
 
     // Auto-save inline editable fields
     var ieFields = pageBody.querySelectorAll('.ie-field');
