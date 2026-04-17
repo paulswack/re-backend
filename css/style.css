@@ -720,24 +720,41 @@ tr:hover { background: var(--gray-50); }
   .dr-agent-filter { flex-direction: column; align-items: stretch; gap: 6px; }
   .dr-agent-filter select { min-width: auto; width: 100%; }
 
-  /* Dashboard stats row — allow wrapping, don't force 3-col */
+  /* Dashboard stats row — keep 3 in a row, just tighter */
   .dash-stats-row {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
   }
   .dash-stats-row .dash-stat {
-    padding: 10px 8px;
+    padding: 8px 6px;
+    gap: 4px;
   }
-  .dash-stats-row .dash-stat:last-child {
-    grid-column: 1 / -1;
-  }
-  .dash-stats-row .dash-stat-value { font-size: 1.2rem; }
-  .dash-stats-row .dash-stat-icon { width: 28px; height: 28px; }
-  .dash-stats-row .dash-stat-icon svg { width: 14px; height: 14px; }
+  .dash-stats-row .dash-stat-value { font-size: 1.1rem; }
+  .dash-stats-row .dash-stat-icon { width: 24px; height: 24px; border-radius: 6px; }
+  .dash-stats-row .dash-stat-icon svg { width: 12px; height: 12px; }
 
-  /* Tables — allow full-width scroll without forced min-width */
-  .table-wrapper table { min-width: 380px; }
-  .dash-widget .table-wrapper table { min-width: 420px; font-size: .75rem; }
+  /* Tables — fit within viewport, no horizontal page scroll */
+  .table-wrapper table { min-width: 0; width: 100%; }
+  .table-wrapper th, .table-wrapper td { padding: 6px 4px; font-size: .7rem; }
+  .dash-widget .table-wrapper table { min-width: 0; width: 100%; font-size: .68rem; }
+  .dash-widget .table-wrapper th, .dash-widget .table-wrapper td { padding: 5px 3px; }
+
+  /* Hide less important table columns on small screens */
+  .dash-widget .table-wrapper th:nth-child(4),
+  .dash-widget .table-wrapper td:nth-child(4),
+  .dash-widget .table-wrapper th:nth-child(5),
+  .dash-widget .table-wrapper td:nth-child(5),
+  .dash-widget .table-wrapper th:nth-child(6),
+  .dash-widget .table-wrapper td:nth-child(6),
+  .dash-widget .table-wrapper th:nth-child(8),
+  .dash-widget .table-wrapper td:nth-child(8) { display: none; }
+
+  /* Widgets — prevent overflow */
+  .dash-widget { overflow: hidden; }
+  .dash-widget-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Top3 podium inside dashboard widget */
+  .dash-widget .top3-podium { padding: 12px 10px 8px; gap: 6px; }
 
   /* Deal room stats strip */
   .dr-stats-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
