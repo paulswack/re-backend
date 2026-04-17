@@ -300,6 +300,14 @@
     .dr-agent-filter select:hover {
       border-color: var(--gray-300);
     }
+    @media (max-width: 768px) {
+      .dr-agent-filter { flex-wrap: wrap; }
+      .dr-agent-filter select { min-width: 0; flex: 1; }
+    }
+    @media (max-width: 480px) {
+      .dr-agent-filter { flex-direction: column; align-items: stretch; gap: 6px; }
+      .dr-agent-filter select { min-width: auto; width: 100%; }
+    }
 
     /* ---- Empty state ---- */
     .dr-empty {

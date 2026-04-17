@@ -669,7 +669,7 @@
     html += '<div class="detail-header-top">';
     html += '<div style="flex:1;min-width:0">' +
       '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(t.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
-      '<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:6px">' +
+      '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:6px">' +
         '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">City</label>' +
         '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="City" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
         '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">State</label>' +

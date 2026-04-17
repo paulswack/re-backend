@@ -613,6 +613,7 @@ tr:hover { background: var(--gray-50); }
   /* Detail views */
   .detail-header-top { flex-direction: column; gap: 12px; }
   .detail-header-body { padding: 16px 16px 14px; }
+  .detail-csz-grid { grid-template-columns: 1fr !important; }
   .detail-header-actions { align-self: flex-start; }
   .detail-blocks-row { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0 !important; }
   .parties-grid { grid-template-columns: 1fr !important; }
@@ -657,6 +658,13 @@ tr:hover { background: var(--gray-50); }
 
   /* Touch-friendly inputs */
   input, select, textarea { font-size: 16px !important; } /* prevents iOS zoom */
+
+  /* Deal Room agent filter — stack on mobile */
+  .dr-agent-filter { flex-wrap: wrap; }
+  .dr-agent-filter select { min-width: 0; flex: 1; }
+
+  /* Dashboard performance table — hide less important columns */
+  .dash-widget .table-wrapper table { min-width: 520px; }
 }
 
 @media (max-width: 480px) {
@@ -707,6 +715,43 @@ tr:hover { background: var(--gray-50); }
 
   /* Modal body padding tighter */
   .modal-body, .modal-header, .modal-footer { padding-left: 16px; padding-right: 16px; }
+
+  /* Deal Room agent filter — full width */
+  .dr-agent-filter { flex-direction: column; align-items: stretch; gap: 6px; }
+  .dr-agent-filter select { min-width: auto; width: 100%; }
+
+  /* Dashboard stats row — allow wrapping, don't force 3-col */
+  .dash-stats-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .dash-stats-row .dash-stat {
+    padding: 10px 8px;
+  }
+  .dash-stats-row .dash-stat:last-child {
+    grid-column: 1 / -1;
+  }
+  .dash-stats-row .dash-stat-value { font-size: 1.2rem; }
+  .dash-stats-row .dash-stat-icon { width: 28px; height: 28px; }
+  .dash-stats-row .dash-stat-icon svg { width: 14px; height: 14px; }
+
+  /* Tables — allow full-width scroll without forced min-width */
+  .table-wrapper table { min-width: 380px; }
+  .dash-widget .table-wrapper table { min-width: 420px; font-size: .75rem; }
+
+  /* Deal room stats strip */
+  .dr-stats-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Deal room columns */
+  .dr-columns { gap: 14px; }
+  .dr-panel-header { flex-wrap: wrap; gap: 8px; }
+  .dr-panel-search { max-width: none; }
+
+  /* Deal room rows — tighter on mobile */
+  .dr-row { grid-template-columns: 1fr auto; padding: 8px 12px; }
+  .dr-row-agent-col { display: none; }
+  .dr-section-hd { grid-template-columns: 1fr auto; }
+  .dr-section-hd-col:first-of-type { display: none; }
 }
 
 @media (max-width: 320px) {
