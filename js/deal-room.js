@@ -200,6 +200,7 @@
     var specs = [];
     if (l.beds)  specs.push(l.beds + ' bd');
     if (l.baths) specs.push(l.baths + ' ba');
+    if (l.sqft)  specs.push(Number(l.sqft).toLocaleString() + ' sqft');
     var subParts = [addrSub, specs.join(' · ')].filter(Boolean);
     var subHtml = subParts.map(function (p, i) {
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
@@ -229,9 +230,11 @@
     var matchLst = (window._drAllListings || []).find(function (l) { return l.address === t.address; });
     var beds  = t.beds  || (matchLst ? matchLst.beds  : null);
     var baths = t.baths || (matchLst ? matchLst.baths : null);
+    var sqft  = t.sqft  || (matchLst ? matchLst.sqft  : null);
     var specs = [];
     if (beds)  specs.push(beds + ' bd');
     if (baths) specs.push(baths + ' ba');
+    if (sqft)  specs.push(Number(sqft).toLocaleString() + ' sqft');
     var subParts = [addrSub, specs.join(' · ')].filter(Boolean);
     var subHtml = subParts.map(function (p, i) {
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
