@@ -25,7 +25,7 @@
   (function () {
     var params = new URLSearchParams(window.location.search);
     var deepId = params.get('id');
-    if (params.get('from') === 'dealRoom') fromDealRoom = true;
+    if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
     if (deepId) {
       selectedTxnId = deepId;
       viewMode = 'detail';
@@ -33,6 +33,13 @@
     if (params.get('action') === 'new') viewMode = 'form';
     if (window.history.replaceState) {
       window.history.replaceState({}, '', window.location.pathname);
+    }
+    // Update topbar when coming from deal room
+    if (fromDealRoom) {
+      var topH1 = document.querySelector('.topbar-title h1');
+      var topP = document.querySelector('.topbar-title p');
+      if (topH1) topH1.textContent = 'Deal Detail';
+      if (topP) topP.textContent = 'Viewing escrow from Deal Room';
     }
   })();
   var editingId = null;

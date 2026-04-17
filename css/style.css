@@ -612,9 +612,11 @@ tr:hover { background: var(--gray-50); }
 
   /* Detail views */
   .detail-header-top { flex-direction: column; gap: 12px; }
-  .detail-header-body { padding: 16px 16px 14px; }
+  .detail-header-body { padding: 16px 14px 14px; }
   .detail-csz-grid { grid-template-columns: 1fr !important; }
-  .detail-header-actions { align-self: flex-start; }
+  .detail-header-actions { align-self: stretch; display: flex; flex-wrap: wrap; gap: 8px; }
+  .detail-header-actions a, .detail-header-actions button { flex: 1; justify-content: center; min-width: 0; text-align: center; font-size: .78rem !important; padding: 10px 12px !important; }
+  .detail-back-btn { font-size: .85rem; padding: 10px 14px; }
   .detail-blocks-row { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0 !important; }
   .parties-grid { grid-template-columns: 1fr !important; }
 
