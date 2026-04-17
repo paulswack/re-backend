@@ -404,18 +404,39 @@
         render();
         break;
 
-      case 'delete-txn':
+      case 'delete-txn': {
         var deleteId = target.getAttribute('data-id');
         var deleteTxn = Data.getTransactions().find(function (t) { return t.id === deleteId; });
         var deleteAddr = deleteTxn ? deleteTxn.address : 'this transaction';
-        if (confirm('Delete "' + deleteAddr + '"?\n\nThis cannot be undone.')) {
-          Data.deleteTransaction(deleteId);
-          showToast('Transaction deleted.');
-          viewMode = 'list';
-          selectedTxnId = null;
-          render();
-        }
+        var dcOverlay = document.createElement('div');
+        dcOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+        dcOverlay.innerHTML =
+          '<div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">' +
+            '<div style="width:48px;height:48px;background:#FEE2E2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">' +
+              '<svg viewBox="0 0 24 24" width="24" height="24" fill="#EF4444"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
+            '</div>' +
+            '<div style="font-size:1.1rem;font-weight:700;color:var(--gray-900);margin-bottom:8px">Delete Closed Deal?</div>' +
+            '<div style="font-size:.88rem;color:var(--gray-500);margin-bottom:24px">' + escapeHtml(deleteAddr) + ' will be permanently deleted and cannot be recovered.</div>' +
+            '<div style="display:flex;gap:10px;justify-content:center">' +
+              '<button data-action="dc-cancel" style="flex:1;padding:10px;border:1.5px solid var(--gray-200);background:#fff;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--gray-700)">Cancel</button>' +
+              '<button data-action="dc-confirm" style="flex:1;padding:10px;background:#EF4444;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;color:#fff">Delete</button>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(dcOverlay);
+        dcOverlay.addEventListener('click', function (ev) {
+          var act = ev.target.closest('[data-action]');
+          if (!act) return;
+          if (act.getAttribute('data-action') === 'dc-confirm') {
+            Data.deleteTransaction(deleteId);
+            showToast('Transaction deleted.');
+            viewMode = 'list';
+            selectedTxnId = null;
+            render();
+          }
+          document.body.removeChild(dcOverlay);
+        });
         break;
+      }
     }
   });
 

@@ -1293,19 +1293,42 @@
         render();
         break;
 
-      case 'delete-txn':
-        if (confirm('Delete this escrow? This cannot be undone.')) {
-          var delId = target.getAttribute('data-id');
-          Data.deleteTransaction(delId);
-          var parties = getParties();
-          delete parties[delId];
-          saveParties(parties);
-          showToast('Transaction deleted.');
-          viewMode = 'list';
-          selectedTxnId = null;
-          render();
-        }
+      case 'delete-txn': {
+        var dtId = target.getAttribute('data-id');
+        var dtTxn = Data.getTransactions().find(function (x) { return x.id === dtId; });
+        var dtAddr = dtTxn ? dtTxn.address : 'this transaction';
+        var dtOverlay = document.createElement('div');
+        dtOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+        dtOverlay.innerHTML =
+          '<div style="background:#fff;border-radius:16px;padding:32px 28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">' +
+            '<div style="width:48px;height:48px;background:#FEE2E2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">' +
+              '<svg viewBox="0 0 24 24" width="24" height="24" fill="#EF4444"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
+            '</div>' +
+            '<div style="font-size:1.1rem;font-weight:700;color:var(--gray-900);margin-bottom:8px">Delete Transaction?</div>' +
+            '<div style="font-size:.88rem;color:var(--gray-500);margin-bottom:24px">' + escapeHtml(dtAddr) + ' will be permanently deleted and cannot be recovered.</div>' +
+            '<div style="display:flex;gap:10px;justify-content:center">' +
+              '<button data-action="dt-cancel" style="flex:1;padding:10px;border:1.5px solid var(--gray-200);background:#fff;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--gray-700)">Cancel</button>' +
+              '<button data-action="dt-confirm" style="flex:1;padding:10px;background:#EF4444;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;color:#fff">Delete</button>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(dtOverlay);
+        dtOverlay.addEventListener('click', function (ev) {
+          var act = ev.target.closest('[data-action]');
+          if (!act) return;
+          if (act.getAttribute('data-action') === 'dt-confirm') {
+            Data.deleteTransaction(dtId);
+            var parties = getParties();
+            delete parties[dtId];
+            saveParties(parties);
+            showToast('Transaction deleted.');
+            viewMode = 'list';
+            selectedTxnId = null;
+            render();
+          }
+          document.body.removeChild(dtOverlay);
+        });
         break;
+      }
 
       case 'add-person':
         var apType = target.getAttribute('data-ptype');
