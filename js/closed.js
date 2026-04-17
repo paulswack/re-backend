@@ -145,8 +145,9 @@
       agentGroups[name].push(t);
     });
 
-    // Sort agents by volume desc
+    // Sort agents by deal count desc, then volume as tiebreaker
     var sortedAgents = Object.keys(agentGroups).sort(function (a, b) {
+      if (agentGroups[b].length !== agentGroups[a].length) return agentGroups[b].length - agentGroups[a].length;
       var volA = agentGroups[a].reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
       var volB = agentGroups[b].reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
       return volB - volA;
