@@ -379,9 +379,15 @@
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.closeDate !== undefined) mapped.close_date = updates.closeDate;
       if (updates.notes !== undefined) mapped.notes = updates.notes;
-      if (updates.beds !== undefined) mapped.beds = updates.beds;
-      if (updates.baths !== undefined) mapped.baths = updates.baths;
-      if (updates.sqft !== undefined) mapped.sqft = updates.sqft;
+      // Store beds/baths/sqft in metadata JSONB since they're not separate columns
+      if (updates.beds !== undefined || updates.baths !== undefined || updates.sqft !== undefined) {
+        var item = txns.getAll().find(function (i) { return i.id === id; });
+        var meta = (item && item.metadata) || {};
+        if (updates.beds !== undefined) meta.beds = updates.beds;
+        if (updates.baths !== undefined) meta.baths = updates.baths;
+        if (updates.sqft !== undefined) meta.sqft = updates.sqft;
+        mapped.metadata = meta;
+      }
       API.updateTransaction(apiId, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
     }
     return result;

@@ -63,10 +63,7 @@ CREATE TABLE transactions (
   source TEXT,
   close_date DATE,
   notes TEXT,
-  beds INTEGER,
-  baths NUMERIC(3,1),
-  sqft INTEGER,
-  metadata JSONB DEFAULT '{}',
+  metadata JSONB DEFAULT '{}', -- beds, baths, sqft stored here
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

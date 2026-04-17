@@ -24,7 +24,8 @@ var ApiBridge = (function () {
   }
   function mapTransactions(txns) {
     return txns.map(function (t) {
-      return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip, type: t.type, status: t.status, price: parseFloat(t.price) || 0, agent: t.agent_name, agentId: t.agent_id, source: t.source, closeDate: t.close_date, notes: t.notes, beds: t.beds, baths: t.baths, sqft: t.sqft, createdAt: t.created_at };
+      var meta = t.metadata || {};
+      return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip, type: t.type, status: t.status, price: parseFloat(t.price) || 0, agent: t.agent_name, agentId: t.agent_id, source: t.source, closeDate: t.close_date, notes: t.notes, beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null, sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
     });
   }
   function mapListings(lsts) {
