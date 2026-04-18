@@ -33,9 +33,9 @@
     var ssId = sessionStorage.getItem('reb_deeplink_id');
     var ssType = sessionStorage.getItem('reb_deeplink_type');
 
-    // DEBUG: show what we received (temporary — will remove once working)
-    var debugInfo = 'URL id=' + (deepId || 'none') + ', SS from=' + (ssFrom || 'none') + ', SS id=' + (ssId || 'none') + ', SS type=' + (ssType || 'none');
-    console.log('LISTING DEEP-LINK:', debugInfo);
+    // DEBUG: always show what we received in the page title
+    var debugInfo = 'id=' + (deepId || 'X') + ' ss=' + (ssId || 'X') + ' t=' + (ssType || 'X');
+    document.title = debugInfo;
 
     if (ssFrom && ssId && ssType === 'listing') {
       deepId = ssId;
@@ -48,11 +48,6 @@
     if (deepId) {
       selectedListingId = deepId;
       viewMode = 'detail';
-    }
-
-    // If we still have no deepId but came from deal room, show debug
-    if (!deepId && (ssFrom || params.get('from'))) {
-      document.title = 'DEBUG: ' + debugInfo;
     }
 
     if (window.history.replaceState) {
