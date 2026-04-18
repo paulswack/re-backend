@@ -2579,6 +2579,10 @@
   // Re-render after bridge loads so DOM IDs match localStorage server IDs
   document.addEventListener('apiBridgeReady', function () {
     window._apiBridgeLoaded = true;
+    // Only re-render if we're NOT already showing a deal detail successfully
+    if (viewMode === 'detail' && selectedTxnId && pageBody.querySelector('.detail-header-card')) {
+      return; // detail is already rendered, don't wipe it
+    }
     render();
   });
 
