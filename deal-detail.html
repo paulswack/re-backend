@@ -8,8 +8,40 @@
     window._forceDetailMode = true;
     window._forceDetailId = window.location.hash ? window.location.hash.substring(1) : '';
     window._forceDetailFrom = 'dealRoom';
+    // Synchronously fetch the deal and inject into localStorage before other scripts load
+    (function() {
+      var id = window._forceDetailId;
+      if (!id) return;
+      var token = localStorage.getItem('reb_jwt');
+      if (!token) return;
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/listings/' + id, false);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+        xhr.send();
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          if (data && data.id) {
+            var mapped = {
+              id: data.id, address: data.address, city: data.city || '', state: data.state || '', zip: data.zip || '',
+              status: data.status, price: parseFloat(data.price) || 0, agent: data.agent_name, agentId: data.agent_id,
+              beds: data.beds, baths: data.baths, sqft: data.sqft, description: data.description,
+              source: data.source, listingDate: data.listing_date, propertyType: data.property_type || '',
+              createdAt: data.created_at
+            };
+            var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
+            var found = false;
+            for (var i = 0; i < existing.length; i++) {
+              if (existing[i].id === mapped.id) { existing[i] = mapped; found = true; break; }
+            }
+            if (!found) existing.push(mapped);
+            localStorage.setItem('reb_listings', JSON.stringify(existing));
+          }
+        }
+      } catch(e) {}
+    })();
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1776545254">
+  <link rel="stylesheet" href="css/style.css?v=1776545567">
   <style>
     /* ---- Listing Page Styles ---- */
 
@@ -220,14 +252,14 @@
     </main>
   </div>
 
-  <script src="js/theme.js?v=1776545254"></script>
-  <script src="js/api.js?v=1776545254"></script>
-  <script src="js/api-bridge.js?v=1776545254"></script>
-  <script src="js/auth.js?v=1776545254"></script>
-  <script src="js/data.js?v=1776545254"></script>
-  <script src="js/listings.js?v=1776545254"></script>
+  <script src="js/theme.js?v=1776545567"></script>
+  <script src="js/api.js?v=1776545567"></script>
+  <script src="js/api-bridge.js?v=1776545567"></script>
+  <script src="js/auth.js?v=1776545567"></script>
+  <script src="js/data.js?v=1776545567"></script>
+  <script src="js/listings.js?v=1776545567"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/datepicker.js?v=1776545254"></script>
+  <script src="js/datepicker.js?v=1776545567"></script>
 </body>
 </html>
