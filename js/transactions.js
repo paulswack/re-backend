@@ -615,6 +615,23 @@
   function renderDetail() {
     var txns = Data.getTransactions();
     var t = txns.find(function (x) { return x.id === selectedTxnId; });
+
+    // Fallback: check sessionStorage for deal passed from deal room
+    if (!t) {
+      try {
+        var cached = JSON.parse(sessionStorage.getItem('reb_deeplink_deal') || 'null');
+        if (cached && cached.id === selectedTxnId) {
+          var existing = JSON.parse(localStorage.getItem('reb_transactions') || '[]');
+          if (!existing.find(function (x) { return x.id === cached.id; })) {
+            existing.push(cached);
+            localStorage.setItem('reb_transactions', JSON.stringify(existing));
+          }
+          sessionStorage.removeItem('reb_deeplink_deal');
+          t = cached;
+        }
+      } catch (e) {}
+    }
+
     if (!t) {
       // Try fetching directly from server API
       if (typeof API !== 'undefined' && API.isLoggedIn() && !window['_fetchedTxn_' + selectedTxnId]) {
@@ -652,6 +669,7 @@
       renderList();
       return;
     }
+    sessionStorage.removeItem('reb_deeplink_deal');
 
     var parties = getParties();
     var txnParties = parties[selectedTxnId] || {};

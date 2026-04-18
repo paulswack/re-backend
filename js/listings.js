@@ -961,6 +961,24 @@
   function renderDetail() {
     var listings = Data.getListings();
     var l = listings.find(function (x) { return x.id === selectedListingId; });
+
+    // Fallback: check sessionStorage for deal passed from deal room
+    if (!l) {
+      try {
+        var cached = JSON.parse(sessionStorage.getItem('reb_deeplink_deal') || 'null');
+        if (cached && cached.id === selectedListingId) {
+          // Inject into localStorage so it persists
+          var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
+          if (!existing.find(function (x) { return x.id === cached.id; })) {
+            existing.push(cached);
+            localStorage.setItem('reb_listings', JSON.stringify(existing));
+          }
+          sessionStorage.removeItem('reb_deeplink_deal');
+          l = cached;
+        }
+      } catch (e) {}
+    }
+
     if (!l) {
       // Try fetching directly from server API
       if (typeof API !== 'undefined' && API.isLoggedIn() && !window['_fetchedListing_' + selectedListingId]) {
@@ -969,7 +987,6 @@
           '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div></div>';
         API.getListing(selectedListingId).then(function (data) {
           if (data && data.id) {
-            // Map server format to local format and store
             var mapped = {
               id: data.id, address: data.address, city: data.city || '', state: data.state || '', zip: data.zip || '',
               status: data.status, price: parseFloat(data.price) || 0, agent: data.agent_name, agentId: data.agent_id,
@@ -997,6 +1014,7 @@
       renderList();
       return;
     }
+    sessionStorage.removeItem('reb_deeplink_deal');
 
     var allNotes = getNotes();
     var listingNotes = allNotes[selectedListingId] || [];

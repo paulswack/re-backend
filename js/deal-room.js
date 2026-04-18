@@ -208,10 +208,8 @@
     var statusKey = l.status || 'active';
     var canOpen = canOpenDeal(l);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var href = canOpen ? 'listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom' : '';
-    var tag = canOpen ? 'a' : 'div';
-    var hrefAttr = canOpen ? ' href="' + href + '"' : '';
-    return '<' + tag + ' class="' + rowClass + '"' + hrefAttr + ' style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
+    var gotoAttr = canOpen ? ' data-goto="listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom"' : '';
+    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -224,7 +222,7 @@
         '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
         (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
       '</div>' +
-    '</' + tag + '>';
+    '</div>';
   }
 
   function escrowRow(t) {
@@ -255,10 +253,8 @@
     var statusKey = t.status || 'active';
     var canOpen = canOpenDeal(t);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var href = canOpen ? 'transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom' : '';
-    var tag = canOpen ? 'a' : 'div';
-    var hrefAttr = canOpen ? ' href="' + href + '"' : '';
-    return '<' + tag + ' class="' + rowClass + '"' + hrefAttr + ' style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
+    var gotoAttr = canOpen ? ' data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom"' : '';
+    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -273,7 +269,7 @@
         (t.closeDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</div>' : '') +
         (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
       '</div>' +
-    '</' + tag + '>';
+    '</div>';
   }
 
   // ---- Listing panel ----
@@ -450,7 +446,27 @@
       if (_txnSearch) txnSearch.setSelectionRange(_txnSearch.length, _txnSearch.length);
     }
 
-    // Rows use <a> tags for navigation — no click listener needed
+    // Row click/tap → navigate to detail
+    // Use event delegation on pageBody for reliable mobile touch handling
+    pageBody.addEventListener('click', function (e) {
+      var row = e.target.closest('[data-goto]');
+      if (row) {
+        e.preventDefault();
+        var dest = row.getAttribute('data-goto');
+        // Store deal data in sessionStorage so the target page can find it even if localStorage is stale
+        var dealId = dest.indexOf('id=') !== -1 ? dest.split('id=')[1].split('&')[0] : '';
+        if (dealId) {
+          var allListings = Data.getListings();
+          var allTxns = Data.getTransactions();
+          var deal = allListings.find(function (d) { return d.id === decodeURIComponent(dealId); }) ||
+                     allTxns.find(function (d) { return d.id === decodeURIComponent(dealId); });
+          if (deal) {
+            sessionStorage.setItem('reb_deeplink_deal', JSON.stringify(deal));
+          }
+        }
+        window.location.href = dest;
+      }
+    });
   }
 
   // ---- Init ----
