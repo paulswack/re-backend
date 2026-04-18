@@ -309,6 +309,7 @@
     }
 
     return '<div class="dr-panel dr-panel--listings">' +
+      '<a href="deal-detail.html#test123" style="display:block;padding:10px;background:red;color:white;text-align:center;font-weight:bold;text-decoration:none">TAP HERE TO TEST DEAL LINK</a>' +
       '<div class="dr-panel-accent"></div>' +
       '<div class="dr-panel-header">' +
         '<div class="dr-panel-title">' +
