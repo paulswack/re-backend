@@ -206,11 +206,8 @@
       return (i > 0 ? '<span class="dr-dot">·</span>' : '') + escapeHtml(p);
     }).join('');
     var statusKey = l.status || 'active';
-    var canOpen = canOpenDeal(l);
-    var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var tag = canOpen ? 'a' : 'div';
-    var linkAttr = canOpen ? ' href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer"' : ' style="cursor:default;opacity:.85"';
-    return '<' + tag + ' class="' + rowClass + '"' + linkAttr + '>' +
+    var rowClass = 'dr-row dr-row--' + statusKey;
+    return '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -223,7 +220,7 @@
         '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
         (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
       '</div>' +
-    '</' + tag + '>';
+    '</a>';
   }
 
   function escrowRow(t) {
@@ -252,11 +249,8 @@
     }
 
     var statusKey = t.status || 'active';
-    var canOpen = canOpenDeal(t);
-    var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var tag = canOpen ? 'a' : 'div';
-    var linkAttr = canOpen ? ' href="deal-detail-txn.html#' + t.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer"' : ' style="cursor:default;opacity:.85"';
-    return '<' + tag + ' class="' + rowClass + '"' + linkAttr + '>' +
+    var rowClass = 'dr-row dr-row--' + statusKey;
+    return '<a class="' + rowClass + '" href="deal-detail-txn.html#' + t.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -271,7 +265,7 @@
         (t.closeDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</div>' : '') +
         (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
       '</div>' +
-    '</' + tag + '>';
+    '</a>';
   }
 
   // ---- Listing panel ----
@@ -309,7 +303,6 @@
     }
 
     return '<div class="dr-panel dr-panel--listings">' +
-      '<a href="deal-detail.html#test123" style="display:block;padding:10px;background:red;color:white;text-align:center;font-weight:bold;text-decoration:none">TAP HERE TO TEST DEAL LINK</a>' +
       '<div class="dr-panel-accent"></div>' +
       '<div class="dr-panel-header">' +
         '<div class="dr-panel-title">' +
