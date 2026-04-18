@@ -616,6 +616,12 @@
     var txns = Data.getTransactions();
     var t = txns.find(function (x) { return x.id === selectedTxnId; });
     if (!t) {
+      if (typeof API !== 'undefined' && API.isLoggedIn() && !window._apiBridgeLoaded) {
+        pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray-400)">' +
+          '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div>' +
+          '<div style="font-size:.85rem">Syncing data from server</div></div>';
+        return;
+      }
       viewMode = 'list';
       renderList();
       return;
@@ -2551,6 +2557,7 @@
 
   // Re-render after bridge loads so DOM IDs match localStorage server IDs
   document.addEventListener('apiBridgeReady', function () {
+    window._apiBridgeLoaded = true;
     render();
   });
 
