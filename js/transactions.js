@@ -616,10 +616,36 @@
     var txns = Data.getTransactions();
     var t = txns.find(function (x) { return x.id === selectedTxnId; });
     if (!t) {
-      if (typeof API !== 'undefined' && API.isLoggedIn() && !window._apiBridgeLoaded) {
+      // Try fetching directly from server API
+      if (typeof API !== 'undefined' && API.isLoggedIn() && !window['_fetchedTxn_' + selectedTxnId]) {
+        window['_fetchedTxn_' + selectedTxnId] = true;
         pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray-400)">' +
-          '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div>' +
-          '<div style="font-size:.85rem">Syncing data from server</div></div>';
+          '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div></div>';
+        API.getTransaction(selectedTxnId).then(function (data) {
+          if (data && data.id) {
+            var meta = data.metadata || {};
+            var mapped = {
+              id: data.id, address: data.address, city: data.city, state: data.state, zip: data.zip,
+              type: data.type, status: data.status, price: parseFloat(data.price) || 0,
+              agent: data.agent_name, agentId: data.agent_id, source: data.source,
+              closeDate: data.close_date, notes: data.notes,
+              beds: data.beds || meta.beds || null, baths: data.baths || meta.baths || null,
+              sqft: data.sqft || meta.sqft || null, metadata: meta, createdAt: data.created_at
+            };
+            var existing = JSON.parse(localStorage.getItem('reb_transactions') || '[]');
+            if (!existing.find(function (x) { return x.id === mapped.id; })) {
+              existing.push(mapped);
+              localStorage.setItem('reb_transactions', JSON.stringify(existing));
+            }
+            render();
+          } else {
+            viewMode = 'list';
+            render();
+          }
+        }).catch(function () {
+          viewMode = 'list';
+          render();
+        });
         return;
       }
       viewMode = 'list';
