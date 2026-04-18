@@ -21,25 +21,37 @@
   var selectedTxnId = null;
   var fromDealRoom = false;
 
-  // Deep-link: open specific transaction from URL param
+  // Deep-link: open specific transaction from URL param or sessionStorage
   (function () {
     var params = new URLSearchParams(window.location.search);
     var deepId = params.get('id');
     if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
+    if (params.get('action') === 'new') viewMode = 'form';
+
+    // Also check sessionStorage (set by Deal Room before navigating)
+    var ssFrom = sessionStorage.getItem('reb_deeplink_from');
+    var ssId = sessionStorage.getItem('reb_deeplink_id');
+    var ssType = sessionStorage.getItem('reb_deeplink_type');
+    if (ssFrom && ssId && ssType === 'transaction') {
+      deepId = ssId;
+      fromDealRoom = true;
+      sessionStorage.removeItem('reb_deeplink_from');
+      sessionStorage.removeItem('reb_deeplink_id');
+      sessionStorage.removeItem('reb_deeplink_type');
+    }
+
     if (deepId) {
       selectedTxnId = deepId;
       viewMode = 'detail';
     }
-    if (params.get('action') === 'new') viewMode = 'form';
     if (window.history.replaceState) {
       window.history.replaceState({}, '', window.location.pathname);
     }
-    // Update topbar when coming from deal room
     if (fromDealRoom) {
       var topH1 = document.querySelector('.topbar-title h1');
       var topP = document.querySelector('.topbar-title p');
       if (topH1) topH1.textContent = 'Deal Detail';
-      if (topP) topP.textContent = 'Viewing escrow from Deal Room';
+      if (topP) topP.textContent = '';
     }
   })();
   var editingId = null;
