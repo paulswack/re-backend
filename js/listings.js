@@ -970,56 +970,10 @@
     var listings = Data.getListings();
     var l = listings.find(function (x) { return x.id === selectedListingId; });
 
-    // Fallback: check sessionStorage for deal passed from deal room
     if (!l) {
-      try {
-        var cached = JSON.parse(sessionStorage.getItem('reb_deeplink_deal') || 'null');
-        if (cached && cached.id === selectedListingId) {
-          // Inject into localStorage so it persists
-          var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
-          if (!existing.find(function (x) { return x.id === cached.id; })) {
-            existing.push(cached);
-            localStorage.setItem('reb_listings', JSON.stringify(existing));
-          }
-          sessionStorage.removeItem('reb_deeplink_deal');
-          l = cached;
-        }
-      } catch (e) {}
-    }
-
-    if (!l) {
-      // Try fetching directly from server API
-      if (typeof API !== 'undefined' && API.isLoggedIn() && !window['_fetchedListing_' + selectedListingId]) {
-        window['_fetchedListing_' + selectedListingId] = true;
-        pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray-400)">' +
-          '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div></div>';
-        API.getListing(selectedListingId).then(function (data) {
-          if (data && data.id) {
-            var mapped = {
-              id: data.id, address: data.address, city: data.city || '', state: data.state || '', zip: data.zip || '',
-              status: data.status, price: parseFloat(data.price) || 0, agent: data.agent_name, agentId: data.agent_id,
-              beds: data.beds, baths: data.baths, sqft: data.sqft, description: data.description,
-              source: data.source, listingDate: data.listing_date, propertyType: data.property_type || '',
-              createdAt: data.created_at
-            };
-            var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
-            if (!existing.find(function (x) { return x.id === mapped.id; })) {
-              existing.push(mapped);
-              localStorage.setItem('reb_listings', JSON.stringify(existing));
-            }
-            render();
-          } else {
-            viewMode = 'list';
-            render();
-          }
-        }).catch(function () {
-          viewMode = 'list';
-          render();
-        });
-        return;
-      }
-      viewMode = 'list';
-      renderList();
+      // Show loading and wait for data to arrive via apiBridgeReady
+      pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray-400)">' +
+        '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div></div>';
       return;
     }
     sessionStorage.removeItem('reb_deeplink_deal');
