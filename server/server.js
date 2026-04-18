@@ -34,8 +34,17 @@ app.use(function (req, res, next) {
   }
 });
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '..')));
+// Serve static frontend files — no caching so updates are immediate
+app.use(express.static(path.join(__dirname, '..'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: function (res, path) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+}));
 
 const { requireAuth, requireActiveSubscription } = require('./lib/auth');
 
