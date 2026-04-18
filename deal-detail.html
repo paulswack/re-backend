@@ -6,15 +6,10 @@
   <title>Deal Detail — RE Back Office</title>
   <script>
     window._forceDetailMode = true;
-    window._forceDetailId = sessionStorage.getItem('reb_deeplink_id') || '';
-    window._forceDetailDeal = null;
-    try { window._forceDetailDeal = JSON.parse(sessionStorage.getItem('reb_deeplink_deal') || 'null'); } catch(e) {}
-    sessionStorage.removeItem('reb_deeplink_id');
-    sessionStorage.removeItem('reb_deeplink_type');
-    sessionStorage.removeItem('reb_deeplink_from');
-    sessionStorage.removeItem('reb_deeplink_deal');
+    window._forceDetailId = window.location.hash ? window.location.hash.substring(1) : '';
+    window._forceDetailFrom = 'dealRoom';
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1776533488">
+  <link rel="stylesheet" href="css/style.css?v=1776534138">
   <style>
     /* ---- Listing Page Styles ---- */
 
@@ -225,14 +220,14 @@
     </main>
   </div>
 
-  <script src="js/theme.js?v=1776533488"></script>
-  <script src="js/api.js?v=1776533488"></script>
-  <script src="js/api-bridge.js?v=1776533488"></script>
-  <script src="js/auth.js?v=1776533488"></script>
-  <script src="js/data.js?v=1776533488"></script>
-  <script src="js/listings.js?v=1776533488"></script>
+  <script src="js/theme.js?v=1776534138"></script>
+  <script src="js/api.js?v=1776534138"></script>
+  <script src="js/api-bridge.js?v=1776534138"></script>
+  <script src="js/auth.js?v=1776534138"></script>
+  <script src="js/data.js?v=1776534138"></script>
+  <script src="js/listings.js?v=1776534138"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/datepicker.js?v=1776533488"></script>
+  <script src="js/datepicker.js?v=1776534138"></script>
 </body>
 </html>

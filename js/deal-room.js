@@ -208,8 +208,9 @@
     var statusKey = l.status || 'active';
     var canOpen = canOpenDeal(l);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var gotoAttr = canOpen ? ' data-goto="deal-detail.html" data-deal-id="' + escapeHtml(l.id) + '" data-deal-type="listing"' : '';
-    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
+    var tag = canOpen ? 'a' : 'div';
+    var linkAttr = canOpen ? ' href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer"' : ' style="cursor:default;opacity:.85"';
+    return '<' + tag + ' class="' + rowClass + '"' + linkAttr + '>' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -222,7 +223,7 @@
         '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
         (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
       '</div>' +
-    '</div>';
+    '</' + tag + '>';
   }
 
   function escrowRow(t) {
@@ -253,8 +254,9 @@
     var statusKey = t.status || 'active';
     var canOpen = canOpenDeal(t);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var gotoAttr = canOpen ? ' data-goto="deal-detail-txn.html" data-deal-id="' + escapeHtml(t.id) + '" data-deal-type="transaction"' : '';
-    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
+    var tag = canOpen ? 'a' : 'div';
+    var linkAttr = canOpen ? ' href="deal-detail-txn.html#' + t.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer"' : ' style="cursor:default;opacity:.85"';
+    return '<' + tag + ' class="' + rowClass + '"' + linkAttr + '>' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -269,7 +271,7 @@
         (t.closeDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</div>' : '') +
         (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
       '</div>' +
-    '</div>';
+    '</' + tag + '>';
   }
 
   // ---- Listing panel ----
@@ -449,27 +451,7 @@
     // Click handler is attached globally below (outside render)
   }
 
-  // ---- Global click handler for deal navigation (attached once) ----
-  document.addEventListener('click', function (e) {
-    var row = e.target.closest('[data-goto]');
-    if (!row) return;
-    e.preventDefault();
-    e.stopPropagation();
-    var dest = row.getAttribute('data-goto');
-    var dealId = row.getAttribute('data-deal-id');
-    var dealType = row.getAttribute('data-deal-type');
-    if (dealId && dealType) {
-      var allData = dealType === 'listing' ? Data.getListings() : Data.getTransactions();
-      var deal = allData.find(function (d) { return d.id === dealId; });
-      if (deal) {
-        sessionStorage.setItem('reb_deeplink_deal', JSON.stringify(deal));
-      }
-      sessionStorage.setItem('reb_deeplink_id', dealId);
-      sessionStorage.setItem('reb_deeplink_type', dealType);
-      sessionStorage.setItem('reb_deeplink_from', 'dealRoom');
-    }
-    window.location.href = dest;
-  });
+  // Deal rows use <a> tags with hash fragment IDs — no JS click handler needed
 
   // ---- Init ----
   render();

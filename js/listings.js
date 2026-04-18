@@ -28,39 +28,21 @@
     if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
     if (params.get('action') === 'new') viewMode = 'form';
 
-    // Check for forced detail mode (set by deal-detail.html inline script)
+    // Forced detail mode (set by deal-detail.html via hash fragment)
     if (window._forceDetailMode && window._forceDetailId) {
       deepId = window._forceDetailId;
       fromDealRoom = true;
-      // If deal data was passed, inject into localStorage
-      if (window._forceDetailDeal && window._forceDetailDeal.id) {
-        var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
-        var found = existing.find(function (x) { return x.id === window._forceDetailDeal.id; });
-        if (!found) {
-          existing.push(window._forceDetailDeal);
-          localStorage.setItem('reb_listings', JSON.stringify(existing));
-        }
-      }
     }
 
-    // Also check sessionStorage as fallback
-    var ssFrom = sessionStorage.getItem('reb_deeplink_from');
-    var ssId = sessionStorage.getItem('reb_deeplink_id');
-    var ssType = sessionStorage.getItem('reb_deeplink_type');
-    if (ssFrom && ssId && ssType === 'listing') {
-      deepId = ssId;
+    // Also check URL hash as fallback
+    if (!deepId && window.location.hash && window.location.hash.length > 1) {
+      deepId = window.location.hash.substring(1);
       fromDealRoom = true;
-      sessionStorage.removeItem('reb_deeplink_from');
-      sessionStorage.removeItem('reb_deeplink_id');
-      sessionStorage.removeItem('reb_deeplink_type');
     }
 
     if (deepId) {
       selectedListingId = deepId;
       viewMode = 'detail';
-    }
-    if (window.history.replaceState) {
-      window.history.replaceState({}, '', window.location.pathname);
     }
     if (fromDealRoom) {
       var topH1 = document.querySelector('.topbar-title h1');
