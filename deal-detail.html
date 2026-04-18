@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Listings — RE Back Office</title>
+  <title>Deal Detail — RE Back Office</title>
+  <script>
+    window._forceDetailMode = true;
+    window._forceDetailId = sessionStorage.getItem('reb_deeplink_id') || '';
+    window._forceDetailDeal = null;
+    try { window._forceDetailDeal = JSON.parse(sessionStorage.getItem('reb_deeplink_deal') || 'null'); } catch(e) {}
+    sessionStorage.removeItem('reb_deeplink_id');
+    sessionStorage.removeItem('reb_deeplink_type');
+    sessionStorage.removeItem('reb_deeplink_from');
+    sessionStorage.removeItem('reb_deeplink_deal');
+  </script>
   <link rel="stylesheet" href="css/style.css?v=1776474552">
   <style>
     /* ---- Listing Page Styles ---- */

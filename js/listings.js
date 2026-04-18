@@ -21,22 +21,32 @@
   var selectedListingId = null;
   var fromDealRoom = false;
 
-  // Deep-link: open specific listing from URL param or sessionStorage
+  // Deep-link: open specific listing
   (function () {
     var params = new URLSearchParams(window.location.search);
     var deepId = params.get('id');
     if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
     if (params.get('action') === 'new') viewMode = 'form';
 
-    // Check sessionStorage (set by Deal Room before navigating)
+    // Check for forced detail mode (set by deal-detail.html inline script)
+    if (window._forceDetailMode && window._forceDetailId) {
+      deepId = window._forceDetailId;
+      fromDealRoom = true;
+      // If deal data was passed, inject into localStorage
+      if (window._forceDetailDeal && window._forceDetailDeal.id) {
+        var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
+        var found = existing.find(function (x) { return x.id === window._forceDetailDeal.id; });
+        if (!found) {
+          existing.push(window._forceDetailDeal);
+          localStorage.setItem('reb_listings', JSON.stringify(existing));
+        }
+      }
+    }
+
+    // Also check sessionStorage as fallback
     var ssFrom = sessionStorage.getItem('reb_deeplink_from');
     var ssId = sessionStorage.getItem('reb_deeplink_id');
     var ssType = sessionStorage.getItem('reb_deeplink_type');
-
-    // DEBUG: always show what we received in the page title
-    var debugInfo = 'id=' + (deepId || 'X') + ' ss=' + (ssId || 'X') + ' t=' + (ssType || 'X');
-    document.title = debugInfo;
-
     if (ssFrom && ssId && ssType === 'listing') {
       deepId = ssId;
       fromDealRoom = true;
@@ -49,7 +59,6 @@
       selectedListingId = deepId;
       viewMode = 'detail';
     }
-
     if (window.history.replaceState) {
       window.history.replaceState({}, '', window.location.pathname);
     }

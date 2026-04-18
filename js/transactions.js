@@ -21,14 +21,28 @@
   var selectedTxnId = null;
   var fromDealRoom = false;
 
-  // Deep-link: open specific transaction from URL param or sessionStorage
+  // Deep-link: open specific transaction
   (function () {
     var params = new URLSearchParams(window.location.search);
     var deepId = params.get('id');
     if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
     if (params.get('action') === 'new') viewMode = 'form';
 
-    // Also check sessionStorage (set by Deal Room before navigating)
+    // Check for forced detail mode (set by deal-detail-txn.html inline script)
+    if (window._forceDetailMode && window._forceDetailId) {
+      deepId = window._forceDetailId;
+      fromDealRoom = true;
+      if (window._forceDetailDeal && window._forceDetailDeal.id) {
+        var existing = JSON.parse(localStorage.getItem('reb_transactions') || '[]');
+        var found = existing.find(function (x) { return x.id === window._forceDetailDeal.id; });
+        if (!found) {
+          existing.push(window._forceDetailDeal);
+          localStorage.setItem('reb_transactions', JSON.stringify(existing));
+        }
+      }
+    }
+
+    // Also check sessionStorage as fallback
     var ssFrom = sessionStorage.getItem('reb_deeplink_from');
     var ssId = sessionStorage.getItem('reb_deeplink_id');
     var ssType = sessionStorage.getItem('reb_deeplink_type');

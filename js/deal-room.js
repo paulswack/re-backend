@@ -208,7 +208,7 @@
     var statusKey = l.status || 'active';
     var canOpen = canOpenDeal(l);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var gotoAttr = canOpen ? ' data-goto="listings.html" data-deal-id="' + escapeHtml(l.id) + '" data-deal-type="listing"' : '';
+    var gotoAttr = canOpen ? ' data-goto="deal-detail.html" data-deal-id="' + escapeHtml(l.id) + '" data-deal-type="listing"' : '';
     return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
@@ -253,7 +253,7 @@
     var statusKey = t.status || 'active';
     var canOpen = canOpenDeal(t);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var gotoAttr = canOpen ? ' data-goto="transactions.html" data-deal-id="' + escapeHtml(t.id) + '" data-deal-type="transaction"' : '';
+    var gotoAttr = canOpen ? ' data-goto="deal-detail-txn.html" data-deal-id="' + escapeHtml(t.id) + '" data-deal-type="transaction"' : '';
     return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
