@@ -208,8 +208,10 @@
     var statusKey = l.status || 'active';
     var canOpen = canOpenDeal(l);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var gotoAttr = canOpen ? ' data-goto="listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom"' : '';
-    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
+    var href = canOpen ? 'listings.html?id=' + encodeURIComponent(l.id) + '&from=dealRoom' : '';
+    var tag = canOpen ? 'a' : 'div';
+    var hrefAttr = canOpen ? ' href="' + href + '"' : '';
+    return '<' + tag + ' class="' + rowClass + '"' + hrefAttr + ' style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -222,7 +224,7 @@
         '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
         (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
       '</div>' +
-    '</div>';
+    '</' + tag + '>';
   }
 
   function escrowRow(t) {
@@ -253,8 +255,10 @@
     var statusKey = t.status || 'active';
     var canOpen = canOpenDeal(t);
     var rowClass = 'dr-row dr-row--' + statusKey + (canOpen ? '' : ' dr-row--locked');
-    var gotoAttr = canOpen ? ' data-goto="transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom"' : '';
-    return '<div class="' + rowClass + '"' + gotoAttr + ' style="' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
+    var href = canOpen ? 'transactions.html?id=' + encodeURIComponent(t.id) + '&from=dealRoom' : '';
+    var tag = canOpen ? 'a' : 'div';
+    var hrefAttr = canOpen ? ' href="' + href + '"' : '';
+    return '<' + tag + ' class="' + rowClass + '"' + hrefAttr + ' style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85') + '">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -269,7 +273,7 @@
         (t.closeDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(t.closeDate)) + '</div>' : '') +
         (urgency ? '<span class="dr-urgency ' + urgencyClass + '">' + escapeHtml(urgency) + '</span>' : '') +
       '</div>' +
-    '</div>';
+    '</' + tag + '>';
   }
 
   // ---- Listing panel ----
@@ -446,12 +450,7 @@
       if (_txnSearch) txnSearch.setSelectionRange(_txnSearch.length, _txnSearch.length);
     }
 
-    // Row click → navigate to detail (only if user has permission)
-    pageBody.querySelectorAll('.dr-row[data-goto]').forEach(function (row) {
-      row.addEventListener('click', function () {
-        window.location.href = this.getAttribute('data-goto');
-      });
-    });
+    // Rows use <a> tags for navigation — no click listener needed
   }
 
   // ---- Init ----
