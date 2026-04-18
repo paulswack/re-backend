@@ -446,32 +446,34 @@
       if (_txnSearch) txnSearch.setSelectionRange(_txnSearch.length, _txnSearch.length);
     }
 
-    // Row click/tap → navigate to detail
-    pageBody.addEventListener('click', function (e) {
-      var row = e.target.closest('[data-goto]');
-      if (row) {
-        var dest = row.getAttribute('data-goto');
-        var dealId = row.getAttribute('data-deal-id');
-        var dealType = row.getAttribute('data-deal-type');
-        if (dealId && dealType) {
-          var allData = dealType === 'listing' ? Data.getListings() : Data.getTransactions();
-          var deal = allData.find(function (d) { return d.id === dealId; });
-          if (deal) {
-            sessionStorage.setItem('reb_deeplink_deal', JSON.stringify(deal));
-          }
-          sessionStorage.setItem('reb_deeplink_id', dealId);
-          sessionStorage.setItem('reb_deeplink_type', dealType);
-          sessionStorage.setItem('reb_deeplink_from', 'dealRoom');
-        }
-        window.location.href = dest;
-      }
-    });
+    // Click handler is attached globally below (outside render)
   }
+
+  // ---- Global click handler for deal navigation (attached once) ----
+  document.addEventListener('click', function (e) {
+    var row = e.target.closest('[data-goto]');
+    if (!row) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var dest = row.getAttribute('data-goto');
+    var dealId = row.getAttribute('data-deal-id');
+    var dealType = row.getAttribute('data-deal-type');
+    if (dealId && dealType) {
+      var allData = dealType === 'listing' ? Data.getListings() : Data.getTransactions();
+      var deal = allData.find(function (d) { return d.id === dealId; });
+      if (deal) {
+        sessionStorage.setItem('reb_deeplink_deal', JSON.stringify(deal));
+      }
+      sessionStorage.setItem('reb_deeplink_id', dealId);
+      sessionStorage.setItem('reb_deeplink_type', dealType);
+      sessionStorage.setItem('reb_deeplink_from', 'dealRoom');
+    }
+    window.location.href = dest;
+  });
 
   // ---- Init ----
   render();
   document.addEventListener('apiBridgeReady', function () {
-    // Re-read current user after bridge loads
     _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
     _currentUserId = _currentUser ? _currentUser.id : null;
     _isPrivileged = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
