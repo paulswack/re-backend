@@ -28,10 +28,15 @@
     if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
     if (params.get('action') === 'new') viewMode = 'form';
 
-    // Also check sessionStorage (set by Deal Room before navigating)
+    // Check sessionStorage (set by Deal Room before navigating)
     var ssFrom = sessionStorage.getItem('reb_deeplink_from');
     var ssId = sessionStorage.getItem('reb_deeplink_id');
     var ssType = sessionStorage.getItem('reb_deeplink_type');
+
+    // DEBUG: show what we received (temporary — will remove once working)
+    var debugInfo = 'URL id=' + (deepId || 'none') + ', SS from=' + (ssFrom || 'none') + ', SS id=' + (ssId || 'none') + ', SS type=' + (ssType || 'none');
+    console.log('LISTING DEEP-LINK:', debugInfo);
+
     if (ssFrom && ssId && ssType === 'listing') {
       deepId = ssId;
       fromDealRoom = true;
@@ -44,6 +49,12 @@
       selectedListingId = deepId;
       viewMode = 'detail';
     }
+
+    // If we still have no deepId but came from deal room, show debug
+    if (!deepId && (ssFrom || params.get('from'))) {
+      document.title = 'DEBUG: ' + debugInfo;
+    }
+
     if (window.history.replaceState) {
       window.history.replaceState({}, '', window.location.pathname);
     }
