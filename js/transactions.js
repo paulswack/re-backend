@@ -21,34 +21,19 @@
   var selectedTxnId = null;
   var fromDealRoom = false;
 
-  // Deep-link: open specific transaction
+  // Deep-link: open specific transaction from URL param
   (function () {
     var params = new URLSearchParams(window.location.search);
     var deepId = params.get('id');
     if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
     if (params.get('action') === 'new') viewMode = 'form';
-
-    // Forced detail mode (set by deal-detail-txn.html via hash fragment)
-    if (window._forceDetailMode && window._forceDetailId) {
-      deepId = window._forceDetailId;
-      fromDealRoom = true;
-    }
-
-    // Also check URL hash as fallback
-    if (!deepId && window.location.hash && window.location.hash.length > 1) {
-      deepId = window.location.hash.substring(1);
-      fromDealRoom = true;
-    }
-
     if (deepId) {
       selectedTxnId = deepId;
       viewMode = 'detail';
     }
     if (fromDealRoom) {
       var topH1 = document.querySelector('.topbar-title h1');
-      var topP = document.querySelector('.topbar-title p');
       if (topH1) topH1.textContent = 'Deal Detail';
-      if (topP) topP.textContent = '';
     }
   })();
   var editingId = null;
@@ -642,9 +627,13 @@
     }
 
     if (!t) {
-      // Show loading and wait for data to arrive via apiBridgeReady
-      pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--gray-400)">' +
-        '<div style="font-size:1.5rem;margin-bottom:12px">Loading deal...</div></div>';
+      if (viewMode === 'detail' && selectedTxnId) {
+        pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px">' +
+          '<div style="font-size:1rem;color:var(--gray-500);margin-bottom:8px">Loading deal...</div></div>';
+        return;
+      }
+      viewMode = 'list';
+      renderList();
       return;
     }
 
@@ -2578,11 +2567,6 @@
 
   // Re-render after bridge loads so DOM IDs match localStorage server IDs
   document.addEventListener('apiBridgeReady', function () {
-    window._apiBridgeLoaded = true;
-    // Only re-render if we're NOT already showing a deal detail successfully
-    if (viewMode === 'detail' && selectedTxnId && pageBody.querySelector('.detail-header-card')) {
-      return; // detail is already rendered, don't wipe it
-    }
     render();
   });
 

@@ -207,7 +207,7 @@
     }).join('');
     var statusKey = l.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
+    return '<a class="' + rowClass + '" href="listings.html?id=' + encodeURIComponent(l.id) + '&amp;from=dealRoom" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -250,7 +250,7 @@
 
     var statusKey = t.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="deal-detail-txn.html#' + t.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
+    return '<a class="' + rowClass + '" href="transactions.html?id=' + encodeURIComponent(t.id) + '&amp;from=dealRoom" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
