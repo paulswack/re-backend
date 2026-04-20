@@ -111,7 +111,7 @@ function deadlineReminderEmail(agentName, deadlines, overrides, branding) {
   var heading = overrides.heading || 'Deadline Reminder';
   var body = overrides.body || 'You have upcoming deadlines that need your attention.';
   var buttonLabel = overrides.buttonLabel || 'View Escrows';
-  var buttonUrl = overrides.buttonUrl || 'https://app.eliteregbackoffice.com/transactions.html';
+  var buttonUrl = overrides.buttonUrl || 'https://app.eliteregbackoffice.com/deal-room.html';
   var subject = overrides.subject || (deadlines.length === 1
     ? `Deadline Reminder: ${deadlines[0].label} — ${deadlines[0].address}`
     : `${deadlines.length} Upcoming Deadlines — RE Back Office`);

@@ -539,7 +539,7 @@
           heading: 'Deadline Reminder',
           body: 'You have upcoming deadlines that need your attention. Log in to take action.',
           buttonLabel: 'View Escrows',
-          buttonUrl: 'https://app.eliteregbackoffice.com/transactions.html'
+          buttonUrl: 'https://app.eliteregbackoffice.com/deal-room.html'
         }
       },
       {
@@ -923,7 +923,7 @@
       case 'portal-txn-milestones': return loadPortalConfig().txnMilestones;
       case 'portal-lst-milestones': return loadPortalConfig().lstMilestones;
       case 'sidebar-order': return (settings.sidebarOrder || []).length ? settings.sidebarOrder.map(function(p) { return { page: p }; }) : [
-        {page:'dashboard.html'},{page:'leaderboard.html'},{page:'listings.html'},{page:'transactions.html'},{page:'closed.html'},
+        {page:'dashboard.html'},{page:'deal-room.html'},{page:'closed.html'},
         {page:'tax-center.html'},{page:'meeting-notes.html'},{page:'vendors.html'},{page:'reviews.html'},{page:'marketing.html'},
         {page:'knowledge-base.html'},{page:'recruiting.html'},{page:'bold100.html'}
       ];
@@ -1201,9 +1201,7 @@
     // Sidebar order
     var defaultOrder = [
       { page: 'dashboard.html', label: 'Dashboard' },
-      { page: 'leaderboard.html', label: 'Leaderboard' },
-      { page: 'listings.html', label: 'Listings' },
-      { page: 'transactions.html', label: 'Current Escrows' },
+      { page: 'deal-room.html', label: 'Deal Room' },
       { page: 'closed.html', label: 'Closed' },
       { page: 'tax-center.html', label: 'Tax Center' },
       { page: 'meeting-notes.html', label: 'Monthly Meeting 1-1' },

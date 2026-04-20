@@ -684,7 +684,7 @@
               type: 'closing_soon',
               title: daysLeft === 0 ? 'Closing today!' : 'Closing in ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : ''),
               detail: t.address,
-              linkPage: 'transactions.html',
+              linkPage: 'deal-detail-txn.html',
               linkId: t.id,
               targetUser: targetUser,
               createdAt: new Date().toISOString()
@@ -1348,8 +1348,8 @@
       { key: 'theme', label: 'Customize Theme', page: 'admin-settings.html' },
       { key: 'team', label: 'Add Team Members', page: 'team.html' },
       { key: 'checklists', label: 'Set Up Checklists', page: 'admin-settings.html' },
-      { key: 'listing', label: 'Add First Listing', page: 'listings.html' },
-      { key: 'escrow', label: 'Add First Escrow', page: 'transactions.html' },
+      { key: 'listing', label: 'Add First Listing', page: 'deal-detail.html' },
+      { key: 'escrow', label: 'Add First Escrow', page: 'deal-detail-txn.html' },
       { key: 'marketing', label: 'Explore Marketing', page: 'marketing.html' },
       { key: 'reviews', label: 'Set Up Reviews', page: 'reviews.html' },
       { key: 'portal', label: 'Preview Portal', page: 'admin-settings.html' }

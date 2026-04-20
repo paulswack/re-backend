@@ -477,7 +477,7 @@
       }
 
       // Navigate to the new escrow in transactions
-      window.location.href = 'transactions.html?id=' + encodeURIComponent(txnId);
+      window.location.href = 'deal-detail-txn.html#' + txnId;
     }
 
     showStep1();
