@@ -21,22 +21,30 @@
   var selectedTxnId = null;
   var fromDealRoom = false;
 
-  // Deep-link: open specific transaction from URL param
+  // Deep-link: open specific transaction
   (function () {
-    var params = new URLSearchParams(window.location.search);
-    var deepId = params.get('id');
-    if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
-    if (params.get('action') === 'new') viewMode = 'form';
-    if (deepId) {
-      selectedTxnId = deepId;
-      viewMode = 'detail';
+    if (window._forceDetailMode) {
+      fromDealRoom = true;
+      if (window._forceDetailId) {
+        selectedTxnId = window._forceDetailId;
+        viewMode = 'detail';
+      } else {
+        viewMode = 'form';
+      }
+    } else {
+      var params = new URLSearchParams(window.location.search);
+      var deepId = params.get('id');
+      if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
+      if (params.get('action') === 'new') viewMode = 'form';
+      if (deepId) { selectedTxnId = deepId; viewMode = 'detail'; }
     }
     if (fromDealRoom) {
       var topH1 = document.querySelector('.topbar-title h1');
-      if (topH1) topH1.textContent = 'Deal Detail';
+      if (topH1) topH1.textContent = viewMode === 'form' ? 'New Escrow' : 'Deal Detail';
     }
   })();
   var editingId = null;
+  var _detailRendered = false;
   var editingPartyType = null; // 'buyer' or 'seller'
 
   // ---- DOM refs ----
@@ -1104,6 +1112,7 @@
     '</div>';
 
     pageBody.innerHTML = html;
+    _detailRendered = true;
 
     initChecklistPickers();
 
@@ -2567,6 +2576,7 @@
 
   // Re-render after bridge loads so DOM IDs match localStorage server IDs
   document.addEventListener('apiBridgeReady', function () {
+    if (_detailRendered) return;
     render();
   });
 

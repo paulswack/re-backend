@@ -207,7 +207,7 @@
     }).join('');
     var statusKey = l.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="listings.html?id=' + encodeURIComponent(l.id) + '&amp;from=dealRoom" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
+    return '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -250,7 +250,7 @@
 
     var statusKey = t.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="transactions.html?id=' + encodeURIComponent(t.id) + '&amp;from=dealRoom" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
+    return '<a class="' + rowClass + '" href="deal-detail-txn.html#' + t.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -314,7 +314,7 @@
           '<div class="dr-panel-search">' + SEARCH_ICON +
             '<input type="text" id="lstSearch" placeholder="Search…" value="' + escapeHtml(_lstSearch) + '">' +
           '</div>' +
-          '<a href="listings.html?action=new&from=dealRoom" class="dr-add-btn">+ Add Listing</a>' +
+          '<a href="deal-detail.html" class="dr-add-btn">+ Add Listing</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +
@@ -365,7 +365,7 @@
           '<div class="dr-panel-search">' + SEARCH_ICON +
             '<input type="text" id="txnSearch" placeholder="Search…" value="' + escapeHtml(_txnSearch) + '">' +
           '</div>' +
-          '<a href="transactions.html?action=new&from=dealRoom" class="dr-add-btn">+ Add Escrow</a>' +
+          '<a href="deal-detail-txn.html" class="dr-add-btn">+ Add Escrow</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +

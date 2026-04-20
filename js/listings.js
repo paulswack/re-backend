@@ -21,22 +21,30 @@
   var selectedListingId = null;
   var fromDealRoom = false;
 
-  // Deep-link: open specific listing from URL param
+  // Deep-link: open specific listing
   (function () {
-    var params = new URLSearchParams(window.location.search);
-    var deepId = params.get('id');
-    if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
-    if (params.get('action') === 'new') viewMode = 'form';
-    if (deepId) {
-      selectedListingId = deepId;
-      viewMode = 'detail';
+    if (window._forceDetailMode) {
+      fromDealRoom = true;
+      if (window._forceDetailId) {
+        selectedListingId = window._forceDetailId;
+        viewMode = 'detail';
+      } else {
+        viewMode = 'form';
+      }
+    } else {
+      var params = new URLSearchParams(window.location.search);
+      var deepId = params.get('id');
+      if (params.get('from') === 'dealRoom' || params.get('from') === 'dashboard') fromDealRoom = true;
+      if (params.get('action') === 'new') viewMode = 'form';
+      if (deepId) { selectedListingId = deepId; viewMode = 'detail'; }
     }
     if (fromDealRoom) {
       var topH1 = document.querySelector('.topbar-title h1');
-      if (topH1) topH1.textContent = 'Deal Detail';
+      if (topH1) topH1.textContent = viewMode === 'form' ? 'New Listing' : 'Deal Detail';
     }
   })();
   var editingId = null;
+  var _detailRendered = false;
 
   // ---- DOM refs ----
   var pageBody = document.getElementById('pageBody');
@@ -1309,6 +1317,7 @@
     '</div>';
 
     pageBody.innerHTML = html;
+    _detailRendered = true;
 
     initChecklistDrag();
     initChecklistPickers();
@@ -2256,6 +2265,7 @@
 
   // Re-render after bridge loads so DOM IDs match localStorage server IDs
   document.addEventListener('apiBridgeReady', function () {
+    if (_detailRendered) return;
     render();
   });
 
