@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vendors — RE Back Office</title>
   <script>
-    var _appVersion = '20260420c';
+    var _appVersion = '20260420d';
     if (localStorage.getItem('reb_app_version') !== _appVersion) {
       localStorage.setItem('reb_app_version', _appVersion);
-      localStorage.removeItem('reb_dash_layout');localStorage.removeItem('reb_listings');localStorage.removeItem('reb_transactions');localStorage.removeItem('reb_admin_settings');
+      localStorage.removeItem('reb_dash_layout');localStorage.removeItem('reb_listings');localStorage.removeItem('reb_transactions');
       if (window.caches) { caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})}); }
       window.location.reload(true);
     }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1776700655">
+  <link rel="stylesheet" href="css/style.css?v=1776700989">
 </head>
 <body>
   <div class="app-layout">
@@ -68,13 +68,13 @@
     </main>
   </div>
 
-  <script src="js/api.js?v=1776700655"></script>
-  <script src="js/api-bridge.js?v=1776700655"></script>
-  <script src="js/auth.js?v=1776700655"></script>
-  <script src="js/data.js?v=1776700655"></script>
-  <script src="js/vendors.js?v=1776700655"></script>
+  <script src="js/api.js?v=1776700989"></script>
+  <script src="js/api-bridge.js?v=1776700989"></script>
+  <script src="js/auth.js?v=1776700989"></script>
+  <script src="js/data.js?v=1776700989"></script>
+  <script src="js/vendors.js?v=1776700989"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/datepicker.js?v=1776700655"></script>
+  <script src="js/datepicker.js?v=1776700989"></script>
 </body>
 </html>
