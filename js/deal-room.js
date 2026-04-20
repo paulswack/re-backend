@@ -614,17 +614,18 @@
   if (typeof API !== 'undefined' && API.isLoggedIn()) {
     Promise.all([
       API.getListings().then(function (d) {
+        if (!d || !Array.isArray(d)) return;
         var mapped = d.map(function (l) {
           return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
             status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id,
             beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description,
             source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
-            openHouses: l.openHouses, openHouse: l.openHouse,
             createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
         });
         localStorage.setItem('reb_listings', JSON.stringify(mapped));
-      }).catch(function () {}),
+      }).catch(function (err) { console.error('Deal room fetch listings failed:', err); }),
       API.getTransactions().then(function (d) {
+        if (!d || !Array.isArray(d)) return;
         var mapped = d.map(function (t) {
           var meta = t.metadata || {};
           return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip,
@@ -635,13 +636,16 @@
             sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
         });
         localStorage.setItem('reb_transactions', JSON.stringify(mapped));
-      }).catch(function () {})
+      }).catch(function (err) { console.error('Deal room fetch transactions failed:', err); })
     ]).then(function () {
       _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
       _currentUserId = _currentUser ? _currentUser.id : null;
       _isPrivileged = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
       render();
     });
+  } else {
+    // Not logged in via API — show message
+    pageBody.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-500)"><p>Please log out and log back in to refresh your data.</p><a href="login.html" style="color:var(--indigo);font-weight:600">Go to Login</a></div>';
   }
 
   document.addEventListener('apiBridgeReady', function () {
