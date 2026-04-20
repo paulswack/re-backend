@@ -1361,7 +1361,7 @@
     (function () {
       // If already logged in, redirect to dashboard
       if ((typeof API !== 'undefined' && API.isLoggedIn()) || Auth.isLoggedIn()) {
-        window.location.href = 'dashboard.html';
+        window.location.href = 'home.html';
         return;
       }
 
@@ -1394,7 +1394,7 @@
             { username: 'asst1', password: 'demo123', displayName: 'Emily Torres', role: 'Assistant', assignedTo: 'admin' }
           ];
         localStorage.setItem(PREFIX + 'users', JSON.stringify(users));
-        window.location.href = 'dashboard.html';
+        window.location.href = 'home.html';
       };
 
       var selectedPlan = null;
@@ -1421,12 +1421,12 @@
         if (window.location.protocol !== 'file:') {
           API.login(username, password).then(function (res) {
             if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
-            window.location.href = 'dashboard.html';
+            window.location.href = 'home.html';
           }).catch(function () {
             // Fallback to localStorage
             if (Auth.login(username, password)) {
               if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
-              window.location.href = 'dashboard.html';
+              window.location.href = 'home.html';
             } else {
               errorEl.style.display = 'block';
             }
@@ -1434,7 +1434,7 @@
         } else {
           if (Auth.login(username, password)) {
             if (selectedPlan) localStorage.setItem('reb_plan_mode', selectedPlan);
-            window.location.href = 'dashboard.html';
+            window.location.href = 'home.html';
           } else {
             errorEl.style.display = 'block';
           }
@@ -1491,7 +1491,7 @@
           plan: plan,
           accessCode: accessCode
         }).then(function (res) {
-          window.location.href = 'dashboard.html';
+          window.location.href = 'home.html';
         }).catch(function (err) {
           regError.textContent = (err && err.error) || 'Registration failed. Username may already be taken.';
           regError.style.display = 'block';

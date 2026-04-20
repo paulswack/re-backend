@@ -171,12 +171,12 @@
     (function () {
       // If already logged in via API, redirect
       if (API.isLoggedIn()) {
-        window.location.href = 'dashboard.html';
+        window.location.href = 'home.html';
         return;
       }
       // Fallback: localStorage auth
       if (Auth.isLoggedIn()) {
-        window.location.href = 'dashboard.html';
+        window.location.href = 'home.html';
         return;
       }
 
@@ -197,11 +197,11 @@
           btn.textContent = 'Signing in...';
 
           API.login(username, password).then(function (res) {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'home.html';
           }).catch(function (err) {
             // Fallback to localStorage login
             if (Auth.login(username, password)) {
-              window.location.href = 'dashboard.html';
+              window.location.href = 'home.html';
             } else {
               errorEl.style.display = 'block';
               btn.disabled = false;
@@ -211,7 +211,7 @@
         } else {
           // File protocol — use localStorage only
           if (Auth.login(username, password)) {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'home.html';
           } else {
             errorEl.style.display = 'block';
           }

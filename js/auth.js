@@ -240,7 +240,7 @@
         loggedInAt: new Date().toISOString()
       };
       localStorage.setItem(PREFIX + 'session', JSON.stringify(session));
-      window.location.href = 'dashboard.html';
+      window.location.href = 'home.html';
     },
 
     exitDemo: function () {
@@ -1088,7 +1088,7 @@
 
     // Show wizard modal for new team leads on dashboard who haven't completed it
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    if (currentPage === 'dashboard.html' && !localStorage.getItem(ONBOARDING_DONE_KEY)) {
+    if (currentPage === 'home.html' && !localStorage.getItem(ONBOARDING_DONE_KEY)) {
       showOnboardingWizard(isLead);
       return;
     }
