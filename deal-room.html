@@ -307,6 +307,17 @@
     @media (max-width: 480px) {
       .dr-agent-filter { flex-direction: column; align-items: stretch; gap: 6px; }
       .dr-agent-filter select { min-width: auto; width: 100%; }
+      .dr-row { grid-template-columns: 1fr auto !important; padding: 8px 12px; }
+      .dr-row-agent-col { display: none; }
+      .dr-section-hd { grid-template-columns: 1fr auto; }
+      .dr-section-hd-col:first-of-type { display: none; }
+      .dr-stats-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+    }
+    @media (max-width: 768px) {
+      .dr-row { grid-template-columns: 1fr 100px 80px; padding: 8px 14px; }
+      .dr-row-address { font-size: .82rem; }
+      .dr-row-price { font-size: .82rem; }
+      .dr-row-agent-name { font-size: .75rem; }
     }
 
     /* ---- Empty state ---- */
@@ -367,11 +378,11 @@
     </main>
   </div>
 
-  <script src="js/theme.js?v=1776699192"></script>
-  <script src="js/api.js?v=1776699192"></script>
-  <script src="js/api-bridge.js?v=1776699192"></script>
-  <script src="js/auth.js?v=1776699192"></script>
-  <script src="js/data.js?v=1776699192"></script>
-  <script src="js/deal-room.js?v=1776699192"></script>
+  <script src="js/theme.js?v=1776699759"></script>
+  <script src="js/api.js?v=1776699759"></script>
+  <script src="js/api-bridge.js?v=1776699759"></script>
+  <script src="js/auth.js?v=1776699759"></script>
+  <script src="js/data.js?v=1776699759"></script>
+  <script src="js/deal-room.js?v=1776699759"></script>
 </body>
 </html>

@@ -226,7 +226,7 @@
     var rowClass = 'dr-row dr-row--' + statusKey;
 
     var rowHtml = '<div style="border-bottom:1px solid var(--gray-100)">' +
-      '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer;border-bottom:none">' +
+      '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="text-decoration:none;color:inherit;cursor:pointer;border-bottom:none">' +
         '<div class="dr-row-main">' +
           '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
           (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -315,7 +315,7 @@
 
     var statusKey = t.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="deal-detail-txn.html#' + t.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
+    return '<a class="' + rowClass + '" href="deal-detail-txn.html#' + t.id + '" style="text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
@@ -609,6 +609,41 @@
 
   // ---- Init ----
   render();
+
+  // Force fresh data fetch to ensure statuses are up to date
+  if (typeof API !== 'undefined' && API.isLoggedIn()) {
+    Promise.all([
+      API.getListings().then(function (d) {
+        var mapped = d.map(function (l) {
+          return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
+            status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id,
+            beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description,
+            source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
+            openHouses: l.openHouses, openHouse: l.openHouse,
+            createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
+        });
+        localStorage.setItem('reb_listings', JSON.stringify(mapped));
+      }).catch(function () {}),
+      API.getTransactions().then(function (d) {
+        var mapped = d.map(function (t) {
+          var meta = t.metadata || {};
+          return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip,
+            type: t.type, status: t.status, price: parseFloat(t.price) || 0,
+            agent: t.agent_name, agentId: t.agent_id, source: t.source,
+            closeDate: t.close_date, notes: t.notes,
+            beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null,
+            sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
+        });
+        localStorage.setItem('reb_transactions', JSON.stringify(mapped));
+      }).catch(function () {})
+    ]).then(function () {
+      _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
+      _currentUserId = _currentUser ? _currentUser.id : null;
+      _isPrivileged = (typeof API !== 'undefined' && API.isPrivileged()) || Auth.isPrivileged();
+      render();
+    });
+  }
+
   document.addEventListener('apiBridgeReady', function () {
     _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
     _currentUserId = _currentUser ? _currentUser.id : null;
