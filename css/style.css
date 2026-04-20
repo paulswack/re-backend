@@ -916,7 +916,6 @@ tr:hover { background: var(--gray-50); }
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   align-items: start;
-  max-width: 1400px;
 }
 
 .dash-col {

@@ -394,9 +394,9 @@
   // LAYOUT
   // ============================================================
   var DEFAULT_LAYOUT = {
-    col1: ['goals', 'reviews'],
-    col2: ['teamRankings', 'upcomingClosings'],
-    col3: ['dealSources']
+    col1: ['goals', 'upcomingClosings'],
+    col2: ['teamRankings'],
+    col3: ['dealSources', 'reviews']
   };
 
   function loadLayout() {
@@ -430,7 +430,7 @@
       '</div>';
     }
 
-    h += '<div class="stats-grid dash-stats-row" style="margin-bottom:28px;grid-template-columns:repeat(3,1fr);max-width:1400px">';
+    h += '<div class="stats-grid dash-stats-row" style="margin-bottom:28px;grid-template-columns:repeat(3,1fr)">';
     var closedVol = closedTxns.reduce(function(s,t){return s+(t.price||0)},0);
     var escrowVol = activeTxns.concat(pendingTxns).reduce(function(s,t){return s+(t.price||0)},0);
     var listingVol = activeListings.reduce(function(s,l){return s+(l.price||0)},0);
