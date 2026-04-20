@@ -2126,6 +2126,18 @@
       flatpickr(input, {
         enableTime: true, dateFormat: 'Y-m-d H:i', altInput: true, altFormat: 'D, M j, Y h:iK',
         allowInput: false, disableMobile: false, minuteIncrement: 15, monthSelectorType: 'static',
+        onReady: function (_, __, fp) {
+          if (fp.altInput) {
+            fp.altInput.style.cssText = fp.input.getAttribute('style') || '';
+            fp.altInput.setAttribute('data-action', 'set-escrow-cl-date');
+          }
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'Done';
+          btn.style.cssText = 'display:block;width:calc(100% - 24px);margin:8px 12px 4px;padding:8px;background:var(--indigo,#6366F1);color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit';
+          btn.addEventListener('click', function () { fp.close(); });
+          fp.calendarContainer.appendChild(btn);
+        },
         onChange: function (selectedDates, dateStr) {
           var txnId = input.getAttribute('data-txn-id');
           var itemId = input.getAttribute('data-item-id');
