@@ -535,11 +535,9 @@ var ApiBridge = (function () {
         }, 500);
       }
 
-      // Deal checklists
+      // Deal checklists — sync immediately to prevent data loss on refresh
       if (key === PREFIX + 'deal_checklists') {
-        debounceSync('deal_checklists', function () {
-          try { API.updateSettings({ _deal_checklists: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 500);
+        try { API.updateSettings({ _deal_checklists: JSON.parse(value) }).catch(function () {}); } catch (e) {}
       }
 
       // Transaction updates (portal timeline)
