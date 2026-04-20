@@ -2450,4 +2450,21 @@
     render();
   });
 
+  // Poll for checklist updates from other computers every 10 seconds
+  setInterval(function () {
+    if (!_detailRendered || !selectedListingId) return;
+    if (typeof API === 'undefined' || !API.isLoggedIn()) return;
+    if (document.hidden) return;
+    API.getSettings().then(function (settings) {
+      if (settings && settings._deal_checklists) {
+        var current = localStorage.getItem('reb_deal_checklists');
+        var fresh = JSON.stringify(settings._deal_checklists);
+        if (current !== fresh) {
+          localStorage.setItem('reb_deal_checklists', fresh);
+          renderDetail();
+        }
+      }
+    }).catch(function () {});
+  }, 10000);
+
 })();
