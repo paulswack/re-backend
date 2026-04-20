@@ -400,20 +400,8 @@
   };
 
   function loadLayout() {
-    try {
-      var saved = JSON.parse(localStorage.getItem('reb_dash_layout'));
-      if (saved && saved.col1 && saved.col2 && saved.col3) {
-        var allIds = saved.col1.concat(saved.col2).concat(saved.col3);
-        var validIds = Object.keys(WIDGETS);
-        var allValid = allIds.every(function (id) { return validIds.indexOf(id) !== -1; });
-        var allPresent = validIds.every(function (id) { return allIds.indexOf(id) !== -1; });
-        if (allValid && allPresent && allIds.length === validIds.length) return saved;
-      }
-    } catch (e) {}
-    // No valid saved layout — force default and save it so it syncs to server
-    var def = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
-    localStorage.setItem('reb_dash_layout', JSON.stringify(def));
-    return def;
+    // Always use the default layout for consistency across all computers
+    return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   }
 
   function saveLayout(layout) {
