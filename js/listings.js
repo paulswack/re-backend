@@ -216,6 +216,12 @@
 
   function saveDealChecklists(data) {
     localStorage.setItem(PREFIX + 'deal_checklists', JSON.stringify(data));
+    // Also save directly to server immediately to prevent data loss
+    if (typeof API !== 'undefined' && API.isLoggedIn()) {
+      API.updateSettings({ _deal_checklists: data }).catch(function (err) {
+        console.error('Failed to sync checklist to server:', err);
+      });
+    }
   }
 
   function relativeTime(isoStr) {
