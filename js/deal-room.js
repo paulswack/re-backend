@@ -655,4 +655,36 @@
     render();
   });
 
+  // Auto-refresh every 15 seconds to pick up changes from other computers
+  setInterval(function () {
+    if (typeof API === 'undefined' || !API.isLoggedIn()) return;
+    if (document.hidden) return; // Don't poll when tab is in background
+    Promise.all([
+      API.getListings().then(function (d) {
+        if (!d || !Array.isArray(d)) return;
+        var mapped = d.map(function (l) {
+          return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '',
+            status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id,
+            beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description,
+            source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
+            createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
+        });
+        localStorage.setItem('reb_listings', JSON.stringify(mapped));
+      }).catch(function () {}),
+      API.getTransactions().then(function (d) {
+        if (!d || !Array.isArray(d)) return;
+        var mapped = d.map(function (t) {
+          var meta = t.metadata || {};
+          return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip,
+            type: t.type, status: t.status, price: parseFloat(t.price) || 0,
+            agent: t.agent_name, agentId: t.agent_id, source: t.source,
+            closeDate: t.close_date, notes: t.notes,
+            beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null,
+            sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
+        });
+        localStorage.setItem('reb_transactions', JSON.stringify(mapped));
+      }).catch(function () {})
+    ]).then(function () { render(); });
+  }, 15000);
+
 })();

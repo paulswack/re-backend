@@ -336,7 +336,7 @@ var ApiBridge = (function () {
       if (key === PREFIX + 'admin_settings') {
         debounceSync('settings', function () {
           try { API.updateSettings(JSON.parse(value)).catch(function () {}); } catch (e) {}
-        }, 1000);
+        }, 300);
       }
 
       // Vendors
@@ -353,7 +353,7 @@ var ApiBridge = (function () {
               return Promise.all(creates);
             }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Announcements
@@ -369,7 +369,7 @@ var ApiBridge = (function () {
               }));
             }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Meeting Notes
@@ -383,14 +383,14 @@ var ApiBridge = (function () {
               return Promise.all(items.map(function (n) { return API.createMeetingNote(n).catch(function () {}); }));
             }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Knowledge Base — synced via settings JSONB instead of individual API calls
       if (key === PREFIX + 'knowledge_base') {
         debounceSync('knowledge', function () {
           try { API.updateSettings({ _knowledge_base: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Recruits
@@ -404,7 +404,7 @@ var ApiBridge = (function () {
               return Promise.all(items.map(function (r) { return API.createRecruit(r).catch(function () {}); }));
             }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Tax Entries — stored per-user as { username: [entries] } so agents don't overwrite each other
@@ -426,7 +426,7 @@ var ApiBridge = (function () {
             dict[uname] = myEntries;
             API.updateSettings({ _tax_entries: dict }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Mileage — stored per-user as { username: [entries] } so agents don't overwrite each other
@@ -448,49 +448,49 @@ var ApiBridge = (function () {
             dict[uname] = myTrips;
             API.updateSettings({ _mileage: dict }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Marketing activities
       if (key === PREFIX + 'marketing') {
         debounceSync('marketing', function () {
           try { API.updateSettings({ _marketing: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Bold 100
       if (key === PREFIX + 'bold100') {
         debounceSync('bold100', function () {
           try { API.updateSettings({ _bold100: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Review requests
       if (key === PREFIX + 'review_requests') {
         debounceSync('review_requests', function () {
           try { API.updateSettings({ _review_requests: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Review scorecard
       if (key === PREFIX + 'review_scorecard') {
         debounceSync('review_scorecard', function () {
           try { API.updateSettings({ _review_scorecard: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Review links
       if (key === PREFIX + 'review_links') {
         debounceSync('review_links', function () {
           try { API.updateSettings({ _review_links: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Review templates
       if (key === PREFIX + 'review_templates') {
         debounceSync('review_templates', function () {
           try { API.updateSettings({ _review_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Agent goals — upsert each user's goal to the agent_goals table
@@ -511,140 +511,140 @@ var ApiBridge = (function () {
               }).catch(function () {});
             });
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Email templates
       if (key === PREFIX + 'email_templates') {
         debounceSync('email_templates', function () {
           try { API.updateSettings({ _email_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Dashboard layout
       if (key === PREFIX + 'dash_layout') {
         debounceSync('dash_layout', function () {
           try { API.updateSettings({ _dash_layout: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Checklist templates
       if (key === PREFIX + 'checklist_templates') {
         debounceSync('checklist_templates', function () {
           try { API.updateSettings({ _checklist_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Deal checklists
       if (key === PREFIX + 'deal_checklists') {
         debounceSync('deal_checklists', function () {
           try { API.updateSettings({ _deal_checklists: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Transaction updates (portal timeline)
       if (key === PREFIX + 'txn_updates') {
         debounceSync('txn_updates', function () {
           try { API.updateSettings({ _txn_updates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Listing updates (portal timeline)
       if (key === PREFIX + 'lst_updates') {
         debounceSync('lst_updates', function () {
           try { API.updateSettings({ _lst_updates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Transaction parties
       if (key === PREFIX + 'txn_parties') {
         debounceSync('txn_parties', function () {
           try { API.updateSettings({ _txn_parties: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Listing parties
       if (key === PREFIX + 'lst_parties') {
         debounceSync('lst_parties', function () {
           try { API.updateSettings({ _lst_parties: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Portal links
       if (key === PREFIX + 'portal_links') {
         debounceSync('portal_links', function () {
           try { API.updateSettings({ _portal_links: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Portal config
       if (key === PREFIX + 'portal_config') {
         debounceSync('portal_config', function () {
           try { API.updateSettings({ _portal_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Marketing config
       if (key === PREFIX + 'marketing_config') {
         debounceSync('marketing_config', function () {
           try { API.updateSettings({ _marketing_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Profiles
       if (key === PREFIX + 'profiles') {
         debounceSync('profiles', function () {
           try { API.updateSettings({ _profiles: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Notifications
       if (key === PREFIX + 'notifications') {
         debounceSync('notifications', function () {
           try { API.updateSettings({ _notifications: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Transaction notes
       if (key === PREFIX + 'txn_notes') {
         debounceSync('txn_notes', function () {
           try { API.updateSettings({ _txn_notes: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 1000);
+        }, 300);
       }
 
       // Transaction key dates (deadlines)
       if (key === PREFIX + 'txn_key_dates') {
         debounceSync('txn_key_dates', function () {
           try { API.updateSettings({ _txn_key_dates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 1000);
+        }, 300);
       }
 
       // Calendar events
       if (key === PREFIX + 'calendar_events') {
         debounceSync('calendar_events', function () {
           try { API.updateSettings({ _calendar_events: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Listing notes
       if (key === PREFIX + 'listing_notes') {
         debounceSync('listing_notes', function () {
           try { API.updateSettings({ _listing_notes: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 1000);
+        }, 300);
       }
 
       // Notification config (team-wide settings)
       if (key === PREFIX + 'notif_config') {
         debounceSync('notif_config', function () {
           try { API.updateSettings({ _notif_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Notification sent log (prevents duplicate emails across devices)
       if (key === PREFIX + 'notif_sent') {
         debounceSync('notif_sent', function () {
           try { API.updateSettings({ _notif_sent: JSON.parse(value) }).catch(function () {}); } catch (e) {}
-        }, 2000);
+        }, 500);
       }
 
       // Listings — diff old vs new and push changes to server
@@ -680,7 +680,7 @@ var ApiBridge = (function () {
               }
             });
           } catch (e) {}
-        }, 1500);
+        }, 300);
       }
 
       // Transactions — diff old vs new and push changes to server
@@ -715,7 +715,7 @@ var ApiBridge = (function () {
               }
             });
           } catch (e) {}
-        }, 1500);
+        }, 300);
       }
 
       // Tax settings (per-user — stored as { username: settings } on server)
@@ -733,7 +733,7 @@ var ApiBridge = (function () {
             existing[uname] = JSON.parse(value);
             API.updateSettings({ _tax_settings: existing }).catch(function () {});
           } catch (e) {}
-        }, 2000);
+        }, 500);
       }
     };
   }
