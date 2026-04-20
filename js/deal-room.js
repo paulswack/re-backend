@@ -549,9 +549,47 @@
       var arr = listing && Array.isArray(listing.openHouses) ? listing.openHouses.slice() :
         (listing && listing.openHouse && listing.openHouse.date) ? [listing.openHouse] : [];
       if (arr.length >= 3) { showToast('Maximum 3 open houses.', 'error'); return; }
-      arr.push({ agent: agEl.value, date: dtEl.value, time: tmEl ? tmEl.value : '' });
+      var ohAgent = agEl.value;
+      var ohDate = dtEl.value;
+      var ohTime = tmEl ? tmEl.value : '';
+      arr.push({ agent: ohAgent, date: ohDate, time: ohTime });
       Data.updateListing(id, { openHouses: arr, openHouse: null });
       showToast('Open house scheduled!');
+
+      // Notify the assigned agent (if different from current user)
+      var session = Auth.getSession();
+      var currentName = session ? session.displayName : '';
+      if (ohAgent && ohAgent !== currentName) {
+        // In-app notification
+        if (typeof addNotification === 'function') {
+          addNotification({
+            type: 'open_house',
+            title: 'Open House Scheduled for You',
+            detail: (listing ? listing.address : '') + ' — ' + ohDate + (ohTime ? ' at ' + ohTime : '') + ' (by ' + currentName + ')',
+            linkPage: 'deal-room.html',
+            linkId: id,
+            targetUser: null // visible to all — agent sees it by name in detail
+          });
+        }
+        // Email notification
+        var users = JSON.parse(localStorage.getItem('reb_users') || '[]');
+        var targetUser = users.find(function (u) { return u.displayName === ohAgent; });
+        if (targetUser && targetUser.email) {
+          fetch('/api/email/open-house', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('reb_jwt') || '') },
+            body: JSON.stringify({
+              to: targetUser.email,
+              agentName: ohAgent,
+              scheduledBy: currentName,
+              address: listing ? listing.address : '',
+              date: ohDate,
+              time: ohTime
+            })
+          }).catch(function () {});
+        }
+      }
+
       render();
     }
 

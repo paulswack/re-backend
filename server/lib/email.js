@@ -158,4 +158,37 @@ function deadlineReminderEmail(agentName, deadlines, overrides, branding) {
   };
 }
 
-module.exports = { sendEmail, welcomeEmail, passwordResetEmail, dealUpdateEmail, reviewRequestEmail, deadlineReminderEmail };
+function openHouseEmail(agentName, scheduledBy, address, date, time) {
+  var timeStr = time ? ' at ' + time : '';
+  return {
+    subject: 'Open House Scheduled: ' + address + ' — ' + date,
+    html: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-block;background:#002242;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;">RE Back Office</div>
+        </div>
+        <h2 style="color:#1E293B;font-size:20px;margin-bottom:6px;">Open House Scheduled</h2>
+        <p style="color:#64748B;font-size:15px;line-height:1.6;margin-bottom:20px;">Hi ${agentName}, an open house has been scheduled for you.</p>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:24px;padding:20px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="width:40px;height:40px;background:#ECFDF5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🏡</div>
+            <div>
+              <div style="font-size:16px;font-weight:700;color:#1E293B;">${address}</div>
+              <div style="font-size:14px;color:#64748B;margin-top:2px;">${date}${timeStr}</div>
+            </div>
+          </div>
+          <div style="background:#F8FAFC;border-radius:8px;padding:12px 16px;">
+            <div style="font-size:12px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Scheduled by</div>
+            <div style="font-size:15px;font-weight:600;color:#1E293B;">${scheduledBy}</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="https://app.eliteregbackoffice.com/deal-room.html" style="display:inline-block;background:#002242;color:#fff;padding:12px 32px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;">View Deal Room</a>
+        </div>
+        <p style="color:#94A3B8;font-size:12px;text-align:center;">You're receiving this because someone scheduled an open house for you in RE Back Office.</p>
+      </div>
+    `
+  };
+}
+
+module.exports = { sendEmail, welcomeEmail, passwordResetEmail, dealUpdateEmail, reviewRequestEmail, deadlineReminderEmail, openHouseEmail };

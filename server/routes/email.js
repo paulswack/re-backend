@@ -1,6 +1,6 @@
 const express = require('express');
 const { requireAuth } = require('../lib/auth');
-const { sendEmail, dealUpdateEmail, reviewRequestEmail, deadlineReminderEmail } = require('../lib/email');
+const { sendEmail, dealUpdateEmail, reviewRequestEmail, deadlineReminderEmail, openHouseEmail } = require('../lib/email');
 
 const router = express.Router();
 
@@ -31,6 +31,16 @@ router.post('/deadline-reminder', async (req, res) => {
     return res.status(400).json({ error: 'to, agentName, and deadlines required' });
   }
   const content = deadlineReminderEmail(agentName || 'Agent', deadlines, overrides, branding);
+  const result = await sendEmail({ to, ...content });
+  res.json({ success: true, sent: !!result });
+});
+
+// POST /api/email/open-house — notify agent about scheduled open house
+router.post('/open-house', requireAuth, async (req, res) => {
+  const { to, agentName, scheduledBy, address, date, time } = req.body;
+  if (!to) return res.status(400).json({ error: 'Recipient email required' });
+
+  const content = openHouseEmail(agentName || 'Agent', scheduledBy || 'Team Lead', address || '', date || '', time || '');
   const result = await sendEmail({ to, ...content });
   res.json({ success: true, sent: !!result });
 });
