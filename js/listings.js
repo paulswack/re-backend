@@ -1159,7 +1159,8 @@
       html += '<span style="font-size:.75rem;font-weight:700;color:var(--emerald);background:var(--emerald-light);padding:2px 10px;border-radius:20px">' + clDone + '/' + clTotal + '</span>';
     }
     html += '</div>';
-    html += '<div id="listingChecklistBody">';
+    var lstClCollapsed = (l.status === 'pending') ? ' style="display:none"' : '';
+    html += '<div id="listingChecklistBody"' + lstClCollapsed + '>';
     if (lstChecklist && lstChecklist.items.length > 0) {
       var clDoneCount = lstChecklist.items.filter(function (i) { return i.completed; }).length;
       var clTotalCount = lstChecklist.items.length;
