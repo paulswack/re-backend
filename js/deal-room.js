@@ -315,7 +315,10 @@
 
     var statusKey = t.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="deal-detail-txn.html#' + t.id + '" style="text-decoration:none;color:inherit;cursor:pointer">' +
+    // If there's a linked listing, go to the listing detail (unified view)
+    var linkedLst = (window._drAllListings || []).find(function (l) { return l.address === t.address; });
+    var detailHref = linkedLst ? 'deal-detail.html#' + linkedLst.id : 'deal-detail-txn.html#' + t.id;
+    return '<a class="' + rowClass + '" href="' + detailHref + '" style="text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
         (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
