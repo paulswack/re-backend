@@ -913,7 +913,7 @@ tr:hover { background: var(--gray-50); }
 /* Dashboard grid */
 .dash-grid {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr;
+  grid-template-columns: 1fr 1.65fr 1fr;
   gap: 20px;
   align-items: start;
   width: 100%;
