@@ -113,8 +113,10 @@
 
   reloadData();
 
+  // Clear stale layout so server layout wins when apiBridgeReady fires
+  localStorage.removeItem('reb_dash_layout');
+
   document.addEventListener('apiBridgeReady', function () {
-    // Server data has been synced into localStorage — re-render with fresh data
     reloadData();
     renderDashboard();
   });
