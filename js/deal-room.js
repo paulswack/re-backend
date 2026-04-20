@@ -255,7 +255,7 @@
         '</div>';
       });
       if (canAdd) {
-        ohHtml += '<button data-action="dr-toggle-oh" data-id="' + l.id + '" style="background:none;border:1px solid var(--indigo);color:var(--indigo);border-radius:6px;padding:2px 8px;font-size:.7rem;font-weight:600;cursor:pointer;margin-top:' + (ohs.length > 0 ? '3px' : '0') + '">+ Open House</button>';
+        ohHtml += '<button data-action="dr-toggle-oh" data-id="' + l.id + '" style="background:none;border:1px solid var(--indigo);color:var(--indigo);border-radius:4px;padding:1px 6px;font-size:.65rem;font-weight:600;cursor:pointer;align-self:flex-start;margin-top:' + (ohs.length > 0 ? '2px' : '0') + '">+ OH</button>';
       }
       if (ohHtml) {
         rowHtml += '<div style="padding:4px 18px 8px;display:flex;flex-direction:column;gap:2px">' + ohHtml + '</div>';
