@@ -1192,6 +1192,10 @@ tr:hover { background: var(--gray-50); }
   .dash-grid { grid-template-columns: 1fr 1fr; }
 }
 
+@media (max-width: 1400px) {
+  .dash-grid { grid-template-columns: 1fr 1fr; }
+}
+
 @media (max-width: 768px) {
   .dash-grid { grid-template-columns: 1fr; }
   .dash-welcome { padding: 20px 18px; gap: 14px; }
