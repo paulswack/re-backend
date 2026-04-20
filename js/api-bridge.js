@@ -781,6 +781,8 @@ var ApiBridge = (function () {
       var settingsKey = parts[0];
       var localKey = parts[1];
       if (settings[settingsKey] !== undefined && settings[settingsKey] !== null) {
+        // Don't overwrite checklists if user has saved locally during this session
+        if (localKey === 'deal_checklists' && window._checklistSavedLocally) return;
         localStorage.setItem(PREFIX + localKey, JSON.stringify(settings[settingsKey]));
       }
     });

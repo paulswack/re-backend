@@ -215,8 +215,9 @@
   }
 
   function saveDealChecklists(data) {
+    window._checklistSavedLocally = true; // Prevent api-bridge from overwriting
     localStorage.setItem(PREFIX + 'deal_checklists', JSON.stringify(data));
-    // Also save directly to server immediately to prevent data loss
+    // Save directly to server immediately
     if (typeof API !== 'undefined' && API.isLoggedIn()) {
       API.updateSettings({ _deal_checklists: data }).catch(function (err) {
         console.error('Failed to sync checklist to server:', err);
@@ -2472,6 +2473,6 @@
         }
       }
     }).catch(function () {});
-  }, 10000);
+  }, 5000);
 
 })();
