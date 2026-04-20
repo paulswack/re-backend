@@ -114,6 +114,7 @@
   reloadData();
 
   document.addEventListener('apiBridgeReady', function () {
+    // Server data has been synced into localStorage — re-render with fresh data
     reloadData();
     renderDashboard();
   });
@@ -406,12 +407,11 @@
         var allPresent = validIds.every(function (id) { return allIds.indexOf(id) !== -1; });
         if (allValid && allPresent && allIds.length === validIds.length) return saved;
       }
-      // Stale or invalid layout — clear it so default takes effect
-      localStorage.removeItem('reb_dash_layout');
-    } catch (e) {
-      localStorage.removeItem('reb_dash_layout');
-    }
-    return JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+    } catch (e) {}
+    // No valid saved layout — force default and save it so it syncs to server
+    var def = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+    localStorage.setItem('reb_dash_layout', JSON.stringify(def));
+    return def;
   }
 
   function saveLayout(layout) {
