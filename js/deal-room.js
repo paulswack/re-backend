@@ -195,6 +195,23 @@
     '</div>';
   }
 
+  // Open house helpers
+  function getOpenHouses(l) {
+    if (l.openHouses && Array.isArray(l.openHouses)) return l.openHouses;
+    if (l.openHouse && l.openHouse.date) return [l.openHouse];
+    return [];
+  }
+  function fmtOhDate(d) {
+    if (!d) return '';
+    var dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  function fmtOhTime(t) {
+    if (!t) return '';
+    var p = t.split(':'), h = parseInt(p[0]), m = p[1];
+    return (h === 0 ? 12 : h > 12 ? h - 12 : h) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
+  }
+
   function listingRow(l) {
     var addrSub = [l.city, l.state].filter(Boolean).join(', ');
     var specs = [];
@@ -207,20 +224,68 @@
     }).join('');
     var statusKey = l.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    return '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer">' +
-      '<div class="dr-row-main">' +
-        '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
-        (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
-      '</div>' +
-      '<div class="dr-row-agent-col">' +
-        avatarHtml(l.agent, 22) +
-        '<span class="dr-row-agent-name">' + escapeHtml((l.agent || '—').split(' ')[0]) + '</span>' +
-      '</div>' +
-      '<div class="dr-row-price-col">' +
-        '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
-        (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
-      '</div>' +
-    '</a>';
+
+    var rowHtml = '<div style="border-bottom:1px solid var(--gray-100)">' +
+      '<a class="' + rowClass + '" href="deal-detail.html#' + l.id + '" style="display:grid;grid-template-columns:1fr 140px 96px;align-items:center;text-decoration:none;color:inherit;cursor:pointer;border-bottom:none">' +
+        '<div class="dr-row-main">' +
+          '<div class="dr-row-address">' + escapeHtml(l.address || '—') + '</div>' +
+          (subHtml ? '<div class="dr-row-sub">' + subHtml + '</div>' : '') +
+        '</div>' +
+        '<div class="dr-row-agent-col">' +
+          avatarHtml(l.agent, 22) +
+          '<span class="dr-row-agent-name">' + escapeHtml((l.agent || '—').split(' ')[0]) + '</span>' +
+        '</div>' +
+        '<div class="dr-row-price-col">' +
+          '<div class="dr-row-price">' + Data.formatCurrencyFull(l.price) + '</div>' +
+          (l.listingDate ? '<div class="dr-row-date">' + escapeHtml(formatDate(l.listingDate)) + '</div>' : '') +
+        '</div>' +
+      '</a>';
+
+    // Open house section for active listings
+    if (statusKey === 'active') {
+      var ohs = getOpenHouses(l);
+      var canAdd = ohs.length < 3;
+      var ohHtml = '';
+      ohs.forEach(function (oh, idx) {
+        ohHtml += '<div style="display:flex;align-items:center;gap:6px;padding:2px 0;flex-wrap:wrap">' +
+          '<span style="font-size:.62rem;font-weight:700;color:#fff;background:var(--emerald);padding:1px 7px;border-radius:20px;letter-spacing:.2px">Open House</span>' +
+          '<span style="font-size:.75rem;font-weight:600;color:var(--gray-700)">' + escapeHtml(oh.agent || '') + '</span>' +
+          '<span style="font-size:.72rem;color:var(--gray-500)">' + fmtOhDate(oh.date) + (oh.time ? ' · ' + fmtOhTime(oh.time) : '') + '</span>' +
+          '<button data-action="dr-remove-oh" data-id="' + l.id + '" data-idx="' + idx + '" style="background:none;border:1px solid var(--rose);color:var(--rose);border-radius:4px;padding:0 5px;font-size:.65rem;cursor:pointer;line-height:1.4">&times;</button>' +
+        '</div>';
+      });
+      if (canAdd) {
+        ohHtml += '<button data-action="dr-toggle-oh" data-id="' + l.id + '" style="background:none;border:1px solid var(--indigo);color:var(--indigo);border-radius:6px;padding:2px 8px;font-size:.7rem;font-weight:600;cursor:pointer;margin-top:' + (ohs.length > 0 ? '3px' : '0') + '">+ Open House</button>';
+      }
+      if (ohHtml) {
+        rowHtml += '<div style="padding:4px 18px 8px;display:flex;flex-direction:column;gap:2px">' + ohHtml + '</div>';
+      }
+      // Hidden form
+      if (canAdd) {
+        var users = JSON.parse(localStorage.getItem('reb_users') || '[]');
+        var agentOpts = '<option value="">Select agent...</option>' + users.filter(function (u) { return u.role !== 'Assistant'; }).map(function (u) {
+          return '<option value="' + escapeHtml(u.displayName) + '">' + escapeHtml(u.displayName) + '</option>';
+        }).join('');
+        rowHtml += '<div id="dr-oh-form-' + l.id + '" style="display:none;padding:10px 18px 12px;background:var(--gray-50);border-top:1px solid var(--gray-100)">' +
+          '<div style="font-size:.78rem;font-weight:700;color:var(--gray-700);margin-bottom:8px">Schedule Open House</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">' +
+            '<div style="flex:2;min-width:120px"><label style="display:block;font-size:.65rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Agent</label>' +
+            '<select id="dr-oh-agent-' + l.id + '" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff">' + agentOpts + '</select></div>' +
+            '<div style="flex:1;min-width:110px"><label style="display:block;font-size:.65rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Date</label>' +
+            '<input type="date" id="dr-oh-date-' + l.id + '" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff"></div>' +
+            '<div style="flex:1;min-width:100px"><label style="display:block;font-size:.65rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Time</label>' +
+            '<input type="time" id="dr-oh-time-' + l.id + '" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff"></div>' +
+            '<div style="display:flex;gap:4px;flex-shrink:0">' +
+              '<button data-action="dr-save-oh" data-id="' + l.id + '" style="padding:7px 14px;background:var(--indigo);color:#fff;border:none;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer">Save</button>' +
+              '<button data-action="dr-toggle-oh" data-id="' + l.id + '" style="padding:7px 10px;background:none;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;cursor:pointer;color:var(--gray-500)">Cancel</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }
+    }
+
+    rowHtml += '</div>';
+    return rowHtml;
   }
 
   function escrowRow(t) {
@@ -445,7 +510,64 @@
     // Click handler is attached globally below (outside render)
   }
 
-  // Deal rows use <a> tags with hash fragment IDs — no JS click handler needed
+  // ---- Open house event handlers (delegated) ----
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.getAttribute('data-action');
+    var id = btn.getAttribute('data-id');
+
+    if (action === 'dr-toggle-oh') {
+      e.preventDefault();
+      e.stopPropagation();
+      var form = document.getElementById('dr-oh-form-' + id);
+      if (form) {
+        var opening = form.style.display === 'none';
+        form.style.display = opening ? '' : 'none';
+        if (opening) {
+          var ag = document.getElementById('dr-oh-agent-' + id);
+          var dt = document.getElementById('dr-oh-date-' + id);
+          var tm = document.getElementById('dr-oh-time-' + id);
+          if (ag) ag.value = '';
+          if (dt) dt.value = '';
+          if (tm) tm.value = '';
+        }
+      }
+    }
+
+    if (action === 'dr-save-oh') {
+      e.preventDefault();
+      e.stopPropagation();
+      var agEl = document.getElementById('dr-oh-agent-' + id);
+      var dtEl = document.getElementById('dr-oh-date-' + id);
+      var tmEl = document.getElementById('dr-oh-time-' + id);
+      if (!agEl || !dtEl || !agEl.value || !dtEl.value) {
+        showToast('Please select an agent and date.', 'error');
+        return;
+      }
+      var listing = Data.getListings().find(function (l) { return l.id === id; });
+      var arr = listing && Array.isArray(listing.openHouses) ? listing.openHouses.slice() :
+        (listing && listing.openHouse && listing.openHouse.date) ? [listing.openHouse] : [];
+      if (arr.length >= 3) { showToast('Maximum 3 open houses.', 'error'); return; }
+      arr.push({ agent: agEl.value, date: dtEl.value, time: tmEl ? tmEl.value : '' });
+      Data.updateListing(id, { openHouses: arr, openHouse: null });
+      showToast('Open house scheduled!');
+      render();
+    }
+
+    if (action === 'dr-remove-oh') {
+      e.preventDefault();
+      e.stopPropagation();
+      var idx = parseInt(btn.getAttribute('data-idx'));
+      var lst = Data.getListings().find(function (l) { return l.id === id; });
+      var ohArr = lst && Array.isArray(lst.openHouses) ? lst.openHouses.slice() :
+        (lst && lst.openHouse && lst.openHouse.date) ? [lst.openHouse] : [];
+      ohArr.splice(idx, 1);
+      Data.updateListing(id, { openHouses: ohArr, openHouse: null });
+      showToast('Open house removed.');
+      render();
+    }
+  });
 
   // ---- Init ----
   render();
