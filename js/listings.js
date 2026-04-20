@@ -1151,14 +1151,15 @@
     var dealChecklists = getDealChecklists();
     var lstChecklist = dealChecklists[selectedListingId];
     html += '<div class="parties-card">';
-    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between">';
-    html += '<span>Checklist</span>';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-action="toggle-listing-checklist">';
+    html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--indigo)" style="flex-shrink:0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Listing Checklist</span>';
     if (lstChecklist && lstChecklist.items.length > 0) {
       var clDone = lstChecklist.items.filter(function (i) { return i.completed; }).length;
       var clTotal = lstChecklist.items.length;
       html += '<span style="font-size:.75rem;font-weight:700;color:var(--emerald);background:var(--emerald-light);padding:2px 10px;border-radius:20px">' + clDone + '/' + clTotal + '</span>';
     }
     html += '</div>';
+    html += '<div id="listingChecklistBody">';
     if (lstChecklist && lstChecklist.items.length > 0) {
       var clDoneCount = lstChecklist.items.filter(function (i) { return i.completed; }).length;
       var clTotalCount = lstChecklist.items.length;
@@ -1265,7 +1266,58 @@
         html += '<div style="padding:20px;text-align:center;font-size:.85rem;color:var(--gray-400)">No checklist templates found. Create one in Admin Settings → Checklist Templates.</div>';
       }
     }
+    html += '</div>'; // listingChecklistBody
     html += '</div>';
+
+    // Escrow Checklist (shown when listing is pending — linked transaction)
+    if (l.status === 'pending') {
+      var linkedTxn = Data.getTransactions().find(function (t) {
+        return t.address === l.address && t.status !== 'closed';
+      });
+      if (linkedTxn) {
+        var txnChecklist = dealChecklists[linkedTxn.id];
+        // Auto-attach escrow template if not yet set
+        if (!txnChecklist) {
+          var escrowTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
+          if (escrowTemplates.length > 0) {
+            var escTpl = escrowTemplates[0];
+            var dc2 = getDealChecklists();
+            dc2[linkedTxn.id] = {
+              templateId: escTpl.id,
+              templateName: escTpl.name,
+              items: escTpl.items.map(function (item) {
+                return { id: 'chk-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9), label: item.label, completed: false, completedBy: null, completedAt: null, dueDate: null, note: '', vendor: '' };
+              })
+            };
+            saveDealChecklists(dc2);
+            txnChecklist = dc2[linkedTxn.id];
+          }
+        }
+        if (txnChecklist && txnChecklist.items && txnChecklist.items.length > 0) {
+          var ecDone = txnChecklist.items.filter(function (i) { return i.completed; }).length;
+          var ecTotal = txnChecklist.items.length;
+          var ecPct = Math.round((ecDone / ecTotal) * 100);
+          html += '<div class="parties-card">';
+          html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-action="toggle-escrow-checklist">';
+          html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--emerald)" style="flex-shrink:0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Escrow Checklist</span>';
+          html += '<span style="font-size:.75rem;font-weight:700;color:var(--emerald);background:var(--emerald-light);padding:2px 10px;border-radius:20px">' + ecDone + '/' + ecTotal + '</span>';
+          html += '</div>';
+          html += '<div id="escrowChecklistBody">';
+          html += '<div style="padding:12px 20px 0 20px">';
+          html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
+          html += '<div style="background:var(--emerald);height:100%;width:' + ecPct + '%;border-radius:6px"></div>';
+          html += '</div></div>';
+          html += '<div style="padding:4px 20px 12px">';
+          txnChecklist.items.forEach(function (item) {
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gray-50)">';
+            html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)">';
+            html += '<span style="font-size:.85rem;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + '">' + escapeHtml(item.label) + '</span>';
+            html += '</div>';
+          });
+          html += '</div></div></div>';
+        }
+      }
+    }
 
     // Client Updates (milestone timeline for portal)
     var allUpdates = getUpdates();
@@ -1544,6 +1596,34 @@
         window.scrollTo(0, 0);
         render();
         break;
+
+      case 'toggle-listing-checklist': {
+        var lcBody = document.getElementById('listingChecklistBody');
+        if (lcBody) lcBody.style.display = lcBody.style.display === 'none' ? '' : 'none';
+        break;
+      }
+
+      case 'toggle-escrow-checklist': {
+        var ecBody = document.getElementById('escrowChecklistBody');
+        if (ecBody) ecBody.style.display = ecBody.style.display === 'none' ? '' : 'none';
+        break;
+      }
+
+      case 'toggle-escrow-cl-item': {
+        var ecTxnId = target.getAttribute('data-txn-id');
+        var ecItemId = target.getAttribute('data-item-id');
+        var ecChecklists = getDealChecklists();
+        if (ecChecklists[ecTxnId]) {
+          var ecItem = ecChecklists[ecTxnId].items.find(function (i) { return i.id === ecItemId; });
+          if (ecItem) {
+            ecItem.completed = !ecItem.completed;
+            ecItem.completedBy = ecItem.completed ? (Auth.getSession() ? Auth.getSession().displayName : '') : null;
+            ecItem.completedAt = ecItem.completed ? new Date().toISOString() : null;
+            saveDealChecklists(ecChecklists);
+          }
+        }
+        break;
+      }
 
       case 'toggle-oh-form':
         e.stopPropagation();
