@@ -4,7 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knowledge Base — RE Back Office</title>
-  <link rel="stylesheet" href="css/style.css?v=1776546093">
+  <script>
+    var _appVersion = '20260420b';
+    if (localStorage.getItem('reb_app_version') !== _appVersion) {
+      localStorage.setItem('reb_app_version', _appVersion);
+      localStorage.removeItem('reb_dash_layout');
+      if (window.caches) { caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})}); }
+      window.location.reload(true);
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css?v=1776700655">
 </head>
 <body>
   <div class="app-layout">
@@ -59,13 +68,13 @@
     </main>
   </div>
 
-  <script src="js/api.js?v=1776546093"></script>
-  <script src="js/api-bridge.js?v=1776546093"></script>
-  <script src="js/auth.js?v=1776546093"></script>
-  <script src="js/data.js?v=1776546093"></script>
-  <script src="js/knowledge-base.js?v=1776546093"></script>
+  <script src="js/api.js?v=1776700655"></script>
+  <script src="js/api-bridge.js?v=1776700655"></script>
+  <script src="js/auth.js?v=1776700655"></script>
+  <script src="js/data.js?v=1776700655"></script>
+  <script src="js/knowledge-base.js?v=1776700655"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/datepicker.js?v=1776546093"></script>
+  <script src="js/datepicker.js?v=1776700655"></script>
 </body>
 </html>
