@@ -1455,6 +1455,21 @@
               return;
             }
 
+            // Moving back from pending — remove the linked escrow
+            if (oldStatus === 'pending' && val !== 'pending' && val !== 'sold') {
+              if (currentListing) {
+                var linkedEscrow = Data.getTransactions().find(function (t) {
+                  return t.address === currentListing.address && t.status !== 'closed';
+                });
+                if (linkedEscrow) {
+                  if (confirm('Remove the linked escrow for ' + currentListing.address + '?')) {
+                    Data.deleteTransaction(linkedEscrow.id);
+                    showToast('Escrow removed.');
+                  }
+                }
+              }
+            }
+
             if (val === 'sold' && oldStatus !== 'sold') {
               Data.updateListing(selectedListingId, { status: 'sold' });
               if (currentListing) {
