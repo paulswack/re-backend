@@ -453,7 +453,7 @@
     var listings = filterByAgent(allListings);
     var txns     = filterByAgent(allTxns);
 
-    var activeLst = listings.filter(function (l) { return l.status !== 'sold'; });
+    var activeLst = listings.filter(function (l) { return l.status === 'pre_listing' || l.status === 'coming_soon' || l.status === 'active'; });
     var activeTxn = txns.filter(function (t) { return t.status !== 'closed'; });
 
     var totalVol = activeLst.concat(activeTxn).reduce(function (s, d) { return s + (parseFloat(d.price) || 0); }, 0);
