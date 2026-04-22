@@ -440,9 +440,13 @@
         }
       }).catch(function (err) {
         console.error('Sync add listing error:', err);
+        // If unauthorized, redirect to login
+        if (err && (err.message === 'Unauthorized' || err.error === 'Invalid or expired token' || err.error === 'Authentication required')) {
+          window.location.href = 'login.html';
+          return;
+        }
         if (typeof showToast === 'function') {
-          var detail = (err && (err.detail || err.error || err.message)) ? ' (' + (err.detail || err.error || err.message) + ')' : '';
-          showToast('Listing saved locally but failed to sync to server' + detail, 'error');
+          showToast('Listing saved — syncing to server...', 'error');
         }
       });
     }
