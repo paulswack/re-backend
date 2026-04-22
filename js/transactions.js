@@ -1168,9 +1168,7 @@
               notifyClientEmail('transaction', selectedTxnId, 'Closing Complete!', 'Your transaction has officially closed. Congratulations!');
               showToast('Deal closed! Moved to Closed section.');
               setTimeout(function () {
-                viewMode = 'list';
-                selectedTxnId = null;
-                render();
+                window.location.href = 'closed.html';
               }, 800);
               return;
             }

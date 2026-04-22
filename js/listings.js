@@ -1498,7 +1498,9 @@
                 }
               }
               showToast('Listing sold! Moved to Closed.');
-              renderDetail();
+              setTimeout(function () {
+                window.location.href = 'closed.html';
+              }, 800);
               return;
             }
           }
