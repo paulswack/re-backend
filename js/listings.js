@@ -1101,6 +1101,19 @@
       '</select>' +
     '</div>';
 
+    // Close of Escrow date (shown when pending and has linked escrow)
+    if (l.status === 'pending') {
+      var _linkedTxnForDate = Data.getTransactions().find(function (t) {
+        return t.address === l.address && t.status !== 'closed';
+      });
+      if (_linkedTxnForDate) {
+        html += '<div class="detail-block">' +
+          '<div class="detail-block-label" style="color:var(--emerald)">Close of Escrow</div>' +
+          '<input type="date" class="ie-field" data-field="escrowCloseDate" data-txn-id="' + _linkedTxnForDate.id + '" value="' + (_linkedTxnForDate.closeDate || '') + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
+        '</div>';
+      }
+    }
+
     html += '</div>'; // detail-blocks-row
 
     html += '</div>'; // detail-header-body
@@ -1452,6 +1465,15 @@
 
         // For selects and date inputs, run synchronously (no tab-order concern)
         if (field.tagName === 'SELECT' || field.type === 'date') {
+          // Close of escrow date — save to the linked transaction, not the listing
+          if (fieldName === 'escrowCloseDate') {
+            var ecTxnId = self.getAttribute('data-txn-id');
+            if (ecTxnId) {
+              Data.updateTransaction(ecTxnId, { closeDate: val });
+              showToast('Close date saved');
+            }
+            return;
+          }
           if (fieldName === 'status') {
             var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
             var oldStatus = currentListing ? currentListing.status : '';
