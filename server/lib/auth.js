@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 're-backoffice-jwt-secret-change-this-in-production';
 
 function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '90d' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '365d' });
 }
 
 function verifyToken(token) {
@@ -21,6 +21,18 @@ function requireAuth(req, res, next) {
     const token = authHeader.split(' ')[1];
     const decoded = verifyToken(token);
     req.user = decoded; // { userId, teamId, username, role }
+
+    // Auto-refresh: if token is more than 7 days old, issue a fresh one
+    const tokenAge = Math.floor(Date.now() / 1000) - (decoded.iat || 0);
+    if (tokenAge > 7 * 86400) {
+      const freshToken = generateToken({
+        userId: decoded.userId, teamId: decoded.teamId,
+        username: decoded.username, displayName: decoded.displayName,
+        role: decoded.role
+      });
+      res.setHeader('X-Refreshed-Token', freshToken);
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token' });

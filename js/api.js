@@ -28,6 +28,12 @@ var API = (function () {
     var opts = { method: method, headers: headers() };
     if (body !== undefined) opts.body = JSON.stringify(body);
     return fetch(BASE + path, opts).then(function (res) {
+      // Auto-refresh token if server sent a new one
+      var refreshedToken = res.headers.get('X-Refreshed-Token');
+      if (refreshedToken) {
+        _token = refreshedToken;
+        localStorage.setItem('reb_jwt', refreshedToken);
+      }
       if (res.status === 401) {
         localStorage.removeItem('reb_jwt');
         localStorage.removeItem('reb_user_cache');
