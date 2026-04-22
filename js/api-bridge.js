@@ -704,12 +704,14 @@ var ApiBridge = (function () {
               if (!uuidRe.test(t.id)) return; // local-only IDs handled by loadAll
               var p = prevMap[t.id];
               if (!p || JSON.stringify(p) !== JSON.stringify(t)) {
-                API.updateTransaction(t.id, {
+                var txnUpdate = {
                   status: t.status, price: t.price,
                   address: t.address, city: t.city || '', state: t.state || '', zip: t.zip || '',
                   type: t.type || 'Buyer', agent_name: t.agent || '', source: t.source || '',
                   close_date: t.closeDate || null, notes: t.notes || ''
-                }).catch(function () {});
+                };
+                if (t.metadata) txnUpdate.metadata = t.metadata;
+                API.updateTransaction(t.id, txnUpdate).catch(function () {});
               }
             });
           } catch (e) {}
