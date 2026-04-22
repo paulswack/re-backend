@@ -381,12 +381,14 @@
       if (updates.notes !== undefined) mapped.notes = updates.notes;
       // Store beds/baths/sqft in metadata JSONB since they're not separate columns
       if (updates.beds !== undefined || updates.baths !== undefined || updates.sqft !== undefined) {
-        var item = txns.getAll().find(function (i) { return i.id === id; });
-        var meta = (item && item.metadata) || {};
+        var metaItem = txns.getAll().find(function (i) { return i.id === id; });
+        var meta = (metaItem && metaItem.metadata) ? JSON.parse(JSON.stringify(metaItem.metadata)) : {};
         if (updates.beds !== undefined) meta.beds = updates.beds;
         if (updates.baths !== undefined) meta.baths = updates.baths;
         if (updates.sqft !== undefined) meta.sqft = updates.sqft;
         mapped.metadata = meta;
+        // Also update metadata in localStorage so the api-bridge interceptor has it
+        txns.update(id, { metadata: meta });
       }
       API.updateTransaction(apiId, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
     }
