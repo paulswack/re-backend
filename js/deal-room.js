@@ -396,11 +396,17 @@
     var filtered = q ? all.filter(function (t) {
       return (t.address + ' ' + (t.city||'') + ' ' + (t.agent||'')).toLowerCase().indexOf(q) !== -1;
     }) : all;
-    filtered.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+    // Sort by close date (earliest first), no close date at end
+    filtered.sort(function (a, b) {
+      if (!a.closeDate && !b.closeDate) return 0;
+      if (!a.closeDate) return 1;
+      if (!b.closeDate) return -1;
+      return new Date(a.closeDate) - new Date(b.closeDate);
+    });
 
     var sections = [
-      { key: 'active',  label: 'Active' },
-      { key: 'pending', label: 'Pending' }
+      { key: 'pending', label: 'Pending' },
+      { key: 'active',  label: 'Active' }
     ];
 
     var rowsHtml = '';

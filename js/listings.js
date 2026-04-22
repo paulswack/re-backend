@@ -385,6 +385,9 @@
           h += '<button type="button" id="addSellerBtn" style="margin-top:8px;padding:6px 14px;border:1.5px dashed #EC4899;border-radius:8px;background:#FDF2F8;color:#BE185D;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">+ Add Seller</button>';
         }
 
+        h += '<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:18px;margin-bottom:8px;color:var(--emerald)">Close of Escrow Date</div>';
+        h += '<input type="date" id="repCloseDate" style="' + inpStyle + '">';
+
         h += '<div style="display:flex;gap:8px;margin-top:20px">';
         h += '<button type="button" id="repBackBtn" style="padding:11px 18px;border:1.5px solid var(--gray-200);border-radius:10px;background:none;color:var(--gray-500);font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit">Back</button>';
         h += '<button type="button" id="repSavePartyBtn" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--indigo);color:#fff;font-size:.92rem;font-weight:700;cursor:pointer;font-family:inherit">Save &amp; Create Escrow</button>';
@@ -429,11 +432,13 @@
 
         if (saveBtn) saveBtn.addEventListener('click', function () {
           syncFromDom();
-          finalize(buyers, sellers);
+          var closeDateEl = overlay.querySelector('#repCloseDate');
+          finalize(buyers, sellers, closeDateEl ? closeDateEl.value : '');
         });
 
         if (skipBtn) skipBtn.addEventListener('click', function () {
-          finalize([], []);
+          var closeDateEl = overlay.querySelector('#repCloseDate');
+          finalize([], [], closeDateEl ? closeDateEl.value : '');
         });
       }
 
@@ -445,7 +450,7 @@
     }
 
     // ---- Finalize: create transaction + save parties ----
-    function finalize(buyersArr, sellersArr) {
+    function finalize(buyersArr, sellersArr, closeDate) {
       overlay.remove();
 
       Data.updateListing(selectedListingId, { status: 'pending' });
@@ -455,7 +460,9 @@
       });
       var txnId;
       if (linkedTxn) {
-        Data.updateTransaction(linkedTxn.id, { status: 'pending', type: selectedRep });
+        var txnUpdates = { status: 'pending', type: selectedRep };
+        if (closeDate) txnUpdates.closeDate = closeDate;
+        Data.updateTransaction(linkedTxn.id, txnUpdates);
         txnId = linkedTxn.id;
         showToast('Escrow updated — ' + selectedRep + ' representation');
       } else {
@@ -463,7 +470,7 @@
           address: listing.address, city: listing.city, state: listing.state, zip: listing.zip,
           price: listing.price, agent: listing.agent, source: listing.source,
           type: selectedRep, status: 'pending',
-          notes: 'Created from listing (' + selectedRep + ' representation)', closeDate: ''
+          notes: 'Created from listing (' + selectedRep + ' representation)', closeDate: closeDate || ''
         });
         txnId = newTxn.id;
         showToast('Transaction created — ' + selectedRep + ' representation');
