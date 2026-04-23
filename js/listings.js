@@ -1470,10 +1470,14 @@
             var ecTxnId = self.getAttribute('data-txn-id');
             if (ecTxnId) {
               Data.updateTransaction(ecTxnId, { closeDate: val });
-              // Also save directly to server to guarantee persistence
-              if (typeof API !== 'undefined' && API.isLoggedIn()) {
-                API.updateTransaction(ecTxnId, { close_date: val }).catch(function () {});
-              }
+              // Save synchronously to server so it persists before user navigates away
+              try {
+                var xhr = new XMLHttpRequest();
+                xhr.open('PUT', '/api/transactions/' + ecTxnId, false);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + (localStorage.getItem('reb_jwt') || ''));
+                xhr.send(JSON.stringify({ close_date: val }));
+              } catch (e) {}
               showToast('Close date saved');
             }
             return;
