@@ -1470,6 +1470,10 @@
             var ecTxnId = self.getAttribute('data-txn-id');
             if (ecTxnId) {
               Data.updateTransaction(ecTxnId, { closeDate: val });
+              // Also save directly to server to guarantee persistence
+              if (typeof API !== 'undefined' && API.isLoggedIn()) {
+                API.updateTransaction(ecTxnId, { close_date: val }).catch(function () {});
+              }
               showToast('Close date saved');
             }
             return;
