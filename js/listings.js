@@ -1108,8 +1108,8 @@
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
 
-    // Close of Escrow card (for pending listings)
-    if (l.status === 'pending') {
+    // Close of Escrow card (for any listing with a linked escrow)
+    {
       var _coeTxn = Data.getTransactions().find(function (t) { return t.address === l.address && t.status !== 'closed'; });
       var _coeVal = _coeTxn ? (_coeTxn.closeDate || '') : '';
       html += '<div style="background:#ECFDF5;border:2px solid #10B981;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
