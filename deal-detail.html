@@ -63,7 +63,7 @@
       } catch(e2) {}
     })();
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1776965775">
+  <link rel="stylesheet" href="css/style.css?v=1776969956">
   <style>
     /* ---- Deal Detail — Clean Design (matches Deal Room) ---- */
 
@@ -87,29 +87,11 @@
       overflow: hidden;
       margin-bottom: 20px;
     }
-    .detail-header-accent { height: 4px; background: linear-gradient(90deg, var(--indigo), #3B82F6); }
-    .detail-header-body { padding: 24px 28px 20px; }
+    .detail-header-accent { height: 3px; background: linear-gradient(90deg, var(--indigo), #3B82F6); }
     .detail-header-top {
       display: flex; align-items: flex-start; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
     }
-    .detail-header-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
-
-    /* Detail blocks row */
-    .detail-blocks-row {
-      display: flex; gap: 0; background: var(--gray-50); border-radius: 12px;
-      overflow: hidden; flex-wrap: wrap; border: 1px solid var(--gray-100);
-    }
-    .detail-block {
-      flex: 1; min-width: 130px; padding: 12px 16px;
-      border-right: 1px solid var(--gray-100);
-    }
-    .detail-block:last-child { border-right: none; }
-    .detail-block-label {
-      font-size: .65rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .5px; color: var(--gray-400); margin-bottom: 4px;
-    }
-    .detail-block-value { font-size: .88rem; font-weight: 600; color: var(--gray-800); }
 
     /* All section cards — consistent style */
     .parties-card, .desc-card, .notes-card {
@@ -168,13 +150,7 @@
     /* Responsive */
     @media (max-width: 768px) {
       .lst-row-specs, .lst-row-date { display: none; }
-      .detail-header-body { padding: 16px 14px; }
-      .detail-blocks-row { flex-direction: column; }
-      .detail-block { border-right: none; border-bottom: 1px solid var(--gray-100); min-width: 0; }
-      .detail-block:last-child { border-bottom: none; }
-      .detail-header-actions { align-self: stretch; display: flex; flex-wrap: wrap; gap: 8px; }
-      .detail-header-actions a, .detail-header-actions button { flex: 1; justify-content: center; min-width: 0; text-align: center; font-size: .78rem !important; padding: 10px 12px !important; }
-      .detail-back-btn { font-size: .82rem; padding: 8px 14px; }
+      .detail-back-btn { font-size: .8rem; padding: 6px 12px; }
     }
     @media (max-width: 480px) {
       .lst-stats-grid { grid-template-columns: 1fr 1fr; }
@@ -234,12 +210,12 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1776965775"></script>
-  <script src="js/api.js?v=1776965775"></script>
-  <script src="js/api-bridge.js?v=1776965775"></script>
-  <script src="js/auth.js?v=1776965775"></script>
-  <script src="js/data.js?v=1776965775"></script>
-  <script src="js/listings.js?v=1776965775"></script>
-  <script src="js/datepicker.js?v=1776965775"></script>
+  <script src="js/theme.js?v=1776969956"></script>
+  <script src="js/api.js?v=1776969956"></script>
+  <script src="js/api-bridge.js?v=1776969956"></script>
+  <script src="js/auth.js?v=1776969956"></script>
+  <script src="js/data.js?v=1776969956"></script>
+  <script src="js/listings.js?v=1776969956"></script>
+  <script src="js/datepicker.js?v=1776969956"></script>
 </body>
 </html>

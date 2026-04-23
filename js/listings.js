@@ -1003,119 +1003,68 @@
 
     var html = '';
 
-    // Back button
-    html += '<button class="detail-back-btn" data-action="back-to-list">' +
+    // Back button + action buttons inline
+    var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">';
+    html += '<button class="detail-back-btn" data-action="back-to-list" style="margin-bottom:0">' +
       '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      (fromDealRoom ? 'Back to Deal Room' : 'Back to Listings') +
+      (fromDealRoom ? 'Deal Room' : 'Back') +
     '</button>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:99px;font-size:.78rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer">' +
+      '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
+    html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
+    html += '</div></div>';
 
     // Inline-editable input style
-    var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 8px;font-family:inherit;transition:all .15s;width:100%;';
+    var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:6px;padding:3px 6px;font-family:inherit;transition:all .15s;width:100%;';
     var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
 
-    // Header Card
+    // Compact header — address + price + city/state/zip on one card
     html += '<div class="detail-header-card">';
     html += '<div class="detail-header-accent"></div>';
-    html += '<div class="detail-header-body">';
-
-    html += '<div class="detail-header-top">';
-    html += '<div style="flex:1;min-width:0">' +
-      '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
-      '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:6px">' +
-        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">City</label>' +
-        '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
-        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">State</label>' +
-        '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="CA" maxlength="2" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
-        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Zip</label>' +
-        '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="93101" maxlength="10" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
-      '</div>' +
-      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:4px;' + inpStyle + '" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
-        'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
-    '</div>';
-    var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
-    var btnBase = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;transition:opacity .15s;white-space:nowrap';
-    html += '<div class="detail-header-actions">' +
-      '<a href="' + zillowUrl + '" target="_blank" rel="noopener" tabindex="-1" style="' + btnBase + ';background:#006AFF;color:#fff;border:none">' +
-        '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>' +
-        'Zillow' +
-      '</a>' +
-      '<button data-action="share-client" data-id="' + l.id + '" tabindex="-1" style="' + btnBase + ';background:var(--indigo);color:#fff;border:none">Share with Client</button>' +
-    '</div>';
+    html += '<div style="padding:16px 20px 12px">';
+    html += '<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">';
+    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.2rem;font-weight:800;color:var(--gray-900);flex:1;min-width:200px;' + inpStyle + '" ' + inpFocus + '>';
+    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.05rem;font-weight:700;color:var(--indigo);width:140px;text-align:right;' + inpStyle + '" ' +
+      'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
+      'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+    html += '</div>';
+    html += '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-top:8px">';
+    var cszStyle = 'width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.82rem;color:var(--gray-700);background:#fff;font-family:inherit';
+    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="' + cszStyle + '">';
+    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="' + cszStyle + '">';
+    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="' + cszStyle + '">';
+    html += '</div>';
     html += '</div>';
 
-    // Detail blocks row — editable
-    html += '<div class="detail-blocks-row">';
-
-    // Beds
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Beds</div>' +
-      '<input type="number" class="ie-field" data-field="beds" value="' + (l.beds || '') + '" placeholder="—" min="0" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-
-    // Baths
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Baths</div>' +
-      '<input type="number" class="ie-field" data-field="baths" value="' + (l.baths || '') + '" placeholder="—" min="0" step="0.5" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-
-    // Sqft
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Sq Ft</div>' +
-      '<input type="number" class="ie-field" data-field="sqft" value="' + (l.sqft || '') + '" placeholder="—" min="0" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-
-    // Agent
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Agent</div>' +
-      '<select class="ie-field" data-field="agent" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') +
-      '</select>' +
-    '</div>';
-
-    // Status
+    // Detail fields — compact grid
+    var selStyle = 'font-size:.82rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid var(--gray-200);border-radius:6px;padding:4px 6px;cursor:pointer;width:100%';
     var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'pre_listing', label: 'Pre-Listing' }, { key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Status</div>' +
-      '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
-      '</select>' +
-    '</div>';
-
-    // Listing Date
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Listing Date</div>' +
-      '<input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-
-    // Source
     var _lstDetailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Source</div>' +
-      '<select class="ie-field" data-field="source" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        '<option value=""' + (!l.source ? ' selected' : '') + '>—</option>' +
-        _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
-      '</select>' +
-    '</div>';
+    var fldLbl = 'font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin-bottom:2px';
+    var fldInp = 'width:100%;padding:4px 6px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;font-family:inherit';
+
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 20px 14px">';
+
+    html += '<div><div style="' + fldLbl + '">Beds</div><input type="number" class="ie-field" data-field="beds" value="' + (l.beds || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
+    html += '<div><div style="' + fldLbl + '">Baths</div><input type="number" class="ie-field" data-field="baths" value="' + (l.baths || '') + '" placeholder="—" min="0" step="0.5" style="' + fldInp + '"></div>';
+    html += '<div><div style="' + fldLbl + '">Sq Ft</div><input type="number" class="ie-field" data-field="sqft" value="' + (l.sqft || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
+    html += '<div><div style="' + fldLbl + '">Source</div><select class="ie-field" data-field="source" style="' + selStyle + '"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div>';
+
+    html += '<div><div style="' + fldLbl + '">Agent</div><select class="ie-field" data-field="agent" style="' + selStyle + '">' + users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') + '</select></div>';
+    html += '<div><div style="' + fldLbl + '">Status</div><select class="ie-field" data-field="status" style="' + selStyle + '">' + _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
+    html += '<div><div style="' + fldLbl + '">Listed</div><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '" style="' + fldInp + '"></div>';
 
     // Close of Escrow (if linked escrow exists)
     var _coeTxn = Data.getTransactions().find(function (t) { return t.address === l.address && t.status !== 'closed'; });
     if (_coeTxn) {
-      html += '<div class="detail-block">' +
-        '<div class="detail-block-label" style="color:var(--emerald)">Close of Escrow</div>' +
-        '<input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-      '</div>';
+      html += '<div><div style="' + fldLbl + ';color:var(--emerald)">COE Date</div><input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '" style="' + fldInp + '"></div>';
     }
 
-    html += '</div>'; // detail-blocks-row
-
-    html += '</div>'; // detail-header-body
-    html += '</div>'; // detail-header-card
-
-    // Close of Escrow date moved to detail blocks row below
+    html += '</div>'; // grid
+    html += '</div>'; // header card body
+    html += '</div>'; // header card
 
     // Seller Info Card — always visible, inline-editable
     var detailParties = getParties();
@@ -1130,27 +1079,21 @@
     if (_localSellersToSync.length > 0 && !_detailUuidRe.test(selectedListingId)) {
       Data.syncListingParties(selectedListingId, _localSellersToSync);
     }
-    var siInp = 'border:1.5px solid transparent;border-radius:6px;padding:5px 8px;font-family:inherit;font-size:.88rem;width:100%;background:transparent;transition:all .15s;';
-    var siFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
-    html += '<div class="parties-card" style="margin-bottom:20px">';
-    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;background:#FDF2F8;border-bottom:1px solid rgba(236,72,153,.1)">';
-    html += '<div style="display:flex;align-items:center;gap:10px">';
-    html += '<svg viewBox="0 0 24 24" width="18" height="18" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-    html += '<span style="color:#BE185D">Seller / Owner Info</span></div>';
-    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid #EC4899;color:#BE185D;border-radius:6px;padding:3px 10px;font-size:.75rem;font-weight:600;cursor:pointer">+ Add Seller</button>';
+    var siInp = 'border:1.5px solid var(--gray-200);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:.82rem;width:100%;background:#fff;transition:border-color .15s;';
+    html += '<div class="parties-card">';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;background:#FDF2F8">';
+    html += '<span style="color:#BE185D;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="14" height="14" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Seller / Owner</span>';
+    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid #EC4899;color:#BE185D;border-radius:99px;padding:2px 10px;font-size:.7rem;font-weight:600;cursor:pointer">+ Add</button>';
     html += '</div>';
-    html += '<div id="detailSellersWrap" style="padding:16px 20px">';
+    html += '<div id="detailSellersWrap" style="padding:10px 16px">';
     detailSellers.forEach(function (s, idx) {
-      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin:10px 0"></div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end" data-seller-row="' + idx + '">';
-      html += '<div style="flex:1;min-width:150px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Name</div>';
-      html += '<input type="text" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Full name" style="' + siInp + 'font-weight:700;color:var(--gray-800);" ' + siFocus + '></div>';
-      html += '<div style="flex:1;min-width:130px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Phone</div>';
-      html += '<input type="tel" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="(555) 555-5555" style="' + siInp + '" ' + siFocus + '></div>';
-      html += '<div style="flex:2;min-width:170px"><div style="font-size:.7rem;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">Email</div>';
-      html += '<input type="email" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="seller@email.com" style="' + siInp + '" ' + siFocus + '></div>';
+      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin:6px 0"></div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center" data-seller-row="' + idx + '">';
+      html += '<input type="text" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Name" style="' + siInp + 'font-weight:700;flex:1;min-width:120px" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+      html += '<input type="tel" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="Phone" style="' + siInp + 'flex:1;min-width:100px" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+      html += '<input type="email" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="Email" style="' + siInp + 'flex:1.5;min-width:140px" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
       if (idx > 0) {
-        html += '<div style="display:flex;align-items:flex-end;padding-bottom:4px"><button type="button" data-action="detail-remove-seller" data-sidx="' + idx + '" style="background:none;border:1px solid var(--gray-200);color:var(--rose);border-radius:6px;padding:4px 8px;font-size:.8rem;cursor:pointer" title="Remove">&times;</button></div>';
+        html += '<button type="button" data-action="detail-remove-seller" data-sidx="' + idx + '" style="background:none;border:none;color:var(--rose);font-size:1rem;cursor:pointer;padding:2px 6px" title="Remove">&times;</button>';
       }
       html += '</div>';
     });
