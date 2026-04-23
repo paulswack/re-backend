@@ -1468,17 +1468,29 @@
           // Close of escrow date — save to the linked transaction, not the listing
           if (fieldName === 'escrowCloseDate') {
             var ecTxnId = self.getAttribute('data-txn-id');
-            if (ecTxnId) {
+            if (ecTxnId && val) {
               Data.updateTransaction(ecTxnId, { closeDate: val });
-              // Save synchronously to server so it persists before user navigates away
+              // Save synchronously to server
+              var token = localStorage.getItem('reb_jwt') || '';
+              if (!token) { showToast('Please log in to save', 'error'); window.location.href = 'login.html'; return; }
               try {
                 var xhr = new XMLHttpRequest();
                 xhr.open('PUT', '/api/transactions/' + ecTxnId, false);
                 xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('Authorization', 'Bearer ' + (localStorage.getItem('reb_jwt') || ''));
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                 xhr.send(JSON.stringify({ close_date: val }));
-              } catch (e) {}
-              showToast('Close date saved');
+                if (xhr.status === 200) {
+                  showToast('Close date saved');
+                } else if (xhr.status === 401) {
+                  localStorage.removeItem('reb_jwt');
+                  showToast('Session expired — please log in', 'error');
+                  window.location.href = 'login.html';
+                } else {
+                  showToast('Failed to save close date', 'error');
+                }
+              } catch (e) {
+                showToast('Network error saving close date', 'error');
+              }
             }
             return;
           }
