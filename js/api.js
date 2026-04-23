@@ -11,6 +11,23 @@ var API = (function () {
   var _token = localStorage.getItem('reb_jwt') || null;
   var _user = null;
 
+  // Check if token is expired — decode without verification to read exp
+  if (_token) {
+    try {
+      var parts = _token.split('.');
+      var payload = JSON.parse(atob(parts[1]));
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        // Token expired — clear and redirect to login
+        localStorage.removeItem('reb_jwt');
+        localStorage.removeItem('reb_user_cache');
+        _token = null;
+        if (window.location.pathname.indexOf('login') === -1 && window.location.pathname.indexOf('index') === -1) {
+          window.location.href = 'login.html';
+        }
+      }
+    } catch (e) {}
+  }
+
   try {
     var cached = localStorage.getItem('reb_user_cache');
     if (cached) _user = JSON.parse(cached);
