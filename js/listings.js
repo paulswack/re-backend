@@ -1101,17 +1101,17 @@
       '</select>' +
     '</div>';
 
-    // Close of Escrow date (shown when pending and has linked escrow)
+    // Close of Escrow date (shown when pending)
     if (l.status === 'pending') {
       var _linkedTxnForDate = Data.getTransactions().find(function (t) {
         return t.address === l.address && t.status !== 'closed';
       });
-      if (_linkedTxnForDate) {
-        html += '<div class="detail-block">' +
-          '<div class="detail-block-label" style="color:var(--emerald)">Close of Escrow</div>' +
-          '<input type="date" class="ie-field" data-field="escrowCloseDate" data-txn-id="' + _linkedTxnForDate.id + '" value="' + (_linkedTxnForDate.closeDate || '') + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-        '</div>';
-      }
+      var _closeDateVal = _linkedTxnForDate ? (_linkedTxnForDate.closeDate || '') : '';
+      var _closeTxnId = _linkedTxnForDate ? _linkedTxnForDate.id : '';
+      html += '<div class="detail-block">' +
+        '<div class="detail-block-label" style="color:var(--emerald)">Close of Escrow</div>' +
+        '<input type="date" class="ie-field" data-field="escrowCloseDate" data-txn-id="' + _closeTxnId + '" data-address="' + escapeHtml(l.address) + '" value="' + _closeDateVal + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
+      '</div>';
     }
 
     html += '</div>'; // detail-blocks-row
@@ -1468,6 +1468,27 @@
           // Close of escrow date — save to the linked transaction, not the listing
           if (fieldName === 'escrowCloseDate') {
             var ecTxnId = self.getAttribute('data-txn-id');
+            // If txn ID wasn't available at render time, look it up now
+            if (!ecTxnId) {
+              var ecAddr = self.getAttribute('data-address') || '';
+              var foundTxn = Data.getTransactions().find(function (t) { return t.address === ecAddr && t.status !== 'closed'; });
+              if (foundTxn) ecTxnId = foundTxn.id;
+            }
+            // If still no txn found, try fetching from server
+            if (!ecTxnId && val) {
+              var ecAddr2 = self.getAttribute('data-address') || '';
+              try {
+                var txnXhr = new XMLHttpRequest();
+                txnXhr.open('GET', '/api/transactions', false);
+                txnXhr.setRequestHeader('Authorization', 'Bearer ' + (localStorage.getItem('reb_jwt') || ''));
+                txnXhr.send();
+                if (txnXhr.status === 200) {
+                  var allTxns = JSON.parse(txnXhr.responseText);
+                  var match = allTxns.find(function (t) { return t.address === ecAddr2 && t.status !== 'closed'; });
+                  if (match) ecTxnId = match.id;
+                }
+              } catch (e) {}
+            }
             if (ecTxnId && val) {
               Data.updateTransaction(ecTxnId, { closeDate: val });
               // Save synchronously to server
