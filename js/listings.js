@@ -1101,31 +1101,21 @@
       '</select>' +
     '</div>';
 
-    // Close of Escrow date moved to standalone card above
+    // Close of Escrow (if linked escrow exists)
+    var _coeTxn = Data.getTransactions().find(function (t) { return t.address === l.address && t.status !== 'closed'; });
+    if (_coeTxn) {
+      html += '<div class="detail-block">' +
+        '<div class="detail-block-label" style="color:var(--emerald)">Close of Escrow</div>' +
+        '<input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
+      '</div>';
+    }
 
     html += '</div>'; // detail-blocks-row
 
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
 
-    // Close of Escrow card (for any listing with a linked escrow)
-    {
-      var _coeTxn = Data.getTransactions().find(function (t) { return t.address === l.address && t.status !== 'closed'; });
-      var _coeVal = _coeTxn ? (_coeTxn.closeDate || '') : '';
-      html += '<div style="background:#ECFDF5;border:2px solid #10B981;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
-      html += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
-      html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="#059669"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>';
-      html += '<span style="font-size:.88rem;font-weight:700;color:#059669">Close of Escrow</span>';
-      html += '</div>';
-      html += '<input type="date" id="coeDate" value="' + _coeVal + '" data-address="' + escapeHtml(l.address) + '" style="padding:8px 12px;border:1.5px solid #10B981;border-radius:8px;font-size:.9rem;font-weight:600;color:#065F46;background:#fff;font-family:inherit;min-width:160px">';
-      html += '<button id="coeSaveBtn" style="padding:8px 18px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit">Save Date</button>';
-      if (_coeVal) {
-        var _coeDays = daysUntil(_coeVal);
-        var _coeLabel = _coeDays === null ? '' : _coeDays === 0 ? 'Closing Today!' : _coeDays < 0 ? Math.abs(_coeDays) + ' days ago' : _coeDays + ' days left';
-        if (_coeLabel) html += '<span style="font-size:.82rem;font-weight:700;color:#065F46">' + escapeHtml(_coeLabel) + '</span>';
-      }
-      html += '</div>';
-    }
+    // Close of Escrow date moved to detail blocks row below
 
     // Seller Info Card — always visible, inline-editable
     var detailParties = getParties();
@@ -1445,48 +1435,28 @@
     initChecklistDrag();
     initChecklistPickers();
 
-    // Close of Escrow save button handler
-    var coeSaveBtn = document.getElementById('coeSaveBtn');
+    // Close of Escrow date change handler
     var coeDateInput = document.getElementById('coeDate');
-    if (coeSaveBtn && coeDateInput) {
-      coeSaveBtn.addEventListener('click', function () {
-        var dateVal = coeDateInput.value;
-        if (!dateVal) { showToast('Please select a date', 'error'); return; }
-        var addr = coeDateInput.getAttribute('data-address');
+    if (coeDateInput) {
+      coeDateInput.addEventListener('change', function () {
+        var dateVal = this.value;
+        var txnId = this.getAttribute('data-txn-id');
+        if (!txnId || !dateVal) return;
         var token = localStorage.getItem('reb_jwt');
         if (!token) { window.location.href = 'login.html'; return; }
-        // Find the transaction by fetching from server
         try {
-          var findXhr = new XMLHttpRequest();
-          findXhr.open('GET', '/api/transactions', false);
-          findXhr.setRequestHeader('Authorization', 'Bearer ' + token);
-          findXhr.send();
-          if (findXhr.status === 401) { window.location.href = 'login.html'; return; }
-          if (findXhr.status === 200) {
-            var allTxns = JSON.parse(findXhr.responseText);
-            var txn = allTxns.find(function (t) { return t.address === addr && t.status !== 'closed'; });
-            if (txn) {
-              var saveXhr = new XMLHttpRequest();
-              saveXhr.open('PUT', '/api/transactions/' + txn.id, false);
-              saveXhr.setRequestHeader('Content-Type', 'application/json');
-              saveXhr.setRequestHeader('Authorization', 'Bearer ' + token);
-              saveXhr.send(JSON.stringify({ close_date: dateVal }));
-              if (saveXhr.status === 200) {
-                Data.updateTransaction(txn.id, { closeDate: dateVal });
-                showToast('Close date saved!');
-                renderDetail();
-              } else if (saveXhr.status === 401) {
-                window.location.href = 'login.html';
-              } else {
-                showToast('Failed to save', 'error');
-              }
-            } else {
-              showToast('No linked escrow found', 'error');
-            }
+          var xhr = new XMLHttpRequest();
+          xhr.open('PUT', '/api/transactions/' + txnId, false);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          xhr.send(JSON.stringify({ close_date: dateVal }));
+          if (xhr.status === 200) {
+            Data.updateTransaction(txnId, { closeDate: dateVal });
+            showToast('Close date saved');
+          } else if (xhr.status === 401) {
+            window.location.href = 'login.html';
           }
-        } catch (e) {
-          showToast('Network error', 'error');
-        }
+        } catch (e) {}
       });
     }
 

@@ -781,21 +781,6 @@
     html += '</div>'; // detail-header-body
     html += '</div>'; // detail-header-card
 
-    // Close of Escrow card
-    html += '<div style="background:#ECFDF5;border:2px solid #10B981;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">';
-    html += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
-    html += '<svg viewBox="0 0 24 24" width="20" height="20" fill="#059669"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>';
-    html += '<span style="font-size:.88rem;font-weight:700;color:#059669">Close of Escrow</span>';
-    html += '</div>';
-    html += '<input type="date" id="coeDateTxn" value="' + (t.closeDate || '') + '" style="padding:8px 12px;border:1.5px solid #10B981;border-radius:8px;font-size:.9rem;font-weight:600;color:#065F46;background:#fff;font-family:inherit;min-width:160px">';
-    html += '<button id="coeSaveBtnTxn" style="padding:8px 18px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit">Save Date</button>';
-    if (t.closeDate) {
-      var _coeDaysTxn = daysUntil(t.closeDate);
-      var _coeLabelTxn = _coeDaysTxn === null ? '' : _coeDaysTxn === 0 ? 'Closing Today!' : _coeDaysTxn < 0 ? Math.abs(_coeDaysTxn) + ' days ago' : _coeDaysTxn + ' days left';
-      if (_coeLabelTxn) html += '<span style="font-size:.82rem;font-weight:700;color:#065F46">' + escapeHtml(_coeLabelTxn) + '</span>';
-    }
-    html += '</div>';
-
     // Buyer / Seller Info Card
     var repType = t.type || 'Dual';
     var showBuyer = repType === 'Buyer' || repType === 'Dual';
@@ -1138,33 +1123,7 @@
 
     initChecklistPickers();
 
-    // Close of Escrow save button
-    var coeSaveBtnTxn = document.getElementById('coeSaveBtnTxn');
-    var coeDateTxn = document.getElementById('coeDateTxn');
-    if (coeSaveBtnTxn && coeDateTxn) {
-      coeSaveBtnTxn.addEventListener('click', function () {
-        var dateVal = coeDateTxn.value;
-        if (!dateVal) { showToast('Please select a date', 'error'); return; }
-        var token = localStorage.getItem('reb_jwt');
-        if (!token) { window.location.href = 'login.html'; return; }
-        try {
-          var xhr = new XMLHttpRequest();
-          xhr.open('PUT', '/api/transactions/' + selectedTxnId, false);
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-          xhr.send(JSON.stringify({ close_date: dateVal }));
-          if (xhr.status === 200) {
-            Data.updateTransaction(selectedTxnId, { closeDate: dateVal });
-            showToast('Close date saved!');
-            renderDetail();
-          } else if (xhr.status === 401) {
-            window.location.href = 'login.html';
-          } else {
-            showToast('Failed to save', 'error');
-          }
-        } catch (e) { showToast('Network error', 'error'); }
-      });
-    }
+    // Close date handled by ie-field auto-save on change event
 
     // Show/hide detail textarea based on milestone selection
     var milestoneSelect = document.getElementById('updateMilestone');
