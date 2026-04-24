@@ -93,7 +93,7 @@
       } catch(e2) {}
     })();
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1777046146">
+  <link rel="stylesheet" href="css/style.css?v=1777073896">
   <style>
     /* ---- Deal Detail — Clean Design (matches Deal Room) ---- */
 
@@ -179,14 +179,19 @@
       border-radius: 16px 16px 0 0;
     }
 
+    /* Expand panel grid */
+    .cl-expand-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
     /* Responsive */
     @media (max-width: 768px) {
       .lst-row-specs, .lst-row-date { display: none; }
       .detail-back-btn { font-size: .8rem; padding: 6px 12px; }
+      .detail-csz-grid { grid-template-columns: 1fr !important; }
     }
     @media (max-width: 480px) {
       .lst-stats-grid { grid-template-columns: 1fr 1fr; }
       .detail-header-card, .parties-card, .desc-card, .notes-card { border-radius: 12px; }
+      .cl-expand-grid { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -242,12 +247,12 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777073587"></script>
-  <script src="js/api.js?v=1777073587"></script>
-  <script src="js/api-bridge.js?v=1777073587"></script>
-  <script src="js/auth.js?v=1777073587"></script>
-  <script src="js/data.js?v=1777073587"></script>
-  <script src="js/listings.js?v=1777073587"></script>
-  <script src="js/datepicker.js?v=1777073587"></script>
+  <script src="js/theme.js?v=1777073896"></script>
+  <script src="js/api.js?v=1777073896"></script>
+  <script src="js/api-bridge.js?v=1777073896"></script>
+  <script src="js/auth.js?v=1777073896"></script>
+  <script src="js/data.js?v=1777073896"></script>
+  <script src="js/listings.js?v=1777073896"></script>
+  <script src="js/datepicker.js?v=1777073896"></script>
 </body>
 </html>

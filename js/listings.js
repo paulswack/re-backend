@@ -1184,7 +1184,7 @@
         });
       }
 
-      html += '<div id="clItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">';
+      html += '<div id="clItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
       clSorted.forEach(function (item) {
         var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
         var leftColor = item.completed ? '#10B981' : overdue ? '#EF4444' : 'var(--indigo)';
@@ -1235,7 +1235,7 @@
       // Expanded detail panel
       html += '<div id="clExpandPanel" style="display:none;margin:0 16px 10px;padding:12px 16px;background:linear-gradient(135deg,#F8FAFC,#EEF2FF);border:1.5px solid var(--indigo);border-radius:12px">';
       html += '<div id="clExpandInfo" style="font-size:.82rem;font-weight:700;color:var(--indigo);margin-bottom:8px"></div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" class="cl-expand-grid">';
       html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="clExpandDate" data-action="set-checklist-date" placeholder="Pick date..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
       html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="clExpandVendor" data-action="set-checklist-vendor" placeholder="Vendor" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
       html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="clExpandNote" data-action="set-checklist-note" placeholder="Add note..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
@@ -1302,7 +1302,7 @@
           html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
           html += '<div style="background:var(--emerald);height:100%;width:' + ecPct + '%;border-radius:6px"></div>';
           html += '</div></div>';
-          html += '<div id="ecClItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">';
+          html += '<div id="ecClItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
           txnChecklist.items.forEach(function (item) {
             var ecOverdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
             var ecLeftColor = item.completed ? '#10B981' : ecOverdue ? '#EF4444' : 'var(--emerald)';
@@ -1341,7 +1341,7 @@
 
           html += '<div id="ecExpandPanel" style="display:none;margin:0 16px 10px;padding:12px 16px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid var(--emerald);border-radius:12px">';
           html += '<div id="ecExpandInfo" style="font-size:.82rem;font-weight:700;color:#059669;margin-bottom:8px"></div>';
-          html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" class="cl-expand-grid">';
           html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="ecExpandDate" data-action="set-escrow-cl-date" data-txn-id="' + linkedTxn.id + '" placeholder="Pick date..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
           html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="ecExpandVendor" data-action="set-escrow-cl-vendor" data-txn-id="' + linkedTxn.id + '" placeholder="Vendor" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
           html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="ecExpandNote" data-action="set-escrow-cl-note" data-txn-id="' + linkedTxn.id + '" placeholder="Add note..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';

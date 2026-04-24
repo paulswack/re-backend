@@ -756,7 +756,8 @@ tr:hover { background: var(--gray-50); }
   .dash-widget-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   /* Top3 podium inside dashboard widget */
-  .dash-widget .top3-podium { padding: 12px 10px 8px; gap: 6px; }
+  .dash-widget .top3-podium { padding: 12px 10px 8px; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .top3-circle { max-width: 100px; }
 
   /* Deal room stats strip */
   .dr-stats-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -925,7 +926,8 @@ tr:hover { background: var(--gray-50); }
   max-width: 100%;
 }
 .dash-widget .table-wrapper {
-  overflow-x: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .dash-widget .table-wrapper table {
   width: 100%;
