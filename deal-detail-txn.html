@@ -48,154 +48,60 @@
   <script>
     }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1776706336">
+  <link rel="stylesheet" href="css/style.css?v=1777057248">
   <style>
-    /* ---- Transaction Page Styles ---- */
+    /* ---- Deal Detail — Clean Design (matches Deal Room) ---- */
 
-    /* Stat cards row */
-    .txn-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    @media (max-width: 900px) { .txn-stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .txn-stats-grid { grid-template-columns: 1fr; } }
-
-    /* List row column layout — matches listings exactly */
-    .lst-row-address { flex: 2; min-width: 0; }
-    .lst-row-address-text {
-      font-weight: 600; color: var(--gray-800);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .lst-row-price { width: 120px; font-weight: 700; color: var(--gray-900); text-align: right; flex-shrink: 0; }
-    .lst-row-specs { width: 160px; font-size: .82rem; color: var(--gray-500); flex-shrink: 0; }
-    .lst-row-agent { width: 180px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .lst-row-agent-name { font-size: .85rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .lst-row-status { width: 100px; flex-shrink: 0; text-align: center; }
-    .lst-row-date { width: 120px; font-size: .82rem; color: var(--gray-400); text-align: right; flex-shrink: 0; }
-
-    /* List header */
-    .list-header {
-      display: flex; align-items: center; gap: 14px;
-      padding: 10px 20px;
-      font-size: .7rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .5px; color: var(--gray-400);
-      border-bottom: 1px solid var(--gray-100);
-      background: var(--gray-50);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    }
-
-    /* ---- Detail View ---- */
+    /* Back button */
     .detail-back-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: .88rem; font-weight: 600; color: var(--gray-500);
-      background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 20px;
-      transition: color .15s;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: .85rem; font-weight: 600; color: var(--gray-500);
+      background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 99px;
+      cursor: pointer; padding: 8px 18px; margin-bottom: 20px;
+      transition: all .15s;
     }
-    .detail-back-btn:hover { color: var(--indigo); }
-    .detail-back-btn svg { width: 18px; height: 18px; fill: currentColor; }
+    .detail-back-btn:hover { color: var(--indigo); border-color: var(--indigo); background: var(--indigo-light, #EEF2FF); }
+    .detail-back-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
+    /* Header card */
     .detail-header-card {
       background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
+      border-radius: 16px;
+      border: 1px solid var(--gray-100);
+      box-shadow: 0 2px 12px rgba(10,22,40,.07), 0 1px 3px rgba(10,22,40,.05);
       overflow: hidden;
-      margin-bottom: 24px;
+      margin-bottom: 14px;
     }
-    .detail-header-accent { height: 4px; background: var(--indigo); }
-    .detail-header-body { padding: 24px 28px 20px; }
+    .detail-header-accent { height: 3px; background: linear-gradient(90deg, var(--emerald), #10B981); }
     .detail-header-top {
       display: flex; align-items: flex-start; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
     }
-    .detail-header-address {
-      font-size: 1.35rem; font-weight: 800; color: var(--gray-900); letter-spacing: -.3px;
-    }
-    .detail-header-price {
-      font-size: 1.2rem; font-weight: 700; color: var(--indigo); margin-top: 4px;
-    }
-    .detail-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-    .detail-blocks-row {
-      display: flex; gap: 0; background: var(--gray-50); border-radius: 12px;
-      overflow: hidden; flex-wrap: wrap;
-    }
-    .detail-block {
-      flex: 1; min-width: 140px; padding: 14px 20px;
-      border-right: 1px solid var(--gray-100);
-    }
-    .detail-block:last-child { border-right: none; }
-    .detail-block-label {
-      font-size: .68rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .5px; color: var(--gray-400); margin-bottom: 4px;
-    }
-    .detail-block-value { font-size: .92rem; font-weight: 600; color: var(--gray-800); }
+    .dd-two-col, .dd-col-left, .dd-col-right { min-width: 0; }
 
-    /* Parties card */
-    .parties-card {
+    /* All section cards — consistent style */
+    .parties-card, .desc-card, .notes-card {
       background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 24px;
+      border-radius: 16px;
+      border: 1px solid var(--gray-100);
+      box-shadow: 0 2px 12px rgba(10,22,40,.07), 0 1px 3px rgba(10,22,40,.05);
+      margin-bottom: 14px;
+      overflow: hidden;
     }
-    .parties-card-header {
-      padding: 16px 24px;
+    .parties-card-header, .desc-card-header, .notes-card-header {
+      padding: 12px 16px;
       border-bottom: 1px solid var(--gray-100);
-      font-size: .95rem; font-weight: 700; color: var(--gray-800);
-    }
-    .parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-    .party-section { padding: 20px 24px; }
-    .party-section:first-child { border-right: 1px solid var(--gray-100); }
-    .party-label {
-      font-size: .72rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .5px; color: var(--gray-400); margin-bottom: 12px;
-    }
-    .party-field { margin-bottom: 10px; }
-    .party-field-label { font-size: .72rem; color: var(--gray-400); margin-bottom: 2px; }
-    .party-field-value { font-size: .88rem; color: var(--gray-800); font-weight: 500; }
-    .party-empty {
-      font-size: .85rem; color: var(--gray-400); font-style: italic; margin-bottom: 12px;
-    }
-    .party-add-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: .82rem; font-weight: 600; color: var(--indigo);
-      background: none; border: none; cursor: pointer; padding: 0;
-    }
-    .party-add-btn:hover { text-decoration: underline; }
-    .party-edit-btn {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: .78rem; font-weight: 600; color: var(--gray-400);
-      background: none; border: none; cursor: pointer; padding: 0; margin-top: 4px;
-    }
-    .party-edit-btn:hover { color: var(--indigo); }
-
-    /* Two-column detail layout */
-    .detail-columns {
-      display: grid; grid-template-columns: 1fr 400px; gap: 24px;
-    }
-    @media (max-width: 960px) {
-      .detail-columns { grid-template-columns: 1fr; }
-      .parties-grid { grid-template-columns: 1fr; }
-      .party-section:first-child { border-right: none; border-bottom: 1px solid var(--gray-100); }
+      font-size: .85rem; font-weight: 700; color: var(--gray-800);
+      background: #fff;
     }
 
-    /* Activity / Notes */
-    .notes-card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-    }
-    .notes-card-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--gray-100);
-      font-size: .92rem; font-weight: 700; color: var(--gray-800);
-    }
-    .note-input-area { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); }
+    /* Notes */
+    .note-input-area { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); }
     .note-input-area textarea {
       width: 100%; padding: 10px 14px; border: 1.5px solid var(--gray-200);
-      border-radius: 8px; font-size: .88rem; font-family: inherit;
-      resize: vertical; min-height: 60px; color: var(--gray-800);
+      border-radius: 10px; font-size: .85rem; font-family: inherit;
+      resize: vertical; min-height: 50px; color: var(--gray-800);
       transition: border-color .15s;
     }
     .note-input-area textarea:focus {
@@ -203,70 +109,39 @@
       box-shadow: 0 0 0 3px rgba(99,102,241,.1);
     }
     .note-input-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
-    .note-item {
-      padding: 14px 20px; border-bottom: 1px solid var(--gray-50);
-    }
+    .note-item { padding: 12px 20px; border-bottom: 1px solid var(--gray-50); }
     .note-item:last-child { border-bottom: none; }
-    .note-meta {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-    }
-    .note-author { font-size: .82rem; font-weight: 600; color: var(--gray-700); }
-    .note-time { font-size: .72rem; color: var(--gray-400); }
-    .note-text { font-size: .88rem; color: var(--gray-600); line-height: 1.5; }
+    .note-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+    .note-author { font-size: .8rem; font-weight: 600; color: var(--gray-700); }
+    .note-time { font-size: .7rem; color: var(--gray-400); }
+    .note-text { font-size: .85rem; color: var(--gray-600); line-height: 1.5; }
 
-    /* Right column cards */
-    .side-card {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 20px;
-      overflow: hidden;
+    /* List header (for form view) */
+    .lst-stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+    .lst-row-address { flex: 2; min-width: 0; }
+    .lst-row-address-text { font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lst-row-price { width: 120px; font-weight: 700; color: var(--gray-900); text-align: right; flex-shrink: 0; }
+    .lst-row-specs { width: 160px; font-size: .82rem; color: var(--gray-500); flex-shrink: 0; }
+    .lst-row-agent { width: 180px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .lst-row-agent-name { font-size: .85rem; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lst-row-status { width: 100px; flex-shrink: 0; text-align: center; }
+    .lst-row-date { width: 120px; font-size: .82rem; color: var(--gray-400); text-align: right; flex-shrink: 0; }
+    .list-header {
+      display: flex; align-items: center; gap: 14px; padding: 10px 20px;
+      font-size: .7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--gray-400);
+      border-bottom: 1px solid var(--gray-100); background: var(--gray-50);
+      border-radius: 16px 16px 0 0;
     }
-    .side-card-header {
-      padding: 12px 16px;
-      font-size: .85rem; font-weight: 700; color: #fff;
-    }
-    .side-card-header.amber { background: var(--amber); }
-    .side-card-header.emerald { background: var(--emerald); }
-    .side-card-body { padding: 16px; }
-    .side-card-body .form-group { margin-bottom: 10px; }
-    .side-card-body .form-group label {
-      display: block; font-size: .78rem; font-weight: 600;
-      color: var(--gray-600); margin-bottom: 3px;
-    }
-    .side-card-body .form-group input,
-    .side-card-body .form-group select,
-    .side-card-body .form-group textarea {
-      width: 100%; padding: 7px 12px; border: 1.5px solid var(--gray-200);
-      border-radius: 8px; font-size: .85rem; color: var(--gray-800);
-      background: var(--white); transition: border-color .15s;
-    }
-    .side-card-body .form-group input:focus,
-    .side-card-body .form-group select:focus {
-      border-color: var(--indigo); outline: none;
-      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
-    }
-    .side-card-body .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-    /* Task / appointment items in right column */
-    .side-list-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 16px; border-bottom: 1px solid var(--gray-50);
-      font-size: .85rem;
+    /* Responsive */
+    @media (max-width: 768px) {
+      .lst-row-specs, .lst-row-date { display: none; }
+      .detail-back-btn { font-size: .8rem; padding: 6px 12px; }
     }
-    .side-list-item:last-child { border-bottom: none; }
-    .side-list-item input[type="checkbox"] { accent-color: var(--indigo); flex-shrink: 0; }
-    .side-list-done { text-decoration: line-through; color: var(--gray-400); }
-    .side-list-title { flex: 1; color: var(--gray-700); }
-    .side-list-meta { font-size: .72rem; color: var(--gray-400); flex-shrink: 0; }
-    .side-list-header {
-      padding: 10px 16px; font-size: .78rem; font-weight: 700;
-      color: var(--gray-500); border-bottom: 1px solid var(--gray-100);
-      background: var(--gray-50);
-    }
-    .side-list-empty {
-      padding: 16px; font-size: .82rem; color: var(--gray-400);
-      text-align: center; font-style: italic;
+    @media (max-width: 480px) {
+      .lst-stats-grid { grid-template-columns: 1fr 1fr; }
+      .detail-header-card, .parties-card, .desc-card, .notes-card { border-radius: 12px; }
     }
   </style>
 </head>
@@ -540,13 +415,13 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777046842"></script>
-  <script src="js/api.js?v=1777046842"></script>
-  <script src="js/api-bridge.js?v=1777046842"></script>
-  <script src="js/auth.js?v=1777046842"></script>
-  <script src="js/data.js?v=1777046842"></script>
-  <script src="js/transactions.js?v=1777046842"></script>
-  <script src="js/notifications.js?v=1777046842"></script>
-  <script src="js/datepicker.js?v=1777046842"></script>
+  <script src="js/theme.js?v=1777057248"></script>
+  <script src="js/api.js?v=1777057248"></script>
+  <script src="js/api-bridge.js?v=1777057248"></script>
+  <script src="js/auth.js?v=1777057248"></script>
+  <script src="js/data.js?v=1777057248"></script>
+  <script src="js/transactions.js?v=1777057248"></script>
+  <script src="js/notifications.js?v=1777057248"></script>
+  <script src="js/datepicker.js?v=1777057248"></script>
 </body>
 </html>
