@@ -666,7 +666,7 @@ tr:hover { background: var(--gray-50); }
   .dr-agent-filter select { min-width: 0; flex: 1; }
 
   /* Dashboard performance table — hide less important columns */
-  .dash-widget .table-wrapper table { min-width: 520px; }
+  .dash-widget .table-wrapper table { min-width: 0; width: 100%; }
 }
 
 @media (max-width: 480px) {
@@ -925,7 +925,20 @@ tr:hover { background: var(--gray-50); }
   max-width: 100%;
 }
 .dash-widget .table-wrapper {
-  overflow-x: auto;
+  overflow-x: hidden;
+}
+.dash-widget .table-wrapper table {
+  width: 100%;
+  table-layout: auto;
+  font-size: .78rem;
+}
+.dash-widget .table-wrapper th,
+.dash-widget .table-wrapper td {
+  padding: 6px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
 }
 
 .dash-col {
