@@ -40,6 +40,23 @@
             }
             if (!found) existing.push(mapped);
             localStorage.setItem('reb_transactions', JSON.stringify(existing));
+            // Check for linked listing — redirect to listing detail for unified view
+            if (data.address) {
+              try {
+                var lxhr = new XMLHttpRequest();
+                lxhr.open('GET', '/api/listings', false);
+                lxhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                lxhr.send();
+                if (lxhr.status === 200) {
+                  var listings = JSON.parse(lxhr.responseText);
+                  var linked = listings.find(function(l) { return l.address === data.address; });
+                  if (linked) {
+                    window.location.replace('deal-detail.html#' + linked.id);
+                    return;
+                  }
+                }
+              } catch(e3) {}
+            }
           }
         }
       } catch(e) {}
@@ -48,7 +65,7 @@
   <script>
     }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1777057248">
+  <link rel="stylesheet" href="css/style.css?v=1777057842">
   <style>
     /* ---- Deal Detail — Clean Design (matches Deal Room) ---- */
 
@@ -415,13 +432,13 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777057248"></script>
-  <script src="js/api.js?v=1777057248"></script>
-  <script src="js/api-bridge.js?v=1777057248"></script>
-  <script src="js/auth.js?v=1777057248"></script>
-  <script src="js/data.js?v=1777057248"></script>
-  <script src="js/transactions.js?v=1777057248"></script>
-  <script src="js/notifications.js?v=1777057248"></script>
-  <script src="js/datepicker.js?v=1777057248"></script>
+  <script src="js/theme.js?v=1777057842"></script>
+  <script src="js/api.js?v=1777057842"></script>
+  <script src="js/api-bridge.js?v=1777057842"></script>
+  <script src="js/auth.js?v=1777057842"></script>
+  <script src="js/data.js?v=1777057842"></script>
+  <script src="js/transactions.js?v=1777057842"></script>
+  <script src="js/notifications.js?v=1777057842"></script>
+  <script src="js/datepicker.js?v=1777057842"></script>
 </body>
 </html>
