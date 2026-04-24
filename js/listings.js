@@ -1383,6 +1383,50 @@
     initChecklistDrag();
     initChecklistPickers();
 
+    // Auto-save for listing checklist expand panel
+    function saveExpandField(inputId, field) {
+      var inp = document.getElementById(inputId);
+      if (!inp) return;
+      var saveHandler = function () {
+        var panel = document.getElementById('clExpandPanel');
+        var itemId = panel ? panel.getAttribute('data-active-id') : null;
+        if (!itemId) return;
+        var cls = getDealChecklists();
+        if (cls[selectedListingId]) {
+          var it = cls[selectedListingId].items.find(function (i) { return i.id === itemId; });
+          if (it) { it[field] = inp.value; saveDealChecklists(cls); showToast('Saved'); }
+        }
+      };
+      inp.addEventListener('change', saveHandler);
+      inp.addEventListener('blur', function () { setTimeout(saveHandler, 0); });
+    }
+    saveExpandField('clExpandDate', 'dueDate');
+    saveExpandField('clExpandVendor', 'vendor');
+    saveExpandField('clExpandNote', 'note');
+
+    // Auto-save for escrow checklist expand panel
+    function saveEcExpandField(inputId, field) {
+      var inp = document.getElementById(inputId);
+      if (!inp) return;
+      var txnId = inp.getAttribute('data-txn-id');
+      var saveHandler = function () {
+        var panel = document.getElementById('ecExpandPanel');
+        var itemId = panel ? panel.getAttribute('data-active-id') : null;
+        if (!itemId) return;
+        var tId = txnId || (inp.getAttribute('data-txn-id'));
+        var cls = getDealChecklists();
+        if (cls[tId]) {
+          var it = cls[tId].items.find(function (i) { return i.id === itemId; });
+          if (it) { it[field] = inp.value; saveDealChecklists(cls); showToast('Saved'); }
+        }
+      };
+      inp.addEventListener('change', saveHandler);
+      inp.addEventListener('blur', function () { setTimeout(saveHandler, 0); });
+    }
+    saveEcExpandField('ecExpandDate', 'dueDate');
+    saveEcExpandField('ecExpandVendor', 'vendor');
+    saveEcExpandField('ecExpandNote', 'note');
+
     // Close of Escrow date change handler
     var coeDateInput = document.getElementById('coeDate');
     if (coeDateInput) {
