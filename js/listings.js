@@ -46,6 +46,15 @@
   var editingId = null;
   var _detailRendered = false;
 
+  function daysUntil(d) {
+    if (!d) return null;
+    try {
+      var dt = new Date(d + 'T00:00:00'), now = new Date();
+      now.setHours(0,0,0,0);
+      return Math.round((dt - now) / 86400000);
+    } catch(e) { return null; }
+  }
+
   // ---- DOM refs ----
   var pageBody = document.getElementById('pageBody');
 
