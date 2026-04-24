@@ -13,12 +13,15 @@
       var id = window._forceDetailId;
       if (!id) return;
       var token = localStorage.getItem('reb_jwt');
-      if (!token) return;
+      if (!token) { window.location.href = 'login.html'; return; }
+      // Check token expiry before making requests
+      try { var p = JSON.parse(atob(token.split('.')[1])); if (p.exp && p.exp * 1000 < Date.now()) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; } } catch(e) {}
       try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/listings/' + id, false);
         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
         xhr.send();
+        if (xhr.status === 401) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; }
         if (xhr.status === 200) {
           var data = JSON.parse(xhr.responseText);
           if (data && data.id) {
@@ -45,6 +48,7 @@
         xhr2.open('GET', '/api/transactions', false);
         xhr2.setRequestHeader('Authorization', 'Bearer ' + token);
         xhr2.send();
+        if (xhr2.status === 401) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; }
         if (xhr2.status === 200) {
           var txns = JSON.parse(xhr2.responseText);
           if (txns && Array.isArray(txns)) {
@@ -212,12 +216,12 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777046713"></script>
-  <script src="js/api.js?v=1777046713"></script>
-  <script src="js/api-bridge.js?v=1777046713"></script>
-  <script src="js/auth.js?v=1777046713"></script>
-  <script src="js/data.js?v=1777046713"></script>
-  <script src="js/listings.js?v=1777046713"></script>
-  <script src="js/datepicker.js?v=1777046713"></script>
+  <script src="js/theme.js?v=1777046842"></script>
+  <script src="js/api.js?v=1777046842"></script>
+  <script src="js/api-bridge.js?v=1777046842"></script>
+  <script src="js/auth.js?v=1777046842"></script>
+  <script src="js/data.js?v=1777046842"></script>
+  <script src="js/listings.js?v=1777046842"></script>
+  <script src="js/datepicker.js?v=1777046842"></script>
 </body>
 </html>
