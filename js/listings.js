@@ -1033,11 +1033,9 @@
     html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
     html += '</div></div>';
 
-    // Row 2: Address + Price
-    html += '<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:10px">';
-    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);flex:1;min-width:200px;' + inpStyle + '" ' + inpFocus + '>';
-    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.15rem;font-weight:800;color:' + statusColor + ';width:160px;text-align:right;' + inpStyle + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
-    html += '</div>';
+    // Row 2: Address then Price below
+    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);' + inpStyle + ';margin-bottom:2px" ' + inpFocus + '>';
+    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:800;color:' + statusColor + ';' + inpStyle + ';margin-bottom:10px" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
 
     // Row 3: City/State/Zip inline
     html += '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:16px">';
@@ -1085,9 +1083,9 @@
     }
     var siInp = 'border:1.5px solid var(--gray-200);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:.82rem;width:100%;background:#fff;transition:border-color .15s;';
     html += '<div class="parties-card">';
-    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;background:#FDF2F8">';
-    html += '<span style="color:#BE185D;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="14" height="14" fill="#EC4899"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Seller / Owner</span>';
-    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid #EC4899;color:#BE185D;border-radius:99px;padding:2px 10px;font-size:.7rem;font-weight:600;cursor:pointer">+ Add</button>';
+    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;background:#FFF8F0">';
+    html += '<span style="color:#C2410C;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="14" height="14" fill="#F59E0B"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Seller / Owner</span>';
+    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid #F59E0B;color:#C2410C;border-radius:99px;padding:2px 10px;font-size:.7rem;font-weight:600;cursor:pointer">+ Add</button>';
     html += '</div>';
     html += '<div id="detailSellersWrap" style="padding:10px 16px">';
     detailSellers.forEach(function (s, idx) {
@@ -1119,8 +1117,7 @@
       html += '</div>';
     }
 
-    // Delete button in left column
-    html += '<button class="btn btn-outline btn-sm" data-action="delete-listing" data-id="' + l.id + '" style="color:var(--rose);border-color:var(--gray-200);margin-top:12px">Delete Listing</button>';
+    // Delete button moved to bottom of page
 
     html += '</div>'; // dd-col-left
     html += '<div class="dd-col-right">';
@@ -1374,6 +1371,11 @@
 
     html += '</div>'; // dd-col-right
     html += '</div>'; // dd-two-col
+
+    // Delete button at bottom
+    html += '<div style="margin-top:30px;padding-top:16px;border-top:1px solid var(--gray-100);margin-bottom:30px">';
+    html += '<button class="btn btn-outline btn-sm" data-action="delete-listing" data-id="' + l.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete This Listing</button>';
+    html += '</div>';
 
     pageBody.innerHTML = html;
     _detailRendered = true;
