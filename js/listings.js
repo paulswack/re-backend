@@ -974,6 +974,7 @@
   //  DETAIL VIEW
   // ============================================================
   function renderDetail() {
+    try {
     var listings = Data.getListings();
     var l = listings.find(function (x) { return x.id === selectedListingId; });
 
@@ -1593,6 +1594,10 @@
         setTimeout(saveDetailSellers, 0);
       });
     });
+    } catch (renderErr) {
+      pageBody.innerHTML = '<div style="padding:40px;color:var(--rose);font-size:.9rem"><strong>Error loading deal:</strong> ' + renderErr.message + '</div>';
+      console.error('renderDetail error:', renderErr);
+    }
   }
 
   // ============================================================
