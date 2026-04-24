@@ -345,7 +345,9 @@
 
   // ---- Server-synced CRUD for transactions ----
   function serverAddTransaction(item) {
+    window._suppressTxnSync = true; // prevent api-bridge from also creating this
     var result = txns.add(item); // save locally first for instant UI
+    window._suppressTxnSync = false;
     if (isServerMode()) {
       API.createTransaction({
         address: item.address, city: item.city, state: item.state, zip: item.zip,
@@ -407,7 +409,9 @@
 
   // ---- Server-synced CRUD for listings ----
   function serverAddListing(item, sellers) {
+    window._suppressLstSync = true;
     var result = listings.add(item);
+    window._suppressLstSync = false;
     if (isServerMode()) {
       var partyRows = (sellers || [])
         .filter(function (s) { return s.name || s.phone || s.email; })

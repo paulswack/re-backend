@@ -646,7 +646,7 @@ var ApiBridge = (function () {
       }
 
       // Listings — diff old vs new and push changes to server
-      if (key === PREFIX + 'listings') {
+      if (key === PREFIX + 'listings' && !window._suppressLstSync) {
         var capturedPrevLst = prevValue;
         var capturedNextLst = value;
         debounceSync('listings', function () {
@@ -682,7 +682,7 @@ var ApiBridge = (function () {
       }
 
       // Transactions — diff old vs new and push changes to server
-      if (key === PREFIX + 'transactions') {
+      if (key === PREFIX + 'transactions' && !window._suppressTxnSync) {
         var capturedPrevTxn = prevValue;
         var capturedNextTxn = value;
         debounceSync('transactions', function () {
