@@ -1160,69 +1160,65 @@
         });
       }
 
-      html += '<div id="clItemList" style="padding:4px 20px 4px">';
+      html += '<div id="clItemList" style="padding:8px 16px 8px;display:flex;flex-direction:column;gap:6px">';
       clSorted.forEach(function (item) {
         var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
-        var dateColor = overdue ? 'var(--rose)' : 'var(--gray-500)';
-        var dateBg = overdue ? '#FFF5F5' : 'var(--gray-50)';
-        var dateBorder = overdue ? 'var(--rose)' : 'var(--gray-200)';
+        var chipBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#fff';
+        var chipBorder = item.completed ? '#86EFAC' : overdue ? '#FECACA' : 'var(--gray-200)';
+        var textColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
+        var hasMeta = item.dueDate || item.vendor || item.note;
 
-        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="display:flex;align-items:flex-start;gap:8px;padding:11px 0;border-bottom:1px solid var(--gray-100)">';
+        // Compact chip/button
+        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="background:' + chipBg + ';border:1.5px solid ' + chipBorder + ';border-radius:12px;overflow:hidden;transition:all .15s">';
 
-        // Drag handle
-        html += '<div class="cl-drag" title="Drag to reorder" style="cursor:grab;color:var(--gray-300);font-size:1.1rem;flex-shrink:0;line-height:1;margin-top:2px;padding:0 2px;user-select:none">&#8801;</div>';
+        // Main row — always visible
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '">';
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
+        html += '<span style="flex:1;font-size:.84rem;font-weight:600;color:' + textColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(item.label) + '</span>';
 
-        // Checkbox
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="margin:3px 0 0;cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)">';
-
-        // Body
-        html += '<div style="flex:1;min-width:0">';
-
-        // Label
-        html += '<div style="font-size:.9rem;font-weight:500;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.4">' + escapeHtml(item.label) + '</div>';
-
-        // Pill row — date, vendor, note
-        html += '<div style="display:flex;align-items:center;gap:5px;margin-top:7px;flex-wrap:wrap">';
-
-        // Date pill
-        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:' + dateBg + ';border:1.5px solid ' + dateBorder + ';border-radius:20px;padding:4px 10px;flex-shrink:0">';
-        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="' + dateColor + '" style="flex-shrink:0"><path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>';
-        html += '<input type="text" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Due date" title="Due date &amp; time" style="border:none;background:transparent;padding:0;font-size:.78rem;color:' + dateColor + ';width:105px;outline:none;cursor:pointer;font-family:inherit">';
-        html += '</div>';
-
-        // Vendor pill
-        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:20px;padding:4px 10px;flex-shrink:0">';
-        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="var(--gray-400)" style="flex-shrink:0"><path d="M20 7h-4V5c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V9c0-1.11-.89-2-2-2zM10 5h4v2h-4V5z"/></svg>';
-        html += '<input type="text" data-action="set-checklist-vendor" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor" style="border:none;background:transparent;padding:0;font-size:.78rem;color:var(--gray-600);width:130px;outline:none;font-family:inherit">';
-        html += '</div>';
-
-        // Note pill
-        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:20px;padding:4px 10px;flex:1;min-width:80px">';
-        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="var(--gray-400)" style="flex-shrink:0"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
-        html += '<input type="text" data-action="set-checklist-note" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add a note..." style="border:none;background:transparent;padding:0;font-size:.78rem;color:var(--gray-600);flex:1;min-width:0;outline:none;font-family:inherit">';
-        html += '</div>';
-
-        html += '</div>'; // pill row
-
-        // Completed by
-        if (item.completed && item.completedBy) {
-          html += '<div style="margin-top:5px;font-size:.72rem;color:var(--gray-400);display:flex;align-items:center;gap:4px">';
-          html += '<svg viewBox="0 0 24 24" width="9" height="9" fill="var(--emerald)"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
-          html += 'Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt);
-          html += '</div>';
+        // Badges on the right
+        if (item.dueDate) {
+          var dLeft = daysUntil(item.dueDate);
+          var dLabel = dLeft === null ? '' : dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd ago' : dLeft + 'd';
+          var dBadgeBg = overdue ? '#FEE2E2' : dLeft !== null && dLeft <= 7 ? '#FEF3C7' : '#EEF2FF';
+          var dBadgeColor = overdue ? '#991B1B' : dLeft !== null && dLeft <= 7 ? '#92400E' : 'var(--indigo)';
+          html += '<span style="font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;background:' + dBadgeBg + ';color:' + dBadgeColor + ';white-space:nowrap;flex-shrink:0">' + dLabel + '</span>';
         }
+        if (item.vendor) html += '<span style="font-size:.6rem;font-weight:600;padding:2px 6px;border-radius:99px;background:var(--gray-50);color:var(--gray-500);white-space:nowrap;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(item.vendor) + '</span>';
+        if (item.note) html += '<span style="width:6px;height:6px;border-radius:50%;background:var(--indigo);flex-shrink:0" title="Has note"></span>';
 
-        html += '</div>'; // body
+        html += '<svg viewBox="0 0 24 24" width="14" height="14" fill="var(--gray-300)" style="flex-shrink:0;transition:transform .15s" class="cl-expand-arrow"><path d="M7 10l5 5 5-5z"/></svg>';
+        html += '<button style="background:none;border:none;color:var(--gray-300);font-size:.9rem;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" onclick="event.stopPropagation()" title="Remove">&times;</button>';
+        html += '</div>';
 
-        // Remove button
-        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:1rem;padding:3px 5px;line-height:1;flex-shrink:0;border-radius:4px;margin-top:1px" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" title="Remove">&times;</button>';
+        // Expandable detail — hidden by default
+        html += '<div class="cl-detail" data-detail-for="' + escapeHtml(item.id) + '" style="display:none;padding:6px 12px 10px;border-top:1px solid ' + chipBorder + ';background:var(--gray-50)">';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
+
+        // Date
+        html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Due Date</div>';
+        html += '<input type="text" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit;cursor:pointer"></div>';
+
+        // Vendor
+        html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Vendor</div>';
+        html += '<input type="text" data-action="set-checklist-vendor" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor name" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit"></div>';
+
+        // Note
+        html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Note</div>';
+        html += '<input type="text" data-action="set-checklist-note" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit"></div>';
+
+        html += '</div>'; // grid
+        if (item.completed && item.completedBy) {
+          html += '<div style="margin-top:6px;font-size:.68rem;color:var(--gray-400)">Completed by ' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
+        }
+        html += '</div>'; // cl-detail
 
         html += '</div>'; // cl-item
       });
-      // Add new item input
-      html += '<div style="display:flex;gap:8px;padding:10px 0;align-items:center">';
-      html += '<input type="text" id="newChecklistItem" placeholder="Add a checklist item..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 12px;font-size:.82rem;outline:none">';
-      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.78rem;padding:6px 14px;white-space:nowrap">+ Add</button>';
+      // Add new item
+      html += '<div style="display:flex;gap:6px;padding:4px 0;align-items:center">';
+      html += '<input type="text" id="newChecklistItem" placeholder="+ Add item..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:99px;padding:6px 14px;font-size:.8rem;outline:none;font-family:inherit">';
+      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.75rem;padding:6px 14px;border-radius:99px;white-space:nowrap">Add</button>';
       html += '</div>';
       html += '</div>';
     } else {
@@ -1651,6 +1647,18 @@
         window.scrollTo(0, 0);
         render();
         break;
+
+      case 'toggle-cl-expand': {
+        var expandId = target.closest('[data-action="toggle-cl-expand"]').getAttribute('data-item-id');
+        var detailEl = document.querySelector('[data-detail-for="' + expandId + '"]');
+        var arrowEl = target.closest('[data-action="toggle-cl-expand"]').querySelector('.cl-expand-arrow');
+        if (detailEl) {
+          var isOpen = detailEl.style.display !== 'none';
+          detailEl.style.display = isOpen ? 'none' : '';
+          if (arrowEl) arrowEl.style.transform = isOpen ? '' : 'rotate(180deg)';
+        }
+        break;
+      }
 
       case 'toggle-listing-checklist': {
         var lcBody = document.getElementById('listingChecklistBody');
