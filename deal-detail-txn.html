@@ -57,6 +57,9 @@
                 }
               } catch(e3) {}
             }
+            // No linked listing — redirect with transaction ID so listings.js handles it
+            window.location.replace('deal-detail.html#' + data.id);
+            return;
           }
         }
       } catch(e) {}
@@ -429,13 +432,13 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777057881"></script>
-  <script src="js/api.js?v=1777057881"></script>
-  <script src="js/api-bridge.js?v=1777057881"></script>
-  <script src="js/auth.js?v=1777057881"></script>
-  <script src="js/data.js?v=1777057881"></script>
-  <script src="js/transactions.js?v=1777057881"></script>
-  <script src="js/notifications.js?v=1777057881"></script>
-  <script src="js/datepicker.js?v=1777057881"></script>
+  <script src="js/theme.js?v=1777073587"></script>
+  <script src="js/api.js?v=1777073587"></script>
+  <script src="js/api-bridge.js?v=1777073587"></script>
+  <script src="js/auth.js?v=1777073587"></script>
+  <script src="js/data.js?v=1777073587"></script>
+  <script src="js/transactions.js?v=1777073587"></script>
+  <script src="js/notifications.js?v=1777073587"></script>
+  <script src="js/datepicker.js?v=1777073587"></script>
 </body>
 </html>

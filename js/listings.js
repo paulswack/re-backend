@@ -987,9 +987,26 @@
     var listings = Data.getListings();
     var l = listings.find(function (x) { return x.id === selectedListingId; });
 
+    // Fallback: if no listing found, check if it's a transaction ID
+    if (!l) {
+      var txnFallback = Data.getTransactions().find(function (x) { return x.id === selectedListingId; });
+      if (txnFallback) {
+        // Map transaction data to listing format so the same template renders
+        l = {
+          id: txnFallback.id, address: txnFallback.address, city: txnFallback.city,
+          state: txnFallback.state, zip: txnFallback.zip, price: txnFallback.price,
+          agent: txnFallback.agent, agentId: txnFallback.agentId,
+          status: txnFallback.status, source: txnFallback.source,
+          beds: txnFallback.beds, baths: txnFallback.baths, sqft: txnFallback.sqft,
+          listingDate: null, propertyType: '', description: '',
+          _isTxn: true, _txnId: txnFallback.id, _txnType: txnFallback.type,
+          _closeDate: txnFallback.closeDate
+        };
+      }
+    }
+
     if (!l) {
       if (viewMode === 'detail' && selectedListingId) {
-        // Deal not loaded yet — wait for apiBridgeReady
         pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px">' +
           '<div style="font-size:1rem;color:var(--gray-500);margin-bottom:8px">Loading deal...</div></div>';
         return;

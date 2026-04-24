@@ -42,6 +42,32 @@
           }
         }
       } catch(e) {}
+      // If listing not found, try as a transaction ID and store in reb_transactions
+      if (!localStorage.getItem('reb_listings') || JSON.parse(localStorage.getItem('reb_listings')).findIndex(function(x){return x.id===id}) === -1) {
+        try {
+          var txhr = new XMLHttpRequest();
+          txhr.open('GET', '/api/transactions/' + id, false);
+          txhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          txhr.send();
+          if (txhr.status === 200) {
+            var tdata = JSON.parse(txhr.responseText);
+            if (tdata && tdata.id) {
+              var tmeta = tdata.metadata || {};
+              var tmapped = { id: tdata.id, address: tdata.address, city: tdata.city, state: tdata.state, zip: tdata.zip,
+                type: tdata.type, status: tdata.status, price: parseFloat(tdata.price) || 0,
+                agent: tdata.agent_name, agentId: tdata.agent_id, source: tdata.source,
+                closeDate: tdata.close_date, notes: tdata.notes,
+                beds: tdata.beds || tmeta.beds || null, baths: tdata.baths || tmeta.baths || null,
+                sqft: tdata.sqft || tmeta.sqft || null, metadata: tmeta, createdAt: tdata.created_at };
+              var texisting = JSON.parse(localStorage.getItem('reb_transactions') || '[]');
+              var tfound = false;
+              for (var ti = 0; ti < texisting.length; ti++) { if (texisting[ti].id === tmapped.id) { texisting[ti] = tmapped; tfound = true; break; } }
+              if (!tfound) texisting.push(tmapped);
+              localStorage.setItem('reb_transactions', JSON.stringify(texisting));
+            }
+          }
+        } catch(et) {}
+      }
       // Also fetch transactions so linked escrow data is available
       try {
         var xhr2 = new XMLHttpRequest();
@@ -216,12 +242,12 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777073310"></script>
-  <script src="js/api.js?v=1777073310"></script>
-  <script src="js/api-bridge.js?v=1777073310"></script>
-  <script src="js/auth.js?v=1777073310"></script>
-  <script src="js/data.js?v=1777073310"></script>
-  <script src="js/listings.js?v=1777073310"></script>
-  <script src="js/datepicker.js?v=1777073310"></script>
+  <script src="js/theme.js?v=1777073587"></script>
+  <script src="js/api.js?v=1777073587"></script>
+  <script src="js/api-bridge.js?v=1777073587"></script>
+  <script src="js/auth.js?v=1777073587"></script>
+  <script src="js/data.js?v=1777073587"></script>
+  <script src="js/listings.js?v=1777073587"></script>
+  <script src="js/datepicker.js?v=1777073587"></script>
 </body>
 </html>
