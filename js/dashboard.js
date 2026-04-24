@@ -243,7 +243,7 @@
         var isMine = session && t.agent === session.displayName;
         var canOpen = isLead || isMine;
         var rowTag = canOpen ? 'a' : 'div';
-        var rowHref = canOpen ? ' href="deal-detail-txn.html#' + t.id + '"' : '';
+        var rowHref = canOpen ? ' href="deal-detail.html#' + t.id + '"' : '';
         var rowStyle = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-50);text-decoration:none;color:inherit;transition:background .12s;border-radius:6px;padding-left:4px;padding-right:4px;' + (canOpen ? 'cursor:pointer' : 'cursor:default;opacity:.85');
         s += '<' + rowTag + rowHref + ' style="' + rowStyle + '"' + (canOpen ? ' onmouseover="this.style.background=\'var(--gray-50)\'" onmouseout="this.style.background=\'transparent\'"' : '') + '>';
         s += '<span class="dr-urgency ' + urgClass + '" style="min-width:42px;text-align:center">' + urgText + '</span>';

@@ -315,9 +315,9 @@
 
     var statusKey = t.status || 'active';
     var rowClass = 'dr-row dr-row--' + statusKey;
-    // If there's a linked listing, go to the listing detail (unified view)
+    // All deals go through deal-detail.html (unified view)
     var linkedLst = (window._drAllListings || []).find(function (l) { return l.address === t.address; });
-    var detailHref = linkedLst ? 'deal-detail.html#' + linkedLst.id : 'deal-detail-txn.html#' + t.id;
+    var detailHref = 'deal-detail.html#' + (linkedLst ? linkedLst.id : t.id);
     return '<a class="' + rowClass + '" href="' + detailHref + '" style="text-decoration:none;color:inherit;cursor:pointer">' +
       '<div class="dr-row-main">' +
         '<div class="dr-row-address">' + escapeHtml(t.address || '—') + '</div>' +
@@ -439,7 +439,7 @@
           '<div class="dr-panel-search">' + SEARCH_ICON +
             '<input type="text" id="txnSearch" placeholder="Search…" value="' + escapeHtml(_txnSearch) + '">' +
           '</div>' +
-          '<a href="deal-detail-txn.html" class="dr-add-btn">+ Add Escrow</a>' +
+          '<a href="deal-detail.html" class="dr-add-btn">+ Add Escrow</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +
