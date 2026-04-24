@@ -9,88 +9,13 @@
     window._forceDetailId = window.location.hash ? window.location.hash.substring(1) : '';
     window._forceDetailFrom = 'dealRoom';
     // Synchronously fetch the deal and inject into localStorage before other scripts load
+    // Non-blocking: check token, then let api-bridge handle data loading
     (function() {
       var id = window._forceDetailId;
       if (!id) return;
       var token = localStorage.getItem('reb_jwt');
       if (!token) { window.location.href = 'login.html'; return; }
-      // Check token expiry before making requests
       try { var p = JSON.parse(atob(token.split('.')[1])); if (p.exp && p.exp * 1000 < Date.now()) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; } } catch(e) {}
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/listings/' + id, false);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-        xhr.send();
-        if (xhr.status === 401) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; }
-        if (xhr.status === 200) {
-          var data = JSON.parse(xhr.responseText);
-          if (data && data.id) {
-            var mapped = {
-              id: data.id, address: data.address, city: data.city || '', state: data.state || '', zip: data.zip || '',
-              status: data.status, price: parseFloat(data.price) || 0, agent: data.agent_name, agentId: data.agent_id,
-              beds: data.beds, baths: data.baths, sqft: data.sqft, description: data.description,
-              source: data.source, listingDate: data.listing_date, propertyType: data.property_type || '',
-              createdAt: data.created_at
-            };
-            var existing = JSON.parse(localStorage.getItem('reb_listings') || '[]');
-            var found = false;
-            for (var i = 0; i < existing.length; i++) {
-              if (existing[i].id === mapped.id) { existing[i] = mapped; found = true; break; }
-            }
-            if (!found) existing.push(mapped);
-            localStorage.setItem('reb_listings', JSON.stringify(existing));
-          }
-        }
-      } catch(e) {}
-      // If listing not found, try as a transaction ID and store in reb_transactions
-      if (!localStorage.getItem('reb_listings') || JSON.parse(localStorage.getItem('reb_listings')).findIndex(function(x){return x.id===id}) === -1) {
-        try {
-          var txhr = new XMLHttpRequest();
-          txhr.open('GET', '/api/transactions/' + id, false);
-          txhr.setRequestHeader('Authorization', 'Bearer ' + token);
-          txhr.send();
-          if (txhr.status === 200) {
-            var tdata = JSON.parse(txhr.responseText);
-            if (tdata && tdata.id) {
-              var tmeta = tdata.metadata || {};
-              var tmapped = { id: tdata.id, address: tdata.address, city: tdata.city, state: tdata.state, zip: tdata.zip,
-                type: tdata.type, status: tdata.status, price: parseFloat(tdata.price) || 0,
-                agent: tdata.agent_name, agentId: tdata.agent_id, source: tdata.source,
-                closeDate: tdata.close_date, notes: tdata.notes,
-                beds: tdata.beds || tmeta.beds || null, baths: tdata.baths || tmeta.baths || null,
-                sqft: tdata.sqft || tmeta.sqft || null, metadata: tmeta, createdAt: tdata.created_at };
-              var texisting = JSON.parse(localStorage.getItem('reb_transactions') || '[]');
-              var tfound = false;
-              for (var ti = 0; ti < texisting.length; ti++) { if (texisting[ti].id === tmapped.id) { texisting[ti] = tmapped; tfound = true; break; } }
-              if (!tfound) texisting.push(tmapped);
-              localStorage.setItem('reb_transactions', JSON.stringify(texisting));
-            }
-          }
-        } catch(et) {}
-      }
-      // Also fetch transactions so linked escrow data is available
-      try {
-        var xhr2 = new XMLHttpRequest();
-        xhr2.open('GET', '/api/transactions', false);
-        xhr2.setRequestHeader('Authorization', 'Bearer ' + token);
-        xhr2.send();
-        if (xhr2.status === 401) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; }
-        if (xhr2.status === 200) {
-          var txns = JSON.parse(xhr2.responseText);
-          if (txns && Array.isArray(txns)) {
-            var mappedTxns = txns.map(function(t) {
-              var meta = t.metadata || {};
-              return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip,
-                type: t.type, status: t.status, price: parseFloat(t.price) || 0,
-                agent: t.agent_name, agentId: t.agent_id, source: t.source,
-                closeDate: t.close_date, notes: t.notes,
-                beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null,
-                sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
-            });
-            localStorage.setItem('reb_transactions', JSON.stringify(mappedTxns));
-          }
-        }
-      } catch(e2) {}
     })();
   </script>
   <link rel="stylesheet" href="css/style.css?v=1777073896">
@@ -247,12 +172,12 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1777073896"></script>
-  <script src="js/api.js?v=1777073896"></script>
-  <script src="js/api-bridge.js?v=1777073896"></script>
-  <script src="js/auth.js?v=1777073896"></script>
-  <script src="js/data.js?v=1777073896"></script>
-  <script src="js/listings.js?v=1777073896"></script>
-  <script src="js/datepicker.js?v=1777073896"></script>
+  <script src="js/theme.js?v=1777074033"></script>
+  <script src="js/api.js?v=1777074033"></script>
+  <script src="js/api-bridge.js?v=1777074033"></script>
+  <script src="js/auth.js?v=1777074033"></script>
+  <script src="js/data.js?v=1777074033"></script>
+  <script src="js/listings.js?v=1777074033"></script>
+  <script src="js/datepicker.js?v=1777074033"></script>
 </body>
 </html>
