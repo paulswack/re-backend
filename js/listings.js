@@ -1003,67 +1003,67 @@
 
     var html = '';
 
-    // Back button + action buttons inline
-    var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">';
-    html += '<button class="detail-back-btn" data-action="back-to-list" style="margin-bottom:0">' +
-      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      (fromDealRoom ? 'Deal Room' : 'Back') +
-    '</button>';
-    html += '<div style="display:flex;gap:6px">';
-    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:99px;font-size:.78rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer">' +
-      '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
-    html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
-    html += '</div></div>';
-
-    // Inline-editable input style
-    var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:6px;padding:3px 6px;font-family:inherit;transition:all .15s;width:100%;';
+    // Styles
+    var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:8px;padding:4px 8px;font-family:inherit;transition:all .15s;width:100%;';
     var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
+    var fldInp = 'width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s';
+    var selStyle = 'font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;border:1.5px solid var(--gray-200);border-radius:10px;padding:6px 10px;cursor:pointer;width:100%;font-family:inherit';
+    var fldLbl = 'font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:3px';
 
-    // Compact header — address + price + city/state/zip on one card
-    html += '<div class="detail-header-card">';
-    html += '<div class="detail-header-accent"></div>';
-    html += '<div style="padding:16px 20px 12px">';
-    html += '<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">';
-    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.2rem;font-weight:800;color:var(--gray-900);flex:1;min-width:200px;' + inpStyle + '" ' + inpFocus + '>';
-    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.05rem;font-weight:700;color:var(--indigo);width:140px;text-align:right;' + inpStyle + '" ' +
-      'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
-      'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
-    html += '</div>';
-    html += '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-top:8px">';
-    var cszStyle = 'width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.82rem;color:var(--gray-700);background:#fff;font-family:inherit';
-    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="' + cszStyle + '">';
-    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="' + cszStyle + '">';
-    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="' + cszStyle + '">';
-    html += '</div>';
-    html += '</div>';
-
-    // Detail fields — compact grid
-    var selStyle = 'font-size:.82rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid var(--gray-200);border-radius:6px;padding:4px 6px;cursor:pointer;width:100%';
+    var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
+    var statusColors = { pre_listing: '#7C3AED', coming_soon: '#3B5BDB', active: '#059669', pending: '#D97706', sold: '#DC2626' };
+    var statusColor = statusColors[l.status] || 'var(--indigo)';
     var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'pre_listing', label: 'Pre-Listing' }, { key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     var _lstDetailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
-    var fldLbl = 'font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin-bottom:2px';
-    var fldInp = 'width:100%;padding:4px 6px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;font-family:inherit';
+    var statusLabel = (_lstDetailStatuses.find(function(s){return s.key===l.status}) || {}).label || l.status;
 
-    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 20px 14px">';
+    // Hero header
+    html += '<div class="detail-header-card" style="margin-bottom:16px">';
+    html += '<div style="height:4px;background:' + statusColor + '"></div>';
+    html += '<div style="padding:20px 24px 16px">';
+
+    // Row 1: Back + Status badge + Action buttons
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<button class="detail-back-btn" data-action="back-to-list" style="margin:0;padding:6px 14px"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (fromDealRoom ? 'Deal Room' : 'Back') + '</button>';
+    html += '<span style="font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;background:' + statusColor + '22;color:' + statusColor + ';text-transform:uppercase;letter-spacing:.3px">' + escapeHtml(statusLabel) + '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
+    html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
+    html += '</div></div>';
+
+    // Row 2: Address + Price
+    html += '<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:10px">';
+    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);flex:1;min-width:200px;' + inpStyle + '" ' + inpFocus + '>';
+    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.15rem;font-weight:800;color:' + statusColor + ';width:160px;text-align:right;' + inpStyle + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+    html += '</div>';
+
+    // Row 3: City/State/Zip inline
+    html += '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:16px">';
+    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="' + fldInp + '" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="' + fldInp + '" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="' + fldInp + '" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+    html += '</div>';
+
+    // Row 4: Property details — clean grid with rounded inputs
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;padding-top:14px;border-top:1px solid var(--gray-100)">';
 
     html += '<div><div style="' + fldLbl + '">Beds</div><input type="number" class="ie-field" data-field="beds" value="' + (l.beds || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
     html += '<div><div style="' + fldLbl + '">Baths</div><input type="number" class="ie-field" data-field="baths" value="' + (l.baths || '') + '" placeholder="—" min="0" step="0.5" style="' + fldInp + '"></div>';
     html += '<div><div style="' + fldLbl + '">Sq Ft</div><input type="number" class="ie-field" data-field="sqft" value="' + (l.sqft || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
-    html += '<div><div style="' + fldLbl + '">Source</div><select class="ie-field" data-field="source" style="' + selStyle + '"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div>';
-
     html += '<div><div style="' + fldLbl + '">Agent</div><select class="ie-field" data-field="agent" style="' + selStyle + '">' + users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') + '</select></div>';
     html += '<div><div style="' + fldLbl + '">Status</div><select class="ie-field" data-field="status" style="' + selStyle + '">' + _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
+    html += '<div><div style="' + fldLbl + '">Source</div><select class="ie-field" data-field="source" style="' + selStyle + '"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div>';
     html += '<div><div style="' + fldLbl + '">Listed</div><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '" style="' + fldInp + '"></div>';
 
-    // Close of Escrow (if linked escrow exists)
     var _coeTxn = Data.getTransactions().find(function (t) { return t.address === l.address && t.status !== 'closed'; });
     if (_coeTxn) {
-      html += '<div><div style="' + fldLbl + ';color:var(--emerald)">COE Date</div><input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '" style="' + fldInp + '"></div>';
+      html += '<div><div style="' + fldLbl + ';color:var(--emerald)">COE Date</div><input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '" style="' + fldInp + ';border-color:#86EFAC"></div>';
     }
 
-    html += '</div>'; // grid
-    html += '</div>'; // header card body
+    html += '</div>'; // property grid
+    html += '</div>'; // padding
     html += '</div>'; // header card
 
     // === TWO COLUMN LAYOUT ===
