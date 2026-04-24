@@ -1160,44 +1160,62 @@
         });
       }
 
-      html += '<div id="clItemList" style="padding:8px 16px 8px;display:flex;flex-wrap:wrap;gap:6px">';
+      html += '<div id="clItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">';
       clSorted.forEach(function (item) {
         var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
-        var chipBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#fff';
-        var chipBorder = item.completed ? '#86EFAC' : overdue ? '#FECACA' : 'var(--gray-200)';
+        var leftColor = item.completed ? '#10B981' : overdue ? '#EF4444' : 'var(--indigo)';
+        var cardBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#FAFAFE';
         var textColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
 
-        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="background:' + chipBg + ';border:1.5px solid ' + chipBorder + ';border-radius:99px;display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;cursor:pointer;transition:all .15s;max-width:100%" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '">';
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:14px;height:14px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-        html += '<span style="font-size:.78rem;font-weight:600;color:' + textColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">' + escapeHtml(item.label) + '</span>';
+        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '" style="background:' + cardBg + ';border:1px solid var(--gray-100);border-left:3px solid ' + leftColor + ';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
 
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
+
+        html += '<div style="flex:1;min-width:0">';
+        html += '<div style="font-size:.82rem;font-weight:600;color:' + textColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + escapeHtml(item.label) + '</div>';
+
+        // Sub info line
+        var subParts = [];
         if (item.dueDate) {
           var dLeft = daysUntil(item.dueDate);
-          var dLabel = dLeft === null ? '' : dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd ago' : dLeft + 'd';
-          var dBadgeBg = overdue ? '#FEE2E2' : dLeft !== null && dLeft <= 7 ? '#FEF3C7' : '#EEF2FF';
-          var dBadgeColor = overdue ? '#991B1B' : dLeft !== null && dLeft <= 7 ? '#92400E' : 'var(--indigo)';
-          html += '<span style="font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:99px;background:' + dBadgeBg + ';color:' + dBadgeColor + ';flex-shrink:0">' + dLabel + '</span>';
+          var dLabel = dLeft === null ? '' : dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd overdue' : dLeft + ' days';
+          subParts.push(dLabel);
         }
-        if (item.vendor || item.note) html += '<span style="width:5px;height:5px;border-radius:50%;background:var(--indigo);flex-shrink:0"></span>';
+        if (item.vendor) subParts.push(item.vendor);
+        if (subParts.length) {
+          html += '<div style="font-size:.7rem;color:var(--gray-400);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(subParts.join(' · ')) + '</div>';
+        }
+        html += '</div>';
 
-        html += '<button style="background:none;border:none;color:var(--gray-300);font-size:.75rem;cursor:pointer;padding:0;line-height:1;flex-shrink:0" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" onclick="event.stopPropagation()" title="Remove">&times;</button>';
+        // Badge
+        if (item.dueDate && !item.completed) {
+          var dLeft2 = daysUntil(item.dueDate);
+          var badgeBg = overdue ? '#FEE2E2' : dLeft2 !== null && dLeft2 <= 7 ? '#FEF3C7' : '#EEF2FF';
+          var badgeColor = overdue ? '#DC2626' : dLeft2 !== null && dLeft2 <= 7 ? '#D97706' : 'var(--indigo)';
+          var badgeText = dLeft2 === 0 ? '!' : dLeft2 < 0 ? '!!' : dLeft2 + 'd';
+          html += '<span style="font-size:.65rem;font-weight:800;padding:3px 7px;border-radius:8px;background:' + badgeBg + ';color:' + badgeColor + ';flex-shrink:0">' + badgeText + '</span>';
+        }
+        if (item.completed) {
+          html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="#10B981" style="flex-shrink:0"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
+        }
+
         html += '</div>';
       });
-      // Add new item
-      html += '<div style="display:inline-flex;align-items:center;gap:4px;border:1.5px dashed var(--gray-200);border-radius:99px;padding:4px 10px 4px 6px">';
-      html += '<input type="text" id="newChecklistItem" placeholder="+ Add..." style="border:none;outline:none;font-size:.78rem;width:80px;font-family:inherit;background:transparent">';
-      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.68rem;padding:3px 10px;border-radius:99px">Add</button>';
+      // Add new item card
+      html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
+      html += '<input type="text" id="newChecklistItem" placeholder="+ Add checklist item..." style="flex:1;border:none;outline:none;font-size:.82rem;font-family:inherit;background:transparent;color:var(--gray-600)">';
+      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.72rem;padding:4px 12px;border-radius:8px;white-space:nowrap">Add</button>';
       html += '</div>';
       html += '</div>';
 
-      // Expanded detail panel — sits below the grid, shown when a chip is clicked
-      html += '<div id="clExpandPanel" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px">';
+      // Expanded detail panel
+      html += '<div id="clExpandPanel" style="display:none;margin:0 16px 10px;padding:12px 16px;background:linear-gradient(135deg,#F8FAFC,#EEF2FF);border:1.5px solid var(--indigo);border-radius:12px">';
+      html += '<div id="clExpandInfo" style="font-size:.82rem;font-weight:700;color:var(--indigo);margin-bottom:8px"></div>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
-      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="clExpandDate" data-action="set-checklist-date" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
-      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="clExpandVendor" data-action="set-checklist-vendor" placeholder="Vendor" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
-      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="clExpandNote" data-action="set-checklist-note" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
+      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="clExpandDate" data-action="set-checklist-date" placeholder="Pick date..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
+      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="clExpandVendor" data-action="set-checklist-vendor" placeholder="Vendor" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
+      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="clExpandNote" data-action="set-checklist-note" placeholder="Add note..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
       html += '</div>';
-      html += '<div id="clExpandInfo" style="margin-top:6px;font-size:.68rem;color:var(--gray-400)"></div>';
       html += '</div>';
     } else {
       // Auto-attach first listing template
@@ -1260,42 +1278,50 @@
           html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
           html += '<div style="background:var(--emerald);height:100%;width:' + ecPct + '%;border-radius:6px"></div>';
           html += '</div></div>';
-          html += '<div id="ecClItemList" style="padding:8px 16px 8px;display:flex;flex-wrap:wrap;gap:6px">';
+          html += '<div id="ecClItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px">';
           txnChecklist.items.forEach(function (item) {
             var ecOverdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
-            var ecChipBg = item.completed ? '#F0FDF4' : ecOverdue ? '#FFF5F5' : '#fff';
-            var ecChipBorder = item.completed ? '#86EFAC' : ecOverdue ? '#FECACA' : 'var(--gray-200)';
+            var ecLeftColor = item.completed ? '#10B981' : ecOverdue ? '#EF4444' : 'var(--emerald)';
+            var ecCardBg = item.completed ? '#F0FDF4' : ecOverdue ? '#FFF5F5' : '#F0FDF9';
             var ecTextColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
 
-            html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" style="background:' + ecChipBg + ';border:1.5px solid ' + ecChipBorder + ';border-radius:99px;display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;cursor:pointer;transition:all .15s;max-width:100%" data-action="toggle-ec-expand" data-item-id="' + escapeHtml(item.id) + '" data-txn-id="' + linkedTxn.id + '">';
-            html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:14px;height:14px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-            html += '<span style="font-size:.78rem;font-weight:600;color:' + ecTextColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">' + escapeHtml(item.label) + '</span>';
+            html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" data-action="toggle-ec-expand" data-item-id="' + escapeHtml(item.id) + '" data-txn-id="' + linkedTxn.id + '" style="background:' + ecCardBg + ';border:1px solid var(--gray-100);border-left:3px solid ' + ecLeftColor + ';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
 
+            html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
+
+            html += '<div style="flex:1;min-width:0">';
+            html += '<div style="font-size:.82rem;font-weight:600;color:' + ecTextColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + escapeHtml(item.label) + '</div>';
+            var ecSubParts = [];
             if (item.dueDate) {
-              var ecDLeft = daysUntil(item.dueDate);
-              var ecDLabel = ecDLeft === null ? '' : ecDLeft === 0 ? 'Today' : ecDLeft < 0 ? Math.abs(ecDLeft) + 'd ago' : ecDLeft + 'd';
-              var ecDBg = ecOverdue ? '#FEE2E2' : ecDLeft !== null && ecDLeft <= 7 ? '#FEF3C7' : '#EEF2FF';
-              var ecDColor = ecOverdue ? '#991B1B' : ecDLeft !== null && ecDLeft <= 7 ? '#92400E' : 'var(--indigo)';
-              html += '<span style="font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:99px;background:' + ecDBg + ';color:' + ecDColor + ';flex-shrink:0">' + ecDLabel + '</span>';
+              var ecDL = daysUntil(item.dueDate);
+              ecSubParts.push(ecDL === 0 ? 'Today' : ecDL < 0 ? Math.abs(ecDL) + 'd overdue' : ecDL + ' days');
             }
-            if (item.vendor || item.note) html += '<span style="width:5px;height:5px;border-radius:50%;background:var(--indigo);flex-shrink:0"></span>';
+            if (item.vendor) ecSubParts.push(item.vendor);
+            if (ecSubParts.length) html += '<div style="font-size:.7rem;color:var(--gray-400);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(ecSubParts.join(' · ')) + '</div>';
+            html += '</div>';
+
+            if (item.dueDate && !item.completed) {
+              var ecDL2 = daysUntil(item.dueDate);
+              var ecBBg = ecOverdue ? '#FEE2E2' : ecDL2 !== null && ecDL2 <= 7 ? '#FEF3C7' : '#ECFDF5';
+              var ecBColor = ecOverdue ? '#DC2626' : ecDL2 !== null && ecDL2 <= 7 ? '#D97706' : '#059669';
+              html += '<span style="font-size:.65rem;font-weight:800;padding:3px 7px;border-radius:8px;background:' + ecBBg + ';color:' + ecBColor + ';flex-shrink:0">' + (ecDL2 === 0 ? '!' : ecDL2 < 0 ? '!!' : ecDL2 + 'd') + '</span>';
+            }
+            if (item.completed) html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="#10B981" style="flex-shrink:0"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
             html += '</div>';
           });
-          // Add new item
-          html += '<div style="display:inline-flex;align-items:center;gap:4px;border:1.5px dashed var(--gray-200);border-radius:99px;padding:4px 10px 4px 6px">';
-          html += '<input type="text" id="newEscrowClItem" placeholder="+ Add..." style="border:none;outline:none;font-size:.78rem;width:80px;font-family:inherit;background:transparent">';
-          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" style="font-size:.68rem;padding:3px 10px;border-radius:99px">Add</button>';
+          html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
+          html += '<input type="text" id="newEscrowClItem" placeholder="+ Add escrow item..." style="flex:1;border:none;outline:none;font-size:.82rem;font-family:inherit;background:transparent;color:var(--gray-600)">';
+          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" style="font-size:.72rem;padding:4px 12px;border-radius:8px;white-space:nowrap">Add</button>';
           html += '</div>';
           html += '</div>';
 
-          // Escrow expand panel
-          html += '<div id="ecExpandPanel" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px">';
+          html += '<div id="ecExpandPanel" style="display:none;margin:0 16px 10px;padding:12px 16px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid var(--emerald);border-radius:12px">';
+          html += '<div id="ecExpandInfo" style="font-size:.82rem;font-weight:700;color:#059669;margin-bottom:8px"></div>';
           html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
-          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="ecExpandDate" data-action="set-escrow-cl-date" data-txn-id="' + linkedTxn.id + '" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
-          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="ecExpandVendor" data-action="set-escrow-cl-vendor" data-txn-id="' + linkedTxn.id + '" placeholder="Vendor" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
-          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="ecExpandNote" data-action="set-escrow-cl-note" data-txn-id="' + linkedTxn.id + '" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="ecExpandDate" data-action="set-escrow-cl-date" data-txn-id="' + linkedTxn.id + '" placeholder="Pick date..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="ecExpandVendor" data-action="set-escrow-cl-vendor" data-txn-id="' + linkedTxn.id + '" placeholder="Vendor" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="ecExpandNote" data-action="set-escrow-cl-note" data-txn-id="' + linkedTxn.id + '" placeholder="Add note..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
           html += '</div>';
-          html += '<div id="ecExpandInfo" style="margin-top:6px;font-size:.68rem;color:var(--gray-400)"></div>';
           html += '</div>';
           html += '</div></div></div>';
         }
