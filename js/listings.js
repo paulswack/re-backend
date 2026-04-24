@@ -1160,66 +1160,44 @@
         });
       }
 
-      html += '<div id="clItemList" style="padding:8px 16px 8px;display:flex;flex-direction:column;gap:6px">';
+      html += '<div id="clItemList" style="padding:8px 16px 8px;display:flex;flex-wrap:wrap;gap:6px">';
       clSorted.forEach(function (item) {
         var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
         var chipBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#fff';
         var chipBorder = item.completed ? '#86EFAC' : overdue ? '#FECACA' : 'var(--gray-200)';
         var textColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
-        var hasMeta = item.dueDate || item.vendor || item.note;
 
-        // Compact chip/button
-        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="background:' + chipBg + ';border:1.5px solid ' + chipBorder + ';border-radius:12px;overflow:hidden;transition:all .15s">';
+        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" style="background:' + chipBg + ';border:1.5px solid ' + chipBorder + ';border-radius:99px;display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;cursor:pointer;transition:all .15s;max-width:100%" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '">';
+        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:14px;height:14px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
+        html += '<span style="font-size:.78rem;font-weight:600;color:' + textColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">' + escapeHtml(item.label) + '</span>';
 
-        // Main row — always visible
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '">';
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-        html += '<span style="flex:1;font-size:.84rem;font-weight:600;color:' + textColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(item.label) + '</span>';
-
-        // Badges on the right
         if (item.dueDate) {
           var dLeft = daysUntil(item.dueDate);
           var dLabel = dLeft === null ? '' : dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd ago' : dLeft + 'd';
           var dBadgeBg = overdue ? '#FEE2E2' : dLeft !== null && dLeft <= 7 ? '#FEF3C7' : '#EEF2FF';
           var dBadgeColor = overdue ? '#991B1B' : dLeft !== null && dLeft <= 7 ? '#92400E' : 'var(--indigo)';
-          html += '<span style="font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;background:' + dBadgeBg + ';color:' + dBadgeColor + ';white-space:nowrap;flex-shrink:0">' + dLabel + '</span>';
+          html += '<span style="font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:99px;background:' + dBadgeBg + ';color:' + dBadgeColor + ';flex-shrink:0">' + dLabel + '</span>';
         }
-        if (item.vendor) html += '<span style="font-size:.6rem;font-weight:600;padding:2px 6px;border-radius:99px;background:var(--gray-50);color:var(--gray-500);white-space:nowrap;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(item.vendor) + '</span>';
-        if (item.note) html += '<span style="width:6px;height:6px;border-radius:50%;background:var(--indigo);flex-shrink:0" title="Has note"></span>';
+        if (item.vendor || item.note) html += '<span style="width:5px;height:5px;border-radius:50%;background:var(--indigo);flex-shrink:0"></span>';
 
-        html += '<svg viewBox="0 0 24 24" width="14" height="14" fill="var(--gray-300)" style="flex-shrink:0;transition:transform .15s" class="cl-expand-arrow"><path d="M7 10l5 5 5-5z"/></svg>';
-        html += '<button style="background:none;border:none;color:var(--gray-300);font-size:.9rem;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" onclick="event.stopPropagation()" title="Remove">&times;</button>';
+        html += '<button style="background:none;border:none;color:var(--gray-300);font-size:.75rem;cursor:pointer;padding:0;line-height:1;flex-shrink:0" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-id="' + escapeHtml(item.id) + '" onclick="event.stopPropagation()" title="Remove">&times;</button>';
         html += '</div>';
-
-        // Expandable detail — hidden by default
-        html += '<div class="cl-detail" data-detail-for="' + escapeHtml(item.id) + '" style="display:none;padding:6px 12px 10px;border-top:1px solid ' + chipBorder + ';background:var(--gray-50)">';
-        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
-
-        // Date
-        html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Due Date</div>';
-        html += '<input type="text" data-action="set-checklist-date" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit;cursor:pointer"></div>';
-
-        // Vendor
-        html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Vendor</div>';
-        html += '<input type="text" data-action="set-checklist-vendor" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor name" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit"></div>';
-
-        // Note
-        html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Note</div>';
-        html += '<input type="text" data-action="set-checklist-note" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit"></div>';
-
-        html += '</div>'; // grid
-        if (item.completed && item.completedBy) {
-          html += '<div style="margin-top:6px;font-size:.68rem;color:var(--gray-400)">Completed by ' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
-        }
-        html += '</div>'; // cl-detail
-
-        html += '</div>'; // cl-item
       });
       // Add new item
-      html += '<div style="display:flex;gap:6px;padding:4px 0;align-items:center">';
-      html += '<input type="text" id="newChecklistItem" placeholder="+ Add item..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:99px;padding:6px 14px;font-size:.8rem;outline:none;font-family:inherit">';
-      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.75rem;padding:6px 14px;border-radius:99px;white-space:nowrap">Add</button>';
+      html += '<div style="display:inline-flex;align-items:center;gap:4px;border:1.5px dashed var(--gray-200);border-radius:99px;padding:4px 10px 4px 6px">';
+      html += '<input type="text" id="newChecklistItem" placeholder="+ Add..." style="border:none;outline:none;font-size:.78rem;width:80px;font-family:inherit;background:transparent">';
+      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.68rem;padding:3px 10px;border-radius:99px">Add</button>';
       html += '</div>';
+      html += '</div>';
+
+      // Expanded detail panel — sits below the grid, shown when a chip is clicked
+      html += '<div id="clExpandPanel" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px">';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="clExpandDate" data-action="set-checklist-date" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
+      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="clExpandVendor" data-action="set-checklist-vendor" placeholder="Vendor" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
+      html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="clExpandNote" data-action="set-checklist-note" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
+      html += '</div>';
+      html += '<div id="clExpandInfo" style="margin-top:6px;font-size:.68rem;color:var(--gray-400)"></div>';
       html += '</div>';
     } else {
       // Auto-attach first listing template
@@ -1282,54 +1260,42 @@
           html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
           html += '<div style="background:var(--emerald);height:100%;width:' + ecPct + '%;border-radius:6px"></div>';
           html += '</div></div>';
-          html += '<div id="ecClItemList" style="padding:8px 16px 8px;display:flex;flex-direction:column;gap:6px">';
+          html += '<div id="ecClItemList" style="padding:8px 16px 8px;display:flex;flex-wrap:wrap;gap:6px">';
           txnChecklist.items.forEach(function (item) {
             var ecOverdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
             var ecChipBg = item.completed ? '#F0FDF4' : ecOverdue ? '#FFF5F5' : '#fff';
             var ecChipBorder = item.completed ? '#86EFAC' : ecOverdue ? '#FECACA' : 'var(--gray-200)';
             var ecTextColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
 
-            html += '<div style="background:' + ecChipBg + ';border:1.5px solid ' + ecChipBorder + ';border-radius:12px;overflow:hidden;transition:all .15s">';
-
-            // Main row
-            html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '">';
-            html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-            html += '<span style="flex:1;font-size:.84rem;font-weight:600;color:' + ecTextColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(item.label) + '</span>';
+            html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" style="background:' + ecChipBg + ';border:1.5px solid ' + ecChipBorder + ';border-radius:99px;display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;cursor:pointer;transition:all .15s;max-width:100%" data-action="toggle-ec-expand" data-item-id="' + escapeHtml(item.id) + '" data-txn-id="' + linkedTxn.id + '">';
+            html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:14px;height:14px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
+            html += '<span style="font-size:.78rem;font-weight:600;color:' + ecTextColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">' + escapeHtml(item.label) + '</span>';
 
             if (item.dueDate) {
               var ecDLeft = daysUntil(item.dueDate);
               var ecDLabel = ecDLeft === null ? '' : ecDLeft === 0 ? 'Today' : ecDLeft < 0 ? Math.abs(ecDLeft) + 'd ago' : ecDLeft + 'd';
               var ecDBg = ecOverdue ? '#FEE2E2' : ecDLeft !== null && ecDLeft <= 7 ? '#FEF3C7' : '#EEF2FF';
               var ecDColor = ecOverdue ? '#991B1B' : ecDLeft !== null && ecDLeft <= 7 ? '#92400E' : 'var(--indigo)';
-              html += '<span style="font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px;background:' + ecDBg + ';color:' + ecDColor + ';white-space:nowrap;flex-shrink:0">' + ecDLabel + '</span>';
+              html += '<span style="font-size:.58rem;font-weight:700;padding:1px 6px;border-radius:99px;background:' + ecDBg + ';color:' + ecDColor + ';flex-shrink:0">' + ecDLabel + '</span>';
             }
-            if (item.vendor) html += '<span style="font-size:.6rem;font-weight:600;padding:2px 6px;border-radius:99px;background:var(--gray-50);color:var(--gray-500);white-space:nowrap;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(item.vendor) + '</span>';
-            if (item.note) html += '<span style="width:6px;height:6px;border-radius:50%;background:var(--indigo);flex-shrink:0" title="Has note"></span>';
-
-            html += '<svg viewBox="0 0 24 24" width="14" height="14" fill="var(--gray-300)" style="flex-shrink:0;transition:transform .15s" class="cl-expand-arrow"><path d="M7 10l5 5 5-5z"/></svg>';
-            html += '</div>';
-
-            // Expandable detail
-            html += '<div class="cl-detail" data-detail-for="' + escapeHtml(item.id) + '" style="display:none;padding:6px 12px 10px;border-top:1px solid ' + ecChipBorder + ';background:var(--gray-50)">';
-            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">';
-            html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Due Date</div>';
-            html += '<input type="text" data-action="set-escrow-cl-date" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit;cursor:pointer"></div>';
-            html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Vendor</div>';
-            html += '<input type="text" data-action="set-escrow-cl-vendor" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor name" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit"></div>';
-            html += '<div><div style="font-size:.58rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px">Note</div>';
-            html += '<input type="text" data-action="set-escrow-cl-note" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.78rem;color:var(--gray-700);background:#fff;font-family:inherit"></div>';
-            html += '</div>';
-            if (item.completed && item.completedBy) {
-              html += '<div style="margin-top:6px;font-size:.68rem;color:var(--gray-400)">Completed by ' + escapeHtml(item.completedBy) + ' · ' + Data.formatDate(item.completedAt) + '</div>';
-            }
-            html += '</div>';
-
+            if (item.vendor || item.note) html += '<span style="width:5px;height:5px;border-radius:50%;background:var(--indigo);flex-shrink:0"></span>';
             html += '</div>';
           });
           // Add new item
-          html += '<div style="display:flex;gap:6px;padding:4px 0;align-items:center">';
-          html += '<input type="text" id="newEscrowClItem" placeholder="+ Add item..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:99px;padding:6px 14px;font-size:.8rem;outline:none;font-family:inherit">';
-          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" style="font-size:.75rem;padding:6px 14px;border-radius:99px;white-space:nowrap">Add</button>';
+          html += '<div style="display:inline-flex;align-items:center;gap:4px;border:1.5px dashed var(--gray-200);border-radius:99px;padding:4px 10px 4px 6px">';
+          html += '<input type="text" id="newEscrowClItem" placeholder="+ Add..." style="border:none;outline:none;font-size:.78rem;width:80px;font-family:inherit;background:transparent">';
+          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" style="font-size:.68rem;padding:3px 10px;border-radius:99px">Add</button>';
+          html += '</div>';
+          html += '</div>';
+
+          // Escrow expand panel
+          html += '<div id="ecExpandPanel" style="display:none;margin:0 16px 8px;padding:10px 14px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:12px">';
+          html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="ecExpandDate" data-action="set-escrow-cl-date" data-txn-id="' + linkedTxn.id + '" placeholder="Pick date..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="ecExpandVendor" data-action="set-escrow-cl-vendor" data-txn-id="' + linkedTxn.id + '" placeholder="Vendor" style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="ecExpandNote" data-action="set-escrow-cl-note" data-txn-id="' + linkedTxn.id + '" placeholder="Add note..." style="width:100%;padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.8rem;background:#fff;font-family:inherit"></div>';
+          html += '</div>';
+          html += '<div id="ecExpandInfo" style="margin-top:6px;font-size:.68rem;color:var(--gray-400)"></div>';
           html += '</div>';
           html += '</div></div></div>';
         }
@@ -1656,13 +1622,92 @@
         break;
 
       case 'toggle-cl-expand': {
-        var expandId = target.closest('[data-action="toggle-cl-expand"]').getAttribute('data-item-id');
-        var detailEl = document.querySelector('[data-detail-for="' + expandId + '"]');
-        var arrowEl = target.closest('[data-action="toggle-cl-expand"]').querySelector('.cl-expand-arrow');
-        if (detailEl) {
-          var isOpen = detailEl.style.display !== 'none';
-          detailEl.style.display = isOpen ? 'none' : '';
-          if (arrowEl) arrowEl.style.transform = isOpen ? '' : 'rotate(180deg)';
+        var expandEl = target.closest('[data-action="toggle-cl-expand"]');
+        var expandId = expandEl ? expandEl.getAttribute('data-item-id') : null;
+        if (!expandId) break;
+        var panel = document.getElementById('clExpandPanel');
+        if (!panel) break;
+
+        // If clicking the same item, toggle off
+        if (panel.style.display !== 'none' && panel.getAttribute('data-active-id') === expandId) {
+          panel.style.display = 'none';
+          panel.setAttribute('data-active-id', '');
+          break;
+        }
+
+        // Find the item data
+        var allCl = getDealChecklists();
+        var clData = allCl[selectedListingId];
+        var clItem = clData ? clData.items.find(function (i) { return i.id === expandId; }) : null;
+        if (!clItem) break;
+
+        // Populate the panel
+        var dateInp = document.getElementById('clExpandDate');
+        var vendorInp = document.getElementById('clExpandVendor');
+        var noteInp = document.getElementById('clExpandNote');
+        var infoEl = document.getElementById('clExpandInfo');
+        if (dateInp) { dateInp.value = clItem.dueDate || ''; dateInp.setAttribute('data-item-id', expandId); }
+        if (vendorInp) { vendorInp.value = clItem.vendor || ''; vendorInp.setAttribute('data-item-id', expandId); }
+        if (noteInp) { noteInp.value = clItem.note || ''; noteInp.setAttribute('data-item-id', expandId); }
+        if (infoEl) {
+          infoEl.innerHTML = clItem.completed && clItem.completedBy
+            ? 'Completed by ' + escapeHtml(clItem.completedBy) + ' · ' + Data.formatDate(clItem.completedAt)
+            : '<span style="font-weight:600;color:var(--gray-600)">' + escapeHtml(clItem.label) + '</span>';
+        }
+
+        panel.setAttribute('data-active-id', expandId);
+        panel.style.display = '';
+
+        // Re-init flatpickr on the date input
+        if (dateInp && typeof flatpickr !== 'undefined') {
+          if (dateInp._flatpickr) dateInp._flatpickr.destroy();
+          flatpickr(dateInp, {
+            enableTime: true, dateFormat: 'Y-m-d H:i', altInput: true, altFormat: 'D, M j h:iK',
+            allowInput: false, disableMobile: false, minuteIncrement: 15,
+            onChange: function (sel, dateStr) {
+              var ev = new Event('change', { bubbles: true });
+              dateInp.dispatchEvent(ev);
+            }
+          });
+        }
+        break;
+      }
+
+      case 'toggle-ec-expand': {
+        var ecExpandEl = target.closest('[data-action="toggle-ec-expand"]');
+        var ecExpandId = ecExpandEl ? ecExpandEl.getAttribute('data-item-id') : null;
+        var ecExpandTxnId = ecExpandEl ? ecExpandEl.getAttribute('data-txn-id') : null;
+        if (!ecExpandId || !ecExpandTxnId) break;
+        var ecPanel = document.getElementById('ecExpandPanel');
+        if (!ecPanel) break;
+        if (ecPanel.style.display !== 'none' && ecPanel.getAttribute('data-active-id') === ecExpandId) {
+          ecPanel.style.display = 'none'; break;
+        }
+        var ecAllCl = getDealChecklists();
+        var ecClData = ecAllCl[ecExpandTxnId];
+        var ecClItem = ecClData ? ecClData.items.find(function (i) { return i.id === ecExpandId; }) : null;
+        if (!ecClItem) break;
+        var ecDateI = document.getElementById('ecExpandDate');
+        var ecVendI = document.getElementById('ecExpandVendor');
+        var ecNoteI = document.getElementById('ecExpandNote');
+        var ecInfoI = document.getElementById('ecExpandInfo');
+        if (ecDateI) { ecDateI.value = ecClItem.dueDate || ''; ecDateI.setAttribute('data-item-id', ecExpandId); }
+        if (ecVendI) { ecVendI.value = ecClItem.vendor || ''; ecVendI.setAttribute('data-item-id', ecExpandId); }
+        if (ecNoteI) { ecNoteI.value = ecClItem.note || ''; ecNoteI.setAttribute('data-item-id', ecExpandId); }
+        if (ecInfoI) {
+          ecInfoI.innerHTML = ecClItem.completed && ecClItem.completedBy
+            ? 'Completed by ' + escapeHtml(ecClItem.completedBy) + ' · ' + Data.formatDate(ecClItem.completedAt)
+            : '<span style="font-weight:600;color:var(--gray-600)">' + escapeHtml(ecClItem.label) + '</span>';
+        }
+        ecPanel.setAttribute('data-active-id', ecExpandId);
+        ecPanel.style.display = '';
+        if (ecDateI && typeof flatpickr !== 'undefined') {
+          if (ecDateI._flatpickr) ecDateI._flatpickr.destroy();
+          flatpickr(ecDateI, {
+            enableTime: true, dateFormat: 'Y-m-d H:i', altInput: true, altFormat: 'D, M j h:iK',
+            allowInput: false, disableMobile: false, minuteIncrement: 15,
+            onChange: function (sel, dateStr) { ecDateI.dispatchEvent(new Event('change', { bubbles: true })); }
+          });
         }
         break;
       }
