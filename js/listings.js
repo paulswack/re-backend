@@ -2602,6 +2602,16 @@
     render();
   });
 
+  // If apiBridgeReady already fired before we registered the listener, retry now
+  if (!_detailRendered && viewMode === 'detail' && selectedListingId) {
+    setTimeout(function () {
+      if (!_detailRendered) render();
+    }, 500);
+    setTimeout(function () {
+      if (!_detailRendered) render();
+    }, 2000);
+  }
+
   // Poll for checklist updates from other computers every 10 seconds
   setInterval(function () {
     if (!_detailRendered || !selectedListingId) return;
