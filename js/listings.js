@@ -1066,6 +1066,10 @@
     html += '</div>'; // header card body
     html += '</div>'; // header card
 
+    // === TWO COLUMN LAYOUT ===
+    html += '<div class="dd-two-col">';
+    html += '<div class="dd-col-left">';
+
     // Seller Info Card — always visible, inline-editable
     var detailParties = getParties();
     var rawDetailP = detailParties[selectedListingId] || {};
@@ -1114,6 +1118,12 @@
       html += '</div>';
       html += '</div>';
     }
+
+    // Delete button in left column
+    html += '<button class="btn btn-outline btn-sm" data-action="delete-listing" data-id="' + l.id + '" style="color:var(--rose);border-color:var(--gray-200);margin-top:12px">Delete Listing</button>';
+
+    html += '</div>'; // dd-col-left
+    html += '<div class="dd-col-right">';
 
     // Checklist Card
     var dealChecklists = getDealChecklists();
@@ -1367,10 +1377,8 @@
     html += '</div>';
 
 
-    // Delete at bottom
-    html += '<div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gray-100);margin-bottom:40px">' +
-      '<button class="btn btn-outline btn-sm" data-action="delete-listing" data-id="' + l.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete This Listing</button>' +
-    '</div>';
+    html += '</div>'; // dd-col-right
+    html += '</div>'; // dd-two-col
 
     pageBody.innerHTML = html;
     _detailRendered = true;

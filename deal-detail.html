@@ -63,7 +63,7 @@
       } catch(e2) {}
     })();
   </script>
-  <link rel="stylesheet" href="css/style.css?v=1776969956">
+  <link rel="stylesheet" href="css/style.css?v=1777044413">
   <style>
     /* ---- Deal Detail — Clean Design (matches Deal Room) ---- */
 
@@ -85,7 +85,7 @@
       border: 1px solid var(--gray-100);
       box-shadow: 0 2px 12px rgba(10,22,40,.07), 0 1px 3px rgba(10,22,40,.05);
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
     .detail-header-accent { height: 3px; background: linear-gradient(90deg, var(--indigo), #3B82F6); }
     .detail-header-top {
@@ -93,19 +93,28 @@
       flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
     }
 
+    /* Two-column layout */
+    .dd-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .dd-col-left, .dd-col-right { min-width: 0; }
+
     /* All section cards — consistent style */
     .parties-card, .desc-card, .notes-card {
       background: var(--white);
       border-radius: 16px;
       border: 1px solid var(--gray-100);
       box-shadow: 0 2px 12px rgba(10,22,40,.07), 0 1px 3px rgba(10,22,40,.05);
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       overflow: hidden;
     }
     .parties-card-header, .desc-card-header, .notes-card-header {
-      padding: 14px 20px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--gray-100);
-      font-size: .9rem; font-weight: 700; color: var(--gray-800);
+      font-size: .85rem; font-weight: 700; color: var(--gray-800);
       background: #fff;
     }
 
@@ -148,6 +157,9 @@
     }
 
     /* Responsive */
+    @media (max-width: 900px) {
+      .dd-two-col { grid-template-columns: 1fr; }
+    }
     @media (max-width: 768px) {
       .lst-row-specs, .lst-row-date { display: none; }
       .detail-back-btn { font-size: .8rem; padding: 6px 12px; }
@@ -210,12 +222,12 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="js/theme.js?v=1776969956"></script>
-  <script src="js/api.js?v=1776969956"></script>
-  <script src="js/api-bridge.js?v=1776969956"></script>
-  <script src="js/auth.js?v=1776969956"></script>
-  <script src="js/data.js?v=1776969956"></script>
-  <script src="js/listings.js?v=1776969956"></script>
-  <script src="js/datepicker.js?v=1776969956"></script>
+  <script src="js/theme.js?v=1777044413"></script>
+  <script src="js/api.js?v=1777044413"></script>
+  <script src="js/api-bridge.js?v=1777044413"></script>
+  <script src="js/auth.js?v=1777044413"></script>
+  <script src="js/data.js?v=1777044413"></script>
+  <script src="js/listings.js?v=1777044413"></script>
+  <script src="js/datepicker.js?v=1777044413"></script>
 </body>
 </html>
