@@ -187,21 +187,29 @@
 
     // Performance table
     if (agentStats.length > 0) {
-      s += '<div style="padding:0 20px 16px">';
-      s += '<div class="table-wrapper"><table style="font-size:.82rem">';
-      s += '<thead><tr><th>#</th><th>Agent</th><th>Closed</th><th>In Escrow</th><th>Listings</th><th>Volume</th><th>Avg Deal</th></tr></thead><tbody>';
+      s += '<div style="padding:0 16px 16px">';
+      s += '<div class="table-wrapper"><table style="font-size:.82rem;border-collapse:separate;border-spacing:0">';
+      s += '<thead><tr style="background:var(--gray-50)">' +
+        '<th style="padding:10px 8px;text-align:left;font-size:.68rem;color:var(--gray-400);font-weight:700;letter-spacing:.3px">#</th>' +
+        '<th style="padding:10px 8px;text-align:left;font-size:.68rem;color:var(--gray-400);font-weight:700;letter-spacing:.3px">Agent</th>' +
+        '<th style="padding:10px 12px;text-align:center;font-size:.68rem;color:var(--emerald);font-weight:700;letter-spacing:.3px">Closed</th>' +
+        '<th style="padding:10px 12px;text-align:center;font-size:.68rem;color:var(--amber);font-weight:700;letter-spacing:.3px">In Escrow</th>' +
+        '<th style="padding:10px 12px;text-align:center;font-size:.68rem;color:#3B82F6;font-weight:700;letter-spacing:.3px">Listings</th>' +
+        '<th style="padding:10px 12px;text-align:right;font-size:.68rem;color:var(--gray-400);font-weight:700;letter-spacing:.3px">Volume</th>' +
+        '<th style="padding:10px 12px;text-align:right;font-size:.68rem;color:var(--gray-400);font-weight:700;letter-spacing:.3px">Avg Deal</th>' +
+        '</tr></thead><tbody>';
       agentStats.forEach(function (a, i) {
         var cls = agentClass(a.name);
         var rankClass = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : ''));
         var isMe = session && a.name === session.displayName;
-        s += '<tr' + (isMe ? ' style="background:#FFFBEB"' : '') + '>';
-        s += '<td><div class="lb-rank-badge ' + rankClass + '" style="width:22px;height:22px;font-size:.68rem">' + (i + 1) + '</div></td>';
-        s += '<td><div style="display:flex;align-items:center;gap:6px"><div class="agent-avatar ' + cls + '" style="width:26px;height:26px;font-size:.58rem">' + getInitials(a.name) + '</div><span style="font-weight:600;white-space:nowrap">' + a.name + (isMe ? ' <span style="font-size:.6rem;color:var(--amber);font-weight:700">(You)</span>' : '') + '</span></div></td>';
-        s += '<td style="font-weight:700;color:var(--emerald)">' + a.closings + '</td>';
-        s += '<td style="color:var(--amber)">' + a.inEscrow + '</td>';
-        s += '<td style="color:#3B82F6">' + a.listings + '</td>';
-        s += '<td style="font-weight:700">' + Data.formatCurrency(a.volume) + '</td>';
-        s += '<td style="color:var(--gray-400)">' + (a.closings > 0 ? Data.formatCurrency(a.avgDeal) : '—') + '</td>';
+        s += '<tr style="border-bottom:1px solid var(--gray-50);' + (isMe ? 'background:#FFFBEB;' : '') + '">';
+        s += '<td style="padding:8px"><div class="lb-rank-badge ' + rankClass + '" style="width:22px;height:22px;font-size:.68rem">' + (i + 1) + '</div></td>';
+        s += '<td style="padding:8px"><div style="display:flex;align-items:center;gap:6px"><div class="agent-avatar ' + cls + '" style="width:26px;height:26px;font-size:.58rem">' + getInitials(a.name) + '</div><span style="font-weight:600;white-space:nowrap">' + a.name + (isMe ? ' <span style="font-size:.6rem;color:var(--amber);font-weight:700">(You)</span>' : '') + '</span></div></td>';
+        s += '<td style="padding:8px 12px;text-align:center;font-weight:800;font-size:.9rem;color:var(--emerald)">' + a.closings + '</td>';
+        s += '<td style="padding:8px 12px;text-align:center;font-weight:700;font-size:.9rem;color:var(--amber)">' + a.inEscrow + '</td>';
+        s += '<td style="padding:8px 12px;text-align:center;font-weight:700;font-size:.9rem;color:#3B82F6">' + a.listings + '</td>';
+        s += '<td style="padding:8px 12px;text-align:right;font-weight:700;font-size:.82rem">' + Data.formatCurrency(a.volume) + '</td>';
+        s += '<td style="padding:8px 12px;text-align:right;font-size:.82rem;color:var(--gray-400)">' + (a.closings > 0 ? Data.formatCurrency(a.avgDeal) : '—') + '</td>';
         s += '</tr>';
       });
       s += '</tbody></table></div>';
