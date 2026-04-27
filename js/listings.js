@@ -1951,20 +1951,25 @@
           '</div>';
         document.body.appendChild(dlOverlay);
         dlOverlay.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          ev.stopImmediatePropagation();
           var act = ev.target.closest('[data-action]');
           if (!act) return;
-          if (act.getAttribute('data-action') === 'dl-confirm') {
+          var actName = act.getAttribute('data-action');
+          if (actName === 'dl-confirm') {
+            dlOverlay.remove();
             Data.deleteListing(dlId);
             var notes = getNotes();
             delete notes[dlId];
             saveNotes(notes);
             showToast('Listing deleted.');
-            viewMode = 'list';
-            selectedListingId = null;
-            render();
+            window.location.href = 'deal-room.html';
+            return;
           }
-          document.body.removeChild(dlOverlay);
-        });
+          if (actName === 'dl-cancel') {
+            dlOverlay.remove();
+          }
+        }, true);
         break;
       }
 
