@@ -2076,6 +2076,24 @@
           showToast('Listing created.');
         }
 
+        // If status is pending, auto-create a linked escrow if one doesn't exist
+        if (fData.status === 'pending') {
+          var existingEscrow = Data.getTransactions().find(function (t) {
+            return t.address === fData.address && t.status !== 'closed';
+          });
+          if (!existingEscrow) {
+            window._suppressTxnSync = true;
+            var newEscrow = Data.addTransaction({
+              address: fData.address, city: fData.city, state: fData.state, zip: fData.zip,
+              price: fData.price, agent: fData.agent, source: fData.source,
+              type: 'Seller', status: 'pending',
+              notes: 'Created from listing (pending)', closeDate: ''
+            });
+            window._suppressTxnSync = false;
+            showToast('Escrow created for pending listing.');
+          }
+        }
+
         // Save listing parties to localStorage
         var fLstParties = getParties();
         if (!fLstParties[fListingId]) fLstParties[fListingId] = { sellers: [], contacts: {} };
