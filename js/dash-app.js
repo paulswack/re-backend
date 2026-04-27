@@ -95,14 +95,13 @@
     agentStats = Object.keys(agentNames).map(function (name) {
       var closed = rangedClosed.filter(function (t) { return t.agent === name; });
       var vol = closed.reduce(function (s, t) { return s + (t.price || 0); }, 0);
-      var active = txns.filter(function (t) { return t.agent === name && t.status === 'active'; });
-      var pending = txns.filter(function (t) { return t.agent === name && t.status === 'pending'; });
-      var agentListings = listings.filter(function (l) { return l.agent === name && l.status === 'active'; });
+      var inEscrow = txns.filter(function (t) { return t.agent === name && (t.status === 'active' || t.status === 'pending'); });
+      var agentListings = listings.filter(function (l) { return l.agent === name && (l.status === 'pre_listing' || l.status === 'coming_soon' || l.status === 'active'); });
       var closedCount = countDeals(closed);
       return {
         name: name, closings: closedCount, volume: vol,
         avgDeal: closedCount > 0 ? vol / closedCount : 0,
-        active: active.length, pending: pending.length,
+        inEscrow: inEscrow.length,
         listings: agentListings.length
       };
     }).sort(function (a, b) {
@@ -190,7 +189,7 @@
     if (agentStats.length > 0) {
       s += '<div style="padding:0 20px 16px">';
       s += '<div class="table-wrapper"><table style="font-size:.82rem">';
-      s += '<thead><tr><th>#</th><th>Agent</th><th>Closed</th><th>Pending</th><th>Active</th><th>Listings</th><th>Volume</th><th>Avg Deal</th></tr></thead><tbody>';
+      s += '<thead><tr><th>#</th><th>Agent</th><th>Closed</th><th>In Escrow</th><th>Listings</th><th>Volume</th><th>Avg Deal</th></tr></thead><tbody>';
       agentStats.forEach(function (a, i) {
         var cls = agentClass(a.name);
         var rankClass = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : ''));
@@ -199,9 +198,8 @@
         s += '<td><div class="lb-rank-badge ' + rankClass + '" style="width:22px;height:22px;font-size:.68rem">' + (i + 1) + '</div></td>';
         s += '<td><div style="display:flex;align-items:center;gap:6px"><div class="agent-avatar ' + cls + '" style="width:26px;height:26px;font-size:.58rem">' + getInitials(a.name) + '</div><span style="font-weight:600;white-space:nowrap">' + a.name + (isMe ? ' <span style="font-size:.6rem;color:var(--amber);font-weight:700">(You)</span>' : '') + '</span></div></td>';
         s += '<td style="font-weight:700;color:var(--emerald)">' + a.closings + '</td>';
-        s += '<td style="color:var(--amber)">' + a.pending + '</td>';
-        s += '<td style="color:#3B82F6">' + a.active + '</td>';
-        s += '<td>' + a.listings + '</td>';
+        s += '<td style="color:var(--amber)">' + a.inEscrow + '</td>';
+        s += '<td style="color:#3B82F6">' + a.listings + '</td>';
         s += '<td style="font-weight:700">' + Data.formatCurrency(a.volume) + '</td>';
         s += '<td style="color:var(--gray-400)">' + (a.closings > 0 ? Data.formatCurrency(a.avgDeal) : '—') + '</td>';
         s += '</tr>';
