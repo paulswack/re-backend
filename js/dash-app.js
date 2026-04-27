@@ -208,8 +208,8 @@
         s += '<td style="padding:8px 12px;text-align:center;font-weight:800;font-size:.9rem;color:var(--emerald)">' + a.closings + '</td>';
         s += '<td style="padding:8px 12px;text-align:center;font-weight:700;font-size:.9rem;color:var(--amber)">' + a.inEscrow + '</td>';
         s += '<td style="padding:8px 12px;text-align:center;font-weight:700;font-size:.9rem;color:#3B82F6">' + a.listings + '</td>';
-        s += '<td style="padding:8px 12px;text-align:right;font-weight:700;font-size:.82rem">' + Data.formatCurrency(a.volume) + '</td>';
-        s += '<td style="padding:8px 12px;text-align:right;font-size:.82rem;color:var(--gray-400)">' + (a.closings > 0 ? Data.formatCurrency(a.avgDeal) : '—') + '</td>';
+        s += '<td style="padding:8px 8px;text-align:right;font-weight:700;font-size:.75rem;white-space:nowrap">' + Data.formatCurrency(a.volume) + '</td>';
+        s += '<td style="padding:8px 8px;text-align:right;font-size:.75rem;color:var(--gray-400);white-space:nowrap">' + (a.closings > 0 ? Data.formatCurrency(a.avgDeal) : '—') + '</td>';
         s += '</tr>';
       });
       s += '</tbody></table></div>';
