@@ -234,6 +234,67 @@
     }
   }
 
+  // Shared compact card renderer — used by both Listing and Escrow checklists so they look identical.
+  // opts: { accent: 'indigo'|'emerald', clickAction, toggleAction, draggable, extraAttrs }
+  function renderClItemCard(item, opts) {
+    var accent = opts.accent === 'emerald' ? 'emerald' : 'indigo';
+    var overdue = item.dueDate && !item.completed && daysUntil(item.dueDate) < 0;
+    var leftColor = item.completed ? '#10B981' : overdue ? '#EF4444' : (accent === 'emerald' ? 'var(--emerald)' : 'var(--indigo)');
+    var cardBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#FFFFFF';
+    var textColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
+    var extra = opts.extraAttrs || '';
+
+    var dateStr = '';
+    if (item.dueDate) {
+      try {
+        var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
+        dateStr = dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } catch(e) { dateStr = item.dueDate; }
+    }
+
+    var subParts = [];
+    if (dateStr) subParts.push(dateStr);
+    if (item.vendor) subParts.push(item.vendor);
+
+    var html = '';
+    html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '"' + (opts.draggable ? ' draggable="true"' : '') +
+      ' data-action="' + opts.clickAction + '"' + extra +
+      ' style="background:' + cardBg + ';border:1px solid var(--gray-200);border-left:3px solid ' + leftColor +
+      ';border-radius:10px;padding:8px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px"' +
+      ' onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
+
+    html += '<input type="checkbox"' + (item.completed ? ' checked' : '') +
+      ' data-action="' + opts.toggleAction + '" data-item-id="' + escapeHtml(item.id) + '"' + extra +
+      ' style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
+
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:.82rem;font-weight:600;color:' + textColor + ';' +
+      (item.completed ? 'text-decoration:line-through;' : '') +
+      'line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(item.label) + '</div>';
+    if (subParts.length) {
+      html += '<div style="font-size:.7rem;color:var(--gray-500);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+        escapeHtml(subParts.join(' · ')) + '</div>';
+    }
+    html += '</div>';
+
+    if (item.dueDate && !item.completed) {
+      var dLeft = daysUntil(item.dueDate);
+      var badgeBg = overdue ? '#FEE2E2' : dLeft !== null && dLeft <= 7 ? '#FEF3C7'
+        : (accent === 'emerald' ? '#ECFDF5' : '#EEF2FF');
+      var badgeColor = overdue ? '#DC2626' : dLeft !== null && dLeft <= 7 ? '#D97706'
+        : (accent === 'emerald' ? '#059669' : 'var(--indigo)');
+      var badgeText = dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd late' : dLeft + 'd';
+      html += '<span style="font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:8px;background:' +
+        badgeBg + ';color:' + badgeColor + ';flex-shrink:0;white-space:nowrap">' + badgeText + '</span>';
+    }
+    if (item.completed) {
+      html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="#10B981" style="flex-shrink:0">' +
+        '<path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function relativeTime(isoStr) {
     if (!isoStr) return '';
     var d = new Date(isoStr);
@@ -1184,46 +1245,14 @@
         });
       }
 
-      html += '<div id="clItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+      html += '<div id="clItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
       clSorted.forEach(function (item) {
-        var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
-        var leftColor = item.completed ? '#10B981' : overdue ? '#EF4444' : 'var(--indigo)';
-        var cardBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#FAFAFE';
-        var textColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
-
-        html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" draggable="true" data-action="toggle-cl-expand" data-item-id="' + escapeHtml(item.id) + '" style="background:' + cardBg + ';border:1px solid var(--gray-100);border-left:3px solid ' + leftColor + ';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
-
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-
-        html += '<div style="flex:1;min-width:0">';
-        html += '<div style="font-size:.82rem;font-weight:600;color:' + textColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + escapeHtml(item.label) + '</div>';
-
-        // Sub info line
-        var subParts = [];
-        if (item.dueDate) {
-          var dLeft = daysUntil(item.dueDate);
-          var dLabel = dLeft === null ? '' : dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd overdue' : dLeft + ' days';
-          subParts.push(dLabel);
-        }
-        if (item.vendor) subParts.push(item.vendor);
-        if (subParts.length) {
-          html += '<div style="font-size:.7rem;color:var(--gray-400);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(subParts.join(' · ')) + '</div>';
-        }
-        html += '</div>';
-
-        // Badge
-        if (item.dueDate && !item.completed) {
-          var dLeft2 = daysUntil(item.dueDate);
-          var badgeBg = overdue ? '#FEE2E2' : dLeft2 !== null && dLeft2 <= 7 ? '#FEF3C7' : '#EEF2FF';
-          var badgeColor = overdue ? '#DC2626' : dLeft2 !== null && dLeft2 <= 7 ? '#D97706' : 'var(--indigo)';
-          var badgeText = dLeft2 === 0 ? '!' : dLeft2 < 0 ? '!!' : dLeft2 + 'd';
-          html += '<span style="font-size:.65rem;font-weight:800;padding:3px 7px;border-radius:8px;background:' + badgeBg + ';color:' + badgeColor + ';flex-shrink:0">' + badgeText + '</span>';
-        }
-        if (item.completed) {
-          html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="#10B981" style="flex-shrink:0"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
-        }
-
-        html += '</div>';
+        html += renderClItemCard(item, {
+          accent: 'indigo',
+          clickAction: 'toggle-cl-expand',
+          toggleAction: 'toggle-checklist-item',
+          draggable: true
+        });
       });
       // Add new item card
       html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
@@ -1302,36 +1331,14 @@
           html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
           html += '<div style="background:var(--emerald);height:100%;width:' + ecPct + '%;border-radius:6px"></div>';
           html += '</div></div>';
-          html += '<div id="ecClItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+          html += '<div id="ecClItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
           txnChecklist.items.forEach(function (item) {
-            var ecOverdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
-            var ecLeftColor = item.completed ? '#10B981' : ecOverdue ? '#EF4444' : 'var(--emerald)';
-            var ecCardBg = item.completed ? '#F0FDF4' : ecOverdue ? '#FFF5F5' : '#F0FDF9';
-            var ecTextColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
-
-            html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '" data-action="toggle-ec-expand" data-item-id="' + escapeHtml(item.id) + '" data-txn-id="' + linkedTxn.id + '" style="background:' + ecCardBg + ';border:1px solid var(--gray-100);border-left:3px solid ' + ecLeftColor + ';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
-
-            html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" data-item-id="' + escapeHtml(item.id) + '" style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-
-            html += '<div style="flex:1;min-width:0">';
-            html += '<div style="font-size:.82rem;font-weight:600;color:' + ecTextColor + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + escapeHtml(item.label) + '</div>';
-            var ecSubParts = [];
-            if (item.dueDate) {
-              var ecDL = daysUntil(item.dueDate);
-              ecSubParts.push(ecDL === 0 ? 'Today' : ecDL < 0 ? Math.abs(ecDL) + 'd overdue' : ecDL + ' days');
-            }
-            if (item.vendor) ecSubParts.push(item.vendor);
-            if (ecSubParts.length) html += '<div style="font-size:.7rem;color:var(--gray-400);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(ecSubParts.join(' · ')) + '</div>';
-            html += '</div>';
-
-            if (item.dueDate && !item.completed) {
-              var ecDL2 = daysUntil(item.dueDate);
-              var ecBBg = ecOverdue ? '#FEE2E2' : ecDL2 !== null && ecDL2 <= 7 ? '#FEF3C7' : '#ECFDF5';
-              var ecBColor = ecOverdue ? '#DC2626' : ecDL2 !== null && ecDL2 <= 7 ? '#D97706' : '#059669';
-              html += '<span style="font-size:.65rem;font-weight:800;padding:3px 7px;border-radius:8px;background:' + ecBBg + ';color:' + ecBColor + ';flex-shrink:0">' + (ecDL2 === 0 ? '!' : ecDL2 < 0 ? '!!' : ecDL2 + 'd') + '</span>';
-            }
-            if (item.completed) html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="#10B981" style="flex-shrink:0"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
-            html += '</div>';
+            html += renderClItemCard(item, {
+              accent: 'emerald',
+              clickAction: 'toggle-ec-expand',
+              toggleAction: 'toggle-escrow-cl-item',
+              extraAttrs: ' data-txn-id="' + linkedTxn.id + '"'
+            });
           });
           html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
           html += '<input type="text" id="newEscrowClItem" placeholder="+ Add escrow item..." style="flex:1;border:none;outline:none;font-size:.82rem;font-family:inherit;background:transparent;color:var(--gray-600)">';
