@@ -49,7 +49,10 @@
   function daysUntil(d) {
     if (!d) return null;
     try {
-      var dt = new Date(d + 'T00:00:00'), now = new Date();
+      // Strip any time component — flatpickr stores 'YYYY-MM-DD HH:mm', also tolerate ISO 'YYYY-MM-DDTHH:mm'
+      var datePart = String(d).split(' ')[0].split('T')[0];
+      var dt = new Date(datePart + 'T00:00:00'), now = new Date();
+      if (isNaN(dt.getTime())) return null;
       now.setHours(0,0,0,0);
       return Math.round((dt - now) / 86400000);
     } catch(e) { return null; }
