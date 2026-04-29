@@ -351,6 +351,24 @@
     }
 
     pageBody.innerHTML = html;
+
+    // Auto-save each field on change/blur — users were editing fields and
+    // walking away without clicking "Save Changes", losing their edits.
+    var autoSaveTxnId = t.id;
+    function autoSaveField(input) {
+      var field = input.getAttribute('data-field');
+      if (!field) return;
+      var val = input.value;
+      if (field === 'price') val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
+      var update = {};
+      update[field] = val;
+      Data.updateTransaction(autoSaveTxnId, update);
+      showToast('Saved');
+    }
+    pageBody.querySelectorAll('.closed-edit-field').forEach(function (inp) {
+      var evt = inp.tagName === 'SELECT' || inp.type === 'date' ? 'change' : 'blur';
+      inp.addEventListener(evt, function () { autoSaveField(inp); });
+    });
   }
 
   // ============================================================
