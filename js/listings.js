@@ -2085,10 +2085,12 @@
           fListingId = editingId;
           showToast('Listing updated.');
         } else {
-          // Pass sellers so they are included in the server POST atomically
+          // Pass sellers so they are included in the server POST atomically.
+          // Don't show "created" yet — Data.addListing will show "Listing saved."
+          // on server confirmation, or a real error toast if the POST fails.
           var fResult = Data.addListing(fData, fSellers);
           fListingId = fResult.id;
-          showToast('Listing created.');
+          showToast('Saving listing…');
         }
 
         // If status is pending, auto-create a linked escrow if one doesn't exist

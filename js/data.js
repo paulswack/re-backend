@@ -442,15 +442,21 @@
             }
           } catch (e) {}
         }
+        if (typeof showToast === 'function') showToast('Listing saved.');
       }).catch(function (err) {
-        console.error('Sync add listing error:', err);
+        // Full server error to console — read this when a save fails so we know WHY
+        console.error('[addListing] server POST failed:', err, 'payload:', {
+          address: item.address, agent_name: item.agent, status: item.status, price: item.price
+        });
         // If unauthorized, redirect to login
         if (err && (err.message === 'Unauthorized' || err.error === 'Invalid or expired token' || err.error === 'Authentication required')) {
+          if (typeof showToast === 'function') showToast('Session expired — please log in again', 'error');
           window.location.href = 'login.html';
           return;
         }
         if (typeof showToast === 'function') {
-          showToast('Listing saved — syncing to server...', 'error');
+          var detail = (err && (err.error || err.message)) || 'unknown error';
+          showToast('⚠ Listing did NOT save to server: ' + detail + '. Please try again.', 'error');
         }
       });
     }
