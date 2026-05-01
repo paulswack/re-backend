@@ -382,7 +382,7 @@
           '<div class="dr-panel-search">' + SEARCH_ICON +
             '<input type="text" id="lstSearch" placeholder="Search…" value="' + escapeHtml(_lstSearch) + '">' +
           '</div>' +
-          '<a href="deal-detail.html" class="dr-add-btn">+ Add Listing</a>' +
+          '<a href="deal-detail.html?action=new&from=dealRoom" class="dr-add-btn">+ Add Listing</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +
@@ -439,7 +439,7 @@
           '<div class="dr-panel-search">' + SEARCH_ICON +
             '<input type="text" id="txnSearch" placeholder="Search…" value="' + escapeHtml(_txnSearch) + '">' +
           '</div>' +
-          '<a href="deal-detail.html" class="dr-add-btn">+ Add Escrow</a>' +
+          '<a href="deal-detail-txn.html?action=new&from=dealRoom" class="dr-add-btn">+ Add Escrow</a>' +
         '</div>' +
       '</div>' +
       rowsHtml +
