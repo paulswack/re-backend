@@ -1268,7 +1268,7 @@
         if (typeof API !== 'undefined' && API.isLoggedIn() && API.updateTeam) {
           var teamData = { name: teamName };
           if (brokerage) teamData.brokerage = brokerage;
-          API.updateTeam(teamData).catch(function () {});
+          API.updateTeam(teamData).catch(function (err) { (window.notifySyncError || console.error)('Team settings', err); });
         }
         existingTeamName = teamName;
       }

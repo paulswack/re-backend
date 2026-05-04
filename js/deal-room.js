@@ -595,7 +595,7 @@
               date: ohDate,
               time: ohTime
             })
-          }).catch(function () {});
+          }).catch(function (err) { (window.notifySyncError || console.error)('Open house email', err); });
         }
       }
 

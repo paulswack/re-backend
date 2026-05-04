@@ -16,6 +16,36 @@ var ApiBridge = (function () {
     return window.location.protocol !== 'file:' && typeof API !== 'undefined' && API.isLoggedIn();
   }
 
+  // ---- Shared sync-error notifier ----
+  // Every server-sync .catch in this layer (and data.js) routes through this so
+  // failures are visible to the user. Throttled per-label to once every 10s so a
+  // brief outage doesn't fire 30 toasts. Auth expiry triggers a single redirect.
+  window._syncErrThrottle = window._syncErrThrottle || {};
+  function notifySyncError(labelOrErr, maybeErr) {
+    var label, err;
+    if (arguments.length >= 2) { label = labelOrErr; err = maybeErr; }
+    else                        { label = 'data';      err = labelOrErr; }
+    try { console.error('[sync:' + label + '] failed:', err); } catch (e) {}
+    var msg = (err && (err.message || err.error)) || '';
+    if (msg === 'Unauthorized' || msg === 'Invalid or expired token' || msg === 'Authentication required') {
+      if (!window._syncAuthRedirectDone) {
+        window._syncAuthRedirectDone = true;
+        try { localStorage.removeItem('reb_jwt'); } catch (e) {}
+        if (typeof showToast === 'function') showToast('Session expired — please log in again', 'error');
+        try { window.location.href = 'login.html'; } catch (e) {}
+      }
+      return;
+    }
+    var now = Date.now();
+    if ((now - (window._syncErrThrottle[label] || 0)) < 10000) return;
+    window._syncErrThrottle[label] = now;
+    if (typeof showToast === 'function') {
+      var detail = msg || 'connection problem';
+      showToast('⚠ Couldn\'t sync ' + label + ' to server: ' + detail + '. Try again or check your connection.', 'error');
+    }
+  }
+  window.notifySyncError = notifySyncError;
+
   // ---- Map server → localStorage formats ----
   function mapUsers(users) {
     return users.map(function (u) {
@@ -54,7 +84,7 @@ var ApiBridge = (function () {
     var uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     var loads = [
-      API.getUsers().then(function (d) { localStorage.setItem(PREFIX + 'users', JSON.stringify(mapUsers(d))); }).catch(function () {}),
+      API.getUsers().then(function (d) { localStorage.setItem(PREFIX + 'users', JSON.stringify(mapUsers(d))); }).catch(notifySyncError),
       API.getTransactions().then(function (d) {
         var serverTxns = mapTransactions(d);
         var serverIds = {};
@@ -75,7 +105,7 @@ var ApiBridge = (function () {
             close_date: t.closeDate || null, notes: t.notes || ''
           }).then(function (created) {
             if (created && created.id) t.server_id = created.id;
-          }).catch(function () {});
+          }).catch(notifySyncError);
         });
         return Promise.all(pushPromises).then(function () {
           // Re-fetch after push so everyone sees the full list
@@ -136,13 +166,13 @@ var ApiBridge = (function () {
                   localSellers.forEach(function (s, i) {
                     partiesToPush.push({ party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } });
                   });
-                  API.updateTransaction(t.id, { parties: partiesToPush }).catch(function () {});
+                  API.updateTransaction(t.id, { parties: partiesToPush }).catch(notifySyncError);
                 }
               }
             });
           } catch (e) {}
         });
-      }).catch(function () {}),
+      }).catch(notifySyncError),
       API.getListings().then(function (d) {
         var serverLsts = mapListings(d);
         var serverIds = {};
@@ -169,7 +199,7 @@ var ApiBridge = (function () {
           }).then(function (created) {
             // Track newly pushed listing so we can migrate its parties
             if (created && created.id) serverToLocalId[created.id] = l.id;
-          }).catch(function () {});
+          }).catch(notifySyncError);
         });
         return Promise.all(pushPromises).then(function () {
           return localOnly.length > 0 ? API.getListings() : Promise.resolve(d);
@@ -254,7 +284,7 @@ var ApiBridge = (function () {
                   var partiesToPush = localSellers.map(function (s, i) {
                     return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
                   });
-                  API.updateListing(l.id, { parties: partiesToPush }).catch(function () {});
+                  API.updateListing(l.id, { parties: partiesToPush }).catch(notifySyncError);
                 }
               }
             });
@@ -273,22 +303,22 @@ var ApiBridge = (function () {
             localStorage.setItem(PREFIX + 'listings', JSON.stringify(currentLst));
           }
         });
-      }).catch(function () {}),
-      API.getSettings().then(function (d) { if (d) localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(d)); }).catch(function () {}),
-      API.getAnnouncements().then(function (d) { localStorage.setItem(PREFIX + 'announcements', JSON.stringify(mapAnnouncements(d))); }).catch(function () {}),
-      API.getChecklistTemplates().then(function (d) { localStorage.setItem(PREFIX + 'checklist_templates', JSON.stringify(mapTemplates(d))); }).catch(function () {}),
-      API.getVendors().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'vendors', JSON.stringify(d)); }).catch(function () {}),
-      API.getReviewRequests().then(function (d) { localStorage.setItem(PREFIX + 'review_requests', JSON.stringify(d)); }).catch(function () {}),
-      API.getReviewScores().then(function (d) { localStorage.setItem(PREFIX + 'review_scorecard', JSON.stringify(d)); }).catch(function () {}),
-      API.getReviewLinks().then(function (d) { localStorage.setItem(PREFIX + 'review_links', JSON.stringify(d)); }).catch(function () {}),
-      API.getEmailTemplates().then(function (d) { localStorage.setItem(PREFIX + 'review_templates', JSON.stringify(d)); }).catch(function () {}),
-      API.getMeetingNotes().then(function (d) { localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(d)); }).catch(function () {}),
-      API.getAgentGoals().then(function (d) { _rawGoals = d || []; }).catch(function () {}),
+      }).catch(notifySyncError),
+      API.getSettings().then(function (d) { if (d) localStorage.setItem(PREFIX + 'admin_settings', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getAnnouncements().then(function (d) { localStorage.setItem(PREFIX + 'announcements', JSON.stringify(mapAnnouncements(d))); }).catch(notifySyncError),
+      API.getChecklistTemplates().then(function (d) { localStorage.setItem(PREFIX + 'checklist_templates', JSON.stringify(mapTemplates(d))); }).catch(notifySyncError),
+      API.getVendors().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'vendors', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getReviewRequests().then(function (d) { localStorage.setItem(PREFIX + 'review_requests', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getReviewScores().then(function (d) { localStorage.setItem(PREFIX + 'review_scorecard', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getReviewLinks().then(function (d) { localStorage.setItem(PREFIX + 'review_links', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getEmailTemplates().then(function (d) { localStorage.setItem(PREFIX + 'review_templates', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getMeetingNotes().then(function (d) { localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getAgentGoals().then(function (d) { _rawGoals = d || []; }).catch(notifySyncError),
       // Knowledge base handled by its own seed logic — don't overwrite
       Promise.resolve(),
-      API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(function () {}),
-      API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(function () {}),
-      API.getNotifications().then(function (d) { localStorage.setItem(PREFIX + 'notifications', JSON.stringify(d)); }).catch(function () {})
+      API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(notifySyncError),
+      API.getNotifications().then(function (d) { localStorage.setItem(PREFIX + 'notifications', JSON.stringify(d)); }).catch(notifySyncError)
     ];
 
     return Promise.all(loads).then(function () {
@@ -335,7 +365,7 @@ var ApiBridge = (function () {
       // Settings
       if (key === PREFIX + 'admin_settings') {
         debounceSync('settings', function () {
-          try { API.updateSettings(JSON.parse(value)).catch(function () {}); } catch (e) {}
+          try { API.updateSettings(JSON.parse(value)).catch(notifySyncError); } catch (e) {}
         }, 300);
       }
 
@@ -346,12 +376,12 @@ var ApiBridge = (function () {
             var items = JSON.parse(value);
             // Full replace — delete all then re-create (simple approach for localStorage-based pages)
             API.getVendors().then(function (existing) {
-              var deletes = existing.map(function (v) { return API.deleteVendor(v.id).catch(function () {}); });
+              var deletes = existing.map(function (v) { return API.deleteVendor(v.id).catch(notifySyncError); });
               return Promise.all(deletes);
             }).then(function () {
-              var creates = items.map(function (v) { return API.createVendor(v).catch(function () {}); });
+              var creates = items.map(function (v) { return API.createVendor(v).catch(notifySyncError); });
               return Promise.all(creates);
-            }).catch(function () {});
+            }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -362,12 +392,12 @@ var ApiBridge = (function () {
           try {
             var items = JSON.parse(value);
             API.getAnnouncements().then(function (existing) {
-              return Promise.all(existing.map(function (a) { return API.deleteAnnouncement(a.id).catch(function () {}); }));
+              return Promise.all(existing.map(function (a) { return API.deleteAnnouncement(a.id).catch(notifySyncError); }));
             }).then(function () {
               return Promise.all(items.map(function (a) {
-                return API.createAnnouncement({ text: a.text, author_name: a.author, pinned: a.pinned }).catch(function () {});
+                return API.createAnnouncement({ text: a.text, author_name: a.author, pinned: a.pinned }).catch(notifySyncError);
               }));
-            }).catch(function () {});
+            }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -378,10 +408,10 @@ var ApiBridge = (function () {
           try {
             var items = JSON.parse(value);
             API.getMeetingNotes().then(function (existing) {
-              return Promise.all(existing.map(function (n) { return API.deleteMeetingNote(n.id).catch(function () {}); }));
+              return Promise.all(existing.map(function (n) { return API.deleteMeetingNote(n.id).catch(notifySyncError); }));
             }).then(function () {
-              return Promise.all(items.map(function (n) { return API.createMeetingNote(n).catch(function () {}); }));
-            }).catch(function () {});
+              return Promise.all(items.map(function (n) { return API.createMeetingNote(n).catch(notifySyncError); }));
+            }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -389,7 +419,7 @@ var ApiBridge = (function () {
       // Knowledge Base — synced via settings JSONB instead of individual API calls
       if (key === PREFIX + 'knowledge_base') {
         debounceSync('knowledge', function () {
-          try { API.updateSettings({ _knowledge_base: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _knowledge_base: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
@@ -399,10 +429,10 @@ var ApiBridge = (function () {
           try {
             var items = JSON.parse(value);
             API.getRecruits().then(function (existing) {
-              return Promise.all(existing.map(function (r) { return API.deleteRecruit(r.id).catch(function () {}); }));
+              return Promise.all(existing.map(function (r) { return API.deleteRecruit(r.id).catch(notifySyncError); }));
             }).then(function () {
-              return Promise.all(items.map(function (r) { return API.createRecruit(r).catch(function () {}); }));
-            }).catch(function () {});
+              return Promise.all(items.map(function (r) { return API.createRecruit(r).catch(notifySyncError); }));
+            }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -424,7 +454,7 @@ var ApiBridge = (function () {
               if (Array.isArray(dict)) dict = {};
             } catch (e) {}
             dict[uname] = myEntries;
-            API.updateSettings({ _tax_entries: dict }).catch(function () {});
+            API.updateSettings({ _tax_entries: dict }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -446,7 +476,7 @@ var ApiBridge = (function () {
               if (Array.isArray(dict)) dict = {};
             } catch (e) {}
             dict[uname] = myTrips;
-            API.updateSettings({ _mileage: dict }).catch(function () {});
+            API.updateSettings({ _mileage: dict }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -454,42 +484,42 @@ var ApiBridge = (function () {
       // Marketing activities
       if (key === PREFIX + 'marketing') {
         debounceSync('marketing', function () {
-          try { API.updateSettings({ _marketing: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _marketing: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Bold 100
       if (key === PREFIX + 'bold100') {
         debounceSync('bold100', function () {
-          try { API.updateSettings({ _bold100: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _bold100: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Review requests
       if (key === PREFIX + 'review_requests') {
         debounceSync('review_requests', function () {
-          try { API.updateSettings({ _review_requests: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _review_requests: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Review scorecard
       if (key === PREFIX + 'review_scorecard') {
         debounceSync('review_scorecard', function () {
-          try { API.updateSettings({ _review_scorecard: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _review_scorecard: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Review links
       if (key === PREFIX + 'review_links') {
         debounceSync('review_links', function () {
-          try { API.updateSettings({ _review_links: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _review_links: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Review templates
       if (key === PREFIX + 'review_templates') {
         debounceSync('review_templates', function () {
-          try { API.updateSettings({ _review_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _review_templates: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
@@ -508,7 +538,7 @@ var ApiBridge = (function () {
                 year: year,
                 closings_goal: g.closings || 0,
                 volume_goal: g.volume || 0
-              }).catch(function () {});
+              }).catch(notifySyncError);
             });
           } catch (e) {}
         }, 500);
@@ -517,131 +547,131 @@ var ApiBridge = (function () {
       // Email templates
       if (key === PREFIX + 'email_templates') {
         debounceSync('email_templates', function () {
-          try { API.updateSettings({ _email_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _email_templates: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Dashboard layout
       if (key === PREFIX + 'dash_layout') {
         debounceSync('dash_layout', function () {
-          try { API.updateSettings({ _dash_layout: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _dash_layout: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Checklist templates
       if (key === PREFIX + 'checklist_templates') {
         debounceSync('checklist_templates', function () {
-          try { API.updateSettings({ _checklist_templates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _checklist_templates: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Deal checklists — sync immediately to prevent data loss on refresh
       if (key === PREFIX + 'deal_checklists') {
-        try { API.updateSettings({ _deal_checklists: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+        try { API.updateSettings({ _deal_checklists: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
       }
 
       // Transaction updates (portal timeline)
       if (key === PREFIX + 'txn_updates') {
         debounceSync('txn_updates', function () {
-          try { API.updateSettings({ _txn_updates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _txn_updates: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Listing updates (portal timeline)
       if (key === PREFIX + 'lst_updates') {
         debounceSync('lst_updates', function () {
-          try { API.updateSettings({ _lst_updates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _lst_updates: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Transaction parties
       if (key === PREFIX + 'txn_parties') {
         debounceSync('txn_parties', function () {
-          try { API.updateSettings({ _txn_parties: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _txn_parties: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Listing parties
       if (key === PREFIX + 'lst_parties') {
         debounceSync('lst_parties', function () {
-          try { API.updateSettings({ _lst_parties: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _lst_parties: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Portal links
       if (key === PREFIX + 'portal_links') {
         debounceSync('portal_links', function () {
-          try { API.updateSettings({ _portal_links: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _portal_links: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Portal config
       if (key === PREFIX + 'portal_config') {
         debounceSync('portal_config', function () {
-          try { API.updateSettings({ _portal_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _portal_config: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Marketing config
       if (key === PREFIX + 'marketing_config') {
         debounceSync('marketing_config', function () {
-          try { API.updateSettings({ _marketing_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _marketing_config: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Profiles
       if (key === PREFIX + 'profiles') {
         debounceSync('profiles', function () {
-          try { API.updateSettings({ _profiles: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _profiles: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Notifications
       if (key === PREFIX + 'notifications') {
         debounceSync('notifications', function () {
-          try { API.updateSettings({ _notifications: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _notifications: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Transaction notes
       if (key === PREFIX + 'txn_notes') {
         debounceSync('txn_notes', function () {
-          try { API.updateSettings({ _txn_notes: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _txn_notes: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 300);
       }
 
       // Transaction key dates (deadlines)
       if (key === PREFIX + 'txn_key_dates') {
         debounceSync('txn_key_dates', function () {
-          try { API.updateSettings({ _txn_key_dates: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _txn_key_dates: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 300);
       }
 
       // Calendar events
       if (key === PREFIX + 'calendar_events') {
         debounceSync('calendar_events', function () {
-          try { API.updateSettings({ _calendar_events: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _calendar_events: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Listing notes
       if (key === PREFIX + 'listing_notes') {
         debounceSync('listing_notes', function () {
-          try { API.updateSettings({ _listing_notes: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _listing_notes: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 300);
       }
 
       // Notification config (team-wide settings)
       if (key === PREFIX + 'notif_config') {
         debounceSync('notif_config', function () {
-          try { API.updateSettings({ _notif_config: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _notif_config: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
       // Notification sent log (prevents duplicate emails across devices)
       if (key === PREFIX + 'notif_sent') {
         debounceSync('notif_sent', function () {
-          try { API.updateSettings({ _notif_sent: JSON.parse(value) }).catch(function () {}); } catch (e) {}
+          try { API.updateSettings({ _notif_sent: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
@@ -660,7 +690,7 @@ var ApiBridge = (function () {
             // Deletions: UUID in prev, not in next
             Object.keys(prevMap).forEach(function (id) {
               if (uuidRe.test(id) && !nextMap[id]) {
-                API.deleteListing(id).catch(function () {});
+                API.deleteListing(id).catch(notifySyncError);
               }
             });
             // Updates: UUID in next, changed vs prev
@@ -674,7 +704,7 @@ var ApiBridge = (function () {
                   agent_name: l.agent || '', beds: l.beds || null, baths: l.baths || null,
                   sqft: l.sqft || null, description: l.description || '', source: l.source || '',
                   listing_date: l.listingDate || null, property_type: l.propertyType || ''
-                }).catch(function () {});
+                }).catch(notifySyncError);
               }
             });
           } catch (e) {}
@@ -696,7 +726,7 @@ var ApiBridge = (function () {
             // Deletions: UUID in prev, not in next
             Object.keys(prevMap).forEach(function (id) {
               if (uuidRe.test(id) && !nextMap[id]) {
-                API.deleteTransaction(id).catch(function () {});
+                API.deleteTransaction(id).catch(notifySyncError);
               }
             });
             // Updates: UUID in next, changed vs prev
@@ -711,7 +741,7 @@ var ApiBridge = (function () {
                   close_date: t.closeDate || null, notes: t.notes || ''
                 };
                 if (t.metadata) txnUpdate.metadata = t.metadata;
-                API.updateTransaction(t.id, txnUpdate).catch(function () {});
+                API.updateTransaction(t.id, txnUpdate).catch(notifySyncError);
               }
             });
           } catch (e) {}
@@ -731,7 +761,7 @@ var ApiBridge = (function () {
               existing = adminSettings._tax_settings || {};
             } catch (e) {}
             existing[uname] = JSON.parse(value);
-            API.updateSettings({ _tax_settings: existing }).catch(function () {});
+            API.updateSettings({ _tax_settings: existing }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }

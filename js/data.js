@@ -359,7 +359,7 @@
         var items = getCollection('transactions');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
         if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('transactions', items); }
-      }).catch(function (err) { console.error('Sync add txn error:', err); });
+      }).catch(function (err) { (window.notifySyncError || console.error)('Escrow', err); });
     }
     return result;
   }
@@ -392,7 +392,7 @@
         // Also update metadata in localStorage so the api-bridge interceptor has it
         txns.update(id, { metadata: meta });
       }
-      API.updateTransaction(apiId, mapped).catch(function (err) { console.error('Sync update txn error:', err); });
+      API.updateTransaction(apiId, mapped).catch(function (err) { (window.notifySyncError || console.error)('Escrow', err); });
     }
     return result;
   }
@@ -402,7 +402,7 @@
     var apiId = (item && item.server_id) || id;
     var result = txns.remove(id);
     if (isServerMode()) {
-      API.deleteTransaction(apiId).catch(function (err) { console.error('Sync delete txn error:', err); });
+      API.deleteTransaction(apiId).catch(function (err) { (window.notifySyncError || console.error)('Escrow delete', err); });
     }
     return result;
   }
@@ -483,7 +483,7 @@
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.listingDate !== undefined) mapped.listing_date = updates.listingDate;
       if (updates.propertyType !== undefined) mapped.property_type = updates.propertyType;
-      API.updateListing(apiId, mapped).catch(function (err) { console.error('Sync update listing error:', err); });
+      API.updateListing(apiId, mapped).catch(function (err) { (window.notifySyncError || console.error)('Listing', err); });
     }
     return result;
   }
@@ -497,7 +497,7 @@
       .map(function (s, i) {
         return { party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } };
       });
-    API.updateListing(apiId, { parties: parties }).catch(function (err) { console.error('Sync listing parties error:', err); });
+    API.updateListing(apiId, { parties: parties }).catch(function (err) { (window.notifySyncError || console.error)('Listing contacts', err); });
   }
 
   function syncTransactionParties(txnId, buyers, sellers) {
@@ -513,7 +513,7 @@
       .forEach(function (s, i) {
         parties.push({ party_type: 'seller', name: s.name || '', phone: s.phone || '', email: s.email || '', sort_order: i, metadata: { relationship: s.relationship || 'Primary' } });
       });
-    API.updateTransaction(apiId, { parties: parties }).catch(function (err) { console.error('Sync transaction parties error:', err); });
+    API.updateTransaction(apiId, { parties: parties }).catch(function (err) { (window.notifySyncError || console.error)('Escrow contacts', err); });
   }
 
   function serverDeleteListing(id) {
@@ -521,7 +521,7 @@
     var apiId = (item && item.server_id) || id;
     var result = listings.remove(id);
     if (isServerMode()) {
-      API.deleteListing(apiId).catch(function (err) { console.error('Sync delete listing error:', err); });
+      API.deleteListing(apiId).catch(function (err) { (window.notifySyncError || console.error)('Listing delete', err); });
     }
     return result;
   }
