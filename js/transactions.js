@@ -1151,7 +1151,11 @@
 
         // For selects and date inputs, run synchronously (no tab-order concern)
         if (field.tagName === 'SELECT' || field.type === 'date') {
-          // Check if status is changing to 'closed'
+          // Check if status is changing to 'closed'.
+          // We must wait for the server to confirm before navigating to closed.html —
+          // otherwise the next page's loadAll() refetches from Supabase, doesn't see
+          // our just-sent update, and overwrites the local "closed" status with the
+          // stale "pending". (This is the bug Shirley hit on Sara Court.)
           if (fieldName === 'status' && val === 'closed') {
             var currentTxn = Data.getTransactions().find(function (x) { return x.id === selectedTxnId; });
             if (currentTxn && currentTxn.status !== 'closed') {
@@ -1159,19 +1163,29 @@
               if (!currentTxn.closeDate) {
                 updates.closeDate = new Date().toISOString().split('T')[0];
               }
-              Data.updateTransaction(selectedTxnId, updates);
+              var txnResult = Data.updateTransaction(selectedTxnId, updates);
+              var lstResult = null;
               var linkedListing = Data.getListings().find(function (l) {
                 return l.address === currentTxn.address && l.status !== 'sold';
               });
               if (linkedListing) {
-                Data.updateListing(linkedListing.id, { status: 'sold' });
+                lstResult = Data.updateListing(linkedListing.id, { status: 'sold' });
               }
               addUpdate(selectedTxnId, 'closing_complete', 'Closing Complete!', 'Your transaction has officially closed. Congratulations!', true);
               notifyClientEmail('transaction', selectedTxnId, 'Closing Complete!', 'Your transaction has officially closed. Congratulations!');
-              showToast('Deal closed! Moved to Closed section.');
-              setTimeout(function () {
+              showToast('Closing — waiting on server…');
+              var pending = [];
+              if (txnResult && txnResult._serverSync) pending.push(txnResult._serverSync);
+              if (lstResult && lstResult._serverSync) pending.push(lstResult._serverSync);
+              Promise.all(pending).then(function () {
+                showToast('Deal closed! Moved to Closed section.');
                 window.location.href = 'closed.html';
-              }, 800);
+              }).catch(function (err) {
+                var detail = (err && (err.error || err.message)) || 'server error';
+                showToast('⚠ Could not mark as closed: ' + detail + '. Stayed on this page so you can retry — your edit is NOT lost.', 'error');
+                // Revert dropdown so what shows matches what the server actually has
+                self.value = currentTxn.status;
+              });
               return;
             }
           }
