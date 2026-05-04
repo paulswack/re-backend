@@ -1544,18 +1544,25 @@
             }
 
             if (val === 'sold' && oldStatus !== 'sold') {
-              Data.updateListing(selectedListingId, { status: 'sold' });
+              // Don't navigate to Closed until BOTH the listing and the linked
+              // escrow have confirmed on the server. If we navigate optimistically,
+              // the next page's loadAll() refetches from Supabase — and if our
+              // sync was still in flight (or failed), it overwrites the local
+              // "closed" status with the server's stale "pending", and the deal
+              // appears to revert. This is what bit Shirley.
+              var lstResult = Data.updateListing(selectedListingId, { status: 'sold' });
+              var txnResult = null;
               if (currentListing) {
                 var linkedTxn = Data.getTransactions().find(function (t) {
                   return t.address === currentListing.address && t.status !== 'closed';
                 });
                 if (linkedTxn) {
-                  Data.updateTransaction(linkedTxn.id, {
+                  txnResult = Data.updateTransaction(linkedTxn.id, {
                     status: 'closed',
                     closeDate: linkedTxn.closeDate || new Date().toISOString().split('T')[0]
                   });
                 } else {
-                  Data.addTransaction({
+                  txnResult = Data.addTransaction({
                     address: currentListing.address,
                     city: currentListing.city,
                     state: currentListing.state,
@@ -1570,10 +1577,19 @@
                   });
                 }
               }
-              showToast('Listing sold! Moved to Closed.');
-              setTimeout(function () {
+              showToast('Marking sold — waiting on server…');
+              var pending = [];
+              if (lstResult && lstResult._serverSync) pending.push(lstResult._serverSync);
+              if (txnResult && txnResult._serverSync) pending.push(txnResult._serverSync);
+              Promise.all(pending).then(function () {
+                showToast('Listing sold! Moved to Closed.');
                 window.location.href = 'closed.html';
-              }, 800);
+              }).catch(function (err) {
+                var detail = (err && (err.error || err.message)) || 'server error';
+                showToast('⚠ Could not mark as sold: ' + detail + '. Stayed on this page so you can retry — your edit is NOT lost.', 'error');
+                // Revert the dropdown so the UI matches what the server actually has
+                self.value = oldStatus;
+              });
               return;
             }
           }

@@ -348,8 +348,8 @@
     window._suppressTxnSync = true; // prevent api-bridge from also creating this
     var result = txns.add(item); // save locally first for instant UI
     window._suppressTxnSync = false;
-    if (isServerMode()) {
-      API.createTransaction({
+    if (isServerMode() && result) {
+      var p = API.createTransaction({
         address: item.address, city: item.city, state: item.state, zip: item.zip,
         type: item.type, status: item.status, price: item.price,
         agent_name: item.agent, source: item.source, close_date: item.closeDate,
@@ -359,14 +359,18 @@
         var items = getCollection('transactions');
         var idx = items.findIndex(function (i) { return i.id === result.id; });
         if (idx !== -1) { items[idx].server_id = serverItem.id; saveCollection('transactions', items); }
-      }).catch(function (err) { (window.notifySyncError || console.error)('Escrow', err); });
+        return serverItem;
+      });
+      // Surface failures + keep the original promise on the result so callers can wait for it.
+      p.catch(function (err) { (window.notifySyncError || console.error)('Escrow', err); });
+      result._serverSync = p;
     }
     return result;
   }
 
   function serverUpdateTransaction(id, updates) {
     var result = txns.update(id, updates);
-    if (isServerMode()) {
+    if (isServerMode() && result) {
       var item = txns.getAll().find(function (i) { return i.id === id; });
       var apiId = (item && item.server_id) || id;
       var mapped = {};
@@ -392,7 +396,9 @@
         // Also update metadata in localStorage so the api-bridge interceptor has it
         txns.update(id, { metadata: meta });
       }
-      API.updateTransaction(apiId, mapped).catch(function (err) { (window.notifySyncError || console.error)('Escrow', err); });
+      var pTxn = API.updateTransaction(apiId, mapped);
+      pTxn.catch(function (err) { (window.notifySyncError || console.error)('Escrow', err); });
+      result._serverSync = pTxn;
     }
     return result;
   }
@@ -465,7 +471,7 @@
 
   function serverUpdateListing(id, updates) {
     var result = listings.update(id, updates);
-    if (isServerMode()) {
+    if (isServerMode() && result) {
       var item = listings.getAll().find(function (i) { return i.id === id; });
       var apiId = (item && item.server_id) || id;
       var mapped = {};
@@ -483,7 +489,9 @@
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.listingDate !== undefined) mapped.listing_date = updates.listingDate;
       if (updates.propertyType !== undefined) mapped.property_type = updates.propertyType;
-      API.updateListing(apiId, mapped).catch(function (err) { (window.notifySyncError || console.error)('Listing', err); });
+      var pLst = API.updateListing(apiId, mapped);
+      pLst.catch(function (err) { (window.notifySyncError || console.error)('Listing', err); });
+      result._serverSync = pLst;
     }
     return result;
   }
