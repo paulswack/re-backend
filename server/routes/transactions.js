@@ -87,7 +87,7 @@ router.post('/', requireAuth, async (req, res) => {
     res.status(201).json(data);
   } catch (err) {
     console.error('POST transaction error:', err);
-    res.status(500).json({ error: 'Failed to create transaction' });
+    res.status(500).json({ error: 'Failed to create transaction', detail: err.message || err.code || String(err) });
   }
 });
 
@@ -142,7 +142,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('PUT transaction error:', err);
-    res.status(500).json({ error: 'Failed to update transaction' });
+    res.status(500).json({ error: 'Failed to update transaction', detail: err.message || err.code || String(err) });
   }
 });
 
@@ -159,7 +159,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('DELETE transaction error:', err);
-    res.status(500).json({ error: 'Failed to delete transaction' });
+    res.status(500).json({ error: 'Failed to delete transaction', detail: err.message || err.code || String(err) });
   }
 });
 

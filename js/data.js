@@ -496,10 +496,23 @@
     return result;
   }
 
+  // True if the id is a server-side UUID; false if it's a local base36 id that
+  // hasn't been synced yet. PUT /api/<resource>/:id with a local id always 500s
+  // because the server has no row by that id, which surfaces as a noisy red
+  // "Couldn't sync ... contacts" toast for users every time they create a new
+  // listing — even though parties are already being saved atomically with the
+  // POST that created the resource.
+  var _uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   function syncListingParties(listingId, sellers) {
     if (!isServerMode()) return;
     var item = listings.getAll().find(function (i) { return i.id === listingId; });
     var apiId = (item && item.server_id) || listingId;
+    // Skip if neither the local id nor server_id is a real UUID — the listing
+    // hasn't been synced yet, so a PUT can only fail. The next loadAll's
+    // local-only push or a later edit will sync these sellers once the
+    // listing has a server_id.
+    if (!_uuidRe.test(apiId)) return;
     var parties = (sellers || [])
       .filter(function (s) { return s.name || s.phone || s.email; })
       .map(function (s, i) {
@@ -512,6 +525,7 @@
     if (!isServerMode()) return;
     var item = txns.getAll().find(function (i) { return i.id === txnId; });
     var apiId = (item && item.server_id) || txnId;
+    if (!_uuidRe.test(apiId)) return;
     var parties = [];
     (buyers || []).filter(function (b) { return b.name || b.phone || b.email; })
       .forEach(function (b, i) {

@@ -140,7 +140,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('PUT listing error:', err);
-    res.status(500).json({ error: 'Failed to update listing' });
+    res.status(500).json({ error: 'Failed to update listing', detail: err.message || err.code || String(err) });
   }
 });
 
@@ -157,7 +157,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('DELETE listing error:', err);
-    res.status(500).json({ error: 'Failed to delete listing' });
+    res.status(500).json({ error: 'Failed to delete listing', detail: err.message || err.code || String(err) });
   }
 });
 
