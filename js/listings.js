@@ -1515,11 +1515,55 @@
         var fieldName = self.getAttribute('data-field');
         var val = self.value;
 
+        // The deal-detail page renders BOTH listings AND escrows-without-a-listing
+        // (buyer-side deals) using the same template (see renderDetail's _isTxn
+        // fallback at line ~1056). When selectedListingId is actually a transaction
+        // id, every save MUST go to Data.updateTransaction — not Data.updateListing,
+        // which silently no-ops because no listing has that id. That silent no-op is
+        // why "change escrow to sold" never saved: the local update returned null,
+        // no _serverSync was attached, Promise.all([]) resolved instantly, and the
+        // user navigated to Closed where nothing was actually closed.
+        var _detailListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
+        var _detailTxn = !_detailListing
+          ? Data.getTransactions().find(function (x) { return x.id === selectedListingId; })
+          : null;
+        var _isTxnView = !!_detailTxn && !_detailListing;
+
         // For selects and date inputs, run synchronously (no tab-order concern)
         if (field.tagName === 'SELECT' || field.type === 'date') {
-          // Close of escrow date — save to the linked transaction, not the listing
           if (fieldName === 'status') {
-            var currentListing = Data.getListings().find(function (x) { return x.id === selectedListingId; });
+            // ── ESCROW path: selectedListingId is a transaction (no linked listing) ──
+            if (_isTxnView) {
+              var oldTxnStatus = _detailTxn.status;
+              if (oldTxnStatus === val) return;
+              // Map listing-style "sold" to escrow "closed"
+              var txnVal = (val === 'sold') ? 'closed' : val;
+              var txnUpdates = { status: txnVal };
+              if (txnVal === 'closed' && !_detailTxn.closeDate) {
+                txnUpdates.closeDate = new Date().toISOString().split('T')[0];
+              }
+              var txnRes = Data.updateTransaction(selectedListingId, txnUpdates);
+              if (txnVal === 'closed') {
+                showToast('Closing — waiting on server…');
+                var pendingEscrow = [];
+                if (txnRes && txnRes._serverSync) pendingEscrow.push(txnRes._serverSync);
+                Promise.all(pendingEscrow).then(function () {
+                  showToast('Deal closed! Moved to Closed section.');
+                  window.location.href = 'closed.html';
+                }).catch(function (err) {
+                  var detail = (err && (err.error || err.message)) || 'server error';
+                  showToast('⚠ Could not close deal: ' + detail + '. Stayed on this page so you can retry.', 'error');
+                  self.value = oldTxnStatus;
+                });
+              } else {
+                showToast('Saved');
+                renderDetail();
+              }
+              return;
+            }
+
+            // ── LISTING path ──
+            var currentListing = _detailListing;
             var oldStatus = currentListing ? currentListing.status : '';
 
             if (val === 'pending') {
@@ -1544,12 +1588,10 @@
             }
 
             if (val === 'sold' && oldStatus !== 'sold') {
-              // Don't navigate to Closed until BOTH the listing and the linked
-              // escrow have confirmed on the server. If we navigate optimistically,
-              // the next page's loadAll() refetches from Supabase — and if our
-              // sync was still in flight (or failed), it overwrites the local
-              // "closed" status with the server's stale "pending", and the deal
-              // appears to revert. This is what bit Shirley.
+              // Wait for the listing PUT and the escrow PUT to confirm on the
+              // server before navigating to closed.html. Otherwise the next
+              // loadAll() refetches and overwrites the local "closed" with the
+              // stale server "pending" — the bug Shirley hit on Sara Court.
               var lstResult = Data.updateListing(selectedListingId, { status: 'sold' });
               var txnResult = null;
               if (currentListing) {
@@ -1587,15 +1629,19 @@
               }).catch(function (err) {
                 var detail = (err && (err.error || err.message)) || 'server error';
                 showToast('⚠ Could not mark as sold: ' + detail + '. Stayed on this page so you can retry — your edit is NOT lost.', 'error');
-                // Revert the dropdown so the UI matches what the server actually has
                 self.value = oldStatus;
               });
               return;
             }
           }
+          // Generic select/date save (non-status or status that didn't take a special branch)
           var update = {};
           update[fieldName] = val;
-          Data.updateListing(selectedListingId, update);
+          if (_isTxnView) {
+            Data.updateTransaction(selectedListingId, update);
+          } else {
+            Data.updateListing(selectedListingId, update);
+          }
           showToast('Saved');
           renderDetail();
           return;
@@ -1614,7 +1660,11 @@
 
           var update = {};
           update[fieldName] = val;
-          Data.updateListing(selectedListingId, update);
+          if (_isTxnView) {
+            Data.updateTransaction(selectedListingId, update);
+          } else {
+            Data.updateListing(selectedListingId, update);
+          }
           showToast('Saved');
         }, 0);
       });
