@@ -633,7 +633,11 @@
           var existing = JSON.parse(localStorage.getItem('reb_transactions') || '[]');
           if (!existing.find(function (x) { return x.id === cached.id; })) {
             existing.push(cached);
-            localStorage.setItem('reb_transactions', JSON.stringify(existing));
+            // Suppress sync interceptor — this is server-sourced data being seeded into localStorage,
+            // not a user edit. Without this flag the interceptor sees a "new" row and re-PUTs it,
+            // potentially with stale fields.
+            window._suppressTxnSync = true;
+            try { localStorage.setItem('reb_transactions', JSON.stringify(existing)); } finally { window._suppressTxnSync = false; }
           }
           sessionStorage.removeItem('reb_deeplink_deal');
           t = cached;

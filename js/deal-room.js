@@ -619,7 +619,14 @@
   // ---- Init ----
   render();
 
-  // Force fresh data fetch to ensure statuses are up to date
+  // Force fresh data fetch to ensure statuses are up to date.
+  // CRITICAL: set _suppressLstSync / _suppressTxnSync around the writes so the
+  // api-bridge localStorage interceptor doesn't treat this server-driven
+  // overwrite as a user edit and push it BACK to the server. Without these
+  // flags, a stale GET response (replication lag, caching) overwrites a
+  // fresh local edit, the interceptor sees a diff, and re-PUTs the stale
+  // value — silently undoing the user's change. This was reverting closed
+  // deals back to pending.
   if (typeof API !== 'undefined' && API.isLoggedIn()) {
     Promise.all([
       API.getListings().then(function (d) {
@@ -631,7 +638,8 @@
             source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
             createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
         });
-        localStorage.setItem('reb_listings', JSON.stringify(mapped));
+        window._suppressLstSync = true;
+        try { localStorage.setItem('reb_listings', JSON.stringify(mapped)); } finally { window._suppressLstSync = false; }
       }).catch(function (err) { console.error('Deal room fetch listings failed:', err); }),
       API.getTransactions().then(function (d) {
         if (!d || !Array.isArray(d)) return;
@@ -644,7 +652,8 @@
             beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null,
             sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
         });
-        localStorage.setItem('reb_transactions', JSON.stringify(mapped));
+        window._suppressTxnSync = true;
+        try { localStorage.setItem('reb_transactions', JSON.stringify(mapped)); } finally { window._suppressTxnSync = false; }
       }).catch(function (err) { console.error('Deal room fetch transactions failed:', err); })
     ]).then(function () {
       _currentUser = (typeof API !== 'undefined' && API.getUser()) || null;
@@ -664,7 +673,10 @@
     render();
   });
 
-  // Auto-refresh every 15 seconds to pick up changes from other computers
+  // Auto-refresh every 15 seconds to pick up changes from other computers.
+  // Suppression flags are critical here for the same reason as the initial
+  // fetch above — without them, the interceptor would re-PUT stale data and
+  // undo the user's recent edits.
   setInterval(function () {
     if (typeof API === 'undefined' || !API.isLoggedIn()) return;
     if (document.hidden) return; // Don't poll when tab is in background
@@ -678,7 +690,8 @@
             source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
             createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
         });
-        localStorage.setItem('reb_listings', JSON.stringify(mapped));
+        window._suppressLstSync = true;
+        try { localStorage.setItem('reb_listings', JSON.stringify(mapped)); } finally { window._suppressLstSync = false; }
       }).catch(function () {}),
       API.getTransactions().then(function (d) {
         if (!d || !Array.isArray(d)) return;
@@ -691,7 +704,8 @@
             beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null,
             sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
         });
-        localStorage.setItem('reb_transactions', JSON.stringify(mapped));
+        window._suppressTxnSync = true;
+        try { localStorage.setItem('reb_transactions', JSON.stringify(mapped)); } finally { window._suppressTxnSync = false; }
       }).catch(function () {})
     ]).then(function () { render(); });
   }, 15000);
