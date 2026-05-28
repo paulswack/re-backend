@@ -1473,6 +1473,19 @@
       }
     }
 
+    // AI Inspection Analyzer card (within Checklist tab)
+    html += '<div class="parties-card">';
+    html += '<div class="parties-card-header"><span><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--indigo)" style="flex-shrink:0;vertical-align:-2px;margin-right:6px"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>AI Inspection Analyzer</span></div>';
+    html += '<div style="padding:14px 18px">';
+    html += '<div style="font-size:.8rem;color:var(--gray-500);margin-bottom:10px;line-height:1.4">Paste the inspection report text below to get major issues, repair cost estimate, and negotiation talking points.</div>';
+    html += '<textarea id="inspectionInput" placeholder="Paste inspection report text here..." style="width:100%;min-height:120px;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;font-family:inherit;resize:vertical;color:var(--gray-800);background:var(--white)"></textarea>';
+    html += '<div style="display:flex;justify-content:flex-end;margin-top:10px">';
+    html += '<button class="btn btn-primary btn-sm" data-action="ai-analyze-inspection">Analyze with AI</button>';
+    html += '</div>';
+    html += '<div id="inspectionResult" class="insp-result"></div>';
+    html += '</div>';
+    html += '</div>';
+
     html += '</div>'; // checklist pane
 
     // ─── CLIENT UPDATES TAB ───
@@ -1540,6 +1553,9 @@
         });
       });
     });
+
+    // Hydrate Inspection result from cache
+    renderInspectionResult();
 
     initChecklistDrag();
     initChecklistPickers();
@@ -2402,6 +2418,10 @@
         addNote();
         break;
 
+      case 'ai-analyze-inspection':
+        aiAnalyzeInspection();
+        break;
+
 
       case 'attach-checklist':
         var attachSelect = document.getElementById('attachChecklistSelect');
@@ -2854,6 +2874,105 @@
     saveNotes(allNotes);
     showToast('Note added.');
     renderDetail();
+  }
+
+  // ============================================================
+  //  AI Inspection Analyzer
+  // ============================================================
+  function getCachedInspection(dealId) {
+    try {
+      var raw = localStorage.getItem('reb_ai_inspections');
+      if (!raw) return null;
+      var all = JSON.parse(raw);
+      return all[dealId] || null;
+    } catch (e) { return null; }
+  }
+  function saveCachedInspection(dealId, data) {
+    try {
+      var raw = localStorage.getItem('reb_ai_inspections');
+      var all = raw ? JSON.parse(raw) : {};
+      all[dealId] = data;
+      localStorage.setItem('reb_ai_inspections', JSON.stringify(all));
+    } catch (e) {}
+  }
+  function renderInspectionResult() {
+    var result = document.getElementById('inspectionResult');
+    if (!result) return;
+    var cached = getCachedInspection(selectedListingId);
+    if (!cached) { result.innerHTML = ''; return; }
+    if (cached.error) {
+      result.innerHTML = '<div class="dd-risks-error">' + escapeHtml(cached.error) + '</div>';
+      return;
+    }
+    var d = cached.data || {};
+    var h = '';
+    if (d.summary) {
+      h += '<div class="insp-summary"><strong>Summary.</strong> ' + escapeHtml(d.summary) + '</div>';
+    }
+    if (d.estimatedRepairCost) {
+      h += '<div class="insp-cost"><span class="insp-cost-label">Est. repair cost</span><span class="insp-cost-val">' + escapeHtml(d.estimatedRepairCost) + '</span></div>';
+    }
+    if (Array.isArray(d.majorIssues) && d.majorIssues.length) {
+      h += '<div class="insp-section"><div class="insp-section-title">Major issues</div>';
+      d.majorIssues.forEach(function (iss) {
+        var sev = (iss.severity || 'medium').toLowerCase();
+        h += '<div class="insp-issue insp-issue-' + sev + '">';
+        h += '<div class="insp-issue-head"><span class="insp-issue-sev">' + sev + '</span><span class="insp-issue-title">' + escapeHtml(iss.title || '') + '</span>';
+        if (iss.area) h += '<span class="insp-issue-area">' + escapeHtml(iss.area) + '</span>';
+        h += '</div>';
+        if (iss.description) h += '<div class="insp-issue-desc">' + escapeHtml(iss.description) + '</div>';
+        h += '</div>';
+      });
+      h += '</div>';
+    }
+    if (Array.isArray(d.talkingPoints) && d.talkingPoints.length) {
+      h += '<div class="insp-section"><div class="insp-section-title">Negotiation talking points</div><ul class="insp-list">';
+      d.talkingPoints.forEach(function (tp) { h += '<li>' + escapeHtml(tp) + '</li>'; });
+      h += '</ul></div>';
+    }
+    if (Array.isArray(d.recommendations) && d.recommendations.length) {
+      h += '<div class="insp-section"><div class="insp-section-title">Next steps</div><ul class="insp-list">';
+      d.recommendations.forEach(function (rec) { h += '<li>' + escapeHtml(rec) + '</li>'; });
+      h += '</ul></div>';
+    }
+    h += '<div class="dd-risks-when">Analyzed ' + relativeTime(cached.timestamp) + '</div>';
+    result.innerHTML = h;
+  }
+  function aiAnalyzeInspection() {
+    var input = document.getElementById('inspectionInput');
+    var result = document.getElementById('inspectionResult');
+    var btn = document.querySelector('[data-action="ai-analyze-inspection"]');
+    if (!input || !result) return;
+    var text = input.value.trim();
+    if (text.length < 80) {
+      showToast('Paste the inspection report (at least a few sentences).', 'error');
+      return;
+    }
+
+    result.innerHTML = '<div class="dd-risks-loading"><span class="dd-spinner"></span>Analyzing inspection…</div>';
+    if (btn) btn.disabled = true;
+
+    var token = localStorage.getItem('reb_jwt');
+    fetch('/api/ai/analyze-inspection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ text: text })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+      .then(function (res) {
+        if (!res.ok) {
+          saveCachedInspection(selectedListingId, { error: res.body.error || 'Analysis failed', timestamp: new Date().toISOString() });
+        } else {
+          saveCachedInspection(selectedListingId, { data: res.body, timestamp: new Date().toISOString() });
+        }
+        renderInspectionResult();
+        if (btn) btn.disabled = false;
+      })
+      .catch(function (err) {
+        saveCachedInspection(selectedListingId, { error: err.message || 'Network error', timestamp: new Date().toISOString() });
+        renderInspectionResult();
+        if (btn) btn.disabled = false;
+      });
   }
 
   // ---- Init ----

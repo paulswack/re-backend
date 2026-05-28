@@ -365,6 +365,126 @@
     .dd-risk-low { border-left-color: var(--gray-400); background: var(--gray-50); }
     .dd-risk-low .dd-risk-sev { background: var(--gray-100); color: var(--gray-600); }
 
+    /* ============================================================
+       Inspection Analyzer result
+       ============================================================ */
+    .insp-result:not(:empty) { margin-top: 16px; }
+    .insp-summary {
+      font-size: .9rem;
+      color: var(--gray-800);
+      line-height: 1.55;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #F5F3FF 0%, #EEF2FF 100%);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .insp-summary strong { color: var(--indigo); }
+    .insp-cost {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--emerald-light);
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .insp-cost-label {
+      font-size: .7rem; font-weight: 700;
+      color: #047857;
+      text-transform: uppercase; letter-spacing: .4px;
+    }
+    .insp-cost-val { font-size: 1.05rem; font-weight: 800; color: #047857; }
+    .insp-section { margin-bottom: 16px; }
+    .insp-section:last-child { margin-bottom: 0; }
+    .insp-section-title {
+      font-size: .72rem; font-weight: 800;
+      color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: .4px;
+      margin-bottom: 8px;
+    }
+    .insp-issue {
+      border-left: 3px solid var(--gray-300);
+      padding: 9px 12px;
+      margin-bottom: 8px;
+      background: var(--gray-50);
+      border-radius: 6px;
+    }
+    .insp-issue:last-child { margin-bottom: 0; }
+    .insp-issue-head {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .insp-issue-sev {
+      font-size: .6rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .5px;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+    .insp-issue-title {
+      font-size: .85rem; font-weight: 700;
+      color: var(--gray-900);
+      flex: 1; min-width: 0;
+    }
+    .insp-issue-area {
+      font-size: .62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .4px;
+      color: var(--gray-500);
+      background: var(--white);
+      padding: 2px 7px;
+      border-radius: 99px;
+      border: 1px solid var(--gray-200);
+    }
+    .insp-issue-desc { font-size: .8rem; color: var(--gray-600); line-height: 1.5; }
+    .insp-issue-high { border-left-color: #DC2626; background: #FEF2F2; }
+    .insp-issue-high .insp-issue-sev { background: #FEE2E2; color: #B91C1C; }
+    .insp-issue-medium { border-left-color: #D97706; background: #FFFBEB; }
+    .insp-issue-medium .insp-issue-sev { background: #FEF3C7; color: #92400E; }
+    .insp-issue-low { border-left-color: var(--gray-400); background: var(--gray-50); }
+    .insp-issue-low .insp-issue-sev { background: var(--gray-100); color: var(--gray-600); }
+
+    .insp-list { margin: 0; padding: 0; list-style: none; }
+    .insp-list li {
+      padding: 7px 12px 7px 26px;
+      margin-bottom: 5px;
+      background: var(--gray-50);
+      border-radius: 6px;
+      font-size: .82rem;
+      color: var(--gray-700);
+      line-height: 1.5;
+      position: relative;
+    }
+    .insp-list li::before {
+      content: '→';
+      position: absolute;
+      left: 10px; top: 7px;
+      color: var(--indigo);
+      font-weight: 700;
+    }
+
+    .dd-risks-loading {
+      font-size: .85rem; color: var(--gray-500);
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 4px;
+    }
+    .dd-risks-error {
+      font-size: .82rem; color: var(--rose);
+      background: #FEF2F2;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .dd-risks-when {
+      font-size: .68rem; color: var(--gray-400);
+      margin-top: 8px; padding: 0 4px;
+    }
+    .dd-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--gray-200);
+      border-top-color: var(--indigo);
+      border-radius: 50%;
+      display: inline-block;
+      animation: dd-spin .8s linear infinite;
+    }
+    @keyframes dd-spin { to { transform: rotate(360deg); } }
+
     /* Map preview */
     .dd-map {
       display: block;
@@ -946,7 +1066,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/listings.js?v=1779511000"></script>
+  <script src="js/listings.js?v=1779512000"></script>
   <script src="js/datepicker.js?v=1777494830"></script>
 </body>
 </html>
