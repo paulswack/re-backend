@@ -247,6 +247,124 @@
     }
 
     /* ---- Action buttons row ---- */
+    /* ============================================================
+       AI Insights (Risk Flagger)
+       ============================================================ */
+    .dd-risks {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .dd-risks-header {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-100);
+      background: linear-gradient(135deg, #F5F3FF 0%, #EEF2FF 100%);
+    }
+    .dd-risks-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .8rem;
+      font-weight: 800;
+      color: #4338CA;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .dd-risks-title svg { color: #4338CA; }
+    .dd-risks-refresh {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      color: #4338CA;
+      border-radius: 99px;
+      padding: 5px 12px;
+      font-size: .72rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .dd-risks-refresh:hover { background: #EEF2FF; border-color: var(--indigo); }
+    .dd-risks-refresh:disabled { opacity: .5; cursor: wait; }
+    .dd-risks-body { padding: 12px 14px; }
+    .dd-risks-empty {
+      font-size: .82rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+      padding: 6px 4px;
+    }
+    .dd-risks-empty strong { color: var(--gray-800); }
+    .dd-risks-error {
+      font-size: .82rem;
+      color: var(--rose);
+      background: #FEF2F2;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .dd-risks-clear {
+      font-size: .85rem;
+      color: var(--emerald);
+      font-weight: 600;
+      padding: 6px 4px;
+    }
+    .dd-risks-when {
+      font-size: .68rem;
+      color: var(--gray-400);
+      margin-top: 8px;
+      padding: 0 4px;
+    }
+    .dd-risks-clear .dd-risks-when { margin-left: 8px; font-weight: 500; }
+    .dd-risks-loading {
+      font-size: .85rem;
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+    }
+    .dd-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--gray-200);
+      border-top-color: var(--indigo);
+      border-radius: 50%;
+      display: inline-block;
+      animation: dd-spin .8s linear infinite;
+    }
+    @keyframes dd-spin { to { transform: rotate(360deg); } }
+
+    .dd-risk {
+      border-left: 3px solid var(--gray-300);
+      padding: 9px 12px;
+      margin-bottom: 8px;
+      background: var(--gray-50);
+      border-radius: 6px;
+    }
+    .dd-risk:last-of-type { margin-bottom: 0; }
+    .dd-risk-row1 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .dd-risk-sev {
+      font-size: .6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+    .dd-risk-title { font-size: .85rem; font-weight: 700; color: var(--gray-900); flex: 1; }
+    .dd-risk-msg { font-size: .78rem; color: var(--gray-600); line-height: 1.45; margin-bottom: 5px; }
+    .dd-risk-action { font-size: .76rem; color: var(--gray-700); line-height: 1.45; }
+    .dd-risk-action strong { color: var(--indigo); font-weight: 700; }
+
+    .dd-risk-high { border-left-color: #DC2626; background: #FEF2F2; }
+    .dd-risk-high .dd-risk-sev { background: #FEE2E2; color: #B91C1C; }
+    .dd-risk-medium { border-left-color: #D97706; background: #FFFBEB; }
+    .dd-risk-medium .dd-risk-sev { background: #FEF3C7; color: #92400E; }
+    .dd-risk-low { border-left-color: var(--gray-400); background: var(--gray-50); }
+    .dd-risk-low .dd-risk-sev { background: var(--gray-100); color: var(--gray-600); }
+
     /* Map preview */
     .dd-map {
       display: block;
@@ -828,7 +946,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/listings.js?v=1779500500"></script>
+  <script src="js/listings.js?v=1779510000"></script>
   <script src="js/datepicker.js?v=1777494830"></script>
 </body>
 </html>
