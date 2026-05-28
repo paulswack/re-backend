@@ -1104,7 +1104,7 @@
     var _lstStages = ['pre_listing', 'coming_soon', 'active', 'pending', 'sold'];
     var _currentStageIdx = _lstStages.indexOf(l.status);
     if (_currentStageIdx < 0) _currentStageIdx = 0;
-    var _activeTab = sessionStorage.getItem('reb_detail_tab') || 'activity';
+    var _activeTab = sessionStorage.getItem('reb_detail_tab') || 'checklist';
 
     // ─── Sellers data (needed for sidebar) ───
     var detailParties = getParties();

@@ -707,7 +707,7 @@
     var _txnStages = ['active', 'pending', 'closed'];
     var _currentStageIdx = _txnStages.indexOf(t.status);
     if (_currentStageIdx < 0) _currentStageIdx = 0;
-    var _activeTab = sessionStorage.getItem('reb_detail_tab_txn') || 'activity';
+    var _activeTab = sessionStorage.getItem('reb_detail_tab_txn') || 'details';
 
     var _txnDetailStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
     var _detailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
