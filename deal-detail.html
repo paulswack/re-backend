@@ -475,6 +475,159 @@
     .dd-tab-pane .notes-card:last-child,
     .dd-tab-pane .desc-card:last-child { margin-bottom: 0; }
 
+    /* ============================================================
+       Checklist — Linear-style single-column list, grouped by urgency
+       ============================================================ */
+    .cl-section { margin-bottom: 6px; }
+    .cl-section-header {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 18px;
+      font-size: .72rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--gray-500);
+      cursor: pointer;
+      user-select: none;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-100);
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .cl-section-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cl-section-label { flex-shrink: 0; }
+    .cl-section-count {
+      background: var(--white);
+      color: var(--gray-700);
+      padding: 1px 9px;
+      border-radius: 99px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .cl-section-chevron {
+      margin-left: auto;
+      color: var(--gray-400);
+      transition: transform .15s;
+      flex-shrink: 0;
+    }
+    .cl-section-collapsed .cl-section-chevron { transform: rotate(-90deg); }
+    .cl-section-collapsed .cl-section-body { display: none; }
+    .cl-section-collapsed .cl-section-header { border-bottom: none; }
+
+    .cl-section-overdue .cl-section-header {
+      background: #FEF2F2; color: #B91C1C;
+      border-color: #FECACA;
+    }
+    .cl-section-overdue .cl-section-dot { background: #DC2626; }
+    .cl-section-overdue .cl-section-count { background: #fff; color: #B91C1C; }
+
+    .cl-section-week .cl-section-header {
+      background: #FFFBEB; color: #92400E;
+      border-color: #FDE68A;
+    }
+    .cl-section-week .cl-section-dot { background: #D97706; }
+    .cl-section-week .cl-section-count { background: #fff; color: #92400E; }
+
+    .cl-section-upcoming .cl-section-dot { background: var(--gray-400); }
+
+    .cl-section-done .cl-section-header {
+      background: #F0FDF4; color: #065F46;
+      border-color: #BBF7D0;
+    }
+    .cl-section-done .cl-section-dot { background: var(--emerald); }
+    .cl-section-done .cl-section-count { background: #fff; color: #065F46; }
+
+    /* Single checklist row */
+    .cl-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 18px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .cl-row:hover { background: #FAFBFD; }
+    .cl-row.completed { opacity: .6; }
+    .cl-row.completed:hover { opacity: .8; }
+    .cl-row-drag {
+      color: var(--gray-300);
+      cursor: grab;
+      flex-shrink: 0;
+      font-size: 1.05rem;
+      line-height: 1;
+      user-select: none;
+      opacity: 0;
+      transition: opacity .15s;
+      width: 12px;
+    }
+    .cl-row:hover .cl-row-drag { opacity: 1; }
+    .cl-row-check {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      accent-color: var(--emerald);
+      cursor: pointer;
+      margin: 0;
+    }
+    .cl-row-body { flex: 1; min-width: 0; }
+    .cl-row-title {
+      font-size: .92rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      line-height: 1.35;
+    }
+    .cl-row.completed .cl-row-title {
+      text-decoration: line-through;
+      color: var(--gray-500);
+    }
+    .cl-row-meta {
+      font-size: .76rem;
+      color: var(--gray-500);
+      margin-top: 3px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .cl-row-date {
+      flex-shrink: 0;
+      font-size: .74rem;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 99px;
+      white-space: nowrap;
+      letter-spacing: .2px;
+    }
+    .cl-row-date.overdue { background: #FEE2E2; color: #DC2626; }
+    .cl-row-date.soon { background: #FEF3C7; color: #B45309; }
+    .cl-row-date.future { background: var(--gray-100); color: var(--gray-700); }
+    .cl-row-date.done {
+      background: var(--emerald-light); color: #065F46;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .cl-row-date.done svg { display: block; }
+
+    /* Add new item row */
+    .cl-add-row {
+      display: flex; gap: 8px;
+      padding: 14px 18px;
+      align-items: center;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-100);
+    }
+    .cl-add-row input {
+      flex: 1;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: .85rem;
+      outline: none;
+      font-family: inherit;
+      background: var(--white);
+      color: var(--gray-800);
+      transition: border-color .15s;
+    }
+    .cl-add-row input:focus { border-color: var(--indigo); }
+    .cl-add-row .btn { padding: 7px 14px; font-size: .82rem; }
+
     /* Notes */
     .note-input-area { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); }
     .note-input-area textarea {
@@ -586,7 +739,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/listings.js?v=1779495000"></script>
+  <script src="js/listings.js?v=1779497000"></script>
   <script src="js/datepicker.js?v=1777494830"></script>
 </body>
 </html>

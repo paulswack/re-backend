@@ -267,6 +267,118 @@
     return Math.ceil((d - now) / (1000 * 60 * 60 * 24));
   }
 
+  // Render one escrow checklist item as a single row with inline editable pills
+  function renderTxnClRow(item, idx) {
+    var dLeft = item.dueDate ? daysUntil(item.dueDate) : null;
+
+    var datePill = '';
+    if (item.completed) {
+      datePill = '<span class="cl-row-date done"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>Done</span>';
+    } else if (item.dueDate) {
+      var dCls = 'future';
+      var dLabel;
+      if (dLeft === null) {
+        dLabel = item.dueDate;
+      } else if (dLeft < 0) {
+        dCls = 'overdue'; dLabel = Math.abs(dLeft) + 'd late';
+      } else if (dLeft === 0) {
+        dCls = 'soon'; dLabel = 'Today';
+      } else if (dLeft === 1) {
+        dCls = 'soon'; dLabel = 'Tomorrow';
+      } else if (dLeft <= 7) {
+        dCls = 'soon'; dLabel = dLeft + 'd';
+      } else {
+        try {
+          var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
+          dLabel = dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } catch(e) { dLabel = item.dueDate; }
+      }
+      datePill = '<span class="cl-row-date ' + dCls + '">' + dLabel + '</span>';
+    }
+
+    var html = '';
+    html += '<div class="cl-item cl-row cl-row-txn' + (item.completed ? ' completed' : '') + '" data-item-idx="' + idx + '">';
+    html += '<span class="cl-row-drag" title="Drag to reorder">&#8801;</span>';
+    html += '<input type="checkbox" class="cl-row-check"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '">';
+    html += '<div class="cl-row-body">';
+    html += '<div class="cl-row-title">' + escapeHtml(item.label) + '</div>';
+    // Inline editable pills
+    html += '<div class="cl-row-pills">';
+    html += '<span class="cl-row-inline-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>';
+    html += '<input type="text" data-action="set-checklist-date" data-item-idx="' + idx + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Due date" title="Due date &amp; time"></span>';
+    html += '<span class="cl-row-inline-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M20 7h-4V5c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V9c0-1.11-.89-2-2-2zM10 5h4v2h-4V5z"/></svg>';
+    html += '<input type="text" data-action="set-checklist-vendor" data-item-idx="' + idx + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor"></span>';
+    html += '<span class="cl-row-inline-pill cl-row-note-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+    html += '<input type="text" data-action="set-checklist-note" data-item-idx="' + idx + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add a note..."></span>';
+    html += '</div>';
+    if (item.completed && item.completedBy) {
+      html += '<div class="cl-row-completed-by"><svg viewBox="0 0 24 24" width="10" height="10" fill="var(--emerald)"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt) + '</div>';
+    }
+    html += '</div>';
+    if (datePill) html += datePill;
+    html += '<button class="cl-row-remove" data-action="remove-checklist-item" data-item-idx="' + idx + '" title="Remove">&times;</button>';
+    html += '</div>';
+    return html;
+  }
+
+  // Bucket items and render grouped sections (Overdue / Due This Week / Upcoming / Completed)
+  function renderTxnClGrouped(items) {
+    var buckets = { overdue: [], week: [], upcoming: [], done: [] };
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+
+    var indexed = items.map(function (item, idx) { return { item: item, idx: idx }; });
+    indexed.forEach(function (rec) {
+      var item = rec.item;
+      if (item.completed) { buckets.done.push(rec); return; }
+      if (!item.dueDate) { buckets.upcoming.push(rec); return; }
+      var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
+      if (isNaN(dd.getTime())) { buckets.upcoming.push(rec); return; }
+      var diff = Math.round((dd - today) / 86400000);
+      if (diff < 0) buckets.overdue.push(rec);
+      else if (diff <= 7) buckets.week.push(rec);
+      else buckets.upcoming.push(rec);
+    });
+
+    function byDate(a, b) {
+      if (!a.item.dueDate && !b.item.dueDate) return 0;
+      if (!a.item.dueDate) return 1;
+      if (!b.item.dueDate) return -1;
+      return new Date(a.item.dueDate) - new Date(b.item.dueDate);
+    }
+    buckets.overdue.sort(byDate);
+    buckets.week.sort(byDate);
+    buckets.upcoming.sort(byDate);
+    buckets.done.sort(function (a, b) { return new Date(b.item.completedAt || 0) - new Date(a.item.completedAt || 0); });
+
+    var sections = [
+      { key: 'overdue', label: 'Overdue', items: buckets.overdue },
+      { key: 'week', label: 'Due This Week', items: buckets.week },
+      { key: 'upcoming', label: 'Upcoming', items: buckets.upcoming },
+      { key: 'done', label: 'Completed', items: buckets.done }
+    ];
+
+    var html = '';
+    sections.forEach(function (sec) {
+      if (sec.items.length === 0) return;
+      var collapsed = sec.key === 'done' ? ' cl-section-collapsed' : '';
+      html += '<div class="cl-section cl-section-' + sec.key + collapsed + '">';
+      html += '<div class="cl-section-header" data-action="toggle-cl-section">';
+      html += '<span class="cl-section-dot"></span>';
+      html += '<span class="cl-section-label">' + sec.label + '</span>';
+      html += '<span class="cl-section-count">' + sec.items.length + '</span>';
+      html += '<svg class="cl-section-chevron" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+      html += '</div>';
+      html += '<div class="cl-section-body">';
+      sec.items.forEach(function (rec) {
+        html += renderTxnClRow(rec.item, rec.idx);
+      });
+      html += '</div>';
+      html += '</div>';
+    });
+
+    return html;
+  }
+
   function formatTime(timeStr) {
     if (!timeStr) return '';
     var parts = timeStr.split(':');
@@ -1018,63 +1130,11 @@
       html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
       html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
       html += '</div></div>';
-      html += '<div id="clItemList" style="padding:4px 20px 4px">';
-      txnChecklist.items.forEach(function (item, idx) {
-        var overdue = item.dueDate && !item.completed && new Date(item.dueDate) < new Date();
-        var dateColor = overdue ? 'var(--rose)' : 'var(--gray-500)';
-        var dateBg = overdue ? '#FFF5F5' : 'var(--gray-50)';
-        var dateBorder = overdue ? 'var(--rose)' : 'var(--gray-200)';
-
-        html += '<div class="cl-item" data-item-idx="' + idx + '" style="display:flex;align-items:flex-start;gap:8px;padding:11px 0;border-bottom:1px solid var(--gray-100)">';
-
-        // Drag handle
-        html += '<div class="cl-drag" title="Drag to reorder" style="cursor:grab;color:var(--gray-300);font-size:1.1rem;flex-shrink:0;line-height:1;margin-top:2px;padding:0 2px;user-select:none">&#8801;</div>';
-
-        // Checkbox
-        html += '<input type="checkbox"' + (item.completed ? ' checked' : '') + ' data-action="toggle-checklist-item" data-item-idx="' + idx + '" style="margin:3px 0 0;cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)">';
-
-        // Body
-        html += '<div style="flex:1;min-width:0">';
-        html += '<div style="font-size:.9rem;font-weight:500;color:' + (item.completed ? 'var(--gray-400)' : 'var(--gray-800)') + ';' + (item.completed ? 'text-decoration:line-through;' : '') + 'line-height:1.4">' + escapeHtml(item.label) + '</div>';
-
-        // Pill row
-        html += '<div style="display:flex;align-items:center;gap:5px;margin-top:7px;flex-wrap:wrap">';
-
-        // Date pill
-        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:' + dateBg + ';border:1.5px solid ' + dateBorder + ';border-radius:20px;padding:4px 10px;flex-shrink:0">';
-        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="' + dateColor + '" style="flex-shrink:0"><path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.89 3 3 3.9 3 5v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>';
-        html += '<input type="text" data-action="set-checklist-date" data-item-idx="' + idx + '" value="' + escapeHtml(item.dueDate || '') + '" placeholder="Due date" title="Due date &amp; time" style="border:none;background:transparent;padding:0;font-size:.78rem;color:' + dateColor + ';width:105px;outline:none;cursor:pointer;font-family:inherit">';
-        html += '</div>';
-
-        // Vendor pill
-        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:20px;padding:4px 10px;flex-shrink:0">';
-        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="var(--gray-400)" style="flex-shrink:0"><path d="M20 7h-4V5c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V9c0-1.11-.89-2-2-2zM10 5h4v2h-4V5z"/></svg>';
-        html += '<input type="text" data-action="set-checklist-vendor" data-item-idx="' + idx + '" value="' + escapeHtml(item.vendor || '') + '" placeholder="Vendor" style="border:none;background:transparent;padding:0;font-size:.78rem;color:var(--gray-600);width:130px;outline:none;font-family:inherit">';
-        html += '</div>';
-
-        // Note pill
-        html += '<div style="display:inline-flex;align-items:center;gap:4px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:20px;padding:4px 10px;flex:1;min-width:80px">';
-        html += '<svg viewBox="0 0 24 24" width="10" height="10" fill="var(--gray-400)" style="flex-shrink:0"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
-        html += '<input type="text" data-action="set-checklist-note" data-item-idx="' + idx + '" value="' + escapeHtml(item.note || '') + '" placeholder="Add a note..." style="border:none;background:transparent;padding:0;font-size:.78rem;color:var(--gray-600);flex:1;min-width:0;outline:none;font-family:inherit">';
-        html += '</div>';
-
-        html += '</div>'; // pill row
-
-        if (item.completed && item.completedBy) {
-          html += '<div style="margin-top:5px;font-size:.72rem;color:var(--gray-400);display:flex;align-items:center;gap:4px">';
-          html += '<svg viewBox="0 0 24 24" width="9" height="9" fill="var(--emerald)"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
-          html += 'Completed by ' + escapeHtml(item.completedBy) + ' &middot; ' + Data.formatDate(item.completedAt);
-          html += '</div>';
-        }
-
-        html += '</div>'; // body
-        html += '<button style="background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:1rem;padding:3px 5px;line-height:1;flex-shrink:0;border-radius:4px;margin-top:1px" onmouseover="this.style.color=\'var(--rose)\'" onmouseout="this.style.color=\'var(--gray-300)\'" data-action="remove-checklist-item" data-item-idx="' + idx + '" title="Remove">&times;</button>';
-        html += '</div>'; // cl-item
-      });
-      // Add new item input
-      html += '<div style="display:flex;gap:8px;padding:10px 0;align-items:center">';
-      html += '<input type="text" id="newChecklistItem" placeholder="Add a checklist item..." style="flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:7px 12px;font-size:.82rem;outline:none">';
-      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.78rem;padding:6px 14px;white-space:nowrap">+ Add</button>';
+      html += '<div id="clItemList">';
+      html += renderTxnClGrouped(txnChecklist.items);
+      html += '<div class="cl-add-row">';
+      html += '<input type="text" id="newChecklistItem" placeholder="+ Add a checklist item...">';
+      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item">+ Add</button>';
       html += '</div>';
       html += '</div>';
     } else {
@@ -1704,6 +1764,12 @@
           renderDetail();
         }
         break;
+
+      case 'toggle-cl-section': {
+        var sec = target.closest('.cl-section');
+        if (sec) sec.classList.toggle('cl-section-collapsed');
+        break;
+      }
 
       case 'toggle-kd-status':
         var kdIdx = parseInt(target.getAttribute('data-kd-idx'));

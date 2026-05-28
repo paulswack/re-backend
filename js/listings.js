@@ -239,62 +239,119 @@
 
   // Shared compact card renderer — used by both Listing and Escrow checklists so they look identical.
   // opts: { accent: 'indigo'|'emerald', clickAction, toggleAction, draggable, extraAttrs }
+  // Render one checklist item as a single row (Linear-style)
   function renderClItemCard(item, opts) {
-    var accent = opts.accent === 'emerald' ? 'emerald' : 'indigo';
-    var overdue = item.dueDate && !item.completed && daysUntil(item.dueDate) < 0;
-    var leftColor = item.completed ? '#10B981' : overdue ? '#EF4444' : (accent === 'emerald' ? 'var(--emerald)' : 'var(--indigo)');
-    var cardBg = item.completed ? '#F0FDF4' : overdue ? '#FFF5F5' : '#FFFFFF';
-    var textColor = item.completed ? 'var(--gray-400)' : 'var(--gray-800)';
     var extra = opts.extraAttrs || '';
+    var dLeft = item.dueDate ? daysUntil(item.dueDate) : null;
 
-    var dateStr = '';
-    if (item.dueDate) {
-      try {
-        var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
-        dateStr = dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      } catch(e) { dateStr = item.dueDate; }
+    // Date pill
+    var datePill = '';
+    if (item.completed) {
+      datePill = '<span class="cl-row-date done"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>Done</span>';
+    } else if (item.dueDate) {
+      var dCls = 'future';
+      var dLabel;
+      if (dLeft === null) {
+        dLabel = item.dueDate;
+      } else if (dLeft < 0) {
+        dCls = 'overdue';
+        dLabel = Math.abs(dLeft) + 'd late';
+      } else if (dLeft === 0) {
+        dCls = 'soon';
+        dLabel = 'Today';
+      } else if (dLeft === 1) {
+        dCls = 'soon';
+        dLabel = 'Tomorrow';
+      } else if (dLeft <= 7) {
+        dCls = 'soon';
+        dLabel = dLeft + 'd';
+      } else {
+        try {
+          var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
+          dLabel = dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } catch(e) { dLabel = item.dueDate; }
+      }
+      datePill = '<span class="cl-row-date ' + dCls + '">' + dLabel + '</span>';
     }
 
+    // Subtext: vendor · note · completed-by
     var subParts = [];
-    if (dateStr) subParts.push(dateStr);
     if (item.vendor) subParts.push(item.vendor);
+    if (item.note) subParts.push(item.note);
+    if (item.completed && item.completedBy) subParts.push('by ' + item.completedBy);
 
     var html = '';
-    html += '<div class="cl-item" data-item-id="' + escapeHtml(item.id) + '"' + (opts.draggable ? ' draggable="true"' : '') +
-      ' data-action="' + opts.clickAction + '"' + extra +
-      ' style="background:' + cardBg + ';border:1px solid var(--gray-200);border-left:3px solid ' + leftColor +
-      ';border-radius:10px;padding:8px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px"' +
-      ' onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">';
-
-    html += '<input type="checkbox"' + (item.completed ? ' checked' : '') +
+    html += '<div class="cl-item cl-row' + (item.completed ? ' completed' : '') + '" data-item-id="' + escapeHtml(item.id) + '"' + (opts.draggable ? ' draggable="true"' : '') +
+      ' data-action="' + opts.clickAction + '"' + extra + '>';
+    html += '<span class="cl-row-drag" title="Drag to reorder">&#8801;</span>';
+    html += '<input type="checkbox" class="cl-row-check"' + (item.completed ? ' checked' : '') +
       ' data-action="' + opts.toggleAction + '" data-item-id="' + escapeHtml(item.id) + '"' + extra +
-      ' style="cursor:pointer;width:16px;height:16px;flex-shrink:0;accent-color:var(--emerald)" onclick="event.stopPropagation()">';
-
-    html += '<div style="flex:1;min-width:0">';
-    html += '<div style="font-size:.82rem;font-weight:600;color:' + textColor + ';' +
-      (item.completed ? 'text-decoration:line-through;' : '') +
-      'line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(item.label) + '</div>';
+      ' onclick="event.stopPropagation()">';
+    html += '<div class="cl-row-body">';
+    html += '<div class="cl-row-title">' + escapeHtml(item.label) + '</div>';
     if (subParts.length) {
-      html += '<div style="font-size:.7rem;color:var(--gray-500);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-        escapeHtml(subParts.join(' · ')) + '</div>';
+      html += '<div class="cl-row-meta">' + escapeHtml(subParts.join(' · ')) + '</div>';
     }
     html += '</div>';
+    if (datePill) html += datePill;
+    html += '</div>';
+    return html;
+  }
 
-    if (item.dueDate && !item.completed) {
-      var dLeft = daysUntil(item.dueDate);
-      var badgeBg = overdue ? '#FEE2E2' : dLeft !== null && dLeft <= 7 ? '#FEF3C7'
-        : (accent === 'emerald' ? '#ECFDF5' : '#EEF2FF');
-      var badgeColor = overdue ? '#DC2626' : dLeft !== null && dLeft <= 7 ? '#D97706'
-        : (accent === 'emerald' ? '#059669' : 'var(--indigo)');
-      var badgeText = dLeft === 0 ? 'Today' : dLeft < 0 ? Math.abs(dLeft) + 'd late' : dLeft + 'd';
-      html += '<span style="font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:8px;background:' +
-        badgeBg + ';color:' + badgeColor + ';flex-shrink:0;white-space:nowrap">' + badgeText + '</span>';
+  // Group checklist items into Overdue / Due This Week / Upcoming / Completed
+  // and render as collapsible sections. Returns HTML string.
+  function renderClGrouped(items, opts) {
+    var buckets = { overdue: [], week: [], upcoming: [], done: [] };
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+
+    items.forEach(function (item) {
+      if (item.completed) { buckets.done.push(item); return; }
+      if (!item.dueDate) { buckets.upcoming.push(item); return; }
+      var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
+      if (isNaN(dd.getTime())) { buckets.upcoming.push(item); return; }
+      var diff = Math.round((dd - today) / 86400000);
+      if (diff < 0) buckets.overdue.push(item);
+      else if (diff <= 7) buckets.week.push(item);
+      else buckets.upcoming.push(item);
+    });
+
+    function byDate(a, b) {
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate) - new Date(b.dueDate);
     }
-    if (item.completed) {
-      html += '<svg viewBox="0 0 24 24" width="16" height="16" fill="#10B981" style="flex-shrink:0">' +
-        '<path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>';
-    }
-    html += '</div>';
+    buckets.overdue.sort(byDate);
+    buckets.week.sort(byDate);
+    buckets.upcoming.sort(byDate);
+    buckets.done.sort(function (a, b) { return new Date(b.completedAt || 0) - new Date(a.completedAt || 0); });
+
+    var sections = [
+      { key: 'overdue', label: 'Overdue', items: buckets.overdue },
+      { key: 'week', label: 'Due This Week', items: buckets.week },
+      { key: 'upcoming', label: 'Upcoming', items: buckets.upcoming },
+      { key: 'done', label: 'Completed', items: buckets.done }
+    ];
+
+    var html = '';
+    sections.forEach(function (sec) {
+      if (sec.items.length === 0) return;
+      var collapsed = sec.key === 'done' ? ' cl-section-collapsed' : '';
+      html += '<div class="cl-section cl-section-' + sec.key + collapsed + '">';
+      html += '<div class="cl-section-header" data-action="toggle-cl-section">';
+      html += '<span class="cl-section-dot"></span>';
+      html += '<span class="cl-section-label">' + sec.label + '</span>';
+      html += '<span class="cl-section-count">' + sec.items.length + '</span>';
+      html += '<svg class="cl-section-chevron" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+      html += '</div>';
+      html += '<div class="cl-section-body">';
+      sec.items.forEach(function (item) {
+        html += renderClItemCard(item, opts);
+      });
+      html += '</div>';
+      html += '</div>';
+    });
+
     return html;
   }
 
@@ -1298,29 +1355,16 @@
       html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
       html += '</div></div>';
 
-      var hasDates = lstChecklist.items.some(function (i) { return i.dueDate; });
-      var clSorted = lstChecklist.items.slice();
-      if (hasDates) {
-        clSorted.sort(function (a, b) {
-          if (!a.dueDate && !b.dueDate) return 0;
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return new Date(a.dueDate) - new Date(b.dueDate);
-        });
-      }
-
-      html += '<div id="clItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
-      clSorted.forEach(function (item) {
-        html += renderClItemCard(item, {
-          accent: 'indigo',
-          clickAction: 'toggle-cl-expand',
-          toggleAction: 'toggle-checklist-item',
-          draggable: true
-        });
+      html += '<div id="clItemList">';
+      html += renderClGrouped(lstChecklist.items, {
+        accent: 'indigo',
+        clickAction: 'toggle-cl-expand',
+        toggleAction: 'toggle-checklist-item',
+        draggable: true
       });
-      html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
-      html += '<input type="text" id="newChecklistItem" placeholder="+ Add checklist item..." style="flex:1;border:none;outline:none;font-size:.82rem;font-family:inherit;background:transparent;color:var(--gray-600)">';
-      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.72rem;padding:4px 12px;border-radius:8px;white-space:nowrap">Add</button>';
+      html += '<div class="cl-add-row">';
+      html += '<input type="text" id="newChecklistItem" placeholder="+ Add checklist item...">';
+      html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item">+ Add</button>';
       html += '</div>';
       html += '</div>';
 
@@ -1391,18 +1435,16 @@
           html += '<div style="background:var(--gray-100);border-radius:6px;height:6px;overflow:hidden">';
           html += '<div style="background:var(--emerald);height:100%;width:' + ecPct + '%;border-radius:6px"></div>';
           html += '</div></div>';
-          html += '<div id="ecClItemList" style="padding:10px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
-          txnChecklist.items.forEach(function (item) {
-            html += renderClItemCard(item, {
-              accent: 'emerald',
-              clickAction: 'toggle-ec-expand',
-              toggleAction: 'toggle-escrow-cl-item',
-              extraAttrs: ' data-txn-id="' + linkedTxn.id + '"'
-            });
+          html += '<div id="ecClItemList">';
+          html += renderClGrouped(txnChecklist.items, {
+            accent: 'emerald',
+            clickAction: 'toggle-ec-expand',
+            toggleAction: 'toggle-escrow-cl-item',
+            extraAttrs: ' data-txn-id="' + linkedTxn.id + '"'
           });
-          html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
-          html += '<input type="text" id="newEscrowClItem" placeholder="+ Add escrow item..." style="flex:1;border:none;outline:none;font-size:.82rem;font-family:inherit;background:transparent;color:var(--gray-600)">';
-          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '" style="font-size:.72rem;padding:4px 12px;border-radius:8px;white-space:nowrap">Add</button>';
+          html += '<div class="cl-add-row">';
+          html += '<input type="text" id="newEscrowClItem" placeholder="+ Add escrow item...">';
+          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '">+ Add</button>';
           html += '</div>';
           html += '</div>';
 
@@ -1964,6 +2006,12 @@
       case 'toggle-listing-checklist': {
         var lcBody = document.getElementById('listingChecklistBody');
         if (lcBody) lcBody.style.display = lcBody.style.display === 'none' ? '' : 'none';
+        break;
+      }
+
+      case 'toggle-cl-section': {
+        var sec = target.closest('.cl-section');
+        if (sec) sec.classList.toggle('cl-section-collapsed');
         break;
       }
 
