@@ -835,12 +835,6 @@
     // ═══════════════ SIDEBAR ═══════════════
     html += '<aside class="dd-bt-sidebar">';
 
-    // Photo placeholder
-    html += '<div class="dd-photo">';
-    html += '<div class="dd-photo-img"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>';
-    html += '<div class="dd-photo-status" style="background:rgba(15,23,42,.78)"><span class="dd-photo-status-dot" style="background:' + _txnStatusColor + '"></span>' + escapeHtml(_txnStatusLabel) + '</div>';
-    html += '</div>';
-
     // Identity
     html += '<div class="dd-identity">';
     html += '<input type="text" class="ie-field dd-address-input" data-field="address" value="' + escapeHtml(t.address) + '" placeholder="Address">';
@@ -895,24 +889,6 @@
       html += '<iframe src="https://maps.google.com/maps?q=' + encodeURIComponent(_mapAddr.trim()) + '&output=embed&z=14" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map of ' + escapeHtml(t.address) + '"></iframe>';
       html += '</a>';
     }
-
-    // Commission breakdown
-    var _commissionRate = getAdminSetting('commission.rate', 0.025);
-    var _agentSplit = getAdminSetting('commission.agentSplit', 0.80);
-    var _gross = (t.price || 0) * _commissionRate;
-    var _agentNet = _gross * _agentSplit;
-    var _brokerCut = _gross - _agentNet;
-    html += '<div class="dd-commission">';
-    html += '<div class="dd-commission-header">';
-    html += '<span class="dd-commission-title">Your Commission</span>';
-    html += '<span class="dd-commission-rate">' + (_commissionRate * 100).toFixed(1) + '% &times; ' + Math.round(_agentSplit * 100) + '%</span>';
-    html += '</div>';
-    html += '<div class="dd-commission-cells">';
-    html += '<div class="dd-commission-cell"><div class="dd-commission-cell-val">' + Data.formatCurrency(_gross) + '</div><div class="dd-commission-cell-lbl">Gross</div></div>';
-    html += '<div class="dd-commission-cell"><div class="dd-commission-cell-val">' + Data.formatCurrency(_brokerCut) + '</div><div class="dd-commission-cell-lbl">Broker</div></div>';
-    html += '<div class="dd-commission-cell dd-commission-cell-net"><div class="dd-commission-cell-val">' + Data.formatCurrency(_agentNet) + '</div><div class="dd-commission-cell-lbl">You Net</div></div>';
-    html += '</div>';
-    html += '</div>';
 
     // Actions
     html += '<div class="dd-actions">';
