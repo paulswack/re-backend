@@ -693,7 +693,7 @@
 
     var html = '';
 
-    // Inline-editable input style
+    // Inline-editable input style (used by buyer/seller/contacts/key-dates below)
     var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 8px;font-family:inherit;transition:all .15s;width:100%;';
     var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
 
@@ -704,89 +704,112 @@
     var _txnStatusLabel = _txnStatusLabels[t.status] || t.status;
     var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((t.address || '') + (t.city ? ', ' + t.city : '') + (t.state ? ', ' + t.state : '')) + '_rb/';
 
-    // Header Card
-    html += '<div class="detail-header-card">';
-    html += '<div style="padding:22px 26px 18px">';
+    var _txnStages = ['active', 'pending', 'closed'];
+    var _currentStageIdx = _txnStages.indexOf(t.status);
+    if (_currentStageIdx < 0) _currentStageIdx = 0;
+    var _activeTab = sessionStorage.getItem('reb_detail_tab_txn') || 'activity';
 
-    // Row 1: Back button (left) + Action buttons (right)
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">';
+    var _txnDetailStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
+    var _detailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
+
+    // ─── Back button ───
     html += '<button class="detail-back-btn" data-action="back-to-list">' +
       '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      (fromDealRoom ? 'Deal Room' : 'Back') +
+      (fromDealRoom ? 'Deal Room' : 'Back to Escrows') +
     '</button>';
-    html += '<div style="display:flex;gap:6px">';
-    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
-    html += '<button data-action="share-client" data-id="' + t.id + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
-    html += '</div></div>';
 
-    // Row 2: Status block + Address
-    html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">';
-    html += '<span class="detail-status-block" style="background:' + _txnStatusColor + '22;color:' + _txnStatusColor + '">' + escapeHtml(_txnStatusLabel) + '</span>';
-    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(t.address) + '" style="flex:1;min-width:200px;font-size:1.5rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>';
+    html += '<div class="dd-bt-layout">';
+
+    // ═══════════════ SIDEBAR ═══════════════
+    html += '<aside class="dd-bt-sidebar">';
+
+    // Photo placeholder
+    html += '<div class="dd-photo">';
+    html += '<div class="dd-photo-img"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>';
+    html += '<div class="dd-photo-status" style="background:rgba(15,23,42,.78)"><span class="dd-photo-status-dot" style="background:' + _txnStatusColor + '"></span>' + escapeHtml(_txnStatusLabel) + '</div>';
     html += '</div>';
 
-    // Row 3: Price
-    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(t.price) + '" data-raw="' + (t.price || '') + '" style="font-size:1.25rem;font-weight:800;color:' + _txnStatusColor + ';' + inpStyle + ';margin-bottom:8px" ' +
-      'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
-      'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+    // Identity
+    html += '<div class="dd-identity">';
+    html += '<input type="text" class="ie-field dd-address-input" data-field="address" value="' + escapeHtml(t.address) + '" placeholder="Address">';
+    html += '<div class="dd-csz-row">';
+    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="City">';
+    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(t.state || '') + '" placeholder="ST" maxlength="2">';
+    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(t.zip || '') + '" placeholder="Zip" maxlength="10">';
+    html += '</div>';
+    html += '<input type="text" class="ie-field dd-price-input" data-field="price" value="' + Data.formatCurrency(t.price) + '" data-raw="' + (t.price || '') + '" style="color:' + _txnStatusColor + '" onfocus="this.value=this.getAttribute(\'data-raw\')">';
 
-    // Row 4: City / State / Zip — transparent inputs that look like text
-    html += '<div class="detail-csz-grid detail-hero-csz" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:18px">';
-    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="City" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;color:var(--gray-800);background:#fff;font-family:inherit">';
-    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(t.state || '') + '" placeholder="ST" maxlength="2" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;color:var(--gray-800);background:#fff;font-family:inherit">';
-    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(t.zip || '') + '" placeholder="Zip" maxlength="10" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;color:var(--gray-800);background:#fff;font-family:inherit">';
+    // Pipeline (3 stages: active → pending → closed)
+    html += '<div class="dd-pipeline"><div class="dd-pipeline-bar">';
+    for (var _pi = 0; _pi < _txnStages.length; _pi++) {
+      var _stepStyle = (_pi <= _currentStageIdx) ? ' style="background:' + _txnStatusColor + '"' : '';
+      html += '<div class="dd-pipeline-step"' + _stepStyle + '></div>';
+    }
+    html += '</div>';
+    html += '<div class="dd-pipeline-label"><span>Stage</span><span style="color:' + _txnStatusColor + '">' + escapeHtml(_txnStatusLabel) + '</span></div>';
+    html += '</div>';
+    html += '</div>'; // dd-identity
+
+    // Quick stats
+    html += '<div class="dd-quickstats">';
+    html += '<div class="dd-qs-cell"><input type="number" class="ie-field" data-field="beds" value="' + (t.beds || '') + '" placeholder="—" min="0"><div class="dd-qs-lbl">Beds</div></div>';
+    html += '<div class="dd-qs-cell"><input type="number" class="ie-field" data-field="baths" value="' + (t.baths || '') + '" placeholder="—" min="0" step="0.5"><div class="dd-qs-lbl">Baths</div></div>';
+    html += '<div class="dd-qs-cell"><input type="number" class="ie-field" data-field="sqft" value="' + (t.sqft || '') + '" placeholder="—" min="0"><div class="dd-qs-lbl">Sq Ft</div></div>';
     html += '</div>';
 
-    // Detail blocks row — editable
-    html += '<div class="detail-blocks-row">';
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Agent</div>' +
-      '<select class="ie-field" data-field="agent" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === t.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') +
-      '</select>' +
-    '</div>';
-    var _txnDetailStatuses = getAdminSetting('transactions.statuses', [{ key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'closed', label: 'Closed' }]);
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Status</div>' +
-      '<select class="ie-field" data-field="status" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        _txnDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') +
-      '</select>' +
-    '</div>';
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Close Date</div>' +
-      '<input type="date" class="ie-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Days to Closing</div>' +
-      '<div class="detail-block-value">' + dtcLabel + '</div>' +
-    '</div>';
-    var _detailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Source</div>' +
-      '<select class="ie-field" data-field="source" style="font-size:.88rem;font-weight:600;color:var(--gray-800);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 6px;cursor:pointer" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'transparent\'">' +
-        '<option value=""' + (!t.source ? ' selected' : '') + '>—</option>' +
-        _detailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') +
-      '</select>' +
-    '</div>';
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Beds</div>' +
-      '<input type="number" class="ie-field" data-field="beds" value="' + (t.beds || '') + '" placeholder="—" min="0" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Baths</div>' +
-      '<input type="number" class="ie-field" data-field="baths" value="' + (t.baths || '') + '" placeholder="—" min="0" step="0.5" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-    html += '<div class="detail-block">' +
-      '<div class="detail-block-label">Sq Ft</div>' +
-      '<input type="number" class="ie-field" data-field="sqft" value="' + (t.sqft || '') + '" placeholder="—" min="0" style="font-size:.88rem;font-weight:600;color:var(--gray-800);' + inpStyle + '" ' + inpFocus + '>' +
-    '</div>';
-    html += '</div>'; // detail-blocks-row
+    // Key facts
+    html += '<div class="dd-facts">';
+    html += '<div class="dd-facts-title">Key Facts</div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Status</div><div class="dd-fact-value"><select class="ie-field" data-field="status">' + _txnDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (t.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Agent</div><div class="dd-fact-value"><select class="ie-field" data-field="agent">' + users.map(function(u) { var _nm = u.displayName || u.username; return '<option value="' + escapeHtml(_nm) + '"' + (_nm === t.agent ? ' selected' : '') + '>' + escapeHtml(_nm) + '</option>'; }).join('') + '</select></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Source</div><div class="dd-fact-value"><select class="ie-field" data-field="source"><option value=""' + (!t.source ? ' selected' : '') + '>—</option>' + _detailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Close</div><div class="dd-fact-value"><input type="date" class="ie-field" data-field="closeDate" value="' + (t.closeDate || '') + '"></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Days</div><div class="dd-fact-value" style="font-weight:700;color:' + _txnStatusColor + '">' + dtcLabel + '</div></div>';
+    html += '</div>';
 
-    html += '</div>'; // detail-header-body
-    html += '</div>'; // detail-header-card
+    // Actions
+    html += '<div class="dd-actions">';
+    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" class="dd-action-btn dd-action-zillow"><svg viewBox="0 0 24 24"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
+    html += '<button data-action="share-client" data-id="' + t.id + '" class="dd-action-btn dd-action-share"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>Share</button>';
+    html += '</div>';
+
+    html += '</aside>'; // dd-bt-sidebar
+
+    // ═══════════════ MAIN ═══════════════
+    html += '<div class="dd-bt-main">';
+
+    // Pre-compute counts for tab badges
+    var _txnUpdatesPre = (getUpdates()[selectedTxnId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+
+    // Tab nav
+    html += '<div class="dd-tabs">';
+    html += '<button class="dd-tab' + (_activeTab === 'activity' ? ' active' : '') + '" data-dd-tab="activity">Activity' + (_txnUpdatesPre.length ? '<span class="dd-tab-count">' + _txnUpdatesPre.length + '</span>' : '') + '</button>';
+    html += '<button class="dd-tab' + (_activeTab === 'details' ? ' active' : '') + '" data-dd-tab="details">Details</button>';
+    html += '<button class="dd-tab' + (_activeTab === 'updates' ? ' active' : '') + '" data-dd-tab="updates">Client Updates' + (_txnUpdatesPre.length ? '<span class="dd-tab-count">' + _txnUpdatesPre.length + '</span>' : '') + '</button>';
+    html += '</div>';
+
+    // ─── ACTIVITY TAB ───
+    html += '<div class="dd-tab-pane' + (_activeTab === 'activity' ? ' active' : '') + '" data-dd-pane="activity">';
+    if (_txnUpdatesPre.length === 0) {
+      html += '<div class="dd-empty">No activity yet. Send a client update to start the timeline.</div>';
+    } else {
+      html += '<div class="dd-timeline">';
+      _txnUpdatesPre.forEach(function (upd) {
+        var _ms = MILESTONES.find(function (m) { return m.key === upd.type; }) || { icon: '📌', label: 'Update' };
+        html += '<div class="dd-tl-item">';
+        html += '<div class="dd-tl-dot update">&#9733;</div>';
+        html += '<div class="dd-tl-body">';
+        html += '<div class="dd-tl-meta">' + escapeHtml(upd.author || 'System') + ' &middot; ' + relativeTime(upd.timestamp) + (upd.auto ? ' &middot; Auto' : '') + '</div>';
+        html += '<div class="dd-tl-title">' + _ms.icon + ' ' + escapeHtml(upd.title || _ms.label) + '</div>';
+        if (upd.detail) html += '<div class="dd-tl-text">' + escapeHtml(upd.detail) + '</div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>'; // activity pane
+
+    // ─── DETAILS TAB (wraps buyer/seller, contacts, key dates, checklist) ───
+    html += '<div class="dd-tab-pane' + (_activeTab === 'details' ? ' active' : '') + '" data-dd-pane="details">';
 
     // Buyer / Seller Info Card
     var repType = t.type || 'Dual';
@@ -1076,6 +1099,11 @@
     }
     html += '</div>';
 
+    html += '</div>'; // details pane
+
+    // ─── CLIENT UPDATES TAB ───
+    html += '<div class="dd-tab-pane' + (_activeTab === 'updates' ? ' active' : '') + '" data-dd-pane="updates">';
+
     // Client Updates (milestone timeline for portal)
     var allUpdates = getUpdates();
     var txnUpdates = (allUpdates[selectedTxnId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
@@ -1119,6 +1147,10 @@
     }
     html += '</div>';
 
+    html += '</div>'; // updates pane
+
+    html += '</div>'; // dd-bt-main
+    html += '</div>'; // dd-bt-layout
 
     // Delete at bottom
     html += '<div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--gray-100);margin-bottom:40px">' +
@@ -1127,6 +1159,20 @@
 
     pageBody.innerHTML = html;
     _detailRendered = true;
+
+    // Tab switching (BoomTown sidebar + tabs layout)
+    pageBody.querySelectorAll('[data-dd-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = this.getAttribute('data-dd-tab');
+        sessionStorage.setItem('reb_detail_tab_txn', tab);
+        pageBody.querySelectorAll('[data-dd-tab]').forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-dd-tab') === tab);
+        });
+        pageBody.querySelectorAll('[data-dd-pane]').forEach(function (p) {
+          p.classList.toggle('active', p.getAttribute('data-dd-pane') === tab);
+        });
+      });
+    });
 
     initChecklistPickers();
 

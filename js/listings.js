@@ -1094,131 +1094,192 @@
 
     var html = '';
 
-    // Styles
-    var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:8px;padding:4px 8px;font-family:inherit;transition:all .15s;width:100%;';
-    var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
-    var fldInp = 'width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s';
-    var selStyle = 'font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;border:1.5px solid var(--gray-200);border-radius:10px;padding:6px 10px;cursor:pointer;width:100%;font-family:inherit';
-    var fldLbl = 'font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:4px';
-
     var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
-    var statusColors = { pre_listing: '#7C3AED', coming_soon: '#3B5BDB', active: '#059669', pending: '#D97706', sold: '#DC2626' };
+    var statusColors = { pre_listing: '#7C3AED', coming_soon: '#3B5BDB', active: '#059669', pending: '#D97706', sold: '#DC2626', closed: '#1A7F4B' };
     var statusColor = statusColors[l.status] || 'var(--indigo)';
     var _lstDetailStatuses = getAdminSetting('listings.statuses', [{ key: 'pre_listing', label: 'Pre-Listing' }, { key: 'coming_soon', label: 'Coming Soon' }, { key: 'active', label: 'Active' }, { key: 'pending', label: 'Pending' }, { key: 'sold', label: 'Sold' }]);
     var _lstDetailSources = getAdminSetting('leadSources', ['Zillow','Realtor.com','Referral','Other']);
     var statusLabel = (_lstDetailStatuses.find(function(s){return s.key===l.status}) || {}).label || l.status;
 
-    // Hero header
-    html += '<div class="detail-header-card" style="margin-bottom:18px">';
-    html += '<div style="padding:22px 26px 18px">';
+    var _lstStages = ['pre_listing', 'coming_soon', 'active', 'pending', 'sold'];
+    var _currentStageIdx = _lstStages.indexOf(l.status);
+    if (_currentStageIdx < 0) _currentStageIdx = 0;
+    var _activeTab = sessionStorage.getItem('reb_detail_tab') || 'activity';
 
-    // Row 1: Back button (left) + Action buttons (right)
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">';
-    html += '<button class="detail-back-btn" data-action="back-to-list"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (fromDealRoom ? 'Deal Room' : 'Back') + '</button>';
-    html += '<div style="display:flex;gap:6px">';
-    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
-    html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
-    html += '</div></div>';
-
-    // Row 2: Status block (left) + Address/Price (right of block)
-    html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">';
-    html += '<span class="detail-status-block" style="background:' + statusColor + '22;color:' + statusColor + '">' + escapeHtml(statusLabel) + '</span>';
-    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="flex:1;min-width:200px;font-size:1.5rem;font-weight:800;color:var(--gray-900);' + inpStyle + '" ' + inpFocus + '>';
-    html += '</div>';
-
-    // Row 3: Price
-    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.25rem;font-weight:800;color:' + statusColor + ';' + inpStyle + ';margin-bottom:8px" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
-
-    // Row 4: City/State/Zip — transparent inputs that look like text
-    html += '<div class="detail-csz-grid detail-hero-csz" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:18px">';
-    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="' + fldInp + ';font-size:.92rem">';
-    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="' + fldInp + ';font-size:.92rem">';
-    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="' + fldInp + ';font-size:.92rem">';
-    html += '</div>';
-
-    // Row 5: Property details — clean grid with rounded inputs
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding-top:18px;border-top:1px solid var(--gray-100)">';
-
-    html += '<div><div style="' + fldLbl + '">Beds</div><input type="number" class="ie-field" data-field="beds" value="' + (l.beds || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
-    html += '<div><div style="' + fldLbl + '">Baths</div><input type="number" class="ie-field" data-field="baths" value="' + (l.baths || '') + '" placeholder="—" min="0" step="0.5" style="' + fldInp + '"></div>';
-    html += '<div><div style="' + fldLbl + '">Sq Ft</div><input type="number" class="ie-field" data-field="sqft" value="' + (l.sqft || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
-    html += '<div><div style="' + fldLbl + '">Agent</div><select class="ie-field" data-field="agent" style="' + selStyle + '">' + users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') + '</select></div>';
-    html += '<div><div style="' + fldLbl + '">Status</div><select class="ie-field" data-field="status" style="' + selStyle + '">' + _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div>';
-    html += '<div><div style="' + fldLbl + '">Source</div><select class="ie-field" data-field="source" style="' + selStyle + '"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div>';
-    html += '<div><div style="' + fldLbl + '">Listed</div><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '" style="' + fldInp + '"></div>';
-
-    var _coeTxn = Data.getTransactions().find(function (t) { return t.address === l.address && t.status !== 'closed'; });
-    if (_coeTxn) {
-      html += '<div><div style="' + fldLbl + ';color:var(--emerald)">COE Date</div><input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '" style="' + fldInp + ';border-color:#86EFAC"></div>';
-    }
-
-    html += '</div>'; // property grid
-    html += '</div>'; // padding
-    html += '</div>'; // header card
-
-    // === TWO COLUMN LAYOUT ===
-    html += '<div class="dd-two-col">';
-    html += '<div class="dd-col-left">';
-
-    // Seller Info Card — always visible, inline-editable
+    // ─── Sellers data (needed for sidebar) ───
     var detailParties = getParties();
     var rawDetailP = detailParties[selectedListingId] || {};
     var detailP = migratePartyData(rawDetailP);
     var detailSellers = detailP.sellers.length ? detailP.sellers : [{ name: '', phone: '', email: '', relationship: 'Primary' }];
-    // Only push seller data if this is a local (unsynced) listing — server listings already
-    // have authoritative party data. Pushing from multiple browsers simultaneously causes
-    // a DELETE+INSERT race that duplicates records.
     var _detailUuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     var _localSellersToSync = detailP.sellers.filter(function (s) { return s.name || s.phone || s.email; });
     if (_localSellersToSync.length > 0 && !_detailUuidRe.test(selectedListingId)) {
       Data.syncListingParties(selectedListingId, _localSellersToSync);
     }
-    var siInp = 'border:1.5px solid var(--gray-200);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:.82rem;width:100%;background:#fff;transition:border-color .15s;';
-    html += '<div class="parties-card">';
-    html += '<div class="parties-card-header">';
-    html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="#F59E0B" style="flex-shrink:0"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Seller / Owner</span>';
-    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid var(--gray-200);color:var(--gray-600);border-radius:99px;padding:3px 12px;font-size:.72rem;font-weight:600;cursor:pointer">+ Add</button>';
+
+    var _coeTxn = Data.getTransactions().find(function (tx) { return tx.address === l.address && tx.status !== 'closed'; });
+    var dealChecklists = getDealChecklists();
+    var lstChecklist = dealChecklists[selectedListingId];
+    var allUpdates = getUpdates();
+    var lstUpdates = (allUpdates[selectedListingId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+
+    // ─── Back button ───
+    html += '<button class="detail-back-btn" data-action="back-to-list"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (fromDealRoom ? 'Deal Room' : 'Back to Listings') + '</button>';
+
+    html += '<div class="dd-bt-layout">';
+
+    // ═══════════════ SIDEBAR ═══════════════
+    html += '<aside class="dd-bt-sidebar">';
+
+    // Photo placeholder with status overlay
+    html += '<div class="dd-photo">';
+    html += '<div class="dd-photo-img"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>';
+    html += '<div class="dd-photo-status" style="background:rgba(15,23,42,.78)"><span class="dd-photo-status-dot" style="background:' + statusColor + '"></span>' + escapeHtml(statusLabel) + '</div>';
     html += '</div>';
-    html += '<div id="detailSellersWrap" style="padding:10px 16px">';
+
+    // Identity card: address, CSZ, price, pipeline
+    html += '<div class="dd-identity">';
+    html += '<input type="text" class="ie-field dd-address-input" data-field="address" value="' + escapeHtml(l.address) + '" placeholder="Address">';
+    html += '<div class="dd-csz-row">';
+    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City">';
+    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2">';
+    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10">';
+    html += '</div>';
+    html += '<input type="text" class="ie-field dd-price-input" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="color:' + statusColor + '" onfocus="this.value=this.getAttribute(\'data-raw\')">';
+
+    // Pipeline stage tracker
+    html += '<div class="dd-pipeline"><div class="dd-pipeline-bar">';
+    for (var _pi = 0; _pi < _lstStages.length; _pi++) {
+      var _stepStyle = (_pi <= _currentStageIdx) ? ' style="background:' + statusColor + '"' : '';
+      html += '<div class="dd-pipeline-step"' + _stepStyle + '></div>';
+    }
+    html += '</div>';
+    html += '<div class="dd-pipeline-label"><span>Stage</span><span style="color:' + statusColor + '">' + escapeHtml(statusLabel) + '</span></div>';
+    html += '</div>';
+    html += '</div>'; // dd-identity
+
+    // Quick stats: beds | baths | sqft
+    html += '<div class="dd-quickstats">';
+    html += '<div class="dd-qs-cell"><input type="number" class="ie-field" data-field="beds" value="' + (l.beds || '') + '" placeholder="—" min="0"><div class="dd-qs-lbl">Beds</div></div>';
+    html += '<div class="dd-qs-cell"><input type="number" class="ie-field" data-field="baths" value="' + (l.baths || '') + '" placeholder="—" min="0" step="0.5"><div class="dd-qs-lbl">Baths</div></div>';
+    html += '<div class="dd-qs-cell"><input type="number" class="ie-field" data-field="sqft" value="' + (l.sqft || '') + '" placeholder="—" min="0"><div class="dd-qs-lbl">Sq Ft</div></div>';
+    html += '</div>';
+
+    // Key facts panel
+    html += '<div class="dd-facts">';
+    html += '<div class="dd-facts-title">Key Facts</div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Status</div><div class="dd-fact-value"><select class="ie-field" data-field="status">' + _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Agent</div><div class="dd-fact-value"><select class="ie-field" data-field="agent">' + users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') + '</select></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Source</div><div class="dd-fact-value"><select class="ie-field" data-field="source"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div></div>';
+    html += '<div class="dd-fact-row"><div class="dd-fact-label">Listed</div><div class="dd-fact-value"><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '"></div></div>';
+    if (_coeTxn) {
+      html += '<div class="dd-fact-row"><div class="dd-fact-label" style="color:var(--emerald)">COE</div><div class="dd-fact-value"><input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '"></div></div>';
+    }
+    html += '</div>';
+
+    // Action buttons
+    html += '<div class="dd-actions">';
+    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" class="dd-action-btn dd-action-zillow"><svg viewBox="0 0 24 24"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
+    html += '<button data-action="share-client" data-id="' + l.id + '" class="dd-action-btn dd-action-share"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>Share</button>';
+    html += '</div>';
+
+    // Seller / Owner card
+    html += '<div class="dd-sellers">';
+    html += '<div class="dd-sellers-header"><span>Seller / Owner</span><button type="button" class="dd-sellers-add" data-action="detail-add-seller">+ Add</button></div>';
+    html += '<div class="dd-sellers-body" id="detailSellersWrap">';
     detailSellers.forEach(function (s, idx) {
-      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin:6px 0"></div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center" data-seller-row="' + idx + '">';
-      html += '<input type="text" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Name" style="' + siInp + 'font-weight:700;flex:1;min-width:120px" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
-      html += '<input type="tel" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="Phone" style="' + siInp + 'flex:1;min-width:100px" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
-      html += '<input type="email" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="Email" style="' + siInp + 'flex:1.5;min-width:140px" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+      if (idx > 0) html += '<div style="border-top:1px solid var(--gray-100);margin:10px 0"></div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px" data-seller-row="' + idx + '">';
+      html += '<input type="text" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="name" value="' + escapeHtml(s.name || '') + '" placeholder="Name" style="font-weight:700">';
+      html += '<input type="tel" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="phone" value="' + escapeHtml(s.phone || '') + '" placeholder="Phone">';
+      html += '<div style="display:flex;gap:6px;align-items:center">';
+      html += '<input type="email" class="detail-seller-field" data-sidx="' + idx + '" data-sfield="email" value="' + escapeHtml(s.email || '') + '" placeholder="Email">';
       if (idx > 0) {
-        html += '<button type="button" data-action="detail-remove-seller" data-sidx="' + idx + '" style="background:none;border:none;color:var(--rose);font-size:1rem;cursor:pointer;padding:2px 6px" title="Remove">&times;</button>';
+        html += '<button type="button" data-action="detail-remove-seller" data-sidx="' + idx + '" style="background:none;border:none;color:var(--rose);font-size:1.1rem;cursor:pointer;padding:2px 8px;flex-shrink:0" title="Remove">&times;</button>';
       }
+      html += '</div>';
       html += '</div>';
     });
     html += '</div>';
     html += '</div>';
 
-    // Linked Tasks (read-only display)
+    html += '</aside>'; // dd-bt-sidebar
+
+    // ═══════════════ MAIN ═══════════════
+    html += '<div class="dd-bt-main">';
+
+    var tasks = Data.getTasks().filter(function (task) {
+      return task.linkedId === selectedListingId && task.linkedType === 'listing';
+    });
+    var _activityCount = listingNotes.length + lstUpdates.length;
+    var _checklistCount = lstChecklist ? lstChecklist.items.length : 0;
+
+    // Tab navigation
+    html += '<div class="dd-tabs">';
+    html += '<button class="dd-tab' + (_activeTab === 'activity' ? ' active' : '') + '" data-dd-tab="activity">Activity' + (_activityCount ? '<span class="dd-tab-count">' + _activityCount + '</span>' : '') + '</button>';
+    html += '<button class="dd-tab' + (_activeTab === 'checklist' ? ' active' : '') + '" data-dd-tab="checklist">Checklist' + (_checklistCount ? '<span class="dd-tab-count">' + _checklistCount + '</span>' : '') + '</button>';
+    html += '<button class="dd-tab' + (_activeTab === 'updates' ? ' active' : '') + '" data-dd-tab="updates">Client Updates' + (lstUpdates.length ? '<span class="dd-tab-count">' + lstUpdates.length + '</span>' : '') + '</button>';
+    html += '</div>';
+
+    // ─── ACTIVITY TAB ───
+    html += '<div class="dd-tab-pane' + (_activeTab === 'activity' ? ' active' : '') + '" data-dd-pane="activity">';
+
+    // Add note input
+    html += '<div class="dd-add-note">';
+    html += '<textarea id="noteInput" placeholder="Add an internal note (visible only to your team)..."></textarea>';
+    html += '<div class="dd-add-note-actions"><button class="btn btn-primary btn-sm" data-action="add-note">Add Note</button></div>';
+    html += '</div>';
+
+    // Combined timeline: notes + client updates
+    var _activity = [];
+    listingNotes.forEach(function (n) {
+      _activity.push({ kind: 'note', timestamp: n.timestamp, author: n.author, title: 'Internal Note', body: n.text });
+    });
+    lstUpdates.forEach(function (upd) {
+      var _ms = MILESTONES.find(function (m) { return m.key === upd.type; }) || { icon: '📌', label: 'Update' };
+      _activity.push({ kind: 'update', timestamp: upd.timestamp, author: upd.author, title: _ms.icon + ' ' + (upd.title || _ms.label), body: upd.detail, auto: upd.auto });
+    });
+    _activity.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+
+    if (_activity.length === 0) {
+      html += '<div class="dd-empty">No activity yet. Add a note above or send a client update to start the timeline.</div>';
+    } else {
+      html += '<div class="dd-timeline">';
+      _activity.forEach(function (item) {
+        var _dotIcon = item.kind === 'update' ? '&#9733;' : '&#9998;';
+        html += '<div class="dd-tl-item">';
+        html += '<div class="dd-tl-dot ' + item.kind + '">' + _dotIcon + '</div>';
+        html += '<div class="dd-tl-body">';
+        html += '<div class="dd-tl-meta">' + escapeHtml(item.author || 'System') + ' &middot; ' + relativeTime(item.timestamp) + (item.auto ? ' &middot; Auto' : '') + '</div>';
+        html += '<div class="dd-tl-title">' + (item.kind === 'update' ? item.title : escapeHtml(item.title)) + '</div>';
+        if (item.body) html += '<div class="dd-tl-text">' + escapeHtml(item.body) + '</div>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>'; // activity pane
+
+    // ─── CHECKLIST TAB ───
+    html += '<div class="dd-tab-pane' + (_activeTab === 'checklist' ? ' active' : '') + '" data-dd-pane="checklist">';
+
+    // Linked tasks (if any)
     if (tasks.length > 0) {
       html += '<div class="desc-card">';
       html += '<div class="desc-card-header">Linked Tasks (' + tasks.length + ')</div>';
       html += '<div style="padding:12px 20px">';
       tasks.forEach(function (task) {
-        var done = task.status === 'done';
-        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.85rem;color:' + (done ? 'var(--gray-400)' : 'var(--gray-700)') + ';' + (done ? 'text-decoration:line-through;' : '') + '">' +
+        var _done = task.status === 'done';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.85rem;color:' + (_done ? 'var(--gray-400)' : 'var(--gray-700)') + ';' + (_done ? 'text-decoration:line-through;' : '') + '">' +
           Data.priorityBadge(task.priority) + ' ' + escapeHtml(task.title) +
         '</div>';
       });
-      html += '</div>';
-      html += '</div>';
+      html += '</div></div>';
     }
 
-    // Delete button moved to bottom of page
-
-    html += '</div>'; // dd-col-left
-    html += '<div class="dd-col-right">';
-
-    // Checklist Card
-    var dealChecklists = getDealChecklists();
-    var lstChecklist = dealChecklists[selectedListingId];
+    // Listing Checklist card
     html += '<div class="parties-card">';
-    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-action="toggle-listing-checklist">';
+    html += '<div class="parties-card-header" style="cursor:pointer" data-action="toggle-listing-checklist">';
     html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--indigo)" style="flex-shrink:0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Listing Checklist</span>';
     if (lstChecklist && lstChecklist.items.length > 0) {
       var clDone = lstChecklist.items.filter(function (i) { return i.completed; }).length;
@@ -1237,7 +1298,6 @@
       html += '<div style="background:var(--emerald);height:100%;width:' + clPct + '%;border-radius:6px;transition:width .3s"></div>';
       html += '</div></div>';
 
-      // Sort items by dueDate — dated items first (ascending), undated items last
       var hasDates = lstChecklist.items.some(function (i) { return i.dueDate; });
       var clSorted = lstChecklist.items.slice();
       if (hasDates) {
@@ -1258,14 +1318,12 @@
           draggable: true
         });
       });
-      // Add new item card
       html += '<div style="border:1.5px dashed var(--gray-200);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:6px;min-height:44px">';
       html += '<input type="text" id="newChecklistItem" placeholder="+ Add checklist item..." style="flex:1;border:none;outline:none;font-size:.82rem;font-family:inherit;background:transparent;color:var(--gray-600)">';
       html += '<button class="btn btn-primary btn-sm" data-action="add-checklist-item" style="font-size:.72rem;padding:4px 12px;border-radius:8px;white-space:nowrap">Add</button>';
       html += '</div>';
       html += '</div>';
 
-      // Expanded detail panel
       html += '<div id="clExpandPanel" style="display:none;margin:0 16px 10px;padding:12px 16px;background:linear-gradient(135deg,#F8FAFC,#EEF2FF);border:1.5px solid var(--indigo);border-radius:12px">';
       html += '<div id="clExpandInfo" style="font-size:.82rem;font-weight:700;color:var(--indigo);margin-bottom:8px"></div>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" class="cl-expand-grid">';
@@ -1275,7 +1333,6 @@
       html += '</div>';
       html += '</div>';
     } else {
-      // Auto-attach first listing template
       var listingTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'listing'; });
       if (listingTemplates.length > 0) {
         var autoTpl = listingTemplates[0];
@@ -1295,16 +1352,15 @@
       }
     }
     html += '</div>'; // listingChecklistBody
-    html += '</div>';
+    html += '</div>'; // parties-card
 
-    // Escrow Checklist (shown when listing is pending — linked transaction)
+    // Escrow Checklist (when pending)
     if (l.status === 'pending') {
-      var linkedTxn = Data.getTransactions().find(function (t) {
-        return t.address === l.address && t.status !== 'closed';
+      var linkedTxn = Data.getTransactions().find(function (tx) {
+        return tx.address === l.address && tx.status !== 'closed';
       });
       if (linkedTxn) {
         var txnChecklist = dealChecklists[linkedTxn.id];
-        // Auto-attach escrow template if not yet set
         if (!txnChecklist) {
           var escrowTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
           if (escrowTemplates.length > 0) {
@@ -1326,7 +1382,7 @@
           var ecTotal = txnChecklist.items.length;
           var ecPct = Math.round((ecDone / ecTotal) * 100);
           html += '<div class="parties-card">';
-          html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" data-action="toggle-escrow-checklist">';
+          html += '<div class="parties-card-header" style="cursor:pointer" data-action="toggle-escrow-checklist">';
           html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--emerald)" style="flex-shrink:0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Escrow Checklist</span>';
           html += '<span style="font-size:.75rem;font-weight:700;color:var(--emerald);background:var(--emerald-light);padding:2px 10px;border-radius:20px">' + ecDone + '/' + ecTotal + '</span>';
           html += '</div>';
@@ -1363,17 +1419,14 @@
       }
     }
 
-    // Client Updates (milestone timeline for portal)
-    var allUpdates = getUpdates();
-    var lstUpdates = (allUpdates[selectedListingId] || []).slice().sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+    html += '</div>'; // checklist pane
+
+    // ─── CLIENT UPDATES TAB ───
+    html += '<div class="dd-tab-pane' + (_activeTab === 'updates' ? ' active' : '') + '" data-dd-pane="updates">';
 
     html += '<div class="notes-card">';
-    html += '<div class="notes-card-header" style="display:flex;align-items:center;justify-content:space-between">' +
-      '<span>Client Updates</span>' +
-      '<span style="font-size:.7rem;color:var(--gray-400);font-weight:500">Visible on client portal</span>' +
-    '</div>';
+    html += '<div class="notes-card-header"><span>Client Updates</span><span style="font-size:.7rem;color:var(--gray-400);font-weight:500">Visible on client portal</span></div>';
 
-    // Milestone selector
     html += '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-100)">';
     html += '<div style="display:flex;gap:10px;align-items:start;flex-wrap:wrap">';
     html += '<select id="updateMilestone" style="flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;color:var(--gray-700);background:var(--white)">';
@@ -1387,7 +1440,6 @@
     html += '<textarea id="updateDetail" placeholder="Add details for the client (optional)..." style="width:100%;margin-top:10px;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.85rem;min-height:60px;font-family:inherit;resize:vertical;display:none"></textarea>';
     html += '</div>';
 
-    // Updates list
     if (lstUpdates.length === 0) {
       html += '<div style="padding:24px;text-align:center;font-size:.85rem;color:var(--gray-400);font-style:italic">No client updates yet. Send a milestone update to keep your seller informed.</div>';
     } else {
@@ -1404,11 +1456,14 @@
         html += '</div>';
       });
     }
-    html += '</div>';
+    html += '</div>'; // notes-card
 
+    html += '</div>'; // updates pane
 
-    html += '</div>'; // dd-col-right
-    html += '</div>'; // dd-two-col
+    html += '</div>'; // dd-bt-main
+    html += '</div>'; // dd-bt-layout
+
+    // (legacy two-col layout removed — replaced by BoomTown sidebar + tabs above)
 
     // Delete button at bottom
     html += '<div style="margin-top:30px;padding-top:16px;border-top:1px solid var(--gray-100);margin-bottom:30px">';
@@ -1417,6 +1472,20 @@
 
     pageBody.innerHTML = html;
     _detailRendered = true;
+
+    // Tab switching (BoomTown sidebar + tabs layout)
+    pageBody.querySelectorAll('[data-dd-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = this.getAttribute('data-dd-tab');
+        sessionStorage.setItem('reb_detail_tab', tab);
+        pageBody.querySelectorAll('[data-dd-tab]').forEach(function (b) {
+          b.classList.toggle('active', b.getAttribute('data-dd-tab') === tab);
+        });
+        pageBody.querySelectorAll('[data-dd-pane]').forEach(function (p) {
+          p.classList.toggle('active', p.getAttribute('data-dd-pane') === tab);
+        });
+      });
+    });
 
     initChecklistDrag();
     initChecklistPickers();
