@@ -247,6 +247,95 @@
     }
 
     /* ---- Action buttons row ---- */
+    /* Map preview */
+    .dd-map {
+      display: block;
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      height: 200px;
+      text-decoration: none;
+      position: relative;
+    }
+    .dd-map iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      pointer-events: none;
+    }
+    .dd-map::after {
+      content: '↗ Open in Maps';
+      position: absolute;
+      bottom: 10px; right: 10px;
+      background: rgba(15,23,42,.78);
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 6px 11px;
+      border-radius: 99px;
+      letter-spacing: .2px;
+      backdrop-filter: blur(6px);
+      transition: background .15s;
+    }
+    .dd-map:hover::after { background: var(--indigo); }
+
+    /* Commission breakdown */
+    .dd-commission {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .dd-commission-header {
+      padding: 13px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .dd-commission-title {
+      font-size: .72rem; font-weight: 800;
+      color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .dd-commission-rate {
+      font-size: .72rem; font-weight: 600;
+      color: var(--gray-400);
+      font-variant-numeric: tabular-nums;
+    }
+    .dd-commission-cells {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .dd-commission-cell {
+      padding: 16px 6px;
+      text-align: center;
+      border-right: 1px solid var(--gray-100);
+    }
+    .dd-commission-cell:last-child { border-right: none; }
+    .dd-commission-cell-val {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .dd-commission-cell-lbl {
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--gray-400);
+      margin-top: 6px;
+    }
+    .dd-commission-cell-net {
+      background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
+    }
+    .dd-commission-cell-net .dd-commission-cell-val { color: #047857; }
+    .dd-commission-cell-net .dd-commission-cell-lbl { color: #047857; }
+
     .dd-actions {
       display: flex; gap: 8px;
     }
@@ -739,7 +828,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/listings.js?v=1779497000"></script>
+  <script src="js/listings.js?v=1779500000"></script>
   <script src="js/datepicker.js?v=1777494830"></script>
 </body>
 </html>

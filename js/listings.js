@@ -1229,9 +1229,45 @@
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Agent</div><div class="dd-fact-value"><select class="ie-field" data-field="agent">' + users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') + '</select></div></div>';
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Source</div><div class="dd-fact-value"><select class="ie-field" data-field="source"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div></div>';
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Listed</div><div class="dd-fact-value"><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '"></div></div>';
+
+    // Days on market
+    if (l.listingDate) {
+      var _lDate = new Date(l.listingDate);
+      if (!isNaN(_lDate.getTime())) {
+        var _dom = Math.floor((Date.now() - _lDate) / 86400000);
+        html += '<div class="dd-fact-row"><div class="dd-fact-label">DOM</div><div class="dd-fact-value" style="font-weight:700;color:var(--gray-800)">' + _dom + ' day' + (_dom !== 1 ? 's' : '') + '</div></div>';
+      }
+    }
+
     if (_coeTxn) {
       html += '<div class="dd-fact-row"><div class="dd-fact-label" style="color:var(--emerald)">COE</div><div class="dd-fact-value"><input type="date" id="coeDate" value="' + (_coeTxn.closeDate || '') + '" data-txn-id="' + _coeTxn.id + '"></div></div>';
     }
+    html += '</div>';
+
+    // Map preview
+    var _mapAddr = (l.address || '') + ' ' + (l.city || '') + ' ' + (l.state || '') + ' ' + (l.zip || '');
+    if (l.address) {
+      html += '<a class="dd-map" href="https://www.google.com/maps/search/' + encodeURIComponent(_mapAddr.trim()) + '" target="_blank" rel="noopener">';
+      html += '<iframe src="https://maps.google.com/maps?q=' + encodeURIComponent(_mapAddr.trim()) + '&output=embed&z=14" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map of ' + escapeHtml(l.address) + '"></iframe>';
+      html += '</a>';
+    }
+
+    // Commission breakdown
+    var _commissionRate = getAdminSetting('commission.rate', 0.025);
+    var _agentSplit = getAdminSetting('commission.agentSplit', 0.80);
+    var _gross = (l.price || 0) * _commissionRate;
+    var _agentNet = _gross * _agentSplit;
+    var _brokerCut = _gross - _agentNet;
+    html += '<div class="dd-commission">';
+    html += '<div class="dd-commission-header">';
+    html += '<span class="dd-commission-title">Your Commission</span>';
+    html += '<span class="dd-commission-rate">' + (_commissionRate * 100).toFixed(1) + '% &times; ' + Math.round(_agentSplit * 100) + '%</span>';
+    html += '</div>';
+    html += '<div class="dd-commission-cells">';
+    html += '<div class="dd-commission-cell"><div class="dd-commission-cell-val">' + Data.formatCurrency(_gross) + '</div><div class="dd-commission-cell-lbl">Gross</div></div>';
+    html += '<div class="dd-commission-cell"><div class="dd-commission-cell-val">' + Data.formatCurrency(_brokerCut) + '</div><div class="dd-commission-cell-lbl">Broker</div></div>';
+    html += '<div class="dd-commission-cell dd-commission-cell-net"><div class="dd-commission-cell-val">' + Data.formatCurrency(_agentNet) + '</div><div class="dd-commission-cell-lbl">You Net</div></div>';
+    html += '</div>';
     html += '</div>';
 
     // Action buttons

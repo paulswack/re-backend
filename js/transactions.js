@@ -877,6 +877,41 @@
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Source</div><div class="dd-fact-value"><select class="ie-field" data-field="source"><option value=""' + (!t.source ? ' selected' : '') + '>—</option>' + _detailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (t.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div></div>';
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Close</div><div class="dd-fact-value"><input type="date" class="ie-field" data-field="closeDate" value="' + (t.closeDate || '') + '"></div></div>';
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Days</div><div class="dd-fact-value" style="font-weight:700;color:' + _txnStatusColor + '">' + dtcLabel + '</div></div>';
+
+    // Days in escrow (since opened)
+    if (t.createdAt) {
+      var _oDate = new Date(t.createdAt);
+      if (!isNaN(_oDate.getTime())) {
+        var _doe = Math.floor((Date.now() - _oDate) / 86400000);
+        html += '<div class="dd-fact-row"><div class="dd-fact-label">Open</div><div class="dd-fact-value" style="font-weight:700;color:var(--gray-800)">' + _doe + ' day' + (_doe !== 1 ? 's' : '') + '</div></div>';
+      }
+    }
+    html += '</div>';
+
+    // Map preview
+    var _mapAddr = (t.address || '') + ' ' + (t.city || '') + ' ' + (t.state || '') + ' ' + (t.zip || '');
+    if (t.address) {
+      html += '<a class="dd-map" href="https://www.google.com/maps/search/' + encodeURIComponent(_mapAddr.trim()) + '" target="_blank" rel="noopener">';
+      html += '<iframe src="https://maps.google.com/maps?q=' + encodeURIComponent(_mapAddr.trim()) + '&output=embed&z=14" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map of ' + escapeHtml(t.address) + '"></iframe>';
+      html += '</a>';
+    }
+
+    // Commission breakdown
+    var _commissionRate = getAdminSetting('commission.rate', 0.025);
+    var _agentSplit = getAdminSetting('commission.agentSplit', 0.80);
+    var _gross = (t.price || 0) * _commissionRate;
+    var _agentNet = _gross * _agentSplit;
+    var _brokerCut = _gross - _agentNet;
+    html += '<div class="dd-commission">';
+    html += '<div class="dd-commission-header">';
+    html += '<span class="dd-commission-title">Your Commission</span>';
+    html += '<span class="dd-commission-rate">' + (_commissionRate * 100).toFixed(1) + '% &times; ' + Math.round(_agentSplit * 100) + '%</span>';
+    html += '</div>';
+    html += '<div class="dd-commission-cells">';
+    html += '<div class="dd-commission-cell"><div class="dd-commission-cell-val">' + Data.formatCurrency(_gross) + '</div><div class="dd-commission-cell-lbl">Gross</div></div>';
+    html += '<div class="dd-commission-cell"><div class="dd-commission-cell-val">' + Data.formatCurrency(_brokerCut) + '</div><div class="dd-commission-cell-lbl">Broker</div></div>';
+    html += '<div class="dd-commission-cell dd-commission-cell-net"><div class="dd-commission-cell-val">' + Data.formatCurrency(_agentNet) + '</div><div class="dd-commission-cell-lbl">You Net</div></div>';
+    html += '</div>';
     html += '</div>';
 
     // Actions
