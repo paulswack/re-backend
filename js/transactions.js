@@ -693,45 +693,48 @@
 
     var html = '';
 
-    // Back button
-    html += '<button class="detail-back-btn" data-action="back-to-list">' +
-      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      (fromDealRoom ? 'Back to Deal Room' : 'Back to Escrows') +
-    '</button>';
-
     // Inline-editable input style
     var inpStyle = 'background:transparent;border:1.5px solid transparent;border-radius:6px;padding:4px 8px;font-family:inherit;transition:all .15s;width:100%;';
     var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
 
+    // Status colors + label (escrow status set)
+    var _txnStatusColors = { active: '#059669', pending: '#D97706', closed: '#1A7F4B' };
+    var _txnStatusColor = _txnStatusColors[t.status] || 'var(--indigo)';
+    var _txnStatusLabels = { active: 'Active', pending: 'Pending', closed: 'Closed' };
+    var _txnStatusLabel = _txnStatusLabels[t.status] || t.status;
+    var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((t.address || '') + (t.city ? ', ' + t.city : '') + (t.state ? ', ' + t.state : '')) + '_rb/';
+
     // Header Card
     html += '<div class="detail-header-card">';
-    html += '<div class="detail-header-accent"></div>';
-    html += '<div class="detail-header-body">';
+    html += '<div style="padding:22px 26px 18px">';
 
-    html += '<div class="detail-header-top">';
-    html += '<div style="flex:1;min-width:0">' +
-      '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(t.address) + '" style="font-size:1.35rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>' +
-      '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:6px">' +
-        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">City</label>' +
-        '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="City" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
-        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">State</label>' +
-        '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(t.state || '') + '" placeholder="CA" maxlength="2" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
-        '<div><label style="display:block;font-size:.72rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Zip</label>' +
-        '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(t.zip || '') + '" placeholder="93101" maxlength="10" style="width:100%;padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.88rem;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'"></div>' +
-      '</div>' +
-      '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(t.price) + '" data-raw="' + (t.price || '') + '" style="font-size:1.1rem;font-weight:700;color:var(--indigo);margin-top:8px;' + inpStyle + '" ' +
-        'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
-        'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">' +
-    '</div>';
-    var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((t.address || '') + (t.city ? ', ' + t.city : '') + (t.state ? ', ' + t.state : '')) + '_rb/';
-    var btnBase = 'display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;transition:opacity .15s;white-space:nowrap';
-    html += '<div class="detail-header-actions">' +
-      '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="' + btnBase + ';background:#006AFF;color:#fff;border:none">' +
-        '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>' +
-        'Zillow' +
-      '</a>' +
-      '<button data-action="share-client" data-id="' + t.id + '" style="' + btnBase + ';background:var(--indigo);color:#fff;border:none">Share with Client</button>' +
-    '</div>';
+    // Row 1: Back button (left) + Action buttons (right)
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">';
+    html += '<button class="detail-back-btn" data-action="back-to-list">' +
+      '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
+      (fromDealRoom ? 'Deal Room' : 'Back') +
+    '</button>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
+    html += '<button data-action="share-client" data-id="' + t.id + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
+    html += '</div></div>';
+
+    // Row 2: Status block + Address
+    html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">';
+    html += '<span class="detail-status-block" style="background:' + _txnStatusColor + '22;color:' + _txnStatusColor + '">' + escapeHtml(_txnStatusLabel) + '</span>';
+    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(t.address) + '" style="flex:1;min-width:200px;font-size:1.5rem;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;' + inpStyle + '" ' + inpFocus + '>';
+    html += '</div>';
+
+    // Row 3: Price
+    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(t.price) + '" data-raw="' + (t.price || '') + '" style="font-size:1.25rem;font-weight:800;color:' + _txnStatusColor + ';' + inpStyle + ';margin-bottom:8px" ' +
+      'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" ' +
+      'onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+
+    // Row 4: City / State / Zip — transparent inputs that look like text
+    html += '<div class="detail-csz-grid detail-hero-csz" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:18px">';
+    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(t.city || '') + '" placeholder="City" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;color:var(--gray-800);background:#fff;font-family:inherit">';
+    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(t.state || '') + '" placeholder="ST" maxlength="2" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;color:var(--gray-800);background:#fff;font-family:inherit">';
+    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(t.zip || '') + '" placeholder="Zip" maxlength="10" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.92rem;color:var(--gray-800);background:#fff;font-family:inherit">';
     html += '</div>';
 
     // Detail blocks row — editable
