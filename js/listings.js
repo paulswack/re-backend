@@ -1099,7 +1099,7 @@
     var inpFocus = 'onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'"';
     var fldInp = 'width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;font-family:inherit;transition:border-color .15s';
     var selStyle = 'font-size:.82rem;font-weight:600;color:var(--gray-800);background:#fff;border:1.5px solid var(--gray-200);border-radius:10px;padding:6px 10px;cursor:pointer;width:100%;font-family:inherit';
-    var fldLbl = 'font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:3px';
+    var fldLbl = 'font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:4px';
 
     var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((l.address || '') + (l.city ? ', ' + l.city : '') + (l.state ? ', ' + l.state : '')) + '_rb/';
     var statusColors = { pre_listing: '#7C3AED', coming_soon: '#3B5BDB', active: '#059669', pending: '#D97706', sold: '#DC2626' };
@@ -1109,34 +1109,35 @@
     var statusLabel = (_lstDetailStatuses.find(function(s){return s.key===l.status}) || {}).label || l.status;
 
     // Hero header
-    html += '<div class="detail-header-card" style="margin-bottom:16px">';
-    html += '<div style="height:4px;background:' + statusColor + '"></div>';
-    html += '<div style="padding:20px 24px 16px">';
+    html += '<div class="detail-header-card" style="margin-bottom:18px">';
+    html += '<div style="padding:22px 26px 18px">';
 
-    // Row 1: Back + Status badge + Action buttons
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">';
-    html += '<div style="display:flex;align-items:center;gap:10px">';
-    html += '<button class="detail-back-btn" data-action="back-to-list" style="margin:0;padding:6px 14px"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (fromDealRoom ? 'Deal Room' : 'Back') + '</button>';
-    html += '<span style="font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:99px;background:' + statusColor + '22;color:' + statusColor + ';text-transform:uppercase;letter-spacing:.3px">' + escapeHtml(statusLabel) + '</span>';
-    html += '</div>';
+    // Row 1: Back button (left) + Action buttons (right)
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px">';
+    html += '<button class="detail-back-btn" data-action="back-to-list"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' + (fromDealRoom ? 'Deal Room' : 'Back') + '</button>';
     html += '<div style="display:flex;gap:6px">';
-    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
-    html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
+    html += '<a href="' + zillowUrl + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:#006AFF;color:#fff;border:none;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L2 9.5l1.5 1L12 4.5l8.5 6 1.5-1L12 2zm0 3.5L5 11v10h5v-6h4v6h5V11l-7-5.5z"/></svg>Zillow</a>';
+    html += '<button data-action="share-client" data-id="' + l.id + '" style="display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:99px;font-size:.82rem;font-weight:600;background:var(--indigo);color:#fff;border:none;cursor:pointer">Share</button>';
     html += '</div></div>';
 
-    // Row 2: Address then Price below
-    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="font-size:1.3rem;font-weight:800;color:var(--gray-900);' + inpStyle + ';margin-bottom:2px" ' + inpFocus + '>';
-    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.1rem;font-weight:800;color:' + statusColor + ';' + inpStyle + ';margin-bottom:10px" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
-
-    // Row 3: City/State/Zip inline
-    html += '<div class="detail-csz-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:16px">';
-    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="' + fldInp + '" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
-    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="' + fldInp + '" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
-    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="' + fldInp + '" onfocus="this.style.borderColor=\'var(--indigo)\'" onblur="this.style.borderColor=\'var(--gray-200)\'">';
+    // Row 2: Status block (left) + Address/Price (right of block)
+    html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">';
+    html += '<span class="detail-status-block" style="background:' + statusColor + '22;color:' + statusColor + '">' + escapeHtml(statusLabel) + '</span>';
+    html += '<input type="text" class="ie-field" data-field="address" value="' + escapeHtml(l.address) + '" style="flex:1;min-width:200px;font-size:1.5rem;font-weight:800;color:var(--gray-900);' + inpStyle + '" ' + inpFocus + '>';
     html += '</div>';
 
-    // Row 4: Property details — clean grid with rounded inputs
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;padding-top:14px;border-top:1px solid var(--gray-100)">';
+    // Row 3: Price
+    html += '<input type="text" class="ie-field" data-field="price" value="' + Data.formatCurrency(l.price) + '" data-raw="' + (l.price || '') + '" style="font-size:1.25rem;font-weight:800;color:' + statusColor + ';' + inpStyle + ';margin-bottom:8px" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\';this.value=this.getAttribute(\'data-raw\')" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
+
+    // Row 4: City/State/Zip — transparent inputs that look like text
+    html += '<div class="detail-csz-grid detail-hero-csz" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:18px">';
+    html += '<input type="text" class="ie-field" data-field="city" value="' + escapeHtml(l.city || '') + '" placeholder="City" style="' + fldInp + ';font-size:.92rem">';
+    html += '<input type="text" class="ie-field" data-field="state" value="' + escapeHtml(l.state || '') + '" placeholder="ST" maxlength="2" style="' + fldInp + ';font-size:.92rem">';
+    html += '<input type="text" class="ie-field" data-field="zip" value="' + escapeHtml(l.zip || '') + '" placeholder="Zip" maxlength="10" style="' + fldInp + ';font-size:.92rem">';
+    html += '</div>';
+
+    // Row 5: Property details — clean grid with rounded inputs
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;padding-top:18px;border-top:1px solid var(--gray-100)">';
 
     html += '<div><div style="' + fldLbl + '">Beds</div><input type="number" class="ie-field" data-field="beds" value="' + (l.beds || '') + '" placeholder="—" min="0" style="' + fldInp + '"></div>';
     html += '<div><div style="' + fldLbl + '">Baths</div><input type="number" class="ie-field" data-field="baths" value="' + (l.baths || '') + '" placeholder="—" min="0" step="0.5" style="' + fldInp + '"></div>';
@@ -1174,9 +1175,9 @@
     }
     var siInp = 'border:1.5px solid var(--gray-200);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:.82rem;width:100%;background:#fff;transition:border-color .15s;';
     html += '<div class="parties-card">';
-    html += '<div class="parties-card-header" style="display:flex;align-items:center;justify-content:space-between;background:#FFF8F0">';
-    html += '<span style="color:#C2410C;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" width="14" height="14" fill="#F59E0B"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Seller / Owner</span>';
-    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid #F59E0B;color:#C2410C;border-radius:99px;padding:2px 10px;font-size:.7rem;font-weight:600;cursor:pointer">+ Add</button>';
+    html += '<div class="parties-card-header">';
+    html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="#F59E0B" style="flex-shrink:0"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Seller / Owner</span>';
+    html += '<button type="button" data-action="detail-add-seller" style="background:none;border:1px solid var(--gray-200);color:var(--gray-600);border-radius:99px;padding:3px 12px;font-size:.72rem;font-weight:600;cursor:pointer">+ Add</button>';
     html += '</div>';
     html += '<div id="detailSellersWrap" style="padding:10px 16px">';
     detailSellers.forEach(function (s, idx) {

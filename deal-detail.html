@@ -20,29 +20,30 @@
   </script>
   <link rel="stylesheet" href="css/style.css?v=1777073896">
   <style>
-    /* ---- Deal Detail — Clean Design (matches Deal Room) ---- */
+    /* ---- Deal Detail — Unified Dashboard-style Cards ---- */
 
     /* Back button */
     .detail-back-btn {
       display: inline-flex; align-items: center; gap: 8px;
       font-size: .85rem; font-weight: 600; color: var(--gray-500);
-      background: var(--white); border: 1.5px solid var(--gray-200); border-radius: 99px;
-      cursor: pointer; padding: 8px 18px; margin-bottom: 20px;
+      background: var(--white); border: 1px solid var(--gray-200); border-radius: 99px;
+      cursor: pointer; padding: 7px 16px;
       transition: all .15s;
     }
     .detail-back-btn:hover { color: var(--indigo); border-color: var(--indigo); background: var(--indigo-light, #EEF2FF); }
-    .detail-back-btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .detail-back-btn svg { width: 15px; height: 15px; fill: currentColor; }
 
-    /* Header card */
-    .detail-header-card {
+    /* All section cards — match dashboard widget styling */
+    .detail-header-card,
+    .parties-card, .desc-card, .notes-card {
       background: var(--white);
-      border-radius: 16px;
-      border: 1px solid var(--gray-100);
-      box-shadow: 0 2px 12px rgba(10,22,40,.07), 0 1px 3px rgba(10,22,40,.05);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
       overflow: hidden;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
     }
-    .detail-header-accent { height: 3px; background: linear-gradient(90deg, var(--indigo), #3B82F6); }
+
     .detail-header-top {
       display: flex; align-items: flex-start; justify-content: space-between;
       flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
@@ -50,20 +51,49 @@
 
     .dd-two-col, .dd-col-left, .dd-col-right { min-width: 0; }
 
-    /* All section cards — consistent style */
-    .parties-card, .desc-card, .notes-card {
-      background: var(--white);
-      border-radius: 16px;
-      border: 1px solid var(--gray-100);
-      box-shadow: 0 2px 12px rgba(10,22,40,.07), 0 1px 3px rgba(10,22,40,.05);
-      margin-bottom: 14px;
-      overflow: hidden;
-    }
+    /* Card headers — match dashboard widget header treatment */
     .parties-card-header, .desc-card-header, .notes-card-header {
-      padding: 12px 16px;
+      padding: 18px 22px 14px;
       border-bottom: 1px solid var(--gray-100);
-      font-size: .85rem; font-weight: 700; color: var(--gray-800);
-      background: #fff;
+      font-size: 1rem; font-weight: 700;
+      color: var(--gray-900);
+      background: var(--white) !important;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+    }
+    .parties-card-header > span:first-child,
+    .desc-card-header > span:first-child,
+    .notes-card-header > span:first-child {
+      color: var(--gray-900) !important;
+      font-size: 1rem; font-weight: 700;
+    }
+
+    /* Status block — colored stat-icon style next to title */
+    .detail-status-block {
+      display: inline-flex; align-items: center;
+      padding: 7px 14px; border-radius: 10px;
+      font-size: .78rem; font-weight: 700;
+      letter-spacing: .4px; text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Hero inline-edit fields — look like clean text until hover/focus */
+    .ie-field {
+      transition: background .15s, border-color .15s;
+    }
+    .detail-hero-csz .ie-field {
+      background: transparent !important;
+      border-color: transparent !important;
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+    .detail-hero-csz .ie-field:hover {
+      background: var(--gray-50) !important;
+    }
+    .detail-hero-csz .ie-field:focus {
+      background: var(--white) !important;
+      border-color: var(--indigo) !important;
+      outline: none;
     }
 
     /* Notes */
@@ -177,7 +207,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/listings.js?v=1777995510"></script>
+  <script src="js/listings.js?v=1779494400"></script>
   <script src="js/datepicker.js?v=1777494830"></script>
 </body>
 </html>
