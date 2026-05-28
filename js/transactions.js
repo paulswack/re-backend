@@ -835,15 +835,6 @@
     // ═══════════════ SIDEBAR ═══════════════
     html += '<aside class="dd-bt-sidebar">';
 
-    // AI Insights widget (Risk Flagger)
-    html += '<div class="dd-risks" id="ddRisks" data-deal-id="' + selectedTxnId + '">';
-    html += '<div class="dd-risks-header">';
-    html += '<span class="dd-risks-title"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 4.5L19.5 19h-15L12 6.5zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z"/></svg>AI Insights</span>';
-    html += '<button class="dd-risks-refresh" data-action="ai-analyze-risks">Run Analysis</button>';
-    html += '</div>';
-    html += '<div class="dd-risks-body" id="ddRisksBody"></div>';
-    html += '</div>';
-
     // Identity
     html += '<div class="dd-identity">';
     html += '<input type="text" class="ie-field dd-address-input" data-field="address" value="' + escapeHtml(t.address) + '" placeholder="Address">';
@@ -1267,8 +1258,7 @@
       });
     });
 
-    // Hydrate AI Insights + Inspection results from cache
-    renderRisksBody();
+    // Hydrate Inspection results from cache
     renderInspectionResult();
 
     initChecklistPickers();
@@ -1807,10 +1797,6 @@
         if (sec) sec.classList.toggle('cl-section-collapsed');
         break;
       }
-
-      case 'ai-analyze-risks':
-        aiAnalyzeRisks();
-        break;
 
       case 'ai-analyze-inspection':
         aiAnalyzeInspection();
@@ -2755,124 +2741,8 @@
   });
 
   // ============================================================
-  //  AI INSIGHTS — Risk Flagger + Inspection Analyzer
+  //  AI Inspection Analyzer
   // ============================================================
-  function getCachedRisks(dealId) {
-    try {
-      var raw = localStorage.getItem('reb_ai_risks');
-      if (!raw) return null;
-      var all = JSON.parse(raw);
-      return all[dealId] || null;
-    } catch (e) { return null; }
-  }
-  function saveCachedRisks(dealId, data) {
-    try {
-      var raw = localStorage.getItem('reb_ai_risks');
-      var all = raw ? JSON.parse(raw) : {};
-      all[dealId] = data;
-      localStorage.setItem('reb_ai_risks', JSON.stringify(all));
-    } catch (e) {}
-  }
-  function renderRisksBody() {
-    var body = document.getElementById('ddRisksBody');
-    if (!body) return;
-    var cached = getCachedRisks(selectedTxnId);
-    if (!cached) {
-      body.innerHTML = '<div class="dd-risks-empty">Click <strong>Run Analysis</strong> to scan this escrow for risks and recommended next steps.</div>';
-      return;
-    }
-    if (cached.error) {
-      body.innerHTML = '<div class="dd-risks-error">' + escapeHtml(cached.error) + '</div>';
-      return;
-    }
-    if (!cached.risks || cached.risks.length === 0) {
-      body.innerHTML = '<div class="dd-risks-clear">&#10003; No risks detected. <span class="dd-risks-when">Last checked ' + relativeTime(cached.timestamp) + '</span></div>';
-      return;
-    }
-    var h = '';
-    cached.risks.forEach(function (r) {
-      var sev = (r.severity || 'medium').toLowerCase();
-      h += '<div class="dd-risk dd-risk-' + sev + '">';
-      h += '<div class="dd-risk-row1"><span class="dd-risk-sev">' + sev + '</span><span class="dd-risk-title">' + escapeHtml(r.title || '') + '</span></div>';
-      if (r.message) h += '<div class="dd-risk-msg">' + escapeHtml(r.message) + '</div>';
-      if (r.action) h += '<div class="dd-risk-action"><strong>Next:</strong> ' + escapeHtml(r.action) + '</div>';
-      h += '</div>';
-    });
-    h += '<div class="dd-risks-when">Last analyzed ' + relativeTime(cached.timestamp) + '</div>';
-    body.innerHTML = h;
-  }
-  function aiAnalyzeRisks() {
-    var body = document.getElementById('ddRisksBody');
-    var btn = document.querySelector('[data-action="ai-analyze-risks"]');
-    if (!body) return;
-
-    var txns = Data.getTransactions();
-    var t = txns.find(function (x) { return x.id === selectedTxnId; });
-    if (!t) { showToast('Cannot find escrow.', 'error'); return; }
-
-    var checklists = getDealChecklists();
-    var lc = checklists[selectedTxnId];
-    var allUpd = getUpdates();
-    var txnUpd = allUpd[selectedTxnId] || [];
-    var keyDates = getKeyDates()[selectedTxnId] || [];
-    var partiesAll = getParties();
-    var p = partiesAll[selectedTxnId] || {};
-    var migrated = migratePartyData(p);
-
-    var ctx = {
-      type: 'escrow',
-      address: t.address, city: t.city, state: t.state, zip: t.zip,
-      price: t.price, status: t.status,
-      beds: t.beds, baths: t.baths, sqft: t.sqft,
-      agent: t.agent, source: t.source,
-      closeDate: t.closeDate, daysToClose: daysUntil(t.closeDate),
-      buyers: (migrated.buyers || []).map(function (b) { return { name: b.name, hasContact: !!(b.phone || b.email) }; }),
-      sellers: (migrated.sellers || []).map(function (s) { return { name: s.name, hasContact: !!(s.phone || s.email) }; }),
-      checklist: lc ? {
-        templateName: lc.templateName,
-        total: lc.items.length,
-        completed: lc.items.filter(function (i) { return i.completed; }).length,
-        overdue: lc.items.filter(function (i) {
-          if (i.completed || !i.dueDate) return false;
-          return new Date(i.dueDate) < new Date();
-        }).length,
-        nextDueItems: lc.items.filter(function (i) { return !i.completed && i.dueDate; })
-          .sort(function (a, b) { return new Date(a.dueDate) - new Date(b.dueDate); })
-          .slice(0, 5)
-          .map(function (i) { return { label: i.label, dueDate: i.dueDate, vendor: i.vendor || '' }; })
-      } : null,
-      keyDates: keyDates.slice(0, 10).map(function (kd) {
-        return { label: kd.label, date: kd.date, status: kd.status };
-      }),
-      lastClientUpdateDaysAgo: txnUpd.length ? Math.floor((Date.now() - new Date(txnUpd[0].timestamp)) / 86400000) : null
-    };
-
-    body.innerHTML = '<div class="dd-risks-loading"><span class="dd-spinner"></span>Analyzing escrow…</div>';
-    if (btn) btn.disabled = true;
-
-    var token = localStorage.getItem('reb_jwt');
-    fetch('/api/ai/risk-flags', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ deal: ctx })
-    })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
-      .then(function (res) {
-        if (!res.ok) {
-          saveCachedRisks(selectedTxnId, { error: res.body.error || 'Analysis failed', timestamp: new Date().toISOString() });
-        } else {
-          saveCachedRisks(selectedTxnId, { risks: res.body.risks || [], timestamp: new Date().toISOString() });
-        }
-        renderRisksBody();
-        if (btn) btn.disabled = false;
-      })
-      .catch(function (err) {
-        saveCachedRisks(selectedTxnId, { error: err.message || 'Network error', timestamp: new Date().toISOString() });
-        renderRisksBody();
-        if (btn) btn.disabled = false;
-      });
-  }
-
   function getCachedInspection(dealId) {
     try {
       var raw = localStorage.getItem('reb_ai_inspections');
