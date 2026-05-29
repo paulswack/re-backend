@@ -1974,6 +1974,11 @@
             : '<span style="font-weight:600;color:var(--gray-600)">' + escapeHtml(clItem.label) + '</span>';
         }
 
+        // Move the panel to slot in right after the clicked row
+        if (expandEl && expandEl.parentNode) {
+          expandEl.parentNode.insertBefore(panel, expandEl.nextSibling);
+        }
+
         panel.setAttribute('data-active-id', expandId);
         panel.style.display = '';
 
@@ -2018,6 +2023,11 @@
             ? 'Completed by ' + escapeHtml(ecClItem.completedBy) + ' · ' + Data.formatDate(ecClItem.completedAt)
             : '<span style="font-weight:600;color:var(--gray-600)">' + escapeHtml(ecClItem.label) + '</span>';
         }
+        // Move the panel to slot in right after the clicked row
+        if (ecExpandEl && ecExpandEl.parentNode) {
+          ecExpandEl.parentNode.insertBefore(ecPanel, ecExpandEl.nextSibling);
+        }
+
         ecPanel.setAttribute('data-active-id', ecExpandId);
         ecPanel.style.display = '';
         if (ecDateI && typeof flatpickr !== 'undefined') {
