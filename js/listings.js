@@ -1346,7 +1346,8 @@
       html += '</div></div>';
     }
 
-    // Listing Checklist card
+    // Listing Checklist card — only for actual listings, not for buyer/seller escrows
+    if (!l._isTxn) {
     html += '<div class="parties-card">';
     html += '<div class="parties-card-header" style="cursor:pointer" data-action="toggle-listing-checklist">';
     html += '<span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="14" height="14" fill="var(--indigo)" style="flex-shrink:0"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>Listing Checklist</span>';
@@ -1409,20 +1410,44 @@
     }
     html += '</div>'; // listingChecklistBody
     html += '</div>'; // parties-card
+    } // end if (!l._isTxn)
 
-    // Escrow Checklist (when pending)
-    if (l.status === 'pending') {
+    // Escrow Checklist — rendered when:
+    //   (a) we're viewing an escrow directly (_isTxn = true), OR
+    //   (b) we're viewing a pending listing that has a linked open escrow
+    var escrowTxnId = null;
+    var escrowTxnType = null;
+    if (l._isTxn) {
+      escrowTxnId = selectedListingId;
+      escrowTxnType = l._txnType;
+    } else if (l.status === 'pending') {
       var linkedTxn = Data.getTransactions().find(function (tx) {
         return tx.address === l.address && tx.status !== 'closed';
       });
       if (linkedTxn) {
-        var txnChecklist = dealChecklists[linkedTxn.id];
+        escrowTxnId = linkedTxn.id;
+        escrowTxnType = linkedTxn.type;
+      }
+    }
+
+    if (escrowTxnId) {
+      {
+        var txnChecklist = dealChecklists[escrowTxnId];
         if (!txnChecklist) {
           var escrowTemplates = loadChecklistTemplates().filter(function (tpl) { return tpl.category === 'escrow'; });
           if (escrowTemplates.length > 0) {
-            var escTpl = escrowTemplates[0];
+            // Pick a template that matches the rep type when possible
+            var escTpl = null;
+            var _typeLower = (escrowTxnType || '').toLowerCase();
+            if (_typeLower === 'buyer') {
+              escTpl = escrowTemplates.find(function (t) { return /buyer/i.test(t.name); });
+            } else if (_typeLower === 'seller') {
+              escTpl = escrowTemplates.find(function (t) { return /seller/i.test(t.name); });
+            }
+            if (!escTpl) escTpl = escrowTemplates[0];
+
             var dc2 = getDealChecklists();
-            dc2[linkedTxn.id] = {
+            dc2[escrowTxnId] = {
               templateId: escTpl.id,
               templateName: escTpl.name,
               items: escTpl.items.map(function (item) {
@@ -1430,7 +1455,7 @@
               })
             };
             saveDealChecklists(dc2);
-            txnChecklist = dc2[linkedTxn.id];
+            txnChecklist = dc2[escrowTxnId];
           }
         }
         if (txnChecklist && txnChecklist.items && txnChecklist.items.length > 0) {
@@ -1452,20 +1477,20 @@
             accent: 'emerald',
             clickAction: 'toggle-ec-expand',
             toggleAction: 'toggle-escrow-cl-item',
-            extraAttrs: ' data-txn-id="' + linkedTxn.id + '"'
+            extraAttrs: ' data-txn-id="' + escrowTxnId + '"'
           });
           html += '<div class="cl-add-row">';
           html += '<input type="text" id="newEscrowClItem" placeholder="+ Add escrow item...">';
-          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + linkedTxn.id + '">+ Add</button>';
+          html += '<button class="btn btn-primary btn-sm" data-action="add-escrow-cl-item" data-txn-id="' + escrowTxnId + '">+ Add</button>';
           html += '</div>';
           html += '</div>';
 
           html += '<div id="ecExpandPanel" style="display:none;margin:0 16px 10px;padding:12px 16px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1.5px solid var(--emerald);border-radius:12px">';
           html += '<div id="ecExpandInfo" style="font-size:.82rem;font-weight:700;color:#059669;margin-bottom:8px"></div>';
           html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" class="cl-expand-grid">';
-          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="ecExpandDate" data-action="set-escrow-cl-date" data-txn-id="' + linkedTxn.id + '" placeholder="Pick date..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
-          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="ecExpandVendor" data-action="set-escrow-cl-vendor" data-txn-id="' + linkedTxn.id + '" placeholder="Vendor" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
-          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="ecExpandNote" data-action="set-escrow-cl-note" data-txn-id="' + linkedTxn.id + '" placeholder="Add note..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Due Date</div><input type="text" id="ecExpandDate" data-action="set-escrow-cl-date" data-txn-id="' + escrowTxnId + '" placeholder="Pick date..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit;cursor:pointer"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Vendor</div><input type="text" id="ecExpandVendor" data-action="set-escrow-cl-vendor" data-txn-id="' + escrowTxnId + '" placeholder="Vendor" style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
+          html += '<div><div style="font-size:.6rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;margin-bottom:3px">Note</div><input type="text" id="ecExpandNote" data-action="set-escrow-cl-note" data-txn-id="' + escrowTxnId + '" placeholder="Add note..." style="width:100%;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:.82rem;background:#fff;font-family:inherit"></div>';
           html += '</div>';
           html += '</div>';
           html += '</div></div></div>';
