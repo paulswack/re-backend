@@ -1559,7 +1559,7 @@
 
     // Delete button at bottom
     html += '<div style="margin-top:30px;padding-top:16px;border-top:1px solid var(--gray-100);margin-bottom:30px">';
-    html += '<button class="btn btn-outline btn-sm" data-action="delete-listing" data-id="' + l.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete This Listing</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="delete-listing" data-id="' + l.id + '" style="color:var(--rose);border-color:var(--gray-200)">Delete This ' + (l._isTxn ? 'Escrow' : 'Listing') + '</button>';
     html += '</div>';
 
     pageBody.innerHTML = html;
@@ -2191,7 +2191,10 @@
       case 'delete-listing': {
         var dlId = target.getAttribute('data-id');
         var dlListing = Data.getListings().find(function (x) { return x.id === dlId; });
-        var dlAddr = dlListing ? dlListing.address : 'this listing';
+        var dlTxn = !dlListing ? Data.getTransactions().find(function (x) { return x.id === dlId; }) : null;
+        var dlIsTxn = !!dlTxn;
+        var dlAddr = dlListing ? dlListing.address : (dlTxn ? dlTxn.address : 'this deal');
+        var dlKind = dlIsTxn ? 'Escrow' : 'Listing';
         var dlOverlay = document.createElement('div');
         dlOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
         dlOverlay.innerHTML =
@@ -2199,7 +2202,7 @@
             '<div style="width:48px;height:48px;background:#FEE2E2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">' +
               '<svg viewBox="0 0 24 24" width="24" height="24" fill="#EF4444"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>' +
             '</div>' +
-            '<div style="font-size:1.1rem;font-weight:700;color:var(--gray-900);margin-bottom:8px">Delete Listing?</div>' +
+            '<div style="font-size:1.1rem;font-weight:700;color:var(--gray-900);margin-bottom:8px">Delete ' + dlKind + '?</div>' +
             '<div style="font-size:.88rem;color:var(--gray-500);margin-bottom:24px">' + escapeHtml(dlAddr) + ' will be permanently deleted and cannot be recovered.</div>' +
             '<div style="display:flex;gap:10px;justify-content:center">' +
               '<button data-action="dl-cancel" style="flex:1;padding:10px;border:1.5px solid var(--gray-200);background:#fff;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--gray-700)">Cancel</button>' +
@@ -2215,11 +2218,15 @@
           var actName = act.getAttribute('data-action');
           if (actName === 'dl-confirm') {
             dlOverlay.remove();
-            Data.deleteListing(dlId);
+            if (dlIsTxn) {
+              Data.deleteTransaction(dlId);
+            } else {
+              Data.deleteListing(dlId);
+            }
             var notes = getNotes();
             delete notes[dlId];
             saveNotes(notes);
-            showToast('Listing deleted.');
+            showToast(dlKind + ' deleted.');
             window.location.href = 'deal-room.html';
             return;
           }
