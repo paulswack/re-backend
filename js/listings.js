@@ -1238,13 +1238,6 @@
     }
     html += '</div>';
 
-    // Map preview
-    var _mapAddr = (l.address || '') + ' ' + (l.city || '') + ' ' + (l.state || '') + ' ' + (l.zip || '');
-    if (l.address) {
-      html += '<a class="dd-map" href="https://www.google.com/maps/search/' + encodeURIComponent(_mapAddr.trim()) + '" target="_blank" rel="noopener">';
-      html += '<iframe src="https://maps.google.com/maps?q=' + encodeURIComponent(_mapAddr.trim()) + '&output=embed&z=14" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map of ' + escapeHtml(l.address) + '"></iframe>';
-      html += '</a>';
-    }
 
     // Action buttons
     html += '<div class="dd-actions">';

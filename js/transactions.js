@@ -882,13 +882,6 @@
     }
     html += '</div>';
 
-    // Map preview
-    var _mapAddr = (t.address || '') + ' ' + (t.city || '') + ' ' + (t.state || '') + ' ' + (t.zip || '');
-    if (t.address) {
-      html += '<a class="dd-map" href="https://www.google.com/maps/search/' + encodeURIComponent(_mapAddr.trim()) + '" target="_blank" rel="noopener">';
-      html += '<iframe src="https://maps.google.com/maps?q=' + encodeURIComponent(_mapAddr.trim()) + '&output=embed&z=14" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map of ' + escapeHtml(t.address) + '"></iframe>';
-      html += '</a>';
-    }
 
     // Actions
     html += '<div class="dd-actions">';
