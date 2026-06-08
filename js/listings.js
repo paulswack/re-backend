@@ -2217,7 +2217,18 @@
           if (!act) return;
           var actName = act.getAttribute('data-action');
           if (actName === 'dl-confirm') {
-            dlOverlay.remove();
+            // Show loading state on the dialog so the user knows the click
+            // registered — the dialog stays up until the server confirms.
+            var confirmBtn = dlOverlay.querySelector('[data-action="dl-confirm"]');
+            var cancelBtn = dlOverlay.querySelector('[data-action="dl-cancel"]');
+            if (confirmBtn) {
+              confirmBtn.disabled = true;
+              confirmBtn.style.opacity = '.7';
+              confirmBtn.style.cursor = 'wait';
+              confirmBtn.textContent = 'Deleting…';
+            }
+            if (cancelBtn) cancelBtn.disabled = true;
+
             var delResult = dlIsTxn ? Data.deleteTransaction(dlId) : Data.deleteListing(dlId);
             var notes = getNotes();
             delete notes[dlId];
@@ -2226,10 +2237,13 @@
             // otherwise the deal-room page may re-fetch from the server and
             // resurrect the deleted row.
             var pending = delResult && delResult._serverSync ? delResult._serverSync : Promise.resolve();
-            showToast(dlKind + ' deleted.');
             pending.then(function () {
+              dlOverlay.remove();
+              showToast(dlKind + ' deleted.');
               window.location.href = 'deal-room.html';
             }).catch(function () {
+              dlOverlay.remove();
+              showToast(dlKind + ' deleted.');
               window.location.href = 'deal-room.html';
             });
             return;
