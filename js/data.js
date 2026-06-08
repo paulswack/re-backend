@@ -406,9 +406,14 @@
   function serverDeleteTransaction(id) {
     var item = txns.getAll().find(function (i) { return i.id === id; });
     var apiId = (item && item.server_id) || id;
-    var result = txns.remove(id);
+    var result = txns.remove(id) || {};
     if (isServerMode()) {
-      API.deleteTransaction(apiId).catch(function (err) { (window.notifySyncError || console.error)('Escrow delete', err); });
+      var p = API.deleteTransaction(apiId);
+      p.catch(function (err) { (window.notifySyncError || console.error)('Escrow delete', err); });
+      // Expose the in-flight server delete so callers can await it before
+      // navigating to a page that re-fetches transactions (otherwise the
+      // re-fetch can race with the server delete and resurrect the row).
+      result._serverSync = p;
     }
     return result;
   }
@@ -541,9 +546,11 @@
   function serverDeleteListing(id) {
     var item = listings.getAll().find(function (i) { return i.id === id; });
     var apiId = (item && item.server_id) || id;
-    var result = listings.remove(id);
+    var result = listings.remove(id) || {};
     if (isServerMode()) {
-      API.deleteListing(apiId).catch(function (err) { (window.notifySyncError || console.error)('Listing delete', err); });
+      var p = API.deleteListing(apiId);
+      p.catch(function (err) { (window.notifySyncError || console.error)('Listing delete', err); });
+      result._serverSync = p;
     }
     return result;
   }

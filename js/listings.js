@@ -2218,16 +2218,20 @@
           var actName = act.getAttribute('data-action');
           if (actName === 'dl-confirm') {
             dlOverlay.remove();
-            if (dlIsTxn) {
-              Data.deleteTransaction(dlId);
-            } else {
-              Data.deleteListing(dlId);
-            }
+            var delResult = dlIsTxn ? Data.deleteTransaction(dlId) : Data.deleteListing(dlId);
             var notes = getNotes();
             delete notes[dlId];
             saveNotes(notes);
+            // Wait for the server-side delete to confirm before navigating —
+            // otherwise the deal-room page may re-fetch from the server and
+            // resurrect the deleted row.
+            var pending = delResult && delResult._serverSync ? delResult._serverSync : Promise.resolve();
             showToast(dlKind + ' deleted.');
-            window.location.href = 'deal-room.html';
+            pending.then(function () {
+              window.location.href = 'deal-room.html';
+            }).catch(function () {
+              window.location.href = 'deal-room.html';
+            });
             return;
           }
           if (actName === 'dl-cancel') {
