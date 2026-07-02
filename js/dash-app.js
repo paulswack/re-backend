@@ -304,97 +304,7 @@
 
   // Volume Summary removed — volumes now shown in stat cards at top
 
-  // ---- Review Tracker ----
-  WIDGETS.reviews = function () {
-    var s = widgetOpen('reviews', 'Review Tracker', 'var(--amber)', '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>', '<a href="reviews.html" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:3px 8px">Manage</a>');
-
-    var username = session.username;
-    var scorecard = {};
-    var rGoals = {};
-    var requests = [];
-    var lastCheck = null;
-    try { var sc = JSON.parse(localStorage.getItem('reb_review_scorecard') || '{}'); scorecard = sc[username] || {}; } catch(e) {}
-    try { var gl = JSON.parse(localStorage.getItem('reb_review_goals') || '{}'); rGoals = gl[username] || {}; } catch(e) {}
-    try { requests = JSON.parse(localStorage.getItem('reb_review_requests') || '[]').filter(function(r) { return r.agent === username; }); } catch(e) {}
-    try { var lc = JSON.parse(localStorage.getItem('reb_review_last_check') || '{}'); lastCheck = lc[username] || null; } catch(e) {}
-
-    var pending = requests.filter(function(r) { return r.status === 'pending'; }).length;
-    var sent = requests.filter(function(r) { return r.status === 'sent'; }).length;
-    var overdue = requests.filter(function(r) { return r.status === 'sent' && r.sentDate && (Math.floor((new Date() - new Date(r.sentDate)) / 86400000) > 14); }).length;
-
-    var SOURCES_DATA = { 'Google': { icon: '&#128269;', bg: '#E8F5E9', text: '#1B5E20' }, 'Zillow': { icon: '&#127968;', bg: '#E3F2FD', text: '#0D47A1' }, 'Realtor.com': { icon: '&#127969;', bg: '#FBE9E7', text: '#BF360C' }, 'Yelp': { icon: '&#11088;', bg: '#FCE4EC', text: '#880E4F' }, 'Facebook': { icon: '&#128077;', bg: '#E8EAF6', text: '#283593' } };
-    var totalReviews = 0;
-    var platformsWithReviews = [];
-    Object.keys(SOURCES_DATA).forEach(function(src) {
-      var count = scorecard[src] || 0;
-      totalReviews += count;
-      if (count > 0) platformsWithReviews.push({ name: src, count: count, goal: rGoals[src] || 0, data: SOURCES_DATA[src] });
-    });
-    try {
-      var links = JSON.parse(localStorage.getItem('reb_review_links') || '{}');
-      var myLinks = links[username] || {};
-      Object.keys(myLinks).forEach(function(k) {
-        if (k !== '_default' && !SOURCES_DATA[k] && myLinks[k]) {
-          var count = scorecard[k] || 0;
-          totalReviews += count;
-          if (count > 0) platformsWithReviews.push({ name: k, count: count, goal: rGoals[k] || 0, data: { icon: '&#128279;', bg: '#F5F5F5', text: '#424242' } });
-        }
-      });
-    } catch(e) {}
-
-    s += '<div class="dash-widget-body" style="padding:14px 20px">';
-
-    var daysSinceCheck = lastCheck ? Math.floor((new Date() - new Date(lastCheck)) / 86400000) : null;
-    if (daysSinceCheck === null || daysSinceCheck >= 7) {
-      s += '<div style="background:#EFF6FF;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:.78rem">';
-      s += '<span>&#128276;</span><span style="color:#1D4ED8;font-weight:600">Time to check your reviews!</span>';
-      s += '<a href="reviews.html" style="margin-left:auto;color:#1D4ED8;font-weight:600;text-decoration:none;font-size:.72rem">Go &#8594;</a>';
-      s += '</div>';
-    }
-
-    s += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
-    s += '<div style="flex:1;min-width:60px;text-align:center;padding:8px;background:var(--gray-50);border-radius:8px"><div style="font-size:1.1rem;font-weight:800;color:var(--gray-900)">' + totalReviews + '</div><div style="font-size:.6rem;color:var(--gray-400);font-weight:600">TOTAL</div></div>';
-    s += '<div style="flex:1;min-width:60px;text-align:center;padding:8px;background:#FEF3C7;border-radius:8px"><div style="font-size:1.1rem;font-weight:800;color:#92400E">' + pending + '</div><div style="font-size:.6rem;color:#92400E;font-weight:600">PENDING</div></div>';
-    s += '<div style="flex:1;min-width:60px;text-align:center;padding:8px;background:#DBEAFE;border-radius:8px"><div style="font-size:1.1rem;font-weight:800;color:#1D4ED8">' + sent + '</div><div style="font-size:.6rem;color:#1D4ED8;font-weight:600">SENT</div></div>';
-    if (overdue > 0) {
-      s += '<div style="flex:1;min-width:60px;text-align:center;padding:8px;background:#FEE2E2;border-radius:8px"><div style="font-size:1.1rem;font-weight:800;color:#991B1B">' + overdue + '</div><div style="font-size:.6rem;color:#991B1B;font-weight:600">OVERDUE</div></div>';
-    }
-    s += '</div>';
-
-    if (platformsWithReviews.length) {
-      platformsWithReviews.forEach(function(p) {
-        var pct = p.goal > 0 ? Math.min(Math.round(p.count / p.goal * 100), 100) : 0;
-        s += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
-        s += '<span style="font-size:.9rem">' + p.data.icon + '</span>';
-        s += '<div style="flex:1;min-width:0">';
-        s += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.78rem;font-weight:600;color:var(--gray-800)">' + p.name + '</span><span style="font-size:.78rem;font-weight:700;color:' + p.data.text + '">' + p.count + (p.goal ? '/' + p.goal : '') + '</span></div>';
-        if (p.goal > 0) {
-          s += '<div style="height:4px;background:var(--gray-100);border-radius:99px;overflow:hidden;margin-top:3px"><div style="height:100%;width:' + pct + '%;background:' + p.data.text + ';border-radius:99px"></div></div>';
-        }
-        s += '</div></div>';
-      });
-    } else {
-      s += '<div style="text-align:center;padding:12px;color:var(--gray-400);font-size:.82rem">No reviews logged yet. <a href="reviews.html" style="color:var(--indigo);text-decoration:none;font-weight:600">Get started &#8594;</a></div>';
-    }
-
-    var actionNeeded = requests.filter(function(r) { return r.status === 'pending' || (r.status === 'sent' && r.sentDate && Math.floor((new Date() - new Date(r.sentDate)) / 86400000) > 14); }).slice(0, 3);
-    if (actionNeeded.length) {
-      s += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-100)">';
-      s += '<div style="font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Needs Action</div>';
-      actionNeeded.forEach(function(r) {
-        var isOD = r.status === 'sent';
-        s += '<a href="reviews.html" style="display:flex;align-items:center;gap:8px;padding:6px 0;text-decoration:none;font-size:.78rem">';
-        s += '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + (isOD ? '#EF4444' : '#F59E0B') + ';flex-shrink:0"></span>';
-        s += '<span style="color:var(--gray-800);font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.clientName || 'Client') + '</span>';
-        s += '<span style="font-size:.68rem;color:' + (isOD ? '#991B1B' : '#92400E') + ';font-weight:600">' + (isOD ? 'Follow up' : 'Send email') + '</span>';
-        s += '</a>';
-      });
-      s += '</div>';
-    }
-
-    s += '</div></div>';
-    return s;
-  };
+  // Review Tracker widget removed
 
   // ============================================================
   // LAYOUT
@@ -402,7 +312,7 @@
   var DEFAULT_LAYOUT = {
     col1: ['goals', 'upcomingClosings'],
     col2: ['teamRankings'],
-    col3: ['dealSources', 'reviews']
+    col3: ['dealSources']
   };
 
   function loadLayout() {

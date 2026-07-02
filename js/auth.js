@@ -1351,7 +1351,6 @@
       { key: 'listing', label: 'Add First Listing', page: 'deal-detail.html' },
       { key: 'escrow', label: 'Add First Escrow', page: 'deal-detail-txn.html' },
       { key: 'marketing', label: 'Explore Marketing', page: 'marketing.html' },
-      { key: 'reviews', label: 'Set Up Reviews', page: 'reviews.html' },
       { key: 'portal', label: 'Preview Portal', page: 'admin-settings.html' }
     ];
 
