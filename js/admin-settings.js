@@ -33,7 +33,7 @@
         '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>' +
         '<h3>Access Restricted</h3>' +
         '<p>Only Team Leads can access Team Customization settings.</p>' +
-        '<a href="home.html" class="btn btn-outline btn-sm">Back to Dashboard</a>' +
+        '<a href="closed.html" class="btn btn-outline btn-sm">Back to Dashboard</a>' +
       '</div>';
     return;
   }
@@ -612,7 +612,7 @@
           heading: 'Welcome to the team!',
           body: 'Your account is all set up. You can now start tracking listings, managing escrows, and growing your business.',
           buttonLabel: 'Go to Dashboard',
-          buttonUrl: 'https://app.eliteregbackoffice.com/home.html'
+          buttonUrl: 'https://app.eliteregbackoffice.com/closed.html'
         }
       },
       {
@@ -984,7 +984,7 @@
       case 'portal-txn-milestones': return loadPortalConfig().txnMilestones;
       case 'portal-lst-milestones': return loadPortalConfig().lstMilestones;
       case 'sidebar-order': return (settings.sidebarOrder || []).length ? settings.sidebarOrder.map(function(p) { return { page: p }; }) : [
-        {page:'home.html'},{page:'deal-room.html'},{page:'closed.html'},
+        {page:'closed.html'},{page:'deal-room.html'},
         {page:'tax-center.html'},{page:'meeting-notes.html'},{page:'vendors.html'},{page:'marketing.html'},
         {page:'knowledge-base.html'},{page:'recruiting.html'},{page:'bold100.html'}
       ];
@@ -1262,9 +1262,8 @@
 
     // Sidebar order
     var defaultOrder = [
-      { page: 'home.html', label: 'Dashboard' },
+      { page: 'closed.html', label: 'Dashboard' },
       { page: 'deal-room.html', label: 'Deal Room' },
-      { page: 'closed.html', label: 'Closed' },
       { page: 'tax-center.html', label: 'Tax Center' },
       { page: 'meeting-notes.html', label: 'Monthly Meeting 1-1' },
       { page: 'vendors.html', label: 'Vendors' },

@@ -22,7 +22,7 @@
         '<svg viewBox="0 0 24 24" width="48" height="48" fill="var(--gray-200)" style="display:block;margin:0 auto 12px"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>' +
         '<h3 style="font-size:1rem;font-weight:700;color:var(--gray-600);margin-bottom:6px">Access Restricted</h3>' +
         '<p style="font-size:.88rem;color:var(--gray-400)">Tax information is private to each agent. Contact your agent for any tax-related questions.</p>' +
-        '<a href="home.html" class="btn btn-outline btn-sm" style="margin-top:16px">Back to Dashboard</a>' +
+        '<a href="closed.html" class="btn btn-outline btn-sm" style="margin-top:16px">Back to Dashboard</a>' +
       '</div>';
     return;
   }

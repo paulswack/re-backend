@@ -408,7 +408,6 @@
     html += podiumBlock(agents);
     html += badgesBlock(profile);
     html += leaderboardBlock(agents);
-    html += recordsBlock(profile);
     html += winsFeedBlock(rangedClosed);
 
     pageBody.innerHTML = html;
@@ -916,7 +915,7 @@
     var html = '';
     html += '<button class="detail-back-btn" data-action="back-to-list">' +
       '<svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>' +
-      'Back to Wins</button>';
+      'Back to Dashboard</button>';
 
     // Hero banner
     html += '<div style="background:linear-gradient(135deg,#064E3B,#065F46);border-radius:16px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden">';
