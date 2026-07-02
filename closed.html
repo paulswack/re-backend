@@ -47,8 +47,8 @@
     }
 
     /* ---- Three-column row: Leaderboard · Upcoming · Sources ---- */
-    .wins-tri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; margin-bottom: 4px; }
-    @media (max-width: 900px) { .wins-tri { grid-template-columns: 1fr; } }
+    /* fluid: 3 equal columns on desktop, auto-drops to 2 then 1 on tablets/phones */
+    .wins-tri { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: start; margin-bottom: 4px; }
     .wins-tri-card { display: flex; flex-direction: column; }
     .wins-tri-head { padding: 13px 16px; border-bottom: 1px solid var(--gray-100); font-size: .92rem; font-weight: 800; color: var(--gray-900); }
     .wins-tri-body { padding: 8px 14px 12px; }
@@ -324,7 +324,7 @@
     /* ---- Celebration overlay ---- */
     .wins-celebrate-overlay {
       position: fixed; inset: 0; z-index: 10040;
-      background: rgba(4,38,26,.55); backdrop-filter: blur(3px);
+      background: rgba(4,38,26,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
       display: flex; align-items: center; justify-content: center; padding: 20px;
       animation: winsFade .25s ease;
     }
