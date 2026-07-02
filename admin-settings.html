@@ -24,7 +24,11 @@
     .as-badge-block { border-bottom: 1px solid var(--gray-100); padding-bottom: 6px; margin-bottom: 4px; }
     .as-badge-block:last-of-type { border-bottom: none; }
     .as-badge-block .as-list-item { border-bottom: none; padding-bottom: 3px; }
-    .as-badge-desc-row { display: flex; align-items: center; gap: 8px; padding: 0 0 2px 62px; }
+    .as-badge-move { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; width: 30px; }
+    .as-move-btn { width: 26px; height: 15px; line-height: 1; padding: 0; font-size: .58rem; border: 1px solid var(--gray-200); background: #fff; border-radius: 4px; cursor: pointer; color: var(--gray-500); }
+    .as-move-btn:hover:not([disabled]) { background: var(--gray-50); color: var(--indigo); border-color: var(--indigo); }
+    .as-move-btn[disabled] { opacity: .3; cursor: default; }
+    .as-badge-desc-row { display: flex; align-items: center; gap: 8px; padding: 0 0 2px 102px; }
     .as-desc-label { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-400); flex-shrink: 0; width: 34px; }
     .as-badge-desc-row .as-inline-input { font-size: .8rem; color: var(--gray-600); }
     .as-custom-badge { flex-wrap: wrap; background: var(--gray-50); border-radius: 8px; padding: 8px; margin: 2px 0; }
@@ -84,7 +88,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/admin-settings.js?v=1782002100"></script>
+  <script src="js/admin-settings.js?v=1782002200"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

@@ -1457,6 +1457,24 @@
     return 'linear-gradient(120deg, ' + shadeHex(base, -0.6) + ' 0%, ' + base + ' 60%, ' + shadeHex(base, 0.15) + ' 100%)';
   }
 
+  // Ordered, visible badge list: saved order first, then any not-yet-ordered badges
+  function orderedBadgeItems() {
+    var hidden = settings.badgesHidden || [];
+    var customBadges = settings.customBadges || [];
+    var order = settings.badgeOrder || [];
+    var builtinById = {}; BADGE_DEFS.forEach(function (b) { builtinById[b.id] = b; });
+    var customById = {}; customBadges.forEach(function (c) { customById[c.id] = c; });
+    var items = [], seen = {};
+    order.forEach(function (id) {
+      if (seen[id]) return;
+      if (builtinById[id] && hidden.indexOf(id) === -1) { items.push({ type: 'builtin', id: id, def: builtinById[id] }); seen[id] = true; }
+      else if (customById[id]) { items.push({ type: 'custom', id: id, cb: customById[id] }); seen[id] = true; }
+    });
+    BADGE_DEFS.forEach(function (b) { if (!seen[b.id] && hidden.indexOf(b.id) === -1) { items.push({ type: 'builtin', id: b.id, def: b }); seen[b.id] = true; } });
+    customBadges.forEach(function (c) { if (!seen[c.id]) { items.push({ type: 'custom', id: c.id, cb: c }); seen[c.id] = true; } });
+    return items;
+  }
+
   function renderBadgePrizes() {
     var badgeCfg = settings.badges || {};
     var podium = settings.podiumPrizes || {};
@@ -1488,50 +1506,57 @@
     });
     h += '</div>';
 
-    // Badges — built-in (emoji + name + prize) then custom (with criteria)
+    // Badges — one ordered list (built-ins + custom), each with move up/down controls
     var hidden = settings.badgesHidden || [];
-    var customBadges = settings.customBadges || [];
-    var visibleBuiltins = BADGE_DEFS.filter(function (b) { return hidden.indexOf(b.id) === -1; });
+    var items = orderedBadgeItems();
 
     h += '<div class="as-card">';
-    h += '<div class="as-card-title">Badges (' + (visibleBuiltins.length + customBadges.length) + ')</div>';
-    h += '<div class="as-badge-head"><span style="width:60px">Emoji</span><span style="width:150px">Name</span><span style="flex:1">Prize</span><span style="width:64px"></span></div>';
+    h += '<div class="as-card-title">Badges (' + items.length + ') — use the arrows to reorder</div>';
+    h += '<div class="as-badge-head"><span style="width:30px"></span><span style="width:60px">Emoji</span><span style="width:150px">Name</span><span style="flex:1">Prize</span><span style="width:64px"></span></div>';
 
-    visibleBuiltins.forEach(function (b) {
-      var cfg = badgeCfg[b.id] || {};
-      var icon = cfg.icon || b.icon;
-      var name = (cfg.name !== undefined && cfg.name !== '') ? cfg.name : b.name;
-      var desc = (cfg.desc !== undefined && cfg.desc !== '') ? cfg.desc : b.desc;
-      var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
-      h += '<div class="as-badge-block">';
-      h += '<div class="as-list-item">' +
-        emojiSelect(b.id, icon) +
-        '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
-        '<input type="text" class="as-inline-input" value="' + escHtml(prize) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-id="' + b.id + '">' +
-        '<button class="as-remove-btn" data-action="reset-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.05rem">&#8635;</button>' +
-        '<button class="as-remove-btn" data-action="hide-badge" data-id="' + b.id + '" title="Delete badge">&times;</button>' +
+    items.forEach(function (item, idx) {
+      var moveCtl = '<div class="as-badge-move">' +
+        '<button class="as-move-btn" data-action="move-badge-up" data-id="' + item.id + '" title="Move up"' + (idx === 0 ? ' disabled' : '') + '>&#9650;</button>' +
+        '<button class="as-move-btn" data-action="move-badge-down" data-id="' + item.id + '" title="Move down"' + (idx === items.length - 1 ? ' disabled' : '') + '>&#9660;</button>' +
       '</div>';
-      h += '<div class="as-badge-desc-row"><span class="as-desc-label">Says</span>' +
-        '<input type="text" class="as-inline-input" value="' + escHtml(desc) + '" placeholder="' + escHtml(b.desc) + '" data-action="update-badge-desc" data-id="' + b.id + '"></div>';
-      h += '</div>';
-    });
 
-    // Custom badges
-    customBadges.forEach(function (cb) {
-      var metricSel = '<select class="as-inline-input" style="width:150px;flex:none" data-action="update-custom-metric" data-id="' + cb.id + '">';
-      BADGE_METRICS.forEach(function (m) {
-        metricSel += '<option value="' + m.key + '"' + (m.key === cb.metric ? ' selected' : '') + '>' + m.label + '</option>';
-      });
-      metricSel += '</select>';
-      h += '<div class="as-list-item as-custom-badge">' +
-        emojiSelect(cb.id, cb.icon || '🏆', 'update-custom-icon') +
-        '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(cb.name || '') + '" placeholder="Badge name" data-action="update-custom-name" data-id="' + cb.id + '">' +
-        metricSel +
-        '<input type="text" class="as-inline-input" style="width:90px;flex:none" inputmode="numeric" value="' + escHtml(cb.value != null ? String(cb.value) : '') + '" placeholder="Goal" data-action="update-custom-value" data-id="' + cb.id + '">' +
-        '<input type="text" class="as-inline-input" value="' + escHtml(cb.prize || '') + '" placeholder="Prize" data-action="update-custom-prize" data-id="' + cb.id + '">' +
-        '<button class="as-remove-btn" data-action="delete-custom" data-id="' + cb.id + '" title="Delete badge">&times;</button>' +
-        '<input type="text" class="as-inline-input" style="flex-basis:100%" value="' + escHtml(cb.desc || '') + '" placeholder="Description (optional — auto-filled from the goal if blank)" data-action="update-custom-desc" data-id="' + cb.id + '">' +
-      '</div>';
+      if (item.type === 'builtin') {
+        var b = item.def;
+        var cfg = badgeCfg[b.id] || {};
+        var icon = cfg.icon || b.icon;
+        var name = (cfg.name !== undefined && cfg.name !== '') ? cfg.name : b.name;
+        var desc = (cfg.desc !== undefined && cfg.desc !== '') ? cfg.desc : b.desc;
+        var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
+        h += '<div class="as-badge-block">';
+        h += '<div class="as-list-item">' +
+          moveCtl +
+          emojiSelect(b.id, icon) +
+          '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
+          '<input type="text" class="as-inline-input" value="' + escHtml(prize) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-id="' + b.id + '">' +
+          '<button class="as-remove-btn" data-action="reset-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.05rem">&#8635;</button>' +
+          '<button class="as-remove-btn" data-action="hide-badge" data-id="' + b.id + '" title="Delete badge">&times;</button>' +
+        '</div>';
+        h += '<div class="as-badge-desc-row"><span class="as-desc-label">Says</span>' +
+          '<input type="text" class="as-inline-input" value="' + escHtml(desc) + '" placeholder="' + escHtml(b.desc) + '" data-action="update-badge-desc" data-id="' + b.id + '"></div>';
+        h += '</div>';
+      } else {
+        var cb = item.cb;
+        var metricSel = '<select class="as-inline-input" style="width:150px;flex:none" data-action="update-custom-metric" data-id="' + cb.id + '">';
+        BADGE_METRICS.forEach(function (m) {
+          metricSel += '<option value="' + m.key + '"' + (m.key === cb.metric ? ' selected' : '') + '>' + m.label + '</option>';
+        });
+        metricSel += '</select>';
+        h += '<div class="as-list-item as-custom-badge">' +
+          moveCtl +
+          emojiSelect(cb.id, cb.icon || '🏆', 'update-custom-icon') +
+          '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(cb.name || '') + '" placeholder="Badge name" data-action="update-custom-name" data-id="' + cb.id + '">' +
+          metricSel +
+          '<input type="text" class="as-inline-input" style="width:90px;flex:none" inputmode="numeric" value="' + escHtml(cb.value != null ? String(cb.value) : '') + '" placeholder="Goal" data-action="update-custom-value" data-id="' + cb.id + '">' +
+          '<input type="text" class="as-inline-input" value="' + escHtml(cb.prize || '') + '" placeholder="Prize" data-action="update-custom-prize" data-id="' + cb.id + '">' +
+          '<button class="as-remove-btn" data-action="delete-custom" data-id="' + cb.id + '" title="Delete badge">&times;</button>' +
+          '<input type="text" class="as-inline-input" style="flex-basis:100%" value="' + escHtml(cb.desc || '') + '" placeholder="Description (optional — auto-filled from the goal if blank)" data-action="update-custom-desc" data-id="' + cb.id + '">' +
+        '</div>';
+      }
     });
 
     h += '<button class="as-add-btn" data-action="add-badge"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Badge</button>';
@@ -1999,6 +2024,20 @@
 
     if (action === 'reset-hero-color') {
       delete settings.winsHeroColor;
+      saveSettings(settings);
+      render();
+      return;
+    }
+
+    if (action === 'move-badge-up' || action === 'move-badge-down') {
+      var mvId = btn.getAttribute('data-id');
+      var ids = orderedBadgeItems().map(function (i) { return i.id; });
+      var idx = ids.indexOf(mvId);
+      if (idx === -1) return;
+      var swap = action === 'move-badge-up' ? idx - 1 : idx + 1;
+      if (swap < 0 || swap >= ids.length) return;
+      var tmp = ids[idx]; ids[idx] = ids[swap]; ids[swap] = tmp;
+      settings.badgeOrder = ids;
       saveSettings(settings);
       render();
       return;

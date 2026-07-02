@@ -391,6 +391,17 @@
       });
     });
 
+    // Apply the admin's custom badge order (stable; unordered badges keep their place at the end)
+    var badgeOrder = getAdminSetting('badgeOrder', []) || [];
+    if (badgeOrder.length) {
+      var pos = {};
+      badgeOrder.forEach(function (id, i) { pos[id] = i; });
+      badges = badges
+        .map(function (b, i) { return { b: b, p: pos[b.id] !== undefined ? pos[b.id] : 100000 + i }; })
+        .sort(function (x, y) { return x.p - y.p; })
+        .map(function (x) { return x.b; });
+    }
+
     return {
       name: name,
       career: career,
