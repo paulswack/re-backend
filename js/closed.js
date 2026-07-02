@@ -319,6 +319,14 @@
       { icon: '🌈', name: '$100M Club',     earned: yVolume >= 100000000, desc: '$100M in volume this year', prize: 'All-expenses weekend getaway', cur: yVolume, goal: 100000000, money: true }
     ];
 
+    // Prizes are overridable in Admin Settings → Badge Prizes (keyed by badge name)
+    var prizeOverrides = getAdminSetting('badgePrizes', {}) || {};
+    badges.forEach(function (b) {
+      if (Object.prototype.hasOwnProperty.call(prizeOverrides, b.name)) {
+        b.prize = prizeOverrides[b.name];
+      }
+    });
+
     return {
       name: name,
       career: career,

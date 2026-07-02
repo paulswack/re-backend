@@ -254,6 +254,40 @@
 
   var settings = loadSettings();
 
+  // Badge catalog for the Badge Prizes tab. Names + default prizes MUST match
+  // the badges defined in js/closed.js (Wins page). Editing a prize here stores
+  // an override in settings.badgePrizes[name]; closed.js overlays those overrides.
+  var BADGE_PRIZE_DEFS = [
+    { icon: '🎯', name: 'First Close',    prize: 'Team shout-out + $25 gift card' },
+    { icon: '🌅', name: 'Fast Start',     prize: 'Coffee on the house' },
+    { icon: '⚡', name: 'Fast Closer',    prize: '$25 coffee card' },
+    { icon: '🤝', name: 'Referral Pro',   prize: '$25 gift card' },
+    { icon: '📸', name: 'Open House Ace', prize: '$25 gift card' },
+    { icon: '🔑', name: 'New Beginnings', prize: '$25 gift card' },
+    { icon: '🎪', name: 'Double-Ender',   prize: '$50 gift card' },
+    { icon: '✋', name: 'High Five',      prize: '$100 gift card' },
+    { icon: '💨', name: 'Speed Demon',    prize: '$50 gift card' },
+    { icon: '💎', name: '$1M Club',       prize: '$100 bonus' },
+    { icon: '🐋', name: 'Big Fish',       prize: '$150 bonus' },
+    { icon: '🎩', name: 'Hat Trick',      prize: 'Team lunch on us' },
+    { icon: '🔥', name: 'On Fire',        prize: '$100 bonus' },
+    { icon: '🎄', name: 'Holiday Closer', prize: '$50 gift card' },
+    { icon: '🏅', name: '10-Sale Club',   prize: '$250 bonus' },
+    { icon: '💠', name: '$5M Club',       prize: '$250 bonus' },
+    { icon: '⚾', name: 'Grand Slam',     prize: '$250 bonus' },
+    { icon: '🐳', name: 'Whale',          prize: '$500 bonus' },
+    { icon: '🌋', name: 'Unstoppable',    prize: '$300 bonus' },
+    { icon: '🎖️', name: '25-Sale Club',   prize: '$750 bonus' },
+    { icon: '🏆', name: '$10M Club',      prize: '$1,000 bonus' },
+    { icon: '👑', name: 'Chart Topper',   prize: 'Reserved parking + trophy' },
+    { icon: '🔗', name: 'Perfect Year',   prize: '$1,000 bonus' },
+    { icon: '🏵️', name: 'Half-Century',   prize: '$2,500 bonus' },
+    { icon: '🌟', name: '$25M Club',      prize: '$2,500 bonus' },
+    { icon: '🚀', name: '$50M Club',      prize: '$5,000 bonus' },
+    { icon: '💯', name: 'Century Club',   prize: '$5,000 + engraved plaque' },
+    { icon: '🌈', name: '$100M Club',     prize: 'All-expenses weekend getaway' }
+  ];
+
   // Load announcements from their own store
   function loadAnnouncements() {
     return JSON.parse(localStorage.getItem(PREFIX + 'announcements') || '[]');
@@ -803,6 +837,7 @@
     { key: 'expenses', label: 'Expense Categories', icon: '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>' },
     { key: 'teamRoles', label: 'Team & Roles', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
     { key: 'leaderboard', label: 'Leaderboard Settings', icon: '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>' },
+    { key: 'badgePrizes', label: 'Badge Prizes', icon: '<path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 00-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>' },
     { key: 'clientPortal', label: 'Client Portal', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' },
     { key: 'goals', label: 'Goals', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>' },
     { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' },
@@ -966,6 +1001,7 @@
       case 'expenses': return renderExpenses();
       case 'teamRoles': return renderTeamRoles();
       case 'leaderboard': return renderLeaderboard();
+      case 'badgePrizes': return renderBadgePrizes();
       case 'clientPortal': return renderClientPortal();
       case 'goals': return renderGoals();
       case 'announcements': return renderAnnouncements();
@@ -1356,6 +1392,29 @@
       '</div>';
     });
     h += '<button class="as-add-btn" data-action="add-lead-source"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Source</button>';
+    h += '</div>';
+
+    h += '</div>';
+    return h;
+  }
+
+  // ---- Badge Prizes ----
+  function renderBadgePrizes() {
+    var overrides = settings.badgePrizes || {};
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Badge Prizes</h2><p>Rewards agents earn for each badge on the Wins (Closed) page. Edit the prize for any badge, or leave it blank to hide the prize. Use the reset button to restore a default.</p></div>';
+
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Badges (' + BADGE_PRIZE_DEFS.length + ')</div>';
+    BADGE_PRIZE_DEFS.forEach(function (b) {
+      var val = (overrides[b.name] !== undefined) ? overrides[b.name] : b.prize;
+      h += '<div class="as-list-item">' +
+        '<span style="font-size:1.25rem;width:30px;text-align:center;flex-shrink:0">' + b.icon + '</span>' +
+        '<span style="width:160px;flex-shrink:0;font-weight:600;color:var(--gray-700);font-size:.88rem">' + escHtml(b.name) + '</span>' +
+        '<input type="text" class="as-inline-input" value="' + escHtml(val) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-name="' + escHtml(b.name) + '">' +
+        '<button class="as-remove-btn" data-action="reset-badge-prize" data-name="' + escHtml(b.name) + '" title="Reset to default" style="font-size:1.1rem">&#8635;</button>' +
+      '</div>';
+    });
     h += '</div>';
 
     h += '</div>';
@@ -1792,6 +1851,16 @@
       if (settings.leadSources.length <= 1) { showToast('Must have at least one source', 'error'); return; }
       settings.leadSources.splice(index, 1);
       saveSettings(settings);
+      render();
+      return;
+    }
+
+    if (action === 'reset-badge-prize') {
+      var badgeName = btn.getAttribute('data-name');
+      if (settings.badgePrizes && badgeName in settings.badgePrizes) {
+        delete settings.badgePrizes[badgeName];
+        saveSettings(settings);
+      }
       render();
       return;
     }
@@ -2375,6 +2444,14 @@
       var val = el.value.trim();
       if (!val) { showToast('Source name cannot be empty', 'error'); render(); return; }
       settings.leadSources[index] = val;
+      saveSettings(settings);
+      return;
+    }
+
+    if (action === 'update-badge-prize') {
+      var badgeName = el.getAttribute('data-name');
+      if (!settings.badgePrizes) settings.badgePrizes = {};
+      settings.badgePrizes[badgeName] = el.value.trim();
       saveSettings(settings);
       return;
     }
