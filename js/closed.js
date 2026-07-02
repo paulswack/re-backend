@@ -68,6 +68,20 @@
     return '$' + Math.round(n);
   }
 
+  // Human-readable description for an admin-created custom badge's criterion
+  function customBadgeDesc(metric, goal, money) {
+    var g = money ? '$' + (Number(goal) || 0).toLocaleString('en-US') : goal;
+    switch (metric) {
+      case 'sales':  return g + ' sales this year';
+      case 'volume': return g + ' in volume this year';
+      case 'gci':    return g + ' in GCI this year';
+      case 'streak': return g + ' months in a row';
+      case 'single': return 'Close a deal over ' + g;
+      case 'month':  return g + ' closings in one month';
+      default:       return 'Custom goal';
+    }
+  }
+
   function monthKey(iso) {
     var d = new Date(iso);
     if (isNaN(d.getTime())) return null;
@@ -337,6 +351,27 @@
       if (typeof o.prize === 'string') b.prize = o.prize; // empty string intentionally hides the prize
     });
 
+    // Hide badges deleted in Admin Settings
+    var hidden = getAdminSetting('badgesHidden', []) || [];
+    if (hidden.length) badges = badges.filter(function (b) { return hidden.indexOf(b.id) === -1; });
+
+    // Append custom badges created in Admin Settings (criterion evaluated on this year's stats)
+    var customBadges = getAdminSetting('customBadges', []) || [];
+    var metricVals = { sales: yCount, volume: yVolume, gci: yVolume * COMMISSION_RATE, streak: yStreak, single: yMaxDeal, month: yBestMonth };
+    customBadges.forEach(function (cb) {
+      if (!cb || !cb.id) return;
+      var cur = metricVals[cb.metric]; if (cur === undefined) cur = 0;
+      var goal = parseFloat(cb.value) || 0;
+      var money = (cb.metric === 'volume' || cb.metric === 'gci' || cb.metric === 'single');
+      badges.push({
+        id: cb.id, icon: cb.icon || '🏆', name: cb.name || 'Badge',
+        earned: goal > 0 && cur >= goal,
+        desc: customBadgeDesc(cb.metric, goal, money),
+        prize: cb.prize || '',
+        cur: cur, goal: goal, money: money
+      });
+    });
+
     return {
       name: name,
       career: career,
@@ -477,7 +512,7 @@
 
   // ---- Champion spotlight (top 3) ----
   function podiumBlock(agents) {
-    var top = agents.filter(function (a) { return a.deals > 0; }).slice(0, 3);
+    var top = agents.filter(function (a) { return a.deals > 0; }).slice(0, 5);
     if (top.length === 0) return '';
 
     var rangeLabels = { all: 'All-Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
@@ -486,13 +521,17 @@
     // Prizes for the top 3 — overridable in Admin Settings → Wins Prizes
     var prizes = getAdminSetting('podiumPrizes', DEFAULT_PODIUM_PRIZES) || {};
 
-    // DOM order = 2nd (left) · champion (center) · 3rd (right)
     var champDeals = top[0].deals;
+    function gap(i) { return champDeals - top[i].deals; }
+
+    // layout left → right: 4th · 2nd · champion · 3rd · 5th
     s += '<div class="wins-spotlight">';
     s += '<div class="wins-spotlight-rays"></div>';
-    if (top[1]) s += runnerCol(top[1], 2, champDeals - top[1].deals, prizes.second);
+    if (top[3]) s += runnerCol(top[3], 4, gap(3), null);
+    if (top[1]) s += runnerCol(top[1], 2, gap(1), prizes.second);
     s += champCol(top[0], prizes.first);
-    if (top[2]) s += runnerCol(top[2], 3, champDeals - top[2].deals, prizes.third);
+    if (top[2]) s += runnerCol(top[2], 3, gap(2), prizes.third);
+    if (top[4]) s += runnerCol(top[4], 5, gap(4), null);
     s += '</div>';
     return s;
   }
@@ -514,9 +553,11 @@
 
   function runnerCol(a, place, behind, prize) {
     var me = a.name === MY_NAME;
-    var medal = place === 2 ? '🥈' : '🥉';
+    var badge = place === 2 ? '<div class="wins-runner-medal">🥈</div>'
+      : place === 3 ? '<div class="wins-runner-medal">🥉</div>'
+      : '<div class="wins-runner-rankpill">' + place + 'th</div>';
     return '<div class="wins-runner' + (me ? ' me' : '') + '">' +
-      '<div class="wins-runner-medal">' + medal + '</div>' +
+      badge +
       avatarMarkup(a.name, 'wins-runner-avatar') +
       '<div class="wins-runner-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
       '<div class="wins-runner-vol">' + salesLabel(a.deals) + '</div>' +

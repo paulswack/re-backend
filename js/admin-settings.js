@@ -296,6 +296,16 @@
     '🦁','🐉','🦅','🚩','🏁','📈','📊','✅','⏱️','⏰','🌱','🥂','🍾','🎊','🎉'
   ];
 
+  // Criteria metrics for admin-created custom badges (must match closed.js)
+  var BADGE_METRICS = [
+    { key: 'sales',  label: 'Sales this year (count)' },
+    { key: 'volume', label: 'Volume this year ($)' },
+    { key: 'gci',    label: 'GCI this year ($)' },
+    { key: 'streak', label: 'Month streak' },
+    { key: 'single', label: 'Single deal over ($)' },
+    { key: 'month',  label: 'Closings in one month' }
+  ];
+
   // Prizes for the top 3 on the Wins leaderboard/podium. Keys + defaults MUST
   // match DEFAULT_PODIUM_PRIZES in js/closed.js.
   var PODIUM_PRIZE_DEFS = [
@@ -1414,14 +1424,21 @@
   }
 
   // ---- Badge Prizes ----
-  function emojiSelect(id, current) {
+  function emojiSelect(id, current, action) {
+    action = action || 'update-badge-icon';
     var choices = EMOJI_CHOICES.slice();
     if (choices.indexOf(current) === -1) choices.unshift(current); // keep a custom/default icon selectable
-    var o = '<select class="as-emoji-select" data-action="update-badge-icon" data-id="' + id + '" title="Change emoji">';
+    var o = '<select class="as-emoji-select" data-action="' + action + '" data-id="' + id + '" title="Change emoji">';
     choices.forEach(function (e) {
       o += '<option value="' + escHtml(e) + '"' + (e === current ? ' selected' : '') + '>' + e + '</option>';
     });
     return o + '</select>';
+  }
+
+  function customBadgeById(id) {
+    var arr = settings.customBadges || [];
+    for (var i = 0; i < arr.length; i++) { if (arr[i].id === id) return arr[i]; }
+    return null;
   }
 
   function renderBadgePrizes() {
@@ -1443,22 +1460,59 @@
     });
     h += '</div>';
 
-    // Badges — emoji + name + prize
+    // Badges — built-in (emoji + name + prize) then custom (with criteria)
+    var hidden = settings.badgesHidden || [];
+    var customBadges = settings.customBadges || [];
+    var visibleBuiltins = BADGE_DEFS.filter(function (b) { return hidden.indexOf(b.id) === -1; });
+
     h += '<div class="as-card">';
-    h += '<div class="as-card-title">Badges (' + BADGE_DEFS.length + ')</div>';
-    h += '<div class="as-badge-head"><span style="width:60px">Emoji</span><span style="width:160px">Name</span><span style="flex:1">Prize</span><span style="width:34px"></span></div>';
-    BADGE_DEFS.forEach(function (b) {
+    h += '<div class="as-card-title">Badges (' + (visibleBuiltins.length + customBadges.length) + ')</div>';
+    h += '<div class="as-badge-head"><span style="width:60px">Emoji</span><span style="width:150px">Name</span><span style="flex:1">Prize</span><span style="width:64px"></span></div>';
+
+    visibleBuiltins.forEach(function (b) {
       var cfg = badgeCfg[b.id] || {};
       var icon = cfg.icon || b.icon;
       var name = (cfg.name !== undefined && cfg.name !== '') ? cfg.name : b.name;
       var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
       h += '<div class="as-list-item">' +
         emojiSelect(b.id, icon) +
-        '<input type="text" class="as-inline-input" style="width:160px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
+        '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
         '<input type="text" class="as-inline-input" value="' + escHtml(prize) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-id="' + b.id + '">' +
-        '<button class="as-remove-btn" data-action="reset-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.1rem">&#8635;</button>' +
+        '<button class="as-remove-btn" data-action="reset-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.05rem">&#8635;</button>' +
+        '<button class="as-remove-btn" data-action="hide-badge" data-id="' + b.id + '" title="Delete badge">&times;</button>' +
       '</div>';
     });
+
+    // Custom badges
+    customBadges.forEach(function (cb) {
+      var metricSel = '<select class="as-inline-input" style="width:150px;flex:none" data-action="update-custom-metric" data-id="' + cb.id + '">';
+      BADGE_METRICS.forEach(function (m) {
+        metricSel += '<option value="' + m.key + '"' + (m.key === cb.metric ? ' selected' : '') + '>' + m.label + '</option>';
+      });
+      metricSel += '</select>';
+      h += '<div class="as-list-item as-custom-badge">' +
+        emojiSelect(cb.id, cb.icon || '🏆', 'update-custom-icon') +
+        '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(cb.name || '') + '" placeholder="Badge name" data-action="update-custom-name" data-id="' + cb.id + '">' +
+        metricSel +
+        '<input type="text" class="as-inline-input" style="width:90px;flex:none" inputmode="numeric" value="' + escHtml(cb.value != null ? String(cb.value) : '') + '" placeholder="Goal" data-action="update-custom-value" data-id="' + cb.id + '">' +
+        '<input type="text" class="as-inline-input" value="' + escHtml(cb.prize || '') + '" placeholder="Prize" data-action="update-custom-prize" data-id="' + cb.id + '">' +
+        '<button class="as-remove-btn" data-action="delete-custom" data-id="' + cb.id + '" title="Delete badge">&times;</button>' +
+      '</div>';
+    });
+
+    h += '<button class="as-add-btn" data-action="add-badge"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Badge</button>';
+
+    // Restore hidden built-ins
+    if (hidden.length) {
+      h += '<div class="as-hidden-badges"><div class="as-hidden-title">Deleted badges</div>';
+      BADGE_DEFS.forEach(function (b) {
+        if (hidden.indexOf(b.id) === -1) return;
+        h += '<div class="as-hidden-row"><span>' + b.icon + ' ' + escHtml(b.name) + '</span>' +
+          '<button class="wins-link-btn" data-action="restore-badge" data-id="' + b.id + '" style="background:none;border:none;color:var(--indigo);font-weight:700;cursor:pointer;font-size:.8rem">Restore</button></div>';
+      });
+      h += '</div>';
+    }
+
     h += '</div>';
 
     h += '</div>';
@@ -1909,6 +1963,40 @@
       return;
     }
 
+    if (action === 'add-badge') {
+      if (!settings.customBadges) settings.customBadges = [];
+      var newId = 'cb-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      settings.customBadges.push({ id: newId, icon: '🏆', name: 'New Badge', metric: 'sales', value: 5, prize: '' });
+      saveSettings(settings);
+      render();
+      return;
+    }
+
+    if (action === 'hide-badge') {
+      var hbId = btn.getAttribute('data-id');
+      if (!settings.badgesHidden) settings.badgesHidden = [];
+      if (settings.badgesHidden.indexOf(hbId) === -1) settings.badgesHidden.push(hbId);
+      saveSettings(settings);
+      render();
+      return;
+    }
+
+    if (action === 'restore-badge') {
+      var reId = btn.getAttribute('data-id');
+      if (settings.badgesHidden) settings.badgesHidden = settings.badgesHidden.filter(function (x) { return x !== reId; });
+      saveSettings(settings);
+      render();
+      return;
+    }
+
+    if (action === 'delete-custom') {
+      var dcId = btn.getAttribute('data-id');
+      if (settings.customBadges) settings.customBadges = settings.customBadges.filter(function (c) { return c.id !== dcId; });
+      saveSettings(settings);
+      render();
+      return;
+    }
+
     if (action === 'reset-podium-prize') {
       var place = btn.getAttribute('data-place');
       if (settings.podiumPrizes && place in settings.podiumPrizes) {
@@ -2226,7 +2314,7 @@
     var field = el.getAttribute('data-field');
     var key = el.getAttribute('data-key');
 
-    // Badge emoji dropdown
+    // Badge emoji dropdown (built-in)
     if (action === 'update-badge-icon') {
       var biId = el.getAttribute('data-id');
       if (!settings.badges) settings.badges = {};
@@ -2234,6 +2322,18 @@
       settings.badges[biId].icon = el.value;
       saveSettings(settings);
       render();
+      return;
+    }
+
+    // Custom badge emoji + metric dropdowns
+    if (action === 'update-custom-icon') {
+      var ciCb = customBadgeById(el.getAttribute('data-id'));
+      if (ciCb) { ciCb.icon = el.value; saveSettings(settings); render(); }
+      return;
+    }
+    if (action === 'update-custom-metric') {
+      var cmCb = customBadgeById(el.getAttribute('data-id'));
+      if (cmCb) { cmCb.metric = el.value; saveSettings(settings); }
       return;
     }
 
@@ -2528,6 +2628,22 @@
       if (!settings.badges[bnId]) settings.badges[bnId] = {};
       settings.badges[bnId].name = el.value.trim();
       saveSettings(settings);
+      return;
+    }
+
+    if (action === 'update-custom-name') {
+      var cnCb = customBadgeById(el.getAttribute('data-id'));
+      if (cnCb) { cnCb.name = el.value.trim(); saveSettings(settings); }
+      return;
+    }
+    if (action === 'update-custom-value') {
+      var cvCb = customBadgeById(el.getAttribute('data-id'));
+      if (cvCb) { cvCb.value = parseFloat((el.value || '').replace(/[^0-9.]/g, '')) || 0; saveSettings(settings); }
+      return;
+    }
+    if (action === 'update-custom-prize') {
+      var cpCb = customBadgeById(el.getAttribute('data-id'));
+      if (cpCb) { cpCb.prize = el.value.trim(); saveSettings(settings); }
       return;
     }
 

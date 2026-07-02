@@ -155,9 +155,9 @@
 
     /* ---- Champion spotlight ---- */
     .wins-spotlight {
-      display: flex; align-items: flex-end; justify-content: center;
-      gap: clamp(24px, 8vw, 80px);
-      padding: 36px 20px 28px; position: relative; overflow: hidden;
+      display: flex; align-items: flex-end; justify-content: center; flex-wrap: wrap;
+      gap: clamp(14px, 3vw, 44px); row-gap: 24px;
+      padding: 36px 16px 28px; position: relative; overflow: hidden;
       background: radial-gradient(ellipse 55% 75% at 50% 116%, rgba(212,175,55,.16), transparent 70%), var(--white);
       border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
     }
@@ -171,15 +171,15 @@
     }
 
     /* champion (center) */
-    .wins-champ { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 150px; padding: 0 6px; }
-    .wins-champ-crown { font-size: 2.3rem; line-height: 1; filter: drop-shadow(0 3px 6px rgba(212,175,55,.55)); animation: winsBob 3s ease-in-out infinite; }
+    .wins-champ { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 140px; padding: 0 4px; }
+    .wins-champ-crown { font-size: 2.4rem; line-height: 1; filter: drop-shadow(0 3px 6px rgba(212,175,55,.55)); animation: winsBob 3s ease-in-out infinite; }
     .wins-champ-ring {
-      width: 118px; height: 118px; border-radius: 50%; margin: 4px 0 12px;
+      width: 134px; height: 134px; border-radius: 50%; margin: 4px 0 12px;
       display: flex; align-items: center; justify-content: center;
       background: conic-gradient(from 45deg, #B8860B, #F7E7A6, #D4AF37, #F7E7A6, #B8860B, #F7E7A6, #D4AF37);
       box-shadow: 0 0 0 5px var(--white), 0 12px 30px rgba(212,175,55,.45), 0 0 52px rgba(212,175,55,.35);
     }
-    .wins-champ-avatar { width: 102px !important; height: 102px !important; font-size: 1.85rem !important; }
+    .wins-champ-avatar { width: 116px !important; height: 116px !important; font-size: 2rem !important; }
     .wins-champ-tag {
       font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .4px;
       color: #7a5c05; background: linear-gradient(90deg, #F7E7A6, #E6BE52);
@@ -204,9 +204,14 @@
     }
 
     /* runners (flanking) */
-    .wins-runner { position: relative; z-index: 1; text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 120px; padding-bottom: 14px; opacity: .96; }
+    .wins-runner { position: relative; z-index: 1; text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 104px; padding-bottom: 14px; opacity: .96; }
     .wins-runner-medal { font-size: 1.7rem; line-height: 1; margin-bottom: 6px; }
-    .wins-runner-avatar { width: 78px !important; height: 78px !important; font-size: 1.3rem !important; box-shadow: 0 5px 14px rgba(10,22,40,.16); }
+    .wins-runner-rankpill {
+      display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 26px;
+      padding: 0 9px; margin-bottom: 8px; font-size: .82rem; font-weight: 800;
+      color: var(--gray-500); background: var(--gray-100); border-radius: 20px;
+    }
+    .wins-runner-avatar { width: 90px !important; height: 90px !important; font-size: 1.45rem !important; box-shadow: 0 5px 14px rgba(10,22,40,.16); }
     .wins-runner-name { font-size: 1rem; font-weight: 800; color: var(--gray-800); margin-top: 11px; }
     .wins-runner-vol { font-size: 1.2rem; font-weight: 800; color: var(--gray-700); margin-top: 2px; }
     .wins-runner-sub { font-size: .74rem; color: var(--gray-400); font-weight: 600; }
@@ -407,7 +412,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1782001100"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782001500"></script>
+  <script src="js/closed.js?v=1782001600"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>
