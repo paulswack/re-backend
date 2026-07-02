@@ -187,21 +187,33 @@
 
     /* ---- Badges ---- */
     .wins-badges {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px;
     }
     .wins-badge {
       background: var(--white); border-radius: 14px; box-shadow: var(--shadow-sm);
-      padding: 16px 12px; text-align: center; border: 1.5px solid transparent;
+      padding: 16px 13px 14px; text-align: center; border: 1.5px solid transparent;
+      display: flex; flex-direction: column; align-items: center;
       transition: transform .15s;
     }
     .wins-badge.earned { border-color: var(--gold-light); }
     .wins-badge.earned:hover { transform: translateY(-3px); }
-    .wins-badge.locked { opacity: .5; filter: grayscale(1); background: var(--gray-50); box-shadow: none; border-color: var(--gray-200); }
+    .wins-badge.locked { opacity: .62; filter: grayscale(.85); background: var(--gray-50); box-shadow: none; border-color: var(--gray-200); }
     .wins-badge-icon { font-size: 2rem; line-height: 1; margin-bottom: 6px; }
     .wins-badge.earned .wins-badge-icon { filter: drop-shadow(0 3px 6px rgba(212,175,55,.4)); }
     .wins-badge-name { font-size: .84rem; font-weight: 800; color: var(--gray-900); }
-    .wins-badge-desc { font-size: .7rem; color: var(--gray-400); margin-top: 3px; line-height: 1.35; }
-    .wins-badge-prog { font-size: .74rem; font-weight: 800; color: var(--gold); margin-top: 4px; }
+    .wins-badge-desc { font-size: .7rem; color: var(--gray-500); margin-top: 3px; line-height: 1.35; }
+    /* progress track for locked, numeric badges */
+    .wins-badge-track { width: 100%; height: 5px; border-radius: 20px; background: var(--gray-200); overflow: hidden; margin-top: 8px; }
+    .wins-badge-track-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #B8860B, #E6BE52); }
+    .wins-badge-prog { font-size: .72rem; font-weight: 800; color: var(--gray-500); margin-top: 4px; }
+    /* prize line — always shown */
+    .wins-badge-prize {
+      margin-top: auto; width: 100%; box-sizing: border-box;
+      font-size: .68rem; font-weight: 700; line-height: 1.3; color: var(--amber);
+      background: var(--amber-light); border-radius: 8px; padding: 5px 8px;
+      /* auto top-margin pins the prize to the bottom so prizes align across a row */
+    }
+    .wins-badge-prize.won { color: var(--emerald); background: var(--emerald-light); }
 
     /* ---- Records ---- */
     .wins-records { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
@@ -343,7 +355,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782000700"></script>
+  <script src="js/closed.js?v=1782000800"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>
