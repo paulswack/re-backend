@@ -168,8 +168,8 @@
     });
 
     agents.sort(function (a, b) {
-      if (b.volume !== a.volume) return b.volume - a.volume;
-      return b.deals - a.deals;
+      if (b.deals !== a.deals) return b.deals - a.deals; // rank by number of sales
+      return b.volume - a.volume;                        // volume breaks ties
     });
     agents.forEach(function (a, i) { a.rank = i + 1; });
     return agents;
@@ -438,22 +438,24 @@
 
   // ---- Champion spotlight (top 3) ----
   function podiumBlock(agents) {
-    var top = agents.filter(function (a) { return a.volume > 0; }).slice(0, 3);
+    var top = agents.filter(function (a) { return a.deals > 0; }).slice(0, 3);
     if (top.length === 0) return '';
 
     var rangeLabels = { all: 'All-Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
     var s = '<div class="wins-section-head"><h3>🏆 ' + rangeLabels[currentRange] + ' Leaders</h3>' + rangeFilter() + '</div>';
 
     // DOM order = 2nd (left) · champion (center) · 3rd (right)
-    var champVol = top[0].volume;
+    var champDeals = top[0].deals;
     s += '<div class="wins-spotlight">';
     s += '<div class="wins-spotlight-rays"></div>';
-    if (top[1]) s += runnerCol(top[1], 2, champVol - top[1].volume);
+    if (top[1]) s += runnerCol(top[1], 2, champDeals - top[1].deals);
     s += champCol(top[0]);
-    if (top[2]) s += runnerCol(top[2], 3, champVol - top[2].volume);
+    if (top[2]) s += runnerCol(top[2], 3, champDeals - top[2].deals);
     s += '</div>';
     return s;
   }
+
+  function salesLabel(n) { return n + ' sale' + (n === 1 ? '' : 's'); }
 
   function champCol(a) {
     var me = a.name === MY_NAME;
@@ -462,8 +464,8 @@
       '<div class="wins-champ-ring">' + avatarMarkup(a.name, 'wins-champ-avatar') + '</div>' +
       '<div class="wins-champ-tag">🏆 Team Leader</div>' +
       '<div class="wins-champ-name">' + escapeHtml(a.name) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
-      '<div class="wins-champ-vol">' + compactMoney(a.volume) + '</div>' +
-      '<div class="wins-champ-sub">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') + ' · ' + compactMoney(a.gci) + ' GCI</div>' +
+      '<div class="wins-champ-vol">' + salesLabel(a.deals) + '</div>' +
+      '<div class="wins-champ-sub">' + compactMoney(a.volume) + ' volume · ' + compactMoney(a.gci) + ' GCI</div>' +
     '</div>';
   }
 
@@ -474,33 +476,33 @@
       '<div class="wins-runner-medal">' + medal + '</div>' +
       avatarMarkup(a.name, 'wins-runner-avatar') +
       '<div class="wins-runner-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
-      '<div class="wins-runner-vol">' + compactMoney(a.volume) + '</div>' +
-      '<div class="wins-runner-sub">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') +
-        (behind > 0 ? ' · ' + compactMoney(behind) + ' behind' : '') + '</div>' +
+      '<div class="wins-runner-vol">' + salesLabel(a.deals) + '</div>' +
+      '<div class="wins-runner-sub">' + compactMoney(a.volume) +
+        (behind > 0 ? ' · ' + behind + ' behind' : '') + '</div>' +
     '</div>';
   }
 
   // ---- Full leaderboard ----
   function leaderboardBlock(agents) {
-    var ranked = agents.filter(function (a) { return a.volume > 0 || a.name === MY_NAME; });
+    var ranked = agents.filter(function (a) { return a.deals > 0 || a.name === MY_NAME; });
     if (ranked.length === 0) return '';
 
     var s = '<div class="wins-card wins-lb">';
     s += '<div class="wins-lb-head"><span style="flex:0 0 44px">#</span><span style="flex:1">Agent</span>' +
-         '<span class="wins-lb-c">Deals</span><span class="wins-lb-c">Volume</span><span class="wins-lb-c wins-lb-gci">GCI</span></div>';
+         '<span class="wins-lb-c">Sales</span><span class="wins-lb-c">Volume</span><span class="wins-lb-c wins-lb-gci">GCI</span></div>';
 
     ranked.forEach(function (a) {
       var me = a.name === MY_NAME;
-      // gap to the agent directly above
+      // gap to the agent directly above (in sales)
       var gap = '';
       if (a.rank > 1) {
         var above = agents[a.rank - 2];
-        if (above && above.volume > a.volume) {
-          gap = compactMoney(above.volume - a.volume) + ' behind ' + above.name.split(/\s+/)[0];
+        if (above && above.deals > a.deals) {
+          gap = (above.deals - a.deals) + ' sale' + (above.deals - a.deals === 1 ? '' : 's') + ' behind ' + above.name.split(/\s+/)[0];
         }
       }
       s += '<div class="wins-lb-row' + (me ? ' me' : '') + '">';
-      s += '<span class="wins-lb-rank" style="flex:0 0 44px">' + (a.volume > 0 ? a.rank : '—') + '</span>';
+      s += '<span class="wins-lb-rank" style="flex:0 0 44px">' + (a.deals > 0 ? a.rank : '—') + '</span>';
       s += '<span class="wins-lb-agent" style="flex:1">';
       s += avatarMarkup(a.name, 'wins-lb-avatar');
       s += '<span class="wins-lb-agent-txt"><span class="wins-lb-name">' + escapeHtml(a.name) +
