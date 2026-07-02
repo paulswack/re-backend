@@ -25,7 +25,7 @@
   var winsLimit = 12;           // how many wins-feed cards to show
   var goalEditMode = false;
   var celebrationDone = false;
-  var COMMISSION_RATE = getAdminSetting('general.defaultCommissionRate', 0.03);
+  var COMMISSION_RATE = 0.0225; // GCI projected at 2.25% of sale volume
 
   var SESSION = (Auth.getSession && Auth.getSession()) || {};
   var MY_NAME = SESSION.displayName || '';
