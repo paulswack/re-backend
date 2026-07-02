@@ -1440,13 +1440,42 @@
     return null;
   }
 
+  // Hero color helpers (mirror js/closed.js so the preview matches the page)
+  function shadeHex(hex, pct) {
+    hex = (hex || '').replace('#', '');
+    if (hex.length !== 6) return '#065F46';
+    var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    function adj(c) {
+      var v = pct < 0 ? c * (1 + pct) : c + (255 - c) * pct;
+      v = Math.max(0, Math.min(255, Math.round(v)));
+      var h = v.toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }
+    return '#' + adj(r) + adj(g) + adj(b);
+  }
+  function heroGradient(base) {
+    return 'linear-gradient(120deg, ' + shadeHex(base, -0.6) + ' 0%, ' + base + ' 60%, ' + shadeHex(base, 0.15) + ' 100%)';
+  }
+
   function renderBadgePrizes() {
     var badgeCfg = settings.badges || {};
     var podium = settings.podiumPrizes || {};
     var h = '<div class="as-section">';
-    h += '<div class="as-section-header"><h2>Wins Prizes & Badges</h2><p>Customize the Wins (Closed) page — top-3 leaderboard prizes, plus each badge\'s emoji, name and prize. Leave a prize blank to hide it; use the reset button to restore a badge\'s defaults.</p></div>';
+    h += '<div class="as-section-header"><h2>Wins Prizes & Badges</h2><p>Customize the Dashboard — hero color, leaderboard prizes, plus each badge\'s emoji, name, description and prize. Leave a prize blank to hide it; use the reset button to restore defaults.</p></div>';
 
-    // Top 3 leaderboard prizes
+    // Dashboard hero color
+    var heroColor = settings.winsHeroColor || '#065F46';
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Dashboard Hero Color</div>';
+    h += '<div class="as-list-item">' +
+      '<input type="color" class="as-color-input" value="' + heroColor + '" data-action="update-hero-color">' +
+      '<div style="flex:1;height:36px;border-radius:8px;background:' + heroGradient(heroColor) + '"></div>' +
+      '<button class="as-remove-btn" data-action="reset-hero-color" title="Reset to default emerald" style="font-size:1.1rem">&#8635;</button>' +
+    '</div>';
+    h += '<div style="font-size:.8rem;color:var(--gray-400);margin-top:6px">Sets the banner color at the top of the Dashboard. The gradient is generated from this color.</div>';
+    h += '</div>';
+
+    // Top 5 leaderboard prizes
     h += '<div class="as-card">';
     h += '<div class="as-card-title">Top 3 Leaderboard</div>';
     PODIUM_PRIZE_DEFS.forEach(function (p) {
@@ -1968,6 +1997,13 @@
       return;
     }
 
+    if (action === 'reset-hero-color') {
+      delete settings.winsHeroColor;
+      saveSettings(settings);
+      render();
+      return;
+    }
+
     if (action === 'add-badge') {
       if (!settings.customBadges) settings.customBadges = [];
       var newId = 'cb-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -2325,6 +2361,14 @@
       if (!settings.badges) settings.badges = {};
       if (!settings.badges[biId]) settings.badges[biId] = {};
       settings.badges[biId].icon = el.value;
+      saveSettings(settings);
+      render();
+      return;
+    }
+
+    // Dashboard hero color
+    if (action === 'update-hero-color') {
+      settings.winsHeroColor = el.value;
       saveSettings(settings);
       render();
       return;

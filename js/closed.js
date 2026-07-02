@@ -68,6 +68,24 @@
     return '$' + Math.round(n);
   }
 
+  // Shade a hex color: pct < 0 darkens, pct > 0 lightens (toward white)
+  function shadeHex(hex, pct) {
+    hex = (hex || '').replace('#', '');
+    if (hex.length !== 6) return '#065F46';
+    var r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    function adj(c) {
+      var v = pct < 0 ? c * (1 + pct) : c + (255 - c) * pct;
+      v = Math.max(0, Math.min(255, Math.round(v)));
+      var h = v.toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }
+    return '#' + adj(r) + adj(g) + adj(b);
+  }
+  // Build the hero gradient from a single base color
+  function heroGradient(base) {
+    return 'linear-gradient(120deg, ' + shadeHex(base, -0.6) + ' 0%, ' + base + ' 60%, ' + shadeHex(base, 0.15) + ' 100%)';
+  }
+
   // Human-readable description for an admin-created custom badge's criterion
   function customBadgeDesc(metric, goal, money) {
     var g = money ? '$' + (Number(goal) || 0).toLocaleString('en-US') : goal;
@@ -420,7 +438,11 @@
     var year = new Date().getFullYear();
     var closedCount = thisYearClosed(MY_NAME).length;
 
-    var s = '<div class="wins-hero">';
+    // Hero banner color is editable in Admin Settings → Wins Prizes & Badges.
+    // When unset, the built-in emerald gradient (from CSS) is kept.
+    var heroColor = getAdminSetting('winsHeroColor', '');
+    var heroStyle = heroColor ? ' style="background:' + heroGradient(heroColor) + '"' : '';
+    var s = '<div class="wins-hero"' + heroStyle + '>';
     s += '<div class="wins-hero-glow"></div>';
 
     // top line: full name + year Results, tier chip + streak
