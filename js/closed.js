@@ -294,44 +294,47 @@
       myRank = found ? found.rank : null;
     }
 
-    // Badges — measured within the current year, ordered easiest → hardest, each with a prize
+    // Badges — measured within the current year, ordered easiest → hardest, each with a prize.
+    // `id` is the STABLE key for admin overrides (icon/name/prize) — never change an id.
     var badges = [
-      { icon: '🎯', name: 'First Close',    earned: yCount >= 1, desc: 'Close your first deal this year', prize: 'Team shout-out + $25 gift card', cur: yCount, goal: 1 },
-      { icon: '🌅', name: 'Fast Start',     earned: yJan, desc: 'Close a deal in January', prize: 'Coffee on the house' },
-      { icon: '⚡', name: 'Fast Closer',    earned: yFastest !== null && yFastest <= 30, desc: 'Close in 30 days or less', prize: '$25 coffee card' },
-      { icon: '🤝', name: 'Referral Pro',   earned: yReferral, desc: 'Close a referral-sourced deal', prize: '$25 gift card' },
-      { icon: '📸', name: 'Open House Ace', earned: yOpenHouse, desc: 'Close an open-house lead', prize: '$25 gift card' },
-      { icon: '🔑', name: 'New Beginnings', earned: yFirstTime, desc: 'Close a first-time buyer', prize: '$25 gift card' },
-      { icon: '🎪', name: 'Double-Ender',   earned: yHasDual, desc: 'Represent both sides of a deal', prize: '$50 gift card' },
-      { icon: '✋', name: 'High Five',      earned: yCount >= 5, desc: '5 sales this year', prize: '$100 gift card', cur: yCount, goal: 5 },
-      { icon: '💨', name: 'Speed Demon',    earned: yFastest !== null && yFastest <= 14, desc: 'Close in 14 days or less', prize: '$50 gift card' },
-      { icon: '💎', name: '$1M Club',       earned: yVolume >= 1000000, desc: '$1M in volume this year', prize: '$100 bonus', cur: yVolume, goal: 1000000, money: true },
-      { icon: '🐋', name: 'Big Fish',       earned: yMaxDeal >= 1000000, desc: 'Close a deal over $1M', prize: '$150 bonus' },
-      { icon: '🎩', name: 'Hat Trick',      earned: yBestMonth >= 3, desc: '3 closings in one month', prize: 'Team lunch on us' },
-      { icon: '🔥', name: 'On Fire',        earned: yStreak >= 3, desc: '3 months in a row', prize: '$100 bonus', cur: yStreak, goal: 3 },
-      { icon: '🎄', name: 'Holiday Closer', earned: yDec, desc: 'Close a deal in December', prize: '$50 gift card' },
-      { icon: '🏅', name: '10-Sale Club',   earned: yCount >= 10, desc: '10 sales this year', prize: '$250 bonus', cur: yCount, goal: 10 },
-      { icon: '💠', name: '$5M Club',       earned: yVolume >= 5000000, desc: '$5M in volume this year', prize: '$250 bonus', cur: yVolume, goal: 5000000, money: true },
-      { icon: '⚾', name: 'Grand Slam',     earned: yBestMonth >= 5, desc: '5 closings in one month', prize: '$250 bonus' },
-      { icon: '🐳', name: 'Whale',          earned: yMaxDeal >= 2000000, desc: 'Close a deal over $2M', prize: '$500 bonus' },
-      { icon: '🌋', name: 'Unstoppable',    earned: yStreak >= 6, desc: '6 months in a row', prize: '$300 bonus', cur: yStreak, goal: 6 },
-      { icon: '🎖️', name: '25-Sale Club',   earned: yCount >= 25, desc: '25 sales this year', prize: '$750 bonus', cur: yCount, goal: 25 },
-      { icon: '🏆', name: '$10M Club',      earned: yVolume >= 10000000, desc: '$10M in volume this year', prize: '$1,000 bonus', cur: yVolume, goal: 10000000, money: true },
-      { icon: '👑', name: 'Chart Topper',   earned: myRank === 1, desc: 'Rank #1 on the board', prize: 'Reserved parking + trophy' },
-      { icon: '🔗', name: 'Perfect Year',   earned: yStreak >= 12, desc: 'Close every month of the year', prize: '$1,000 bonus', cur: yStreak, goal: 12 },
-      { icon: '🏵️', name: 'Half-Century',   earned: yCount >= 50, desc: '50 sales this year', prize: '$2,500 bonus', cur: yCount, goal: 50 },
-      { icon: '🌟', name: '$25M Club',      earned: yVolume >= 25000000, desc: '$25M in volume this year', prize: '$2,500 bonus', cur: yVolume, goal: 25000000, money: true },
-      { icon: '🚀', name: '$50M Club',      earned: yVolume >= 50000000, desc: '$50M in volume this year', prize: '$5,000 bonus', cur: yVolume, goal: 50000000, money: true },
-      { icon: '💯', name: 'Century Club',   earned: yCount >= 100, desc: '100 sales this year', prize: '$5,000 + engraved plaque', cur: yCount, goal: 100 },
-      { icon: '🌈', name: '$100M Club',     earned: yVolume >= 100000000, desc: '$100M in volume this year', prize: 'All-expenses weekend getaway', cur: yVolume, goal: 100000000, money: true }
+      { id: 'first-close',   icon: '🎯', name: 'First Close',    earned: yCount >= 1, desc: 'Close your first deal this year', prize: 'Team shout-out + $25 gift card', cur: yCount, goal: 1 },
+      { id: 'fast-start',    icon: '🌅', name: 'Fast Start',     earned: yJan, desc: 'Close a deal in January', prize: 'Coffee on the house' },
+      { id: 'fast-closer',   icon: '⚡', name: 'Fast Closer',    earned: yFastest !== null && yFastest <= 30, desc: 'Close in 30 days or less', prize: '$25 coffee card' },
+      { id: 'referral-pro',  icon: '🤝', name: 'Referral Pro',   earned: yReferral, desc: 'Close a referral-sourced deal', prize: '$25 gift card' },
+      { id: 'open-house-ace',icon: '📸', name: 'Open House Ace', earned: yOpenHouse, desc: 'Close an open-house lead', prize: '$25 gift card' },
+      { id: 'new-beginnings',icon: '🔑', name: 'New Beginnings', earned: yFirstTime, desc: 'Close a first-time buyer', prize: '$25 gift card' },
+      { id: 'double-ender',  icon: '🎪', name: 'Double-Ender',   earned: yHasDual, desc: 'Represent both sides of a deal', prize: '$50 gift card' },
+      { id: 'high-five',     icon: '✋', name: 'High Five',      earned: yCount >= 5, desc: '5 sales this year', prize: '$100 gift card', cur: yCount, goal: 5 },
+      { id: 'speed-demon',   icon: '💨', name: 'Speed Demon',    earned: yFastest !== null && yFastest <= 14, desc: 'Close in 14 days or less', prize: '$50 gift card' },
+      { id: 'm1-club',       icon: '💎', name: '$1M Club',       earned: yVolume >= 1000000, desc: '$1M in volume this year', prize: '$100 bonus', cur: yVolume, goal: 1000000, money: true },
+      { id: 'big-fish',      icon: '🐋', name: 'Big Fish',       earned: yMaxDeal >= 1000000, desc: 'Close a deal over $1M', prize: '$150 bonus' },
+      { id: 'hat-trick',     icon: '🎩', name: 'Hat Trick',      earned: yBestMonth >= 3, desc: '3 closings in one month', prize: 'Team lunch on us' },
+      { id: 'on-fire',       icon: '🔥', name: 'On Fire',        earned: yStreak >= 3, desc: '3 months in a row', prize: '$100 bonus', cur: yStreak, goal: 3 },
+      { id: 'holiday-closer',icon: '🎄', name: 'Holiday Closer', earned: yDec, desc: 'Close a deal in December', prize: '$50 gift card' },
+      { id: 'sale10-club',   icon: '🏅', name: '10-Sale Club',   earned: yCount >= 10, desc: '10 sales this year', prize: '$250 bonus', cur: yCount, goal: 10 },
+      { id: 'm5-club',       icon: '💠', name: '$5M Club',       earned: yVolume >= 5000000, desc: '$5M in volume this year', prize: '$250 bonus', cur: yVolume, goal: 5000000, money: true },
+      { id: 'grand-slam',    icon: '⚾', name: 'Grand Slam',     earned: yBestMonth >= 5, desc: '5 closings in one month', prize: '$250 bonus' },
+      { id: 'whale',         icon: '🐳', name: 'Whale',          earned: yMaxDeal >= 2000000, desc: 'Close a deal over $2M', prize: '$500 bonus' },
+      { id: 'unstoppable',   icon: '🌋', name: 'Unstoppable',    earned: yStreak >= 6, desc: '6 months in a row', prize: '$300 bonus', cur: yStreak, goal: 6 },
+      { id: 'sale25-club',   icon: '🎖️', name: '25-Sale Club',   earned: yCount >= 25, desc: '25 sales this year', prize: '$750 bonus', cur: yCount, goal: 25 },
+      { id: 'm10-club',      icon: '🏆', name: '$10M Club',      earned: yVolume >= 10000000, desc: '$10M in volume this year', prize: '$1,000 bonus', cur: yVolume, goal: 10000000, money: true },
+      { id: 'chart-topper',  icon: '👑', name: 'Chart Topper',   earned: myRank === 1, desc: 'Rank #1 on the board', prize: 'Reserved parking + trophy' },
+      { id: 'perfect-year',  icon: '🔗', name: 'Perfect Year',   earned: yStreak >= 12, desc: 'Close every month of the year', prize: '$1,000 bonus', cur: yStreak, goal: 12 },
+      { id: 'half-century',  icon: '🏵️', name: 'Half-Century',   earned: yCount >= 50, desc: '50 sales this year', prize: '$2,500 bonus', cur: yCount, goal: 50 },
+      { id: 'm25-club',      icon: '🌟', name: '$25M Club',      earned: yVolume >= 25000000, desc: '$25M in volume this year', prize: '$2,500 bonus', cur: yVolume, goal: 25000000, money: true },
+      { id: 'm50-club',      icon: '🚀', name: '$50M Club',      earned: yVolume >= 50000000, desc: '$50M in volume this year', prize: '$5,000 bonus', cur: yVolume, goal: 50000000, money: true },
+      { id: 'century-club',  icon: '💯', name: 'Century Club',   earned: yCount >= 100, desc: '100 sales this year', prize: '$5,000 + engraved plaque', cur: yCount, goal: 100 },
+      { id: 'm100-club',     icon: '🌈', name: '$100M Club',     earned: yVolume >= 100000000, desc: '$100M in volume this year', prize: 'All-expenses weekend getaway', cur: yVolume, goal: 100000000, money: true }
     ];
 
-    // Prizes are overridable in Admin Settings → Badge Prizes (keyed by badge name)
-    var prizeOverrides = getAdminSetting('badgePrizes', {}) || {};
+    // Icon / name / prize are overridable in Admin Settings → Wins Prizes (keyed by stable badge id)
+    var badgeOverrides = getAdminSetting('badges', {}) || {};
     badges.forEach(function (b) {
-      if (Object.prototype.hasOwnProperty.call(prizeOverrides, b.name)) {
-        b.prize = prizeOverrides[b.name];
-      }
+      var o = badgeOverrides[b.id];
+      if (!o) return;
+      if (o.icon) b.icon = o.icon;
+      if (o.name) b.name = o.name;
+      if (typeof o.prize === 'string') b.prize = o.prize; // empty string intentionally hides the prize
     });
 
     return {

@@ -254,38 +254,46 @@
 
   var settings = loadSettings();
 
-  // Badge catalog for the Badge Prizes tab. Names + default prizes MUST match
-  // the badges defined in js/closed.js (Wins page). Editing a prize here stores
-  // an override in settings.badgePrizes[name]; closed.js overlays those overrides.
-  var BADGE_PRIZE_DEFS = [
-    { icon: '🎯', name: 'First Close',    prize: 'Team shout-out + $25 gift card' },
-    { icon: '🌅', name: 'Fast Start',     prize: 'Coffee on the house' },
-    { icon: '⚡', name: 'Fast Closer',    prize: '$25 coffee card' },
-    { icon: '🤝', name: 'Referral Pro',   prize: '$25 gift card' },
-    { icon: '📸', name: 'Open House Ace', prize: '$25 gift card' },
-    { icon: '🔑', name: 'New Beginnings', prize: '$25 gift card' },
-    { icon: '🎪', name: 'Double-Ender',   prize: '$50 gift card' },
-    { icon: '✋', name: 'High Five',      prize: '$100 gift card' },
-    { icon: '💨', name: 'Speed Demon',    prize: '$50 gift card' },
-    { icon: '💎', name: '$1M Club',       prize: '$100 bonus' },
-    { icon: '🐋', name: 'Big Fish',       prize: '$150 bonus' },
-    { icon: '🎩', name: 'Hat Trick',      prize: 'Team lunch on us' },
-    { icon: '🔥', name: 'On Fire',        prize: '$100 bonus' },
-    { icon: '🎄', name: 'Holiday Closer', prize: '$50 gift card' },
-    { icon: '🏅', name: '10-Sale Club',   prize: '$250 bonus' },
-    { icon: '💠', name: '$5M Club',       prize: '$250 bonus' },
-    { icon: '⚾', name: 'Grand Slam',     prize: '$250 bonus' },
-    { icon: '🐳', name: 'Whale',          prize: '$500 bonus' },
-    { icon: '🌋', name: 'Unstoppable',    prize: '$300 bonus' },
-    { icon: '🎖️', name: '25-Sale Club',   prize: '$750 bonus' },
-    { icon: '🏆', name: '$10M Club',      prize: '$1,000 bonus' },
-    { icon: '👑', name: 'Chart Topper',   prize: 'Reserved parking + trophy' },
-    { icon: '🔗', name: 'Perfect Year',   prize: '$1,000 bonus' },
-    { icon: '🏵️', name: 'Half-Century',   prize: '$2,500 bonus' },
-    { icon: '🌟', name: '$25M Club',      prize: '$2,500 bonus' },
-    { icon: '🚀', name: '$50M Club',      prize: '$5,000 bonus' },
-    { icon: '💯', name: 'Century Club',   prize: '$5,000 + engraved plaque' },
-    { icon: '🌈', name: '$100M Club',     prize: 'All-expenses weekend getaway' }
+  // Badge catalog for the Wins Prizes tab. ids + default icons/names/prizes MUST match
+  // the badges defined in js/closed.js. Editing here stores overrides in
+  // settings.badges[id] = { icon, name, prize }; closed.js overlays them by id.
+  var BADGE_DEFS = [
+    { id: 'first-close',    icon: '🎯', name: 'First Close',    prize: 'Team shout-out + $25 gift card' },
+    { id: 'fast-start',     icon: '🌅', name: 'Fast Start',     prize: 'Coffee on the house' },
+    { id: 'fast-closer',    icon: '⚡', name: 'Fast Closer',    prize: '$25 coffee card' },
+    { id: 'referral-pro',   icon: '🤝', name: 'Referral Pro',   prize: '$25 gift card' },
+    { id: 'open-house-ace', icon: '📸', name: 'Open House Ace', prize: '$25 gift card' },
+    { id: 'new-beginnings', icon: '🔑', name: 'New Beginnings', prize: '$25 gift card' },
+    { id: 'double-ender',   icon: '🎪', name: 'Double-Ender',   prize: '$50 gift card' },
+    { id: 'high-five',      icon: '✋', name: 'High Five',      prize: '$100 gift card' },
+    { id: 'speed-demon',    icon: '💨', name: 'Speed Demon',    prize: '$50 gift card' },
+    { id: 'm1-club',        icon: '💎', name: '$1M Club',       prize: '$100 bonus' },
+    { id: 'big-fish',       icon: '🐋', name: 'Big Fish',       prize: '$150 bonus' },
+    { id: 'hat-trick',      icon: '🎩', name: 'Hat Trick',      prize: 'Team lunch on us' },
+    { id: 'on-fire',        icon: '🔥', name: 'On Fire',        prize: '$100 bonus' },
+    { id: 'holiday-closer', icon: '🎄', name: 'Holiday Closer', prize: '$50 gift card' },
+    { id: 'sale10-club',    icon: '🏅', name: '10-Sale Club',   prize: '$250 bonus' },
+    { id: 'm5-club',        icon: '💠', name: '$5M Club',       prize: '$250 bonus' },
+    { id: 'grand-slam',     icon: '⚾', name: 'Grand Slam',     prize: '$250 bonus' },
+    { id: 'whale',          icon: '🐳', name: 'Whale',          prize: '$500 bonus' },
+    { id: 'unstoppable',    icon: '🌋', name: 'Unstoppable',    prize: '$300 bonus' },
+    { id: 'sale25-club',    icon: '🎖️', name: '25-Sale Club',   prize: '$750 bonus' },
+    { id: 'm10-club',       icon: '🏆', name: '$10M Club',      prize: '$1,000 bonus' },
+    { id: 'chart-topper',   icon: '👑', name: 'Chart Topper',   prize: 'Reserved parking + trophy' },
+    { id: 'perfect-year',   icon: '🔗', name: 'Perfect Year',   prize: '$1,000 bonus' },
+    { id: 'half-century',   icon: '🏵️', name: 'Half-Century',   prize: '$2,500 bonus' },
+    { id: 'm25-club',       icon: '🌟', name: '$25M Club',      prize: '$2,500 bonus' },
+    { id: 'm50-club',       icon: '🚀', name: '$50M Club',      prize: '$5,000 bonus' },
+    { id: 'century-club',   icon: '💯', name: 'Century Club',   prize: '$5,000 + engraved plaque' },
+    { id: 'm100-club',      icon: '🌈', name: '$100M Club',     prize: 'All-expenses weekend getaway' }
+  ];
+
+  // Emoji choices for the badge icon dropdown
+  var EMOJI_CHOICES = [
+    '🏆','🥇','🥈','🥉','🎖️','🏅','🎗️','👑','💎','💠','🌟','⭐','✨','🔥','🌋','⚡',
+    '💨','🚀','🌈','🎯','🎪','🎩','🎁','🏵️','💯','🔗','🤝','📸','🔑','🌅','🎄','⚾',
+    '🏀','⚽','🏈','🎾','🥊','💪','🙌','👏','🫡','💰','💵','💸','🤑','🐋','🐳','🦈',
+    '🦁','🐉','🦅','🚩','🏁','📈','📊','✅','⏱️','⏰','🌱','🥂','🍾','🎊','🎉'
   ];
 
   // Prizes for the top 3 on the Wins leaderboard/podium. Keys + defaults MUST
@@ -1406,11 +1414,21 @@
   }
 
   // ---- Badge Prizes ----
+  function emojiSelect(id, current) {
+    var choices = EMOJI_CHOICES.slice();
+    if (choices.indexOf(current) === -1) choices.unshift(current); // keep a custom/default icon selectable
+    var o = '<select class="as-emoji-select" data-action="update-badge-icon" data-id="' + id + '" title="Change emoji">';
+    choices.forEach(function (e) {
+      o += '<option value="' + escHtml(e) + '"' + (e === current ? ' selected' : '') + '>' + e + '</option>';
+    });
+    return o + '</select>';
+  }
+
   function renderBadgePrizes() {
-    var overrides = settings.badgePrizes || {};
+    var badgeCfg = settings.badges || {};
     var podium = settings.podiumPrizes || {};
     var h = '<div class="as-section">';
-    h += '<div class="as-section-header"><h2>Wins Prizes</h2><p>Rewards on the Wins (Closed) page — for the top 3 on the leaderboard and for each badge. Leave a field blank to hide that prize; use the reset button to restore a default.</p></div>';
+    h += '<div class="as-section-header"><h2>Wins Prizes & Badges</h2><p>Customize the Wins (Closed) page — top-3 leaderboard prizes, plus each badge\'s emoji, name and prize. Leave a prize blank to hide it; use the reset button to restore a badge\'s defaults.</p></div>';
 
     // Top 3 leaderboard prizes
     h += '<div class="as-card">';
@@ -1425,15 +1443,20 @@
     });
     h += '</div>';
 
+    // Badges — emoji + name + prize
     h += '<div class="as-card">';
-    h += '<div class="as-card-title">Badges (' + BADGE_PRIZE_DEFS.length + ')</div>';
-    BADGE_PRIZE_DEFS.forEach(function (b) {
-      var val = (overrides[b.name] !== undefined) ? overrides[b.name] : b.prize;
+    h += '<div class="as-card-title">Badges (' + BADGE_DEFS.length + ')</div>';
+    h += '<div class="as-badge-head"><span style="width:60px">Emoji</span><span style="width:160px">Name</span><span style="flex:1">Prize</span><span style="width:34px"></span></div>';
+    BADGE_DEFS.forEach(function (b) {
+      var cfg = badgeCfg[b.id] || {};
+      var icon = cfg.icon || b.icon;
+      var name = (cfg.name !== undefined && cfg.name !== '') ? cfg.name : b.name;
+      var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
       h += '<div class="as-list-item">' +
-        '<span style="font-size:1.25rem;width:30px;text-align:center;flex-shrink:0">' + b.icon + '</span>' +
-        '<span style="width:160px;flex-shrink:0;font-weight:600;color:var(--gray-700);font-size:.88rem">' + escHtml(b.name) + '</span>' +
-        '<input type="text" class="as-inline-input" value="' + escHtml(val) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-name="' + escHtml(b.name) + '">' +
-        '<button class="as-remove-btn" data-action="reset-badge-prize" data-name="' + escHtml(b.name) + '" title="Reset to default" style="font-size:1.1rem">&#8635;</button>' +
+        emojiSelect(b.id, icon) +
+        '<input type="text" class="as-inline-input" style="width:160px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
+        '<input type="text" class="as-inline-input" value="' + escHtml(prize) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-id="' + b.id + '">' +
+        '<button class="as-remove-btn" data-action="reset-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.1rem">&#8635;</button>' +
       '</div>';
     });
     h += '</div>';
@@ -1876,10 +1899,10 @@
       return;
     }
 
-    if (action === 'reset-badge-prize') {
-      var badgeName = btn.getAttribute('data-name');
-      if (settings.badgePrizes && badgeName in settings.badgePrizes) {
-        delete settings.badgePrizes[badgeName];
+    if (action === 'reset-badge') {
+      var rbId = btn.getAttribute('data-id');
+      if (settings.badges && rbId in settings.badges) {
+        delete settings.badges[rbId];
         saveSettings(settings);
       }
       render();
@@ -2203,6 +2226,17 @@
     var field = el.getAttribute('data-field');
     var key = el.getAttribute('data-key');
 
+    // Badge emoji dropdown
+    if (action === 'update-badge-icon') {
+      var biId = el.getAttribute('data-id');
+      if (!settings.badges) settings.badges = {};
+      if (!settings.badges[biId]) settings.badges[biId] = {};
+      settings.badges[biId].icon = el.value;
+      saveSettings(settings);
+      render();
+      return;
+    }
+
     // General fields
     if (action === 'save-general') {
       var val = el.value;
@@ -2480,9 +2514,19 @@
     }
 
     if (action === 'update-badge-prize') {
-      var badgeName = el.getAttribute('data-name');
-      if (!settings.badgePrizes) settings.badgePrizes = {};
-      settings.badgePrizes[badgeName] = el.value.trim();
+      var bpId = el.getAttribute('data-id');
+      if (!settings.badges) settings.badges = {};
+      if (!settings.badges[bpId]) settings.badges[bpId] = {};
+      settings.badges[bpId].prize = el.value.trim();
+      saveSettings(settings);
+      return;
+    }
+
+    if (action === 'update-badge-name') {
+      var bnId = el.getAttribute('data-id');
+      if (!settings.badges) settings.badges = {};
+      if (!settings.badges[bnId]) settings.badges[bnId] = {};
+      settings.badges[bnId].name = el.value.trim();
       saveSettings(settings);
       return;
     }
