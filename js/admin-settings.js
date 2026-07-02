@@ -258,34 +258,34 @@
   // the badges defined in js/closed.js. Editing here stores overrides in
   // settings.badges[id] = { icon, name, prize }; closed.js overlays them by id.
   var BADGE_DEFS = [
-    { id: 'first-close',    icon: '🎯', name: 'First Close',    prize: 'Team shout-out + $25 gift card' },
-    { id: 'fast-start',     icon: '🌅', name: 'Fast Start',     prize: 'Coffee on the house' },
-    { id: 'fast-closer',    icon: '⚡', name: 'Fast Closer',    prize: '$25 coffee card' },
-    { id: 'referral-pro',   icon: '🤝', name: 'Referral Pro',   prize: '$25 gift card' },
-    { id: 'open-house-ace', icon: '📸', name: 'Open House Ace', prize: '$25 gift card' },
-    { id: 'new-beginnings', icon: '🔑', name: 'New Beginnings', prize: '$25 gift card' },
-    { id: 'double-ender',   icon: '🎪', name: 'Double-Ender',   prize: '$50 gift card' },
-    { id: 'high-five',      icon: '✋', name: 'High Five',      prize: '$100 gift card' },
-    { id: 'speed-demon',    icon: '💨', name: 'Speed Demon',    prize: '$50 gift card' },
-    { id: 'm1-club',        icon: '💎', name: '$1M Club',       prize: '$100 bonus' },
-    { id: 'big-fish',       icon: '🐋', name: 'Big Fish',       prize: '$150 bonus' },
-    { id: 'hat-trick',      icon: '🎩', name: 'Hat Trick',      prize: 'Team lunch on us' },
-    { id: 'on-fire',        icon: '🔥', name: 'On Fire',        prize: '$100 bonus' },
-    { id: 'holiday-closer', icon: '🎄', name: 'Holiday Closer', prize: '$50 gift card' },
-    { id: 'sale10-club',    icon: '🏅', name: '10-Sale Club',   prize: '$250 bonus' },
-    { id: 'm5-club',        icon: '💠', name: '$5M Club',       prize: '$250 bonus' },
-    { id: 'grand-slam',     icon: '⚾', name: 'Grand Slam',     prize: '$250 bonus' },
-    { id: 'whale',          icon: '🐳', name: 'Whale',          prize: '$500 bonus' },
-    { id: 'unstoppable',    icon: '🌋', name: 'Unstoppable',    prize: '$300 bonus' },
-    { id: 'sale25-club',    icon: '🎖️', name: '25-Sale Club',   prize: '$750 bonus' },
-    { id: 'm10-club',       icon: '🏆', name: '$10M Club',      prize: '$1,000 bonus' },
-    { id: 'chart-topper',   icon: '👑', name: 'Chart Topper',   prize: 'Reserved parking + trophy' },
-    { id: 'perfect-year',   icon: '🔗', name: 'Perfect Year',   prize: '$1,000 bonus' },
-    { id: 'half-century',   icon: '🏵️', name: 'Half-Century',   prize: '$2,500 bonus' },
-    { id: 'm25-club',       icon: '🌟', name: '$25M Club',      prize: '$2,500 bonus' },
-    { id: 'm50-club',       icon: '🚀', name: '$50M Club',      prize: '$5,000 bonus' },
-    { id: 'century-club',   icon: '💯', name: 'Century Club',   prize: '$5,000 + engraved plaque' },
-    { id: 'm100-club',      icon: '🌈', name: '$100M Club',     prize: 'All-expenses weekend getaway' }
+    { id: 'first-close',    icon: '🎯', name: 'First Close',    desc: 'Close your first deal this year', prize: 'Team shout-out + $25 gift card' },
+    { id: 'fast-start',     icon: '🌅', name: 'Fast Start',     desc: 'Close a deal in January', prize: 'Coffee on the house' },
+    { id: 'fast-closer',    icon: '⚡', name: 'Fast Closer',    desc: 'Close in 30 days or less', prize: '$25 coffee card' },
+    { id: 'referral-pro',   icon: '🤝', name: 'Referral Pro',   desc: 'Close a referral-sourced deal', prize: '$25 gift card' },
+    { id: 'open-house-ace', icon: '📸', name: 'Open House Ace', desc: 'Close an open-house lead', prize: '$25 gift card' },
+    { id: 'new-beginnings', icon: '🔑', name: 'New Beginnings', desc: 'Close a first-time buyer', prize: '$25 gift card' },
+    { id: 'double-ender',   icon: '🎪', name: 'Double-Ender',   desc: 'Represent both sides of a deal', prize: '$50 gift card' },
+    { id: 'high-five',      icon: '✋', name: 'High Five',      desc: '5 sales this year', prize: '$100 gift card' },
+    { id: 'speed-demon',    icon: '💨', name: 'Speed Demon',    desc: 'Close in 14 days or less', prize: '$50 gift card' },
+    { id: 'm1-club',        icon: '💎', name: '$1M Club',       desc: '$1M in volume this year', prize: '$100 bonus' },
+    { id: 'big-fish',       icon: '🐋', name: 'Big Fish',       desc: 'Close a deal over $1M', prize: '$150 bonus' },
+    { id: 'hat-trick',      icon: '🎩', name: 'Hat Trick',      desc: '3 closings in one month', prize: 'Team lunch on us' },
+    { id: 'on-fire',        icon: '🔥', name: 'On Fire',        desc: '3 months in a row', prize: '$100 bonus' },
+    { id: 'holiday-closer', icon: '🎄', name: 'Holiday Closer', desc: 'Close a deal in December', prize: '$50 gift card' },
+    { id: 'sale10-club',    icon: '🏅', name: '10-Sale Club',   desc: '10 sales this year', prize: '$250 bonus' },
+    { id: 'm5-club',        icon: '💠', name: '$5M Club',       desc: '$5M in volume this year', prize: '$250 bonus' },
+    { id: 'grand-slam',     icon: '⚾', name: 'Grand Slam',     desc: '5 closings in one month', prize: '$250 bonus' },
+    { id: 'whale',          icon: '🐳', name: 'Whale',          desc: 'Close a deal over $2M', prize: '$500 bonus' },
+    { id: 'unstoppable',    icon: '🌋', name: 'Unstoppable',    desc: '6 months in a row', prize: '$300 bonus' },
+    { id: 'sale25-club',    icon: '🎖️', name: '25-Sale Club',   desc: '25 sales this year', prize: '$750 bonus' },
+    { id: 'm10-club',       icon: '🏆', name: '$10M Club',      desc: '$10M in volume this year', prize: '$1,000 bonus' },
+    { id: 'chart-topper',   icon: '👑', name: 'Chart Topper',   desc: 'Rank #1 on the board', prize: 'Reserved parking + trophy' },
+    { id: 'perfect-year',   icon: '🔗', name: 'Perfect Year',   desc: 'Close every month of the year', prize: '$1,000 bonus' },
+    { id: 'half-century',   icon: '🏵️', name: 'Half-Century',   desc: '50 sales this year', prize: '$2,500 bonus' },
+    { id: 'm25-club',       icon: '🌟', name: '$25M Club',      desc: '$25M in volume this year', prize: '$2,500 bonus' },
+    { id: 'm50-club',       icon: '🚀', name: '$50M Club',      desc: '$50M in volume this year', prize: '$5,000 bonus' },
+    { id: 'century-club',   icon: '💯', name: 'Century Club',   desc: '100 sales this year', prize: '$5,000 + engraved plaque' },
+    { id: 'm100-club',      icon: '🌈', name: '$100M Club',     desc: '$100M in volume this year', prize: 'All-expenses weekend getaway' }
   ];
 
   // Emoji choices for the badge icon dropdown
@@ -1473,7 +1473,9 @@
       var cfg = badgeCfg[b.id] || {};
       var icon = cfg.icon || b.icon;
       var name = (cfg.name !== undefined && cfg.name !== '') ? cfg.name : b.name;
+      var desc = (cfg.desc !== undefined && cfg.desc !== '') ? cfg.desc : b.desc;
       var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
+      h += '<div class="as-badge-block">';
       h += '<div class="as-list-item">' +
         emojiSelect(b.id, icon) +
         '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
@@ -1481,6 +1483,9 @@
         '<button class="as-remove-btn" data-action="reset-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.05rem">&#8635;</button>' +
         '<button class="as-remove-btn" data-action="hide-badge" data-id="' + b.id + '" title="Delete badge">&times;</button>' +
       '</div>';
+      h += '<div class="as-badge-desc-row"><span class="as-desc-label">Says</span>' +
+        '<input type="text" class="as-inline-input" value="' + escHtml(desc) + '" placeholder="' + escHtml(b.desc) + '" data-action="update-badge-desc" data-id="' + b.id + '"></div>';
+      h += '</div>';
     });
 
     // Custom badges
@@ -1497,6 +1502,7 @@
         '<input type="text" class="as-inline-input" style="width:90px;flex:none" inputmode="numeric" value="' + escHtml(cb.value != null ? String(cb.value) : '') + '" placeholder="Goal" data-action="update-custom-value" data-id="' + cb.id + '">' +
         '<input type="text" class="as-inline-input" value="' + escHtml(cb.prize || '') + '" placeholder="Prize" data-action="update-custom-prize" data-id="' + cb.id + '">' +
         '<button class="as-remove-btn" data-action="delete-custom" data-id="' + cb.id + '" title="Delete badge">&times;</button>' +
+        '<input type="text" class="as-inline-input" style="flex-basis:100%" value="' + escHtml(cb.desc || '') + '" placeholder="Description (optional — auto-filled from the goal if blank)" data-action="update-custom-desc" data-id="' + cb.id + '">' +
       '</div>';
     });
 
@@ -2628,6 +2634,21 @@
       if (!settings.badges[bnId]) settings.badges[bnId] = {};
       settings.badges[bnId].name = el.value.trim();
       saveSettings(settings);
+      return;
+    }
+
+    if (action === 'update-badge-desc') {
+      var bdId = el.getAttribute('data-id');
+      if (!settings.badges) settings.badges = {};
+      if (!settings.badges[bdId]) settings.badges[bdId] = {};
+      settings.badges[bdId].desc = el.value.trim();
+      saveSettings(settings);
+      return;
+    }
+
+    if (action === 'update-custom-desc') {
+      var cdCb = customBadgeById(el.getAttribute('data-id'));
+      if (cdCb) { cdCb.desc = el.value.trim(); saveSettings(settings); }
       return;
     }
 

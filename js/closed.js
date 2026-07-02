@@ -348,6 +348,7 @@
       if (!o) return;
       if (o.icon) b.icon = o.icon;
       if (o.name) b.name = o.name;
+      if (o.desc) b.desc = o.desc;
       if (typeof o.prize === 'string') b.prize = o.prize; // empty string intentionally hides the prize
     });
 
@@ -366,7 +367,7 @@
       badges.push({
         id: cb.id, icon: cb.icon || '🏆', name: cb.name || 'Badge',
         earned: goal > 0 && cur >= goal,
-        desc: customBadgeDesc(cb.metric, goal, money),
+        desc: (cb.desc && String(cb.desc).trim()) ? cb.desc : customBadgeDesc(cb.metric, goal, money),
         prize: cb.prize || '',
         cur: cur, goal: goal, money: money
       });
