@@ -122,6 +122,13 @@
     .wins-tier-bar { height: 6px; border-radius: 20px; background: rgba(255,255,255,.16); overflow: hidden; }
     .wins-tier-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #D4AF37, #F5D77E); transition: width .6s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 10px rgba(212,175,55,.5); }
     .wins-tier-bar-meta { font-size: .72rem; color: rgba(255,255,255,.72); font-weight: 600; margin-top: 6px; }
+    /* team pipeline tiles inside the hero */
+    .wins-hero-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; position: relative; }
+    .wins-hero-tile { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 10px; padding: 10px 13px; }
+    .wins-hero-tile-val { font-size: 1.45rem; font-weight: 800; line-height: 1; }
+    .wins-hero-tile-lbl { font-size: .66rem; text-transform: uppercase; letter-spacing: .4px; color: rgba(255,255,255,.68); font-weight: 700; margin-top: 5px; }
+    .wins-hero-tile-sub { font-size: .78rem; color: rgba(255,255,255,.88); font-weight: 700; margin-top: 3px; }
+    @media (max-width: 480px) { .wins-hero-tile-val { font-size: 1.2rem; } .wins-hero-tile-lbl { font-size: .58rem; } }
 
     /* ---- Goal thermometer ---- */
     .wins-goal { padding: 20px 22px; margin-bottom: 4px; }
@@ -412,7 +419,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1782001100"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782001800"></script>
+  <script src="js/closed.js?v=1782001900"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

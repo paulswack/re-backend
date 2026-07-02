@@ -457,6 +457,19 @@
     } else {
       s += '<div class="wins-tier-bar-meta" style="margin-top:10px">👑 Top tier reached — you\'re a Legend</div>';
     }
+
+    // Team pipeline tiles (moved from the dashboard): Total Closed · In Escrow · Active Listings
+    var allTxns = Data.getTransactions();
+    var closedT = allTxns.filter(function (x) { return x.status === 'closed'; });
+    var escrowT = allTxns.filter(function (x) { return x.status === 'active' || x.status === 'pending'; });
+    var activeL = Data.getListings().filter(function (l) { return l.status === 'active'; });
+    var sumP = function (arr) { return arr.reduce(function (acc, x) { return acc + (parseFloat(x.price) || 0); }, 0); };
+    s += '<div class="wins-hero-tiles">';
+    s += heroTile('Total Closed', closedT.length, compactMoney(sumP(closedT)));
+    s += heroTile('In Escrow', escrowT.length, compactMoney(sumP(escrowT)));
+    s += heroTile('Active Listings', activeL.length, compactMoney(sumP(activeL)));
+    s += '</div>';
+
     s += '</div>';
     return s;
   }
@@ -464,6 +477,13 @@
   function heroStat(value, label) {
     return '<span class="wins-hero-stat"><span class="wins-hero-stat-val">' + value + '</span>' +
            '<span class="wins-hero-stat-lbl">' + label + '</span></span>';
+  }
+
+  function heroTile(label, value, sub) {
+    return '<div class="wins-hero-tile">' +
+      '<div class="wins-hero-tile-val">' + value + '</div>' +
+      '<div class="wins-hero-tile-lbl">' + label + '</div>' +
+      '<div class="wins-hero-tile-sub">' + sub + '</div></div>';
   }
 
   // ---- GCI goal thermometer ----

@@ -346,14 +346,7 @@
       '</div>';
     }
 
-    h += '<div class="stats-grid dash-stats-row" style="margin-bottom:28px;grid-template-columns:repeat(3,1fr)">';
-    var closedVol = closedTxns.reduce(function(s,t){return s+(t.price||0)},0);
-    var escrowVol = activeTxns.concat(pendingTxns).reduce(function(s,t){return s+(t.price||0)},0);
-    var listingVol = activeListings.reduce(function(s,l){return s+(l.price||0)},0);
-    h += dashStat('Total Closed', closedTxns.length, '#ECFDF5', 'var(--emerald)', '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>', null, null, Data.formatCurrencyFull(closedVol));
-    h += dashStat('In Escrow', escrowCount, '#EEF2FF', 'var(--indigo)', '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.89 2-2V5c0-1.1-.89-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>', null, null, Data.formatCurrencyFull(escrowVol));
-    h += dashStat('Active Listings', activeListings.length, '#FFF8EE', 'var(--amber)', '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>', null, null, Data.formatCurrencyFull(listingVol));
-    h += '</div>';
+    // Total Closed / In Escrow / Active Listings stat cards moved to the Wins (Closed) page hero
 
     if (!isLead) {
       h += '<div class="dash-tax-strip">' +
