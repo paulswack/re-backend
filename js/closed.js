@@ -81,6 +81,27 @@
     try { return JSON.parse(localStorage.getItem('reb_users') || '[]'); } catch (e) { return []; }
   }
 
+  // Map agent displayName -> profile photo (photos are keyed by username)
+  var PHOTOS = {};
+  function refreshPhotos() {
+    var profiles = {};
+    try { profiles = JSON.parse(localStorage.getItem('reb_profiles') || '{}'); } catch (e) {}
+    var map = {};
+    getUsersList().forEach(function (u) {
+      var p = profiles[u.username];
+      if (u.displayName && p && p.photo) map[u.displayName] = p.photo;
+    });
+    PHOTOS = map;
+  }
+  // Avatar with team photo when available, initials otherwise
+  function avatarMarkup(name, extraClass) {
+    var photo = PHOTOS[name];
+    var inner = photo
+      ? '<img src="' + photo + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">'
+      : getInitials(name || '?');
+    return '<span class="agent-avatar ' + agentClass(name) + ' ' + extraClass + '">' + inner + '</span>';
+  }
+
   function getAllClosed() {
     return Data.getTransactions().filter(function (t) { return t.status === 'closed'; });
   }
@@ -231,11 +252,10 @@
       if (days >= 0 && (fastest === null || days < fastest)) fastest = days;
     });
 
-    var hasHatTrick = bestMonthCount >= 3;
-    var hasDual = career.some(function (t) { return t.type === 'Dual'; });
-    var hasBigFish = career.some(function (t) { return (parseFloat(t.price) || 0) >= 1000000; });
-    var hasFast = fastest !== null && fastest <= 30;
     var streak = currentStreak(career);
+    var count = career.length;
+    var maxDeal = biggest ? (parseFloat(biggest.price) || 0) : 0;
+    var hasDual = career.some(function (t) { return t.type === 'Dual'; });
 
     var myRank = null;
     if (allAgents) {
@@ -244,15 +264,37 @@
     }
 
     var badges = [
-      { icon: '🎯', name: 'First Close',   earned: career.length >= 1, desc: 'Close your first deal', cur: career.length, goal: 1 },
-      { icon: '🏅', name: '10-Deal Club',  earned: career.length >= 10, desc: '10 career closings', cur: career.length, goal: 10 },
-      { icon: '💎', name: '$1M Club',      earned: careerVolume >= 1000000, desc: '$1M in career volume', cur: careerVolume, goal: 1000000, money: true },
-      { icon: '🏆', name: '$10M Club',     earned: careerVolume >= 10000000, desc: '$10M in career volume', cur: careerVolume, goal: 10000000, money: true },
-      { icon: '🐋', name: 'Big Fish',      earned: hasBigFish, desc: 'Close a deal over $1M' },
+      // Career closings — deal-count ladder
+      { icon: '🎯', name: 'First Close',   earned: count >= 1,   desc: 'Close your first deal',   cur: count, goal: 1 },
+      { icon: '✋', name: 'High Five',     earned: count >= 5,   desc: '5 career closings',       cur: count, goal: 5 },
+      { icon: '🏅', name: '10-Deal Club',  earned: count >= 10,  desc: '10 career closings',      cur: count, goal: 10 },
+      { icon: '🎖️', name: '25-Deal Club',  earned: count >= 25,  desc: '25 career closings',      cur: count, goal: 25 },
+      { icon: '🏵️', name: 'Half-Century',  earned: count >= 50,  desc: '50 career closings',      cur: count, goal: 50 },
+      { icon: '💯', name: 'Century Club',  earned: count >= 100, desc: '100 career closings',     cur: count, goal: 100 },
+
+      // Career volume ladder
+      { icon: '💎', name: '$1M Club',      earned: careerVolume >= 1000000,   desc: '$1M in career volume',   cur: careerVolume, goal: 1000000,   money: true },
+      { icon: '💠', name: '$5M Club',      earned: careerVolume >= 5000000,   desc: '$5M in career volume',   cur: careerVolume, goal: 5000000,   money: true },
+      { icon: '🏆', name: '$10M Club',     earned: careerVolume >= 10000000,  desc: '$10M in career volume',  cur: careerVolume, goal: 10000000,  money: true },
+      { icon: '🌟', name: '$25M Club',     earned: careerVolume >= 25000000,  desc: '$25M in career volume',  cur: careerVolume, goal: 25000000,  money: true },
+      { icon: '🚀', name: '$50M Club',     earned: careerVolume >= 50000000,  desc: '$50M in career volume',  cur: careerVolume, goal: 50000000,  money: true },
+      { icon: '🌈', name: '$100M Club',    earned: careerVolume >= 100000000, desc: '$100M in career volume', cur: careerVolume, goal: 100000000, money: true },
+
+      // Big single deals
+      { icon: '🐋', name: 'Big Fish',      earned: maxDeal >= 1000000, desc: 'Close a deal over $1M' },
+      { icon: '🐳', name: 'Whale',         earned: maxDeal >= 2000000, desc: 'Close a deal over $2M' },
+
+      // Streaks
+      { icon: '🔥', name: 'On Fire',       earned: streak >= 3,  desc: '3-month closing streak',  cur: streak, goal: 3 },
+      { icon: '🌋', name: 'Unstoppable',   earned: streak >= 6,  desc: '6-month closing streak',  cur: streak, goal: 6 },
+      { icon: '🔗', name: 'Iron Year',     earned: streak >= 12, desc: '12-month closing streak', cur: streak, goal: 12 },
+
+      // Skill & speed
       { icon: '🎪', name: 'Double-Ender',  earned: hasDual, desc: 'Represent both sides of a deal' },
-      { icon: '⚡', name: 'Fast Closer',   earned: hasFast, desc: 'Close in 30 days or less' },
-      { icon: '🔥', name: 'Hat Trick',     earned: hasHatTrick, desc: '3 closings in one month' },
-      { icon: '📈', name: 'On Fire',       earned: streak >= 3, desc: '3-month closing streak', cur: streak, goal: 3 },
+      { icon: '⚡', name: 'Fast Closer',   earned: fastest !== null && fastest <= 30, desc: 'Close in 30 days or less' },
+      { icon: '💨', name: 'Speed Demon',   earned: fastest !== null && fastest <= 14, desc: 'Close in 14 days or less' },
+      { icon: '🎩', name: 'Hat Trick',     earned: bestMonthCount >= 3, desc: '3 closings in one month' },
+      { icon: '⚾', name: 'Grand Slam',    earned: bestMonthCount >= 5, desc: '5 closings in one month' },
       { icon: '👑', name: 'Chart Topper',  earned: myRank === 1, desc: 'Rank #1 on the board' }
     ];
 
@@ -279,6 +321,7 @@
   //  RENDER — LIST (the Wins dashboard)
   // ============================================================
   function renderList() {
+    refreshPhotos();
     var agents = buildAgentStats();
     var profile = buildProfile(MY_NAME, agents);
     var rangedClosed = filterByRange(getAllClosed())
@@ -288,7 +331,6 @@
     var html = '';
     html += heroBlock(profile);
     html += badgesBlock(profile);
-    html += goalBlock(profile);
     html += podiumBlock(agents);
     html += leaderboardBlock(agents);
     html += recordsBlock(profile);
@@ -403,11 +445,12 @@
     var s = '<div class="wins-section-head"><h3>🏆 ' + rangeLabels[currentRange] + ' Leaders</h3>' + rangeFilter() + '</div>';
 
     // DOM order = 2nd (left) · champion (center) · 3rd (right)
+    var champVol = top[0].volume;
     s += '<div class="wins-spotlight">';
     s += '<div class="wins-spotlight-rays"></div>';
-    if (top[1]) s += runnerCol(top[1], 2);
+    if (top[1]) s += runnerCol(top[1], 2, champVol - top[1].volume);
     s += champCol(top[0]);
-    if (top[2]) s += runnerCol(top[2], 3);
+    if (top[2]) s += runnerCol(top[2], 3, champVol - top[2].volume);
     s += '</div>';
     return s;
   }
@@ -416,22 +459,24 @@
     var me = a.name === MY_NAME;
     return '<div class="wins-champ' + (me ? ' me' : '') + '">' +
       '<div class="wins-champ-crown">👑</div>' +
-      '<div class="wins-champ-ring"><span class="agent-avatar ' + agentClass(a.name) + ' wins-champ-avatar">' + getInitials(a.name) + '</span></div>' +
-      '<div class="wins-champ-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
+      '<div class="wins-champ-ring">' + avatarMarkup(a.name, 'wins-champ-avatar') + '</div>' +
+      '<div class="wins-champ-tag">🏆 Team Leader</div>' +
+      '<div class="wins-champ-name">' + escapeHtml(a.name) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
       '<div class="wins-champ-vol">' + compactMoney(a.volume) + '</div>' +
-      '<div class="wins-champ-sub">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') + ' · Rank #1</div>' +
+      '<div class="wins-champ-sub">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') + ' · ' + compactMoney(a.gci) + ' GCI</div>' +
     '</div>';
   }
 
-  function runnerCol(a, place) {
+  function runnerCol(a, place, behind) {
     var me = a.name === MY_NAME;
     var medal = place === 2 ? '🥈' : '🥉';
     return '<div class="wins-runner' + (me ? ' me' : '') + '">' +
       '<div class="wins-runner-medal">' + medal + '</div>' +
-      '<span class="agent-avatar ' + agentClass(a.name) + ' wins-runner-avatar">' + getInitials(a.name) + '</span>' +
+      avatarMarkup(a.name, 'wins-runner-avatar') +
       '<div class="wins-runner-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
       '<div class="wins-runner-vol">' + compactMoney(a.volume) + '</div>' +
-      '<div class="wins-runner-sub">#' + place + '</div>' +
+      '<div class="wins-runner-sub">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') +
+        (behind > 0 ? ' · ' + compactMoney(behind) + ' behind' : '') + '</div>' +
     '</div>';
   }
 
@@ -457,7 +502,7 @@
       s += '<div class="wins-lb-row' + (me ? ' me' : '') + '">';
       s += '<span class="wins-lb-rank" style="flex:0 0 44px">' + (a.volume > 0 ? a.rank : '—') + '</span>';
       s += '<span class="wins-lb-agent" style="flex:1">';
-      s += '<span class="agent-avatar ' + agentClass(a.name) + ' wins-lb-avatar">' + getInitials(a.name) + '</span>';
+      s += avatarMarkup(a.name, 'wins-lb-avatar');
       s += '<span class="wins-lb-agent-txt"><span class="wins-lb-name">' + escapeHtml(a.name) +
            (me ? ' <span class="wins-you">YOU</span>' : '') + '</span>' +
            (gap ? '<span class="wins-lb-gap">' + escapeHtml(gap) + '</span>' : '') + '</span>';
@@ -534,7 +579,7 @@
       s += '<div class="wins-feed-card' + (me ? ' me' : '') + '" data-action="open-detail" data-id="' + t.id + '">';
       s += '<div class="wins-feed-accent"></div>';
       s += '<div class="wins-feed-top">';
-      s += '<div class="agent-avatar ' + agentClass(t.agent) + ' wins-feed-avatar">' + getInitials(t.agent || '?') + '</div>';
+      s += avatarMarkup(t.agent, 'wins-feed-avatar');
       s += '<div class="wins-feed-who"><div class="wins-feed-agent">' + escapeHtml(t.agent || 'Unassigned') + '</div>' +
            '<div class="wins-feed-date">' + Data.formatDate(t.closeDate) + '</div></div>';
       if (t.type) s += '<span class="wins-feed-type">' + escapeHtml(t.type) + '</span>';
