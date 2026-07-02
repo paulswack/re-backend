@@ -67,6 +67,14 @@
     .wins-hero-stat { display: inline-flex; align-items: baseline; gap: 6px; }
     .wins-hero-stat-val { font-size: 1.3rem; font-weight: 800; letter-spacing: -.4px; }
     .wins-hero-stat-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: rgba(255,255,255,.6); font-weight: 600; }
+    .wins-hero-rankline { margin-top: 11px; position: relative; }
+    .wins-rank-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: .82rem; font-weight: 700; color: #fff;
+      background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22);
+      padding: 5px 13px; border-radius: 20px;
+    }
+    .wins-rank-badge.muted { opacity: .8; font-weight: 600; }
     .wins-tier-bar-wrap { margin-top: 11px; position: relative; }
     .wins-tier-bar { height: 6px; border-radius: 20px; background: rgba(255,255,255,.16); overflow: hidden; }
     .wins-tier-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #D4AF37, #F5D77E); transition: width .6s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 10px rgba(212,175,55,.5); }
@@ -181,7 +189,7 @@
     }
     .wins-badge.earned { border-color: var(--gold-light); }
     .wins-badge.earned:hover { transform: translateY(-3px); }
-    .wins-badge.locked { opacity: .58; filter: grayscale(.7); }
+    .wins-badge.locked { opacity: .5; filter: grayscale(1); background: var(--gray-50); box-shadow: none; border-color: var(--gray-200); }
     .wins-badge-icon { font-size: 2rem; line-height: 1; margin-bottom: 6px; }
     .wins-badge.earned .wins-badge-icon { filter: drop-shadow(0 3px 6px rgba(212,175,55,.4)); }
     .wins-badge-name { font-size: .84rem; font-weight: 800; color: var(--gray-900); }
@@ -325,7 +333,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782000100"></script>
+  <script src="js/closed.js?v=1782000200"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

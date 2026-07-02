@@ -269,6 +269,7 @@
       fastest: fastest,
       streak: streak,
       rank: myRank,
+      teamSize: allAgents ? allAgents.length : 0,
       badges: badges,
       tier: tierFor(ytdVolume)
     };
@@ -286,10 +287,10 @@
 
     var html = '';
     html += heroBlock(profile);
+    html += badgesBlock(profile);
     html += goalBlock(profile);
     html += podiumBlock(agents);
     html += leaderboardBlock(agents);
-    html += badgesBlock(profile);
     html += recordsBlock(profile);
     html += winsFeedBlock(rangedClosed);
 
@@ -301,18 +302,16 @@
     var t = p.tier;
     var pct = Math.round(t.progress * 100);
     var year = new Date().getFullYear();
-    var firstName = (MY_NAME || 'there').split(/\s+/)[0];
     var closedCount = thisYearClosed(MY_NAME).length;
 
     var s = '<div class="wins-hero">';
     s += '<div class="wins-hero-glow"></div>';
 
-    // top line: greeting + tier chip + rank + streak
+    // top line: full name + year Results, tier chip + streak
     s += '<div class="wins-hero-row">';
-    s += '<div class="wins-hero-greet">' + escapeHtml(firstName) + '\'s ' + year + '</div>';
+    s += '<div class="wins-hero-greet">' + (MY_NAME ? escapeHtml(MY_NAME) : 'Your') + ' ' + year + ' Results</div>';
     s += '<div class="wins-hero-chips">';
     s += '<span class="wins-tier-chip" style="color:' + t.current.color + '">' + t.current.icon + ' ' + t.current.name + '</span>';
-    if (p.rank) s += '<span class="wins-hero-rank">#' + p.rank + '</span>';
     if (p.streak > 0) s += '<span class="wins-hero-streak" title="Consecutive months with a closing">🔥 ' + p.streak + ' mo</span>';
     s += '</div></div>';
 
@@ -321,6 +320,15 @@
     s += heroStat(compactMoney(p.ytdVolume), 'volume');
     s += heroStat(Data.formatCurrency(p.ytdGci), 'GCI');
     s += heroStat(String(closedCount), closedCount === 1 ? 'deal' : 'deals');
+    s += '</div>';
+
+    // team ranking
+    s += '<div class="wins-hero-rankline">';
+    if (p.rank) {
+      s += '<span class="wins-rank-badge">🏅 Ranked #' + p.rank + ' of ' + p.teamSize + ' on the team</span>';
+    } else {
+      s += '<span class="wins-rank-badge muted">Not ranked yet — close a deal to get on the board</span>';
+    }
     s += '</div>';
 
     // thin tier progress bar
