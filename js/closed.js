@@ -527,39 +527,110 @@
   }
 
   // ---- Full leaderboard ----
+  // Three equal columns: Leaderboard · Upcoming Closings · Deal Sources
   function leaderboardBlock(agents) {
+    return '<div class="wins-tri">' +
+      leaderboardCol(agents) +
+      upcomingClosingsCol() +
+      dealSourcesCol() +
+    '</div>';
+  }
+
+  function triCard(title, body) {
+    return '<div class="wins-card wins-tri-card">' +
+      '<div class="wins-tri-head">' + title + '</div>' +
+      '<div class="wins-tri-body">' + body + '</div></div>';
+  }
+
+  function triEmpty(msg) {
+    return '<div class="wins-tri-empty">' + escapeHtml(msg) + '</div>';
+  }
+
+  function leaderboardCol(agents) {
     var ranked = agents.filter(function (a) { return a.deals > 0 || a.name === MY_NAME; });
-    if (ranked.length === 0) return '';
+    var body = '';
+    if (!ranked.length) {
+      body = triEmpty('No sales yet');
+    } else {
+      body += '<div class="wins-mlb-head"><span class="wins-mlb-rank">#</span><span class="wins-mlb-name">Agent</span>' +
+        '<span class="wins-mlb-sales">Sales</span><span class="wins-mlb-vol">Volume</span></div>';
+      ranked.forEach(function (a) {
+        var me = a.name === MY_NAME;
+        body += '<div class="wins-mlb-row' + (me ? ' me' : '') + '">';
+        body += '<span class="wins-mlb-rank">' + (a.deals > 0 ? a.rank : '—') + '</span>';
+        body += avatarMarkup(a.name, 'wins-mlb-avatar');
+        body += '<span class="wins-mlb-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</span>';
+        body += '<span class="wins-mlb-sales">' + a.deals + '</span>';
+        body += '<span class="wins-mlb-vol">' + Data.formatCurrency(a.volume) + '</span>';
+        body += '</div>';
+      });
+    }
+    return triCard('🏅 Leaderboard', body);
+  }
 
-    var s = '<div class="wins-card wins-lb">';
-    s += '<div class="wins-lb-head"><span style="flex:0 0 44px">#</span><span style="flex:1">Agent</span>' +
-         '<span class="wins-lb-c">Sales</span><span class="wins-lb-c wins-lb-vol">Volume</span><span class="wins-lb-c wins-lb-gci">GCI</span></div>';
+  function upcomingClosingsCol() {
+    var isLead = (Auth && typeof Auth.isPrivileged === 'function') ? Auth.isPrivileged() : false;
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var upcoming = Data.getTransactions().filter(function (t) {
+      if (t.status === 'closed' || !t.closeDate) return false;
+      var d = new Date(t.closeDate + 'T00:00:00');
+      var diff = Math.round((d - now) / 86400000);
+      return diff >= 0 && diff <= 30;
+    }).sort(function (a, b) {
+      return new Date(a.closeDate) - new Date(b.closeDate);
+    }).slice(0, 8);
 
-    ranked.forEach(function (a) {
-      var me = a.name === MY_NAME;
-      // gap to the agent directly above (in sales)
-      var gap = '';
-      if (a.rank > 1) {
-        var above = agents[a.rank - 2];
-        if (above && above.deals > a.deals) {
-          gap = (above.deals - a.deals) + ' sale' + (above.deals - a.deals === 1 ? '' : 's') + ' behind ' + above.name.split(/\s+/)[0];
-        }
-      }
-      s += '<div class="wins-lb-row' + (me ? ' me' : '') + '">';
-      s += '<span class="wins-lb-rank" style="flex:0 0 44px">' + (a.deals > 0 ? a.rank : '—') + '</span>';
-      s += '<span class="wins-lb-agent" style="flex:1">';
-      s += avatarMarkup(a.name, 'wins-lb-avatar');
-      s += '<span class="wins-lb-agent-txt"><span class="wins-lb-name">' + escapeHtml(a.name) +
-           (me ? ' <span class="wins-you">YOU</span>' : '') + '</span>' +
-           (gap ? '<span class="wins-lb-gap">' + escapeHtml(gap) + '</span>' : '') + '</span>';
-      s += '</span>';
-      s += '<span class="wins-lb-c">' + a.deals + '</span>';
-      s += '<span class="wins-lb-c wins-lb-vol">' + Data.formatCurrency(a.volume) + '</span>';
-      s += '<span class="wins-lb-c wins-lb-gci">' + compactMoney(a.gci) + '</span>';
-      s += '</div>';
+    var body = '';
+    if (!upcoming.length) {
+      body = triEmpty('No closings in the next 30 days');
+    } else {
+      upcoming.forEach(function (t) {
+        var d = new Date(t.closeDate + 'T00:00:00');
+        var diff = Math.round((d - now) / 86400000);
+        var color = diff <= 3 ? '#B91C1C' : (diff <= 10 ? '#B86B00' : '#1A7F4B');
+        var bg = diff <= 3 ? '#FEE2E2' : (diff <= 10 ? '#FFF4E0' : '#E6F5EE');
+        var urg = diff === 0 ? 'Today' : (diff === 1 ? '1d' : diff + 'd');
+        var canOpen = isLead || t.agent === MY_NAME;
+        var open = canOpen ? '<a href="deal-detail-txn.html#' + t.id + '"' : '<div';
+        var close = canOpen ? '</a>' : '</div>';
+        body += open + ' class="wins-up-row">';
+        body += '<span class="wins-up-badge" style="color:' + color + ';background:' + bg + '">' + urg + '</span>';
+        body += '<span class="wins-up-info"><span class="wins-up-addr">' + escapeHtml((t.address || '—').split(',')[0]) + '</span>' +
+          '<span class="wins-up-agent">' + escapeHtml(t.agent || '—') + '</span></span>';
+        body += '<span class="wins-up-price">' + Data.formatCurrencyFull(t.price) + '</span>';
+        body += close;
+      });
+    }
+    return triCard('🗓️ Upcoming Closings', body);
+  }
+
+  function dealSourcesCol() {
+    var counts = {}, vol = {};
+    Data.getTransactions().forEach(function (t) {
+      var src = t.source || 'Unknown';
+      counts[src] = (counts[src] || 0) + 1;
+      if (t.status === 'closed') vol[src] = (vol[src] || 0) + (parseFloat(t.price) || 0);
     });
-    s += '</div>';
-    return s;
+    var keys = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+    var total = keys.reduce(function (s, k) { return s + counts[k]; }, 0);
+
+    var body = '';
+    if (!keys.length || (keys.length === 1 && keys[0] === 'Unknown')) {
+      body = triEmpty('No deal source data yet');
+    } else {
+      keys.slice(0, 8).forEach(function (src) {
+        var count = counts[src];
+        var pct = total > 0 ? Math.round(count / total * 100) : 0;
+        body += '<div class="wins-src-row">';
+        body += '<span class="wins-src-pct">' + pct + '%</span>';
+        body += '<span class="wins-src-info">';
+        body += '<span class="wins-src-top"><span class="wins-src-name">' + escapeHtml(src) + '</span><span class="wins-src-count">' + count + '</span></span>';
+        body += '<span class="wins-src-bar"><span class="wins-src-fill" style="width:' + Math.max(pct, 3) + '%"></span></span>';
+        if (vol[src]) body += '<span class="wins-src-vol">' + Data.formatCurrency(vol[src]) + ' closed</span>';
+        body += '</span></div>';
+      });
+    }
+    return triCard('📊 Deal Sources', body);
   }
 
   // ---- Achievement badges (current user) ----
