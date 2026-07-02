@@ -252,10 +252,26 @@
       if (days >= 0 && (fastest === null || days < fastest)) fastest = days;
     });
 
-    var streak = currentStreak(career);
-    var count = career.length;
-    var maxDeal = biggest ? (parseFloat(biggest.price) || 0) : 0;
-    var hasDual = career.some(function (t) { return t.type === 'Dual'; });
+    // ---- Year-only metrics (badges reset each calendar year) ----
+    var yCount = ytd.length;
+    var yVolume = ytdVolume;
+    var yMaxDeal = ytd.reduce(function (mx, t) { var p = parseFloat(t.price) || 0; return p > mx ? p : mx; }, 0);
+    var yHasDual = ytd.some(function (t) { return t.type === 'Dual'; });
+    var yStreak = currentStreak(ytd);
+
+    var yMonthCounts = {};
+    ytd.forEach(function (t) { var k = monthKey(t.closeDate); if (k) yMonthCounts[k] = (yMonthCounts[k] || 0) + 1; });
+    var yBestMonth = 0;
+    Object.keys(yMonthCounts).forEach(function (k) { if (yMonthCounts[k] > yBestMonth) yBestMonth = yMonthCounts[k]; });
+
+    var yFastest = null;
+    ytd.forEach(function (t) {
+      if (!t.createdAt || !t.closeDate) return;
+      var c = new Date(t.createdAt), cl = new Date(t.closeDate);
+      if (isNaN(c.getTime()) || isNaN(cl.getTime())) return;
+      var d = Math.round((cl - c) / 86400000);
+      if (d >= 0 && (yFastest === null || d < yFastest)) yFastest = d;
+    });
 
     var myRank = null;
     if (allAgents) {
@@ -263,39 +279,31 @@
       myRank = found ? found.rank : null;
     }
 
+    // Badges — all measured within the current year, ordered easiest → hardest
     var badges = [
-      // Career closings — deal-count ladder
-      { icon: '🎯', name: 'First Close',   earned: count >= 1,   desc: 'Close your first deal',   cur: count, goal: 1 },
-      { icon: '✋', name: 'High Five',     earned: count >= 5,   desc: '5 career closings',       cur: count, goal: 5 },
-      { icon: '🏅', name: '10-Deal Club',  earned: count >= 10,  desc: '10 career closings',      cur: count, goal: 10 },
-      { icon: '🎖️', name: '25-Deal Club',  earned: count >= 25,  desc: '25 career closings',      cur: count, goal: 25 },
-      { icon: '🏵️', name: 'Half-Century',  earned: count >= 50,  desc: '50 career closings',      cur: count, goal: 50 },
-      { icon: '💯', name: 'Century Club',  earned: count >= 100, desc: '100 career closings',     cur: count, goal: 100 },
-
-      // Career volume ladder
-      { icon: '💎', name: '$1M Club',      earned: careerVolume >= 1000000,   desc: '$1M in career volume',   cur: careerVolume, goal: 1000000,   money: true },
-      { icon: '💠', name: '$5M Club',      earned: careerVolume >= 5000000,   desc: '$5M in career volume',   cur: careerVolume, goal: 5000000,   money: true },
-      { icon: '🏆', name: '$10M Club',     earned: careerVolume >= 10000000,  desc: '$10M in career volume',  cur: careerVolume, goal: 10000000,  money: true },
-      { icon: '🌟', name: '$25M Club',     earned: careerVolume >= 25000000,  desc: '$25M in career volume',  cur: careerVolume, goal: 25000000,  money: true },
-      { icon: '🚀', name: '$50M Club',     earned: careerVolume >= 50000000,  desc: '$50M in career volume',  cur: careerVolume, goal: 50000000,  money: true },
-      { icon: '🌈', name: '$100M Club',    earned: careerVolume >= 100000000, desc: '$100M in career volume', cur: careerVolume, goal: 100000000, money: true },
-
-      // Big single deals
-      { icon: '🐋', name: 'Big Fish',      earned: maxDeal >= 1000000, desc: 'Close a deal over $1M' },
-      { icon: '🐳', name: 'Whale',         earned: maxDeal >= 2000000, desc: 'Close a deal over $2M' },
-
-      // Streaks
-      { icon: '🔥', name: 'On Fire',       earned: streak >= 3,  desc: '3-month closing streak',  cur: streak, goal: 3 },
-      { icon: '🌋', name: 'Unstoppable',   earned: streak >= 6,  desc: '6-month closing streak',  cur: streak, goal: 6 },
-      { icon: '🔗', name: 'Iron Year',     earned: streak >= 12, desc: '12-month closing streak', cur: streak, goal: 12 },
-
-      // Skill & speed
-      { icon: '🎪', name: 'Double-Ender',  earned: hasDual, desc: 'Represent both sides of a deal' },
-      { icon: '⚡', name: 'Fast Closer',   earned: fastest !== null && fastest <= 30, desc: 'Close in 30 days or less' },
-      { icon: '💨', name: 'Speed Demon',   earned: fastest !== null && fastest <= 14, desc: 'Close in 14 days or less' },
-      { icon: '🎩', name: 'Hat Trick',     earned: bestMonthCount >= 3, desc: '3 closings in one month' },
-      { icon: '⚾', name: 'Grand Slam',    earned: bestMonthCount >= 5, desc: '5 closings in one month' },
-      { icon: '👑', name: 'Chart Topper',  earned: myRank === 1, desc: 'Rank #1 on the board' }
+      { icon: '🎯', name: 'First Close',   earned: yCount >= 1, desc: 'Close your first deal this year', cur: yCount, goal: 1 },
+      { icon: '⚡', name: 'Fast Closer',   earned: yFastest !== null && yFastest <= 30, desc: 'Close in 30 days or less' },
+      { icon: '🎪', name: 'Double-Ender',  earned: yHasDual, desc: 'Represent both sides of a deal' },
+      { icon: '✋', name: 'High Five',     earned: yCount >= 5, desc: '5 sales this year', cur: yCount, goal: 5 },
+      { icon: '💎', name: '$1M Club',      earned: yVolume >= 1000000, desc: '$1M in volume this year', cur: yVolume, goal: 1000000, money: true },
+      { icon: '💨', name: 'Speed Demon',   earned: yFastest !== null && yFastest <= 14, desc: 'Close in 14 days or less' },
+      { icon: '🐋', name: 'Big Fish',      earned: yMaxDeal >= 1000000, desc: 'Close a deal over $1M' },
+      { icon: '🎩', name: 'Hat Trick',     earned: yBestMonth >= 3, desc: '3 closings in one month' },
+      { icon: '🔥', name: 'On Fire',       earned: yStreak >= 3, desc: '3 months in a row', cur: yStreak, goal: 3 },
+      { icon: '🏅', name: '10-Sale Club',  earned: yCount >= 10, desc: '10 sales this year', cur: yCount, goal: 10 },
+      { icon: '💠', name: '$5M Club',      earned: yVolume >= 5000000, desc: '$5M in volume this year', cur: yVolume, goal: 5000000, money: true },
+      { icon: '⚾', name: 'Grand Slam',    earned: yBestMonth >= 5, desc: '5 closings in one month' },
+      { icon: '🐳', name: 'Whale',         earned: yMaxDeal >= 2000000, desc: 'Close a deal over $2M' },
+      { icon: '🌋', name: 'Unstoppable',   earned: yStreak >= 6, desc: '6 months in a row', cur: yStreak, goal: 6 },
+      { icon: '🎖️', name: '25-Sale Club',  earned: yCount >= 25, desc: '25 sales this year', cur: yCount, goal: 25 },
+      { icon: '🏆', name: '$10M Club',     earned: yVolume >= 10000000, desc: '$10M in volume this year', cur: yVolume, goal: 10000000, money: true },
+      { icon: '👑', name: 'Chart Topper',  earned: myRank === 1, desc: 'Rank #1 on the board' },
+      { icon: '🔗', name: 'Perfect Year',  earned: yStreak >= 12, desc: 'Close every month of the year', cur: yStreak, goal: 12 },
+      { icon: '🏵️', name: 'Half-Century',  earned: yCount >= 50, desc: '50 sales this year', cur: yCount, goal: 50 },
+      { icon: '🌟', name: '$25M Club',     earned: yVolume >= 25000000, desc: '$25M in volume this year', cur: yVolume, goal: 25000000, money: true },
+      { icon: '🚀', name: '$50M Club',     earned: yVolume >= 50000000, desc: '$50M in volume this year', cur: yVolume, goal: 50000000, money: true },
+      { icon: '💯', name: 'Century Club',  earned: yCount >= 100, desc: '100 sales this year', cur: yCount, goal: 100 },
+      { icon: '🌈', name: '$100M Club',    earned: yVolume >= 100000000, desc: '$100M in volume this year', cur: yVolume, goal: 100000000, money: true }
     ];
 
     return {
@@ -309,7 +317,7 @@
       bestMonthLabel: bestMonthLabel,
       bestMonthCount: bestMonthCount,
       fastest: fastest,
-      streak: streak,
+      streak: yStreak,
       rank: myRank,
       teamSize: allAgents ? allAgents.length : 0,
       badges: badges,
@@ -521,7 +529,7 @@
   // ---- Achievement badges (current user) ----
   function badgesBlock(p) {
     var earnedCount = p.badges.filter(function (b) { return b.earned; }).length;
-    var s = '<div class="wins-section-head"><h3>🎖️ Your Badges <span class="wins-count-pill">' +
+    var s = '<div class="wins-section-head"><h3>🎖️ ' + new Date().getFullYear() + ' Badges <span class="wins-count-pill">' +
             earnedCount + '/' + p.badges.length + '</span></h3></div>';
     s += '<div class="wins-badges">';
     p.badges.forEach(function (b) {
