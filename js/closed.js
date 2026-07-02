@@ -497,7 +497,7 @@
 
     var s = '<div class="wins-card wins-lb">';
     s += '<div class="wins-lb-head"><span style="flex:0 0 44px">#</span><span style="flex:1">Agent</span>' +
-         '<span class="wins-lb-c">Sales</span><span class="wins-lb-c">Volume</span><span class="wins-lb-c wins-lb-gci">GCI</span></div>';
+         '<span class="wins-lb-c">Sales</span><span class="wins-lb-c wins-lb-vol">Volume</span><span class="wins-lb-c wins-lb-gci">GCI</span></div>';
 
     ranked.forEach(function (a) {
       var me = a.name === MY_NAME;
@@ -518,7 +518,7 @@
            (gap ? '<span class="wins-lb-gap">' + escapeHtml(gap) + '</span>' : '') + '</span>';
       s += '</span>';
       s += '<span class="wins-lb-c">' + a.deals + '</span>';
-      s += '<span class="wins-lb-c">' + compactMoney(a.volume) + '</span>';
+      s += '<span class="wins-lb-c wins-lb-vol">' + Data.formatCurrency(a.volume) + '</span>';
       s += '<span class="wins-lb-c wins-lb-gci">' + compactMoney(a.gci) + '</span>';
       s += '</div>';
     });
