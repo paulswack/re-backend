@@ -51,6 +51,13 @@
     .wins-tri { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: start; margin-bottom: 4px; }
     .wins-tri-card { display: flex; flex-direction: column; }
     .wins-tri-head { padding: 13px 16px; border-bottom: 1px solid var(--gray-100); font-size: .92rem; font-weight: 800; color: var(--gray-900); }
+    .wins-tri-head-flex { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    /* Sales/Volume ranking toggle */
+    .wins-metric-toggle { display: inline-flex; background: var(--gray-100); border-radius: 8px; padding: 2px; flex-shrink: 0; }
+    .wins-mt-btn { border: none; background: none; cursor: pointer; font-size: .68rem; font-weight: 800; color: var(--gray-500); padding: 3px 9px; border-radius: 6px; }
+    .wins-mt-btn.active { background: var(--white); color: var(--emerald); box-shadow: var(--shadow-sm); }
+    /* de-emphasize the inactive metric column */
+    .wins-mlb-sales:not(.active), .wins-mlb-vol:not(.active) { color: var(--gray-400); font-weight: 600; }
     .wins-tri-body { padding: 8px 14px 12px; }
     .wins-tri-empty { text-align: center; padding: 26px 8px; color: var(--gray-400); font-size: .82rem; }
 
@@ -418,7 +425,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782002200"></script>
+  <script src="js/closed.js?v=1782002400"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

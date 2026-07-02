@@ -22,6 +22,7 @@
   var viewMode = 'list';        // 'list' or 'detail'
   var selectedTxnId = null;
   var currentRange = 'year';    // all | year | quarter | month
+  var rankMetric = 'sales';     // 'sales' | 'volume' — how the leaders + leaderboard are ranked
   var winsLimit = 12;           // how many wins-feed cards to show
   var goalEditMode = false;
   var celebrationDone = false;
@@ -207,7 +208,11 @@
     });
 
     agents.sort(function (a, b) {
-      if (b.deals !== a.deals) return b.deals - a.deals; // rank by number of sales
+      if (rankMetric === 'volume') {
+        if (b.volume !== a.volume) return b.volume - a.volume;
+        return b.deals - a.deals;
+      }
+      if (b.deals !== a.deals) return b.deals - a.deals; // default: rank by number of sales
       return b.volume - a.volume;                        // volume breaks ties
     });
     agents.forEach(function (a, i) { a.rank = i + 1; });
@@ -574,8 +579,9 @@
     // Prizes for the top 3 — overridable in Admin Settings → Wins Prizes
     var prizes = getAdminSetting('podiumPrizes', DEFAULT_PODIUM_PRIZES) || {};
 
-    var champDeals = top[0].deals;
-    function gap(i) { return champDeals - top[i].deals; }
+    function metricVal(a) { return rankMetric === 'volume' ? a.volume : a.deals; }
+    var champTop = metricVal(top[0]);
+    function gap(i) { return champTop - metricVal(top[i]); }
 
     // layout left → right: 4th · 2nd · champion · 3rd · 5th
     s += '<div class="wins-spotlight">';
@@ -591,6 +597,16 @@
 
   function salesLabel(n) { return n + ' sale' + (n === 1 ? '' : 's'); }
 
+  // Big headline metric + secondary line for a podium agent, based on the active toggle
+  function podiumPrimary(a) {
+    return rankMetric === 'volume' ? compactMoney(a.volume) : salesLabel(a.deals);
+  }
+  function podiumSecondary(a, behind) {
+    var base = rankMetric === 'volume' ? salesLabel(a.deals) : compactMoney(a.volume) + ' volume';
+    var behindStr = behind > 0 ? (rankMetric === 'volume' ? compactMoney(behind) : behind) + ' behind' : '';
+    return base + (behindStr ? ' · ' + behindStr : '');
+  }
+
   function champCol(a, prize) {
     var me = a.name === MY_NAME;
     return '<div class="wins-champ' + (me ? ' me' : '') + '">' +
@@ -598,8 +614,8 @@
       '<div class="wins-champ-ring">' + avatarMarkup(a.name, 'wins-champ-avatar') + '</div>' +
       '<div class="wins-champ-tag">🏆 Team Leader</div>' +
       '<div class="wins-champ-name">' + escapeHtml(a.name) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
-      '<div class="wins-champ-vol">' + salesLabel(a.deals) + '</div>' +
-      '<div class="wins-champ-sub">' + compactMoney(a.volume) + ' volume · ' + compactMoney(a.gci) + ' GCI</div>' +
+      '<div class="wins-champ-vol">' + podiumPrimary(a) + '</div>' +
+      '<div class="wins-champ-sub">' + podiumSecondary(a, 0) + ' · ' + compactMoney(a.gci) + ' GCI</div>' +
       (prize ? '<div class="wins-podium-prize champ">🎁 ' + escapeHtml(prize) + '</div>' : '') +
     '</div>';
   }
@@ -613,9 +629,8 @@
       badge +
       avatarMarkup(a.name, 'wins-runner-avatar') +
       '<div class="wins-runner-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
-      '<div class="wins-runner-vol">' + salesLabel(a.deals) + '</div>' +
-      '<div class="wins-runner-sub">' + compactMoney(a.volume) +
-        (behind > 0 ? ' · ' + behind + ' behind' : '') + '</div>' +
+      '<div class="wins-runner-vol">' + podiumPrimary(a) + '</div>' +
+      '<div class="wins-runner-sub">' + podiumSecondary(a, behind) + '</div>' +
       (prize ? '<div class="wins-podium-prize">🎁 ' + escapeHtml(prize) + '</div>' : '') +
     '</div>';
   }
@@ -640,26 +655,37 @@
     return '<div class="wins-tri-empty">' + escapeHtml(msg) + '</div>';
   }
 
+  function metricToggle() {
+    return '<div class="wins-metric-toggle">' +
+      '<button class="wins-mt-btn' + (rankMetric === 'sales' ? ' active' : '') + '" data-action="rank-metric" data-metric="sales">Sales</button>' +
+      '<button class="wins-mt-btn' + (rankMetric === 'volume' ? ' active' : '') + '" data-action="rank-metric" data-metric="volume">Volume</button>' +
+    '</div>';
+  }
+
   function leaderboardCol(agents) {
     var ranked = agents.filter(function (a) { return a.deals > 0 || a.name === MY_NAME; });
+    var salesActive = rankMetric === 'sales';
     var body = '';
     if (!ranked.length) {
       body = triEmpty('No sales yet');
     } else {
       body += '<div class="wins-mlb-head"><span class="wins-mlb-rank">#</span><span class="wins-mlb-name">Agent</span>' +
-        '<span class="wins-mlb-sales">Sales</span><span class="wins-mlb-vol">Volume</span></div>';
+        '<span class="wins-mlb-sales' + (salesActive ? ' active' : '') + '">Sales</span>' +
+        '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '">Volume</span></div>';
       ranked.forEach(function (a) {
         var me = a.name === MY_NAME;
         body += '<div class="wins-mlb-row' + (me ? ' me' : '') + '">';
         body += '<span class="wins-mlb-rank">' + (a.deals > 0 ? a.rank : '—') + '</span>';
         body += avatarMarkup(a.name, 'wins-mlb-avatar');
         body += '<span class="wins-mlb-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</span>';
-        body += '<span class="wins-mlb-sales">' + a.deals + '</span>';
-        body += '<span class="wins-mlb-vol">' + Data.formatCurrency(a.volume) + '</span>';
+        body += '<span class="wins-mlb-sales' + (salesActive ? ' active' : '') + '">' + a.deals + '</span>';
+        body += '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '">' + Data.formatCurrency(a.volume) + '</span>';
         body += '</div>';
       });
     }
-    return triCard('🏅 Leaderboard', body);
+    return '<div class="wins-card wins-tri-card">' +
+      '<div class="wins-tri-head wins-tri-head-flex"><span>🏅 Leaderboard</span>' + metricToggle() + '</div>' +
+      '<div class="wins-tri-body">' + body + '</div></div>';
   }
 
   function upcomingClosingsCol() {
@@ -1073,6 +1099,11 @@
       case 'time-filter':
         currentRange = target.getAttribute('data-range');
         winsLimit = 12;
+        render();
+        break;
+
+      case 'rank-metric':
+        rankMetric = target.getAttribute('data-metric') === 'volume' ? 'volume' : 'sales';
         render();
         break;
 
