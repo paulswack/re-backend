@@ -978,6 +978,7 @@
       case 'property-types': return settings.listings.propertyTypes;
       case 'lead-sources': return settings.leadSources;
       case 'expense-cats': return settings.expenseCategories;
+      case 'badges': return orderedBadgeItems().map(function (i) { return i.id; });
       case 'mkt-categories': return loadMktConfig().categories;
       case 'mkt-weekly': return loadMktConfig().weekly;
       case 'mkt-monthly': return loadMktConfig().monthly;
@@ -1008,6 +1009,7 @@
       case 'property-types': settings.listings.propertyTypes = arr; break;
       case 'lead-sources': settings.leadSources = arr; break;
       case 'expense-cats': settings.expenseCategories = arr; break;
+      case 'badges': settings.badgeOrder = arr; break;
       case 'mkt-categories': var mc1 = loadMktConfig(); mc1.categories = arr; saveMktConfig(mc1); break;
       case 'mkt-weekly': var mc2 = loadMktConfig(); mc2.weekly = arr; saveMktConfig(mc2); break;
       case 'mkt-monthly': var mc3 = loadMktConfig(); mc3.monthly = arr; saveMktConfig(mc3); break;
@@ -1511,14 +1513,11 @@
     var items = orderedBadgeItems();
 
     h += '<div class="as-card">';
-    h += '<div class="as-card-title">Badges (' + items.length + ') — use the arrows to reorder</div>';
-    h += '<div class="as-badge-head"><span style="width:30px"></span><span style="width:60px">Emoji</span><span style="width:150px">Name</span><span style="flex:1">Prize</span><span style="width:64px"></span></div>';
+    h += '<div class="as-card-title">Badges (' + items.length + ') — drag to reorder</div>';
+    h += '<div class="as-badge-head"><span style="width:24px"></span><span style="width:60px">Emoji</span><span style="width:150px">Name</span><span style="flex:1">Prize</span><span style="width:64px"></span></div>';
 
     items.forEach(function (item, idx) {
-      var moveCtl = '<div class="as-badge-move">' +
-        '<button class="as-move-btn" data-action="move-badge-up" data-id="' + item.id + '" title="Move up"' + (idx === 0 ? ' disabled' : '') + '>&#9650;</button>' +
-        '<button class="as-move-btn" data-action="move-badge-down" data-id="' + item.id + '" title="Move down"' + (idx === items.length - 1 ? ' disabled' : '') + '>&#9660;</button>' +
-      '</div>';
+      var grip = dragHandle('badges', idx);
 
       if (item.type === 'builtin') {
         var b = item.def;
@@ -1528,8 +1527,8 @@
         var desc = (cfg.desc !== undefined && cfg.desc !== '') ? cfg.desc : b.desc;
         var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
         h += '<div class="as-badge-block">';
-        h += '<div class="as-list-item">' +
-          moveCtl +
+        h += '<div class="as-list-item" draggable="true" data-list="badges" data-index="' + idx + '">' +
+          grip +
           emojiSelect(b.id, icon) +
           '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-badge-name" data-id="' + b.id + '">' +
           '<input type="text" class="as-inline-input" value="' + escHtml(prize) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-badge-prize" data-id="' + b.id + '">' +
@@ -1546,8 +1545,8 @@
           metricSel += '<option value="' + m.key + '"' + (m.key === cb.metric ? ' selected' : '') + '>' + m.label + '</option>';
         });
         metricSel += '</select>';
-        h += '<div class="as-list-item as-custom-badge">' +
-          moveCtl +
+        h += '<div class="as-list-item as-custom-badge" draggable="true" data-list="badges" data-index="' + idx + '">' +
+          grip +
           emojiSelect(cb.id, cb.icon || '🏆', 'update-custom-icon') +
           '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(cb.name || '') + '" placeholder="Badge name" data-action="update-custom-name" data-id="' + cb.id + '">' +
           metricSel +
@@ -2024,20 +2023,6 @@
 
     if (action === 'reset-hero-color') {
       delete settings.winsHeroColor;
-      saveSettings(settings);
-      render();
-      return;
-    }
-
-    if (action === 'move-badge-up' || action === 'move-badge-down') {
-      var mvId = btn.getAttribute('data-id');
-      var ids = orderedBadgeItems().map(function (i) { return i.id; });
-      var idx = ids.indexOf(mvId);
-      if (idx === -1) return;
-      var swap = action === 'move-badge-up' ? idx - 1 : idx + 1;
-      if (swap < 0 || swap >= ids.length) return;
-      var tmp = ids[idx]; ids[idx] = ids[swap]; ids[swap] = tmp;
-      settings.badgeOrder = ids;
       saveSettings(settings);
       render();
       return;
