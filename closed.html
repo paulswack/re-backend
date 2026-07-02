@@ -41,39 +41,36 @@
       vertical-align: middle;
     }
     /* base .agent-avatar is display:none with only a bg color — give ours full layout */
-    .wins-podium-avatar, .wins-lb-avatar, .wins-feed-avatar {
+    .wins-champ-avatar, .wins-runner-avatar, .wins-lb-avatar, .wins-feed-avatar {
       display: flex !important; align-items: center; justify-content: center;
       border-radius: 50%; color: #fff; font-weight: 700;
     }
 
-    /* ---- Hero ---- */
+    /* ---- Hero (slim) ---- */
     .wins-hero {
       position: relative; overflow: hidden;
-      background: linear-gradient(135deg, #04261a 0%, #065F46 55%, #0a7a54 100%);
-      border-radius: 18px; padding: 26px 30px; margin-bottom: 16px; color: #fff;
+      background: linear-gradient(120deg, #04261a 0%, #065F46 60%, #0a7a54 100%);
+      border-radius: 14px; padding: 15px 20px; margin-bottom: 14px; color: #fff;
     }
     .wins-hero-glow {
-      position: absolute; top: -80px; right: -60px; width: 260px; height: 260px;
-      border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,.35), transparent 70%);
+      position: absolute; top: -70px; right: -50px; width: 200px; height: 200px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,.3), transparent 70%);
       pointer-events: none;
     }
-    .wins-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: relative; }
-    .wins-hero-greet { font-size: 1.5rem; font-weight: 800; letter-spacing: -.4px; }
-    .wins-tier { display: flex; align-items: center; gap: 7px; margin-top: 6px; flex-wrap: wrap; }
-    .wins-tier-icon { font-size: 1.1rem; }
-    .wins-tier-name { font-weight: 800; font-size: .95rem; background: rgba(255,255,255,.92); padding: 2px 10px; border-radius: 20px; }
-    .wins-tier-rank { font-size: .82rem; color: rgba(255,255,255,.75); font-weight: 600; }
-    .wins-streak {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
-      border-radius: 20px; padding: 6px 14px; font-size: .85rem; font-weight: 800; white-space: nowrap;
-    }
-    .wins-hero-stats { display: flex; gap: 30px; flex-wrap: wrap; margin: 22px 0 4px; position: relative; }
-    .wins-hero-stat-val { font-size: 1.7rem; font-weight: 800; letter-spacing: -.5px; }
-    .wins-hero-stat-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: rgba(255,255,255,.6); font-weight: 600; margin-top: 2px; }
-    .wins-tier-bar-wrap { margin-top: 18px; position: relative; }
-    .wins-tier-bar { height: 10px; border-radius: 20px; background: rgba(255,255,255,.15); overflow: hidden; }
-    .wins-tier-fill { height: 100%; border-radius: 20px; transition: width .6s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 12px rgba(212,175,55,.5); }
-    .wins-tier-bar-meta { display: flex; justify-content: space-between; font-size: .74rem; color: rgba(255,255,255,.72); font-weight: 600; margin-top: 7px; gap: 10px; }
+    .wins-hero-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: relative; }
+    .wins-hero-greet { font-size: 1.15rem; font-weight: 800; letter-spacing: -.3px; }
+    .wins-hero-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .wins-tier-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .8rem; font-weight: 800; background: rgba(255,255,255,.94); padding: 3px 11px; border-radius: 20px; }
+    .wins-hero-rank { font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.8); }
+    .wins-hero-streak { font-size: .8rem; font-weight: 800; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .wins-hero-stats { display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap; margin-top: 11px; position: relative; }
+    .wins-hero-stat { display: inline-flex; align-items: baseline; gap: 6px; }
+    .wins-hero-stat-val { font-size: 1.3rem; font-weight: 800; letter-spacing: -.4px; }
+    .wins-hero-stat-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: rgba(255,255,255,.6); font-weight: 600; }
+    .wins-tier-bar-wrap { margin-top: 11px; position: relative; }
+    .wins-tier-bar { height: 6px; border-radius: 20px; background: rgba(255,255,255,.16); overflow: hidden; }
+    .wins-tier-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #D4AF37, #F5D77E); transition: width .6s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 10px rgba(212,175,55,.5); }
+    .wins-tier-bar-meta { font-size: .72rem; color: rgba(255,255,255,.72); font-weight: 600; margin-top: 6px; }
 
     /* ---- Goal thermometer ---- */
     .wins-goal { padding: 20px 22px; margin-bottom: 4px; }
@@ -105,29 +102,49 @@
     .wins-goal-input:focus { outline: none; border-color: var(--emerald); }
     .wins-goal-hint { font-size: .8rem; color: var(--gray-400); margin-top: 10px; }
 
-    /* ---- Podium ---- */
-    .wins-podium { display: flex; align-items: flex-end; justify-content: center; gap: 14px; padding: 8px 0 4px; }
-    .wins-podium-col {
-      flex: 1; max-width: 200px; text-align: center;
-      display: flex; flex-direction: column; align-items: center;
-      background: var(--white); border-radius: 14px 14px 0 0;
-      box-shadow: var(--shadow-sm); padding: 16px 10px 0; position: relative;
+    /* ---- Champion spotlight ---- */
+    .wins-spotlight {
+      display: flex; align-items: flex-end; justify-content: center; gap: 8px;
+      padding: 26px 10px 14px; position: relative; overflow: hidden;
+      background: radial-gradient(ellipse 60% 80% at 50% 118%, rgba(212,175,55,.14), transparent 70%);
+      border-radius: var(--radius-lg);
     }
-    .wins-podium-col.me { box-shadow: 0 0 0 2px var(--gold), var(--shadow-sm); }
-    .wins-podium-col.tall { padding-top: 20px; }
-    .wins-podium-medal { font-size: 1.9rem; line-height: 1; }
-    .wins-podium-avatar { width: 46px !important; height: 46px !important; font-size: .9rem !important; margin: 8px 0 8px; box-shadow: var(--shadow-sm); }
-    .wins-podium-name { font-size: .9rem; font-weight: 800; color: var(--gray-900); }
-    .wins-podium-vol { font-size: 1.05rem; font-weight: 800; color: var(--emerald); margin-top: 4px; }
-    .wins-podium-deals { font-size: .72rem; color: var(--gray-400); font-weight: 600; margin-bottom: 12px; }
-    .wins-podium-base {
-      width: 100%; font-weight: 800; color: #fff; font-size: 1rem;
+    /* subtle light rays behind the champion */
+    .wins-spotlight-rays {
+      position: absolute; top: -30%; left: 50%; width: 260px; height: 260px;
+      transform: translateX(-50%);
+      background: conic-gradient(from 0deg, transparent 0 8deg, rgba(212,175,55,.10) 8deg 16deg, transparent 16deg 24deg,
+        rgba(212,175,55,.10) 24deg 32deg, transparent 32deg 40deg, rgba(212,175,55,.10) 40deg 48deg, transparent 48deg 360deg);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* champion (center) */
+    .wins-champ { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; align-items: center; padding: 0 8px; }
+    .wins-champ-crown { font-size: 1.9rem; line-height: 1; filter: drop-shadow(0 3px 6px rgba(212,175,55,.55)); animation: winsBob 3s ease-in-out infinite; }
+    .wins-champ-ring {
+      width: 90px; height: 90px; border-radius: 50%; margin: 2px 0 10px;
       display: flex; align-items: center; justify-content: center;
-      border-radius: 8px 8px 0 0;
+      background: conic-gradient(from 45deg, #B8860B, #F7E7A6, #D4AF37, #F7E7A6, #B8860B, #F7E7A6, #D4AF37);
+      box-shadow: 0 0 0 4px var(--white), 0 10px 26px rgba(212,175,55,.45), 0 0 44px rgba(212,175,55,.35);
     }
-    .wins-podium-col.tall  .wins-podium-base { height: 64px; background: linear-gradient(180deg, #D4AF37, #B8860B); }
-    .wins-podium-col.mid   .wins-podium-base { height: 46px; background: linear-gradient(180deg, #9BA5B7, #6B7280); }
-    .wins-podium-col.short .wins-podium-base { height: 32px; background: linear-gradient(180deg, #C57A3B, #A0562A); }
+    .wins-champ-avatar { width: 78px !important; height: 78px !important; font-size: 1.45rem !important; }
+    .wins-champ-name { font-size: 1.05rem; font-weight: 800; color: var(--gray-900); }
+    .wins-champ-vol {
+      font-size: 1.55rem; font-weight: 800; letter-spacing: -.5px; margin-top: 2px; color: #B8860B;
+      background: linear-gradient(90deg, #B8860B, #E6BE52, #B8860B);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .wins-champ-sub { font-size: .76rem; color: var(--gray-500); font-weight: 600; margin-top: 1px; }
+
+    /* runners (flanking) */
+    .wins-runner { position: relative; z-index: 1; text-align: center; display: flex; flex-direction: column; align-items: center; padding-bottom: 10px; opacity: .95; }
+    .wins-runner-medal { font-size: 1.35rem; line-height: 1; margin-bottom: 5px; }
+    .wins-runner-avatar { width: 54px !important; height: 54px !important; font-size: 1rem !important; box-shadow: 0 4px 12px rgba(10,22,40,.14); }
+    .wins-runner-name { font-size: .9rem; font-weight: 800; color: var(--gray-800); margin-top: 9px; }
+    .wins-runner-vol { font-size: 1rem; font-weight: 800; color: var(--gray-700); margin-top: 1px; }
+    .wins-runner-sub { font-size: .72rem; color: var(--gray-400); font-weight: 600; }
+    .wins-runner.me .wins-runner-avatar { box-shadow: 0 0 0 3px var(--gold), 0 4px 12px rgba(10,22,40,.14); }
+    @keyframes winsBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
     /* ---- Leaderboard ---- */
     .wins-lb { overflow: hidden; padding: 6px 0; }
@@ -243,10 +260,13 @@
     .detail-back-btn svg { width: 18px; height: 18px; fill: currentColor; }
 
     @media (max-width: 640px) {
-      .wins-hero-stats { gap: 20px; }
-      .wins-hero-stat-val { font-size: 1.4rem; }
+      .wins-hero-stats { gap: 16px; }
+      .wins-hero-stat-val { font-size: 1.15rem; }
       .wins-lb-gci { display: none; }
-      .wins-podium-col { padding: 12px 6px 0; }
+      .wins-spotlight { gap: 2px; padding: 22px 4px 12px; }
+      .wins-champ-ring { width: 78px; height: 78px; }
+      .wins-champ-avatar { width: 66px !important; height: 66px !important; font-size: 1.2rem !important; }
+      .wins-runner-avatar { width: 46px !important; height: 46px !important; }
     }
   </style>
 </head>
@@ -305,7 +325,7 @@
   <script src="js/api-bridge.js?v=1777908759"></script>
   <script src="js/auth.js?v=1777908759"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782000000"></script>
+  <script src="js/closed.js?v=1782000100"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

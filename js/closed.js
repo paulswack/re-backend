@@ -296,52 +296,49 @@
     pageBody.innerHTML = html;
   }
 
-  // ---- Hero: "Your Year" + producer tier ----
+  // ---- Hero: slim "Your Year" bar + producer tier ----
   function heroBlock(p) {
     var t = p.tier;
-    var nextTxt = t.next
-      ? (t.current.name === 'Legend' ? '' : 'Next: ' + t.next.icon + ' ' + t.next.name + ' at ' + compactMoney(t.next.min))
-      : 'Top tier reached 🎉';
     var pct = Math.round(t.progress * 100);
     var year = new Date().getFullYear();
-
     var firstName = (MY_NAME || 'there').split(/\s+/)[0];
-    var s = '';
-    s += '<div class="wins-hero">';
+    var closedCount = thisYearClosed(MY_NAME).length;
+
+    var s = '<div class="wins-hero">';
     s += '<div class="wins-hero-glow"></div>';
-    s += '<div class="wins-hero-top">';
-    s += '<div>';
+
+    // top line: greeting + tier chip + rank + streak
+    s += '<div class="wins-hero-row">';
     s += '<div class="wins-hero-greet">' + escapeHtml(firstName) + '\'s ' + year + '</div>';
-    s += '<div class="wins-tier"><span class="wins-tier-icon">' + t.current.icon + '</span>' +
-         '<span class="wins-tier-name" style="color:' + t.current.color + '">' + t.current.name + '</span>' +
-         (p.rank ? '<span class="wins-tier-rank">· #' + p.rank + ' on the team</span>' : '') + '</div>';
-    s += '</div>';
-    if (p.streak > 0) {
-      s += '<div class="wins-streak" title="Consecutive months with a closing">🔥 ' + p.streak + ' mo streak</div>';
-    }
-    s += '</div>';
+    s += '<div class="wins-hero-chips">';
+    s += '<span class="wins-tier-chip" style="color:' + t.current.color + '">' + t.current.icon + ' ' + t.current.name + '</span>';
+    if (p.rank) s += '<span class="wins-hero-rank">#' + p.rank + '</span>';
+    if (p.streak > 0) s += '<span class="wins-hero-streak" title="Consecutive months with a closing">🔥 ' + p.streak + ' mo</span>';
+    s += '</div></div>';
 
-    // stat trio
+    // inline stat trio
     s += '<div class="wins-hero-stats">';
-    s += heroStat(compactMoney(p.ytdVolume), 'Volume closed');
-    s += heroStat(Data.formatCurrency(p.ytdGci), 'Commission (GCI)');
-    s += heroStat(String(thisYearClosed(MY_NAME).length), 'Deals closed');
+    s += heroStat(compactMoney(p.ytdVolume), 'volume');
+    s += heroStat(Data.formatCurrency(p.ytdGci), 'GCI');
+    s += heroStat(String(closedCount), closedCount === 1 ? 'deal' : 'deals');
     s += '</div>';
 
-    // tier progress bar
+    // thin tier progress bar
     if (t.next) {
       s += '<div class="wins-tier-bar-wrap">';
-      s += '<div class="wins-tier-bar"><div class="wins-tier-fill" style="width:' + pct + '%;background:' + (t.next.color) + '"></div></div>';
-      s += '<div class="wins-tier-bar-meta"><span>' + pct + '% to ' + t.next.name + '</span><span>' + escapeHtml(nextTxt) + '</span></div>';
+      s += '<div class="wins-tier-bar"><div class="wins-tier-fill" style="width:' + pct + '%"></div></div>';
+      s += '<div class="wins-tier-bar-meta">' + pct + '% to ' + t.next.icon + ' ' + t.next.name + '</div>';
       s += '</div>';
+    } else {
+      s += '<div class="wins-tier-bar-meta" style="margin-top:10px">👑 Top tier reached — you\'re a Legend</div>';
     }
     s += '</div>';
     return s;
   }
 
   function heroStat(value, label) {
-    return '<div class="wins-hero-stat"><div class="wins-hero-stat-val">' + value + '</div>' +
-           '<div class="wins-hero-stat-lbl">' + label + '</div></div>';
+    return '<span class="wins-hero-stat"><span class="wins-hero-stat-val">' + value + '</span>' +
+           '<span class="wins-hero-stat-lbl">' + label + '</span></span>';
   }
 
   // ---- GCI goal thermometer ----
@@ -389,37 +386,45 @@
     return s;
   }
 
-  // ---- Podium (top 3) ----
+  // ---- Champion spotlight (top 3) ----
   function podiumBlock(agents) {
     var top = agents.filter(function (a) { return a.volume > 0; }).slice(0, 3);
     if (top.length === 0) return '';
 
     var rangeLabels = { all: 'All-Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
-    var s = '<div class="wins-section-head"><h3>🏆 ' + rangeLabels[currentRange] + ' Podium</h3>' + rangeFilter() + '</div>';
+    var s = '<div class="wins-section-head"><h3>🏆 ' + rangeLabels[currentRange] + ' Leaders</h3>' + rangeFilter() + '</div>';
 
-    s += '<div class="wins-podium">';
-    // order visually: 2nd, 1st, 3rd
-    var order = [];
-    if (top[1]) order.push({ a: top[1], place: 2 });
-    if (top[0]) order.push({ a: top[0], place: 1 });
-    if (top[2]) order.push({ a: top[2], place: 3 });
-
-    var medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-    var heights = { 1: 'tall', 2: 'mid', 3: 'short' };
-    order.forEach(function (o) {
-      var a = o.a;
-      var me = a.name === MY_NAME;
-      s += '<div class="wins-podium-col ' + heights[o.place] + (me ? ' me' : '') + '">';
-      s += '<div class="wins-podium-medal">' + medals[o.place] + '</div>';
-      s += '<div class="agent-avatar ' + agentClass(a.name) + ' wins-podium-avatar">' + getInitials(a.name) + '</div>';
-      s += '<div class="wins-podium-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>';
-      s += '<div class="wins-podium-vol">' + compactMoney(a.volume) + '</div>';
-      s += '<div class="wins-podium-deals">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') + '</div>';
-      s += '<div class="wins-podium-base">' + o.place + '</div>';
-      s += '</div>';
-    });
+    // DOM order = 2nd (left) · champion (center) · 3rd (right)
+    s += '<div class="wins-spotlight">';
+    s += '<div class="wins-spotlight-rays"></div>';
+    if (top[1]) s += runnerCol(top[1], 2);
+    s += champCol(top[0]);
+    if (top[2]) s += runnerCol(top[2], 3);
     s += '</div>';
     return s;
+  }
+
+  function champCol(a) {
+    var me = a.name === MY_NAME;
+    return '<div class="wins-champ' + (me ? ' me' : '') + '">' +
+      '<div class="wins-champ-crown">👑</div>' +
+      '<div class="wins-champ-ring"><span class="agent-avatar ' + agentClass(a.name) + ' wins-champ-avatar">' + getInitials(a.name) + '</span></div>' +
+      '<div class="wins-champ-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
+      '<div class="wins-champ-vol">' + compactMoney(a.volume) + '</div>' +
+      '<div class="wins-champ-sub">' + a.deals + ' deal' + (a.deals === 1 ? '' : 's') + ' · Rank #1</div>' +
+    '</div>';
+  }
+
+  function runnerCol(a, place) {
+    var me = a.name === MY_NAME;
+    var medal = place === 2 ? '🥈' : '🥉';
+    return '<div class="wins-runner' + (me ? ' me' : '') + '">' +
+      '<div class="wins-runner-medal">' + medal + '</div>' +
+      '<span class="agent-avatar ' + agentClass(a.name) + ' wins-runner-avatar">' + getInitials(a.name) + '</span>' +
+      '<div class="wins-runner-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
+      '<div class="wins-runner-vol">' + compactMoney(a.volume) + '</div>' +
+      '<div class="wins-runner-sub">#' + place + '</div>' +
+    '</div>';
   }
 
   // ---- Full leaderboard ----
