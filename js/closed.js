@@ -370,8 +370,8 @@
     var html = '';
     html += heroBlock(profile);
     html += podiumBlock(agents);
-    html += leaderboardBlock(agents);
     html += badgesBlock(profile);
+    html += leaderboardBlock(agents);
     html += recordsBlock(profile);
     html += winsFeedBlock(rangedClosed);
 
