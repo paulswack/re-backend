@@ -30,6 +30,13 @@
   var SESSION = (Auth.getSession && Auth.getSession()) || {};
   var MY_NAME = SESSION.displayName || '';
 
+  // Default prizes for the top 3 (editable in Admin Settings → Wins Prizes)
+  var DEFAULT_PODIUM_PRIZES = {
+    first: '$500 bonus + Agent of the Month',
+    second: '$250 bonus',
+    third: '$100 bonus'
+  };
+
   var pageBody = document.getElementById('pageBody');
 
   // ---- Producer tiers (by YTD closed volume) ----
@@ -473,20 +480,23 @@
     var rangeLabels = { all: 'All-Time', year: 'This Year', quarter: 'This Quarter', month: 'This Month' };
     var s = '<div class="wins-section-head"><h3>🏆 ' + rangeLabels[currentRange] + ' Leaders</h3>' + rangeFilter() + '</div>';
 
+    // Prizes for the top 3 — overridable in Admin Settings → Wins Prizes
+    var prizes = getAdminSetting('podiumPrizes', DEFAULT_PODIUM_PRIZES) || {};
+
     // DOM order = 2nd (left) · champion (center) · 3rd (right)
     var champDeals = top[0].deals;
     s += '<div class="wins-spotlight">';
     s += '<div class="wins-spotlight-rays"></div>';
-    if (top[1]) s += runnerCol(top[1], 2, champDeals - top[1].deals);
-    s += champCol(top[0]);
-    if (top[2]) s += runnerCol(top[2], 3, champDeals - top[2].deals);
+    if (top[1]) s += runnerCol(top[1], 2, champDeals - top[1].deals, prizes.second);
+    s += champCol(top[0], prizes.first);
+    if (top[2]) s += runnerCol(top[2], 3, champDeals - top[2].deals, prizes.third);
     s += '</div>';
     return s;
   }
 
   function salesLabel(n) { return n + ' sale' + (n === 1 ? '' : 's'); }
 
-  function champCol(a) {
+  function champCol(a, prize) {
     var me = a.name === MY_NAME;
     return '<div class="wins-champ' + (me ? ' me' : '') + '">' +
       '<div class="wins-champ-crown">👑</div>' +
@@ -495,10 +505,11 @@
       '<div class="wins-champ-name">' + escapeHtml(a.name) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
       '<div class="wins-champ-vol">' + salesLabel(a.deals) + '</div>' +
       '<div class="wins-champ-sub">' + compactMoney(a.volume) + ' volume · ' + compactMoney(a.gci) + ' GCI</div>' +
+      (prize ? '<div class="wins-podium-prize champ">🎁 ' + escapeHtml(prize) + '</div>' : '') +
     '</div>';
   }
 
-  function runnerCol(a, place, behind) {
+  function runnerCol(a, place, behind, prize) {
     var me = a.name === MY_NAME;
     var medal = place === 2 ? '🥈' : '🥉';
     return '<div class="wins-runner' + (me ? ' me' : '') + '">' +
@@ -508,6 +519,7 @@
       '<div class="wins-runner-vol">' + salesLabel(a.deals) + '</div>' +
       '<div class="wins-runner-sub">' + compactMoney(a.volume) +
         (behind > 0 ? ' · ' + behind + ' behind' : '') + '</div>' +
+      (prize ? '<div class="wins-podium-prize">🎁 ' + escapeHtml(prize) + '</div>' : '') +
     '</div>';
   }
 
