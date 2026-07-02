@@ -369,9 +369,9 @@
 
     var html = '';
     html += heroBlock(profile);
-    html += badgesBlock(profile);
     html += podiumBlock(agents);
     html += leaderboardBlock(agents);
+    html += badgesBlock(profile);
     html += recordsBlock(profile);
     html += winsFeedBlock(rangedClosed);
 
