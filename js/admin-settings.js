@@ -306,6 +306,41 @@
     { key: 'month',  label: 'Closings in one month' }
   ];
 
+  // Marketing badges — ids/defaults MUST match js/marketing.js
+  var MKT_BADGE_DEFS = [
+    { id: 'mkt-first',       icon: '🌱', name: 'Getting Started',   desc: 'Complete your first activity', prize: 'Coffee on the house' },
+    { id: 'mkt-warm',        icon: '✅', name: 'Warmed Up',         desc: 'Complete 10 activities',       prize: '$25 gift card' },
+    { id: 'mkt-roll',        icon: '🔥', name: 'On a Roll',         desc: '3-week streak',                prize: '$25 gift card' },
+    { id: 'mkt-marketer',    icon: '📣', name: 'Marketer',          desc: 'Complete 25 activities',       prize: '$50 gift card' },
+    { id: 'mkt-consistent',  icon: '📈', name: 'Consistent',        desc: '6-week streak',                prize: '$50 gift card' },
+    { id: 'mkt-grinder',     icon: '💪', name: 'Grinder',           desc: 'Complete 50 activities',       prize: '$100 bonus' },
+    { id: 'mkt-unstoppable', icon: '🌋', name: 'Unstoppable',       desc: '10-week streak',               prize: '$150 bonus' },
+    { id: 'mkt-machine',     icon: '🏆', name: 'Marketing Machine', desc: 'Complete 100 activities',      prize: '$250 bonus' },
+    { id: 'mkt-quarter',     icon: '👑', name: 'Quarter Champ',     desc: '13-week streak',               prize: '$300 bonus' },
+    { id: 'mkt-powerhouse',  icon: '🚀', name: 'Powerhouse',        desc: 'Complete 250 activities',      prize: '$500 bonus' }
+  ];
+  var MKT_BADGE_METRICS = [
+    { key: 'completed', label: 'Activities completed' },
+    { key: 'streak',    label: 'Week streak' }
+  ];
+
+  function orderedMktBadgeItems() {
+    var hidden = settings.mktBadgesHidden || [];
+    var customBadges = settings.mktCustomBadges || [];
+    var order = settings.mktBadgeOrder || [];
+    var builtinById = {}; MKT_BADGE_DEFS.forEach(function (b) { builtinById[b.id] = b; });
+    var customById = {}; customBadges.forEach(function (c) { customById[c.id] = c; });
+    var items = [], seen = {};
+    order.forEach(function (id) {
+      if (seen[id]) return;
+      if (builtinById[id] && hidden.indexOf(id) === -1) { items.push({ type: 'builtin', id: id, def: builtinById[id] }); seen[id] = true; }
+      else if (customById[id]) { items.push({ type: 'custom', id: id, cb: customById[id] }); seen[id] = true; }
+    });
+    MKT_BADGE_DEFS.forEach(function (b) { if (!seen[b.id] && hidden.indexOf(b.id) === -1) { items.push({ type: 'builtin', id: b.id, def: b }); seen[b.id] = true; } });
+    customBadges.forEach(function (c) { if (!seen[c.id]) { items.push({ type: 'custom', id: c.id, cb: c }); seen[c.id] = true; } });
+    return items;
+  }
+
   // Prizes for the top 3 on the Wins leaderboard/podium. Keys + defaults MUST
   // match DEFAULT_PODIUM_PRIZES in js/closed.js.
   var PODIUM_PRIZE_DEFS = [
@@ -864,6 +899,7 @@
     { key: 'teamRoles', label: 'Team & Roles', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
     { key: 'leaderboard', label: 'Leaderboard Settings', icon: '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>' },
     { key: 'badgePrizes', label: 'Wins Prizes', icon: '<path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 00-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>' },
+    { key: 'marketingBadges', label: 'Marketing Badges', icon: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' },
     { key: 'clientPortal', label: 'Client Portal', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' },
     { key: 'goals', label: 'Goals', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>' },
     { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' },
@@ -979,6 +1015,7 @@
       case 'lead-sources': return settings.leadSources;
       case 'expense-cats': return settings.expenseCategories;
       case 'badges': return orderedBadgeItems().map(function (i) { return i.id; });
+      case 'mkt-badges': return orderedMktBadgeItems().map(function (i) { return i.id; });
       case 'mkt-categories': return loadMktConfig().categories;
       case 'mkt-weekly': return loadMktConfig().weekly;
       case 'mkt-monthly': return loadMktConfig().monthly;
@@ -1010,6 +1047,7 @@
       case 'lead-sources': settings.leadSources = arr; break;
       case 'expense-cats': settings.expenseCategories = arr; break;
       case 'badges': settings.badgeOrder = arr; break;
+      case 'mkt-badges': settings.mktBadgeOrder = arr; break;
       case 'mkt-categories': var mc1 = loadMktConfig(); mc1.categories = arr; saveMktConfig(mc1); break;
       case 'mkt-weekly': var mc2 = loadMktConfig(); mc2.weekly = arr; saveMktConfig(mc2); break;
       case 'mkt-monthly': var mc3 = loadMktConfig(); mc3.monthly = arr; saveMktConfig(mc3); break;
@@ -1030,6 +1068,7 @@
       case 'teamRoles': return renderTeamRoles();
       case 'leaderboard': return renderLeaderboard();
       case 'badgePrizes': return renderBadgePrizes();
+      case 'marketingBadges': return renderMarketingBadges();
       case 'clientPortal': return renderClientPortal();
       case 'goals': return renderGoals();
       case 'announcements': return renderAnnouncements();
@@ -1442,6 +1481,12 @@
     return null;
   }
 
+  function mktCustomBadgeById(id) {
+    var arr = settings.mktCustomBadges || [];
+    for (var i = 0; i < arr.length; i++) { if (arr[i].id === id) return arr[i]; }
+    return null;
+  }
+
   // Hero color helpers (mirror js/closed.js so the preview matches the page)
   function shadeHex(hex, pct) {
     hex = (hex || '').replace('#', '');
@@ -1573,6 +1618,76 @@
 
     h += '</div>';
 
+    h += '</div>';
+    return h;
+  }
+
+  // ---- Marketing Badges ----
+  function renderMarketingBadges() {
+    var badgeCfg = settings.mktBadges || {};
+    var hidden = settings.mktBadgesHidden || [];
+    var items = orderedMktBadgeItems();
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Marketing Badges</h2><p>Badges agents earn on the Marketing page for completing activities and building streaks. Edit each badge\'s emoji, name, description and prize; add your own with a goal; drag to reorder.</p></div>';
+
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Badges (' + items.length + ') — drag to reorder</div>';
+    h += '<div class="as-badge-head"><span style="width:24px"></span><span style="width:60px">Emoji</span><span style="width:150px">Name</span><span style="flex:1">Prize</span><span style="width:64px"></span></div>';
+
+    items.forEach(function (item, idx) {
+      var grip = dragHandle('mkt-badges', idx);
+      if (item.type === 'builtin') {
+        var b = item.def;
+        var cfg = badgeCfg[b.id] || {};
+        var icon = cfg.icon || b.icon;
+        var name = (cfg.name !== undefined && cfg.name !== '') ? cfg.name : b.name;
+        var desc = (cfg.desc !== undefined && cfg.desc !== '') ? cfg.desc : b.desc;
+        var prize = (cfg.prize !== undefined) ? cfg.prize : b.prize;
+        h += '<div class="as-badge-block">';
+        h += '<div class="as-list-item" draggable="true" data-list="mkt-badges" data-index="' + idx + '">' +
+          grip +
+          emojiSelect(b.id, icon, 'update-mkt-badge-icon') +
+          '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(name) + '" placeholder="' + escHtml(b.name) + '" data-action="update-mkt-badge-name" data-id="' + b.id + '">' +
+          '<input type="text" class="as-inline-input" value="' + escHtml(prize) + '" placeholder="' + escHtml(b.prize) + '" data-action="update-mkt-badge-prize" data-id="' + b.id + '">' +
+          '<button class="as-remove-btn" data-action="reset-mkt-badge" data-id="' + b.id + '" title="Reset to default" style="font-size:1.05rem">&#8635;</button>' +
+          '<button class="as-remove-btn" data-action="hide-mkt-badge" data-id="' + b.id + '" title="Delete badge">&times;</button>' +
+        '</div>';
+        h += '<div class="as-badge-desc-row"><span class="as-desc-label">Says</span>' +
+          '<input type="text" class="as-inline-input" value="' + escHtml(desc) + '" placeholder="' + escHtml(b.desc) + '" data-action="update-mkt-badge-desc" data-id="' + b.id + '"></div>';
+        h += '</div>';
+      } else {
+        var cb = item.cb;
+        var metricSel = '<select class="as-inline-input" style="width:150px;flex:none" data-action="update-mkt-custom-metric" data-id="' + cb.id + '">';
+        MKT_BADGE_METRICS.forEach(function (m) {
+          metricSel += '<option value="' + m.key + '"' + (m.key === cb.metric ? ' selected' : '') + '>' + m.label + '</option>';
+        });
+        metricSel += '</select>';
+        h += '<div class="as-list-item as-custom-badge" draggable="true" data-list="mkt-badges" data-index="' + idx + '">' +
+          grip +
+          emojiSelect(cb.id, cb.icon || '🏆', 'update-mkt-custom-icon') +
+          '<input type="text" class="as-inline-input" style="width:150px;flex:none" value="' + escHtml(cb.name || '') + '" placeholder="Badge name" data-action="update-mkt-custom-name" data-id="' + cb.id + '">' +
+          metricSel +
+          '<input type="text" class="as-inline-input" style="width:90px;flex:none" inputmode="numeric" value="' + escHtml(cb.value != null ? String(cb.value) : '') + '" placeholder="Goal" data-action="update-mkt-custom-value" data-id="' + cb.id + '">' +
+          '<input type="text" class="as-inline-input" value="' + escHtml(cb.prize || '') + '" placeholder="Prize" data-action="update-mkt-custom-prize" data-id="' + cb.id + '">' +
+          '<button class="as-remove-btn" data-action="delete-mkt-custom" data-id="' + cb.id + '" title="Delete badge">&times;</button>' +
+          '<input type="text" class="as-inline-input" style="flex-basis:100%" value="' + escHtml(cb.desc || '') + '" placeholder="Description (optional — auto-filled from the goal if blank)" data-action="update-mkt-custom-desc" data-id="' + cb.id + '">' +
+        '</div>';
+      }
+    });
+
+    h += '<button class="as-add-btn" data-action="add-mkt-badge"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Badge</button>';
+
+    if (hidden.length) {
+      h += '<div class="as-hidden-badges"><div class="as-hidden-title">Deleted badges</div>';
+      MKT_BADGE_DEFS.forEach(function (b) {
+        if (hidden.indexOf(b.id) === -1) return;
+        h += '<div class="as-hidden-row"><span>' + b.icon + ' ' + escHtml(b.name) + '</span>' +
+          '<button class="wins-link-btn" data-action="restore-mkt-badge" data-id="' + b.id + '" style="background:none;border:none;color:var(--indigo);font-weight:700;cursor:pointer;font-size:.8rem">Restore</button></div>';
+      });
+      h += '</div>';
+    }
+
+    h += '</div>';
     h += '</div>';
     return h;
   }
@@ -2062,6 +2177,44 @@
       return;
     }
 
+    // ---- Marketing badges ----
+    if (action === 'reset-mkt-badge') {
+      var mrId = btn.getAttribute('data-id');
+      if (settings.mktBadges && mrId in settings.mktBadges) { delete settings.mktBadges[mrId]; saveSettings(settings); }
+      render();
+      return;
+    }
+    if (action === 'hide-mkt-badge') {
+      var mhId = btn.getAttribute('data-id');
+      if (!settings.mktBadgesHidden) settings.mktBadgesHidden = [];
+      if (settings.mktBadgesHidden.indexOf(mhId) === -1) settings.mktBadgesHidden.push(mhId);
+      saveSettings(settings);
+      render();
+      return;
+    }
+    if (action === 'restore-mkt-badge') {
+      var mreId = btn.getAttribute('data-id');
+      if (settings.mktBadgesHidden) settings.mktBadgesHidden = settings.mktBadgesHidden.filter(function (x) { return x !== mreId; });
+      saveSettings(settings);
+      render();
+      return;
+    }
+    if (action === 'add-mkt-badge') {
+      if (!settings.mktCustomBadges) settings.mktCustomBadges = [];
+      var mNewId = 'mktc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      settings.mktCustomBadges.push({ id: mNewId, icon: '🏆', name: 'New Badge', metric: 'completed', value: 10, prize: '' });
+      saveSettings(settings);
+      render();
+      return;
+    }
+    if (action === 'delete-mkt-custom') {
+      var mdcId = btn.getAttribute('data-id');
+      if (settings.mktCustomBadges) settings.mktCustomBadges = settings.mktCustomBadges.filter(function (c) { return c.id !== mdcId; });
+      saveSettings(settings);
+      render();
+      return;
+    }
+
     if (action === 'reset-podium-prize') {
       var place = btn.getAttribute('data-place');
       if (settings.podiumPrizes && place in settings.podiumPrizes) {
@@ -2410,6 +2563,26 @@
       return;
     }
 
+    // Marketing badge dropdowns
+    if (action === 'update-mkt-badge-icon') {
+      var mbiId = el.getAttribute('data-id');
+      if (!settings.mktBadges) settings.mktBadges = {};
+      if (!settings.mktBadges[mbiId]) settings.mktBadges[mbiId] = {};
+      settings.mktBadges[mbiId].icon = el.value;
+      saveSettings(settings); render();
+      return;
+    }
+    if (action === 'update-mkt-custom-icon') {
+      var mciCb = mktCustomBadgeById(el.getAttribute('data-id'));
+      if (mciCb) { mciCb.icon = el.value; saveSettings(settings); render(); }
+      return;
+    }
+    if (action === 'update-mkt-custom-metric') {
+      var mcmCb = mktCustomBadgeById(el.getAttribute('data-id'));
+      if (mcmCb) { mcmCb.metric = el.value; saveSettings(settings); }
+      return;
+    }
+
     // General fields
     if (action === 'save-general') {
       var val = el.value;
@@ -2732,6 +2905,37 @@
     if (action === 'update-custom-prize') {
       var cpCb = customBadgeById(el.getAttribute('data-id'));
       if (cpCb) { cpCb.prize = el.value.trim(); saveSettings(settings); }
+      return;
+    }
+
+    // Marketing badge text fields
+    if (action === 'update-mkt-badge-name' || action === 'update-mkt-badge-desc' || action === 'update-mkt-badge-prize') {
+      var mbId = el.getAttribute('data-id');
+      if (!settings.mktBadges) settings.mktBadges = {};
+      if (!settings.mktBadges[mbId]) settings.mktBadges[mbId] = {};
+      var mbField = action === 'update-mkt-badge-name' ? 'name' : (action === 'update-mkt-badge-desc' ? 'desc' : 'prize');
+      settings.mktBadges[mbId][mbField] = el.value.trim();
+      saveSettings(settings);
+      return;
+    }
+    if (action === 'update-mkt-custom-name') {
+      var mcnCb = mktCustomBadgeById(el.getAttribute('data-id'));
+      if (mcnCb) { mcnCb.name = el.value.trim(); saveSettings(settings); }
+      return;
+    }
+    if (action === 'update-mkt-custom-value') {
+      var mcvCb = mktCustomBadgeById(el.getAttribute('data-id'));
+      if (mcvCb) { mcvCb.value = parseFloat((el.value || '').replace(/[^0-9.]/g, '')) || 0; saveSettings(settings); }
+      return;
+    }
+    if (action === 'update-mkt-custom-prize') {
+      var mcpCb = mktCustomBadgeById(el.getAttribute('data-id'));
+      if (mcpCb) { mcpCb.prize = el.value.trim(); saveSettings(settings); }
+      return;
+    }
+    if (action === 'update-mkt-custom-desc') {
+      var mcdCb = mktCustomBadgeById(el.getAttribute('data-id'));
+      if (mcdCb) { mcdCb.desc = el.value.trim(); saveSettings(settings); }
       return;
     }
 

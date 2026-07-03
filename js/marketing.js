@@ -702,6 +702,114 @@
   }
 
   // ---- Main Render ----
+  // ============================================================
+  //  MARKETING BADGES (customizable in Admin Settings → Marketing Badges)
+  // ============================================================
+  function marketingStats(username) {
+    var ud = userData(username);
+    var completed = 0;
+    ['weekly', 'monthly'].forEach(function (type) {
+      var periods = ud[type] || {};
+      Object.keys(periods).forEach(function (pk) {
+        var m = periods[pk] || {};
+        Object.keys(m).forEach(function (id) { if (m[id]) completed++; });
+      });
+    });
+    return { completed: completed, streak: calcStreak(username) };
+  }
+
+  // Built-in ladder — criteria use 'completed' (activities) and 'streak' (weeks)
+  function marketingBadgeDefs() {
+    return [
+      { id: 'mkt-first',       icon: '🌱', name: 'Getting Started',   desc: 'Complete your first activity', prize: 'Coffee on the house', metric: 'completed', goal: 1 },
+      { id: 'mkt-warm',        icon: '✅', name: 'Warmed Up',         desc: 'Complete 10 activities',       prize: '$25 gift card',       metric: 'completed', goal: 10 },
+      { id: 'mkt-roll',        icon: '🔥', name: 'On a Roll',         desc: '3-week streak',                prize: '$25 gift card',       metric: 'streak',    goal: 3 },
+      { id: 'mkt-marketer',    icon: '📣', name: 'Marketer',          desc: 'Complete 25 activities',       prize: '$50 gift card',       metric: 'completed', goal: 25 },
+      { id: 'mkt-consistent',  icon: '📈', name: 'Consistent',        desc: '6-week streak',                prize: '$50 gift card',       metric: 'streak',    goal: 6 },
+      { id: 'mkt-grinder',     icon: '💪', name: 'Grinder',           desc: 'Complete 50 activities',       prize: '$100 bonus',          metric: 'completed', goal: 50 },
+      { id: 'mkt-unstoppable', icon: '🌋', name: 'Unstoppable',       desc: '10-week streak',               prize: '$150 bonus',          metric: 'streak',    goal: 10 },
+      { id: 'mkt-machine',     icon: '🏆', name: 'Marketing Machine', desc: 'Complete 100 activities',      prize: '$250 bonus',          metric: 'completed', goal: 100 },
+      { id: 'mkt-quarter',     icon: '👑', name: 'Quarter Champ',     desc: '13-week streak',               prize: '$300 bonus',          metric: 'streak',    goal: 13 },
+      { id: 'mkt-powerhouse',  icon: '🚀', name: 'Powerhouse',        desc: 'Complete 250 activities',      prize: '$500 bonus',          metric: 'completed', goal: 250 }
+    ];
+  }
+
+  function mktCustomDesc(metric, goal) {
+    return metric === 'streak' ? goal + '-week streak' : 'Complete ' + goal + ' activities';
+  }
+
+  function adminSetting(key, fallback) {
+    return (typeof getAdminSetting === 'function') ? getAdminSetting(key, fallback) : fallback;
+  }
+
+  function buildMarketingBadges(username) {
+    var stats = marketingStats(username);
+    var vals = { completed: stats.completed, streak: stats.streak };
+    var badges = marketingBadgeDefs().map(function (b) {
+      var cur = vals[b.metric] || 0;
+      return { id: b.id, icon: b.icon, name: b.name, desc: b.desc, prize: b.prize, cur: cur, goal: b.goal, earned: cur >= b.goal };
+    });
+
+    var ov = adminSetting('mktBadges', {}) || {};
+    badges.forEach(function (b) {
+      var o = ov[b.id]; if (!o) return;
+      if (o.icon) b.icon = o.icon;
+      if (o.name) b.name = o.name;
+      if (o.desc) b.desc = o.desc;
+      if (typeof o.prize === 'string') b.prize = o.prize;
+    });
+
+    var hidden = adminSetting('mktBadgesHidden', []) || [];
+    if (hidden.length) badges = badges.filter(function (b) { return hidden.indexOf(b.id) === -1; });
+
+    var customs = adminSetting('mktCustomBadges', []) || [];
+    customs.forEach(function (cb) {
+      if (!cb || !cb.id) return;
+      var cur = vals[cb.metric]; if (cur === undefined) cur = 0;
+      var goal = parseFloat(cb.value) || 0;
+      badges.push({
+        id: cb.id, icon: cb.icon || '🏆', name: cb.name || 'Badge',
+        desc: (cb.desc && String(cb.desc).trim()) ? cb.desc : mktCustomDesc(cb.metric, goal),
+        prize: cb.prize || '', cur: cur, goal: goal, earned: goal > 0 && cur >= goal
+      });
+    });
+
+    var order = adminSetting('mktBadgeOrder', []) || [];
+    if (order.length) {
+      var pos = {}; order.forEach(function (id, i) { pos[id] = i; });
+      badges = badges.map(function (b, i) { return { b: b, p: pos[b.id] !== undefined ? pos[b.id] : 100000 + i }; })
+        .sort(function (x, y) { return x.p - y.p; }).map(function (x) { return x.b; });
+    }
+    return badges;
+  }
+
+  function renderMarketingBadges() {
+    var badges = buildMarketingBadges(session.username);
+    var earned = badges.filter(function (b) { return b.earned; }).length;
+    var s = '<div class="mkt-badges-section">';
+    s += '<div class="mkt-badges-head"><h3>🎖️ Marketing Badges <span class="mkt-badge-count">' + earned + '/' + badges.length + '</span></h3></div>';
+    s += '<div class="mkt-badges">';
+    badges.forEach(function (b) {
+      s += '<div class="mkt-badge' + (b.earned ? ' earned' : ' locked') + '">';
+      s += '<div class="mkt-badge-icon">' + b.icon + '</div>';
+      s += '<div class="mkt-badge-name">' + escHtml(b.name) + '</div>';
+      s += '<div class="mkt-badge-desc">' + escHtml(b.desc) + '</div>';
+      if (!b.earned && b.goal) {
+        var pct = Math.max(0, Math.min(100, (b.cur / b.goal) * 100));
+        s += '<div class="mkt-badge-track"><div class="mkt-badge-track-fill" style="width:' + pct + '%"></div></div>';
+        s += '<div class="mkt-badge-prog">' + b.cur + ' / ' + b.goal + '</div>';
+      }
+      if (b.prize) {
+        s += b.earned
+          ? '<div class="mkt-badge-prize won">🏆 Won: ' + escHtml(b.prize) + '</div>'
+          : '<div class="mkt-badge-prize">🎁 ' + escHtml(b.prize) + '</div>';
+      }
+      s += '</div>';
+    });
+    s += '</div></div>';
+    return s;
+  }
+
   function render() {
     var wk = getWeekKey();
     var mk = getMonthKey();
@@ -753,6 +861,9 @@
 
       // Activity checklist
       html += renderActivityList(activities, checked, periodKey);
+
+      // Marketing badges
+      html += renderMarketingBadges();
 
     } else if (currentView === 'history') {
       // Period toggle for history
