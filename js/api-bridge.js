@@ -49,7 +49,13 @@ var ApiBridge = (function () {
   // ---- Map server → localStorage formats ----
   function mapUsers(users) {
     return users.map(function (u) {
-      return { id: u.id, username: u.username, password: '***', displayName: u.display_name, role: u.role, phone: u.phone, email: u.email, assignedTo: u.assigned_to, profile: u.profile };
+      // Profile photos are saved to the authoritative `photo_url` column (per-user,
+      // no clobber). Surface it as profile.photo so it reliably reaches every device
+      // — previously photo_url was dropped here and photos only rode the best-effort
+      // _profiles settings blob, so they didn't always sync.
+      var profile = u.profile ? JSON.parse(JSON.stringify(u.profile)) : {};
+      if (u.photo_url) profile.photo = u.photo_url;
+      return { id: u.id, username: u.username, password: '***', displayName: u.display_name, role: u.role, phone: u.phone, email: u.email, assignedTo: u.assigned_to, profile: profile };
     });
   }
   function mapTransactions(txns) {
