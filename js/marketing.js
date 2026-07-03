@@ -853,6 +853,9 @@
       // Category breakdown
       html += renderCategoryBreakdown(activities, checked);
 
+      // Marketing badges (above the activity list)
+      html += renderMarketingBadges();
+
       // Period toggle
       html += '<div style="display:flex;gap:8px;margin-bottom:20px">';
       html += '<button class="lb-filter-btn' + (currentTab === 'weekly' ? ' active' : '') + '" data-action="switch-tab" data-tab="weekly">Weekly</button>';
@@ -861,9 +864,6 @@
 
       // Activity checklist
       html += renderActivityList(activities, checked, periodKey);
-
-      // Marketing badges
-      html += renderMarketingBadges();
 
     } else if (currentView === 'history') {
       // Period toggle for history
