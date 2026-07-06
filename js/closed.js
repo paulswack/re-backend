@@ -741,7 +741,8 @@
       keys.slice(0, 8).forEach(function (src) {
         var count = counts[src];
         var pct = total > 0 ? Math.round(count / total * 100) : 0;
-        body += '<div class="wins-src-row">';
+        var srcAttr = src.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        body += '<div class="wins-src-row" data-action="open-source" data-source="' + srcAttr + '" title="See deals from ' + escapeHtml(src) + '">';
         body += '<span class="wins-src-pct">' + pct + '%</span>';
         body += '<span class="wins-src-info">';
         body += '<span class="wins-src-top"><span class="wins-src-name">' + escapeHtml(src) + '</span><span class="wins-src-count">' + count + '</span></span>';
@@ -751,6 +752,66 @@
       });
     }
     return triCard('📊 Deal Sources', body);
+  }
+
+  // Popup: all deals from a given lead source
+  function openSourceModal(src) {
+    var txns = Data.getTransactions().filter(function (t) { return (t.source || 'Unknown') === src; });
+    txns.sort(function (a, b) {
+      return (b.closeDate || b.createdAt || '').localeCompare(a.closeDate || a.createdAt || '');
+    });
+    var closed = txns.filter(function (t) { return t.status === 'closed'; });
+    var closedVol = closed.reduce(function (s, t) { return s + (parseFloat(t.price) || 0); }, 0);
+    var statusColor = { closed: '#1A7F4B', active: '#1E5FA8', pending: '#B86B00' };
+
+    var rows = '';
+    if (!txns.length) {
+      rows = '<div style="padding:26px;text-align:center;color:var(--gray-400);font-size:.88rem">No transactions from this source.</div>';
+    } else {
+      txns.forEach(function (t) {
+        var sc = statusColor[t.status] || 'var(--gray-500)';
+        var st = (t.status || '').charAt(0).toUpperCase() + (t.status || '').slice(1);
+        rows += '<div class="wins-modal-row" data-id="' + t.id + '">' +
+          '<div class="wins-modal-row-main">' +
+            '<div class="wins-modal-addr">' + escapeHtml(t.address || '—') + '</div>' +
+            '<div class="wins-modal-sub">' + escapeHtml(t.agent || '—') + ' · ' + Data.formatDate(t.closeDate || t.createdAt) + '</div>' +
+          '</div>' +
+          '<div class="wins-modal-right">' +
+            '<div class="wins-modal-price">' + Data.formatCurrency(t.price) + '</div>' +
+            '<div class="wins-modal-status" style="color:' + sc + '">' + st + '</div>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'wins-modal-overlay';
+    overlay.innerHTML =
+      '<div class="wins-modal">' +
+        '<div class="wins-modal-head">' +
+          '<div><div class="wins-modal-title">📊 ' + escapeHtml(src) + '</div>' +
+          '<div class="wins-modal-meta">' + txns.length + ' deal' + (txns.length === 1 ? '' : 's') +
+            ' · ' + closed.length + ' closed · ' + Data.formatCurrency(closedVol) + ' volume</div></div>' +
+          '<button class="wins-modal-close" data-action="close-source-modal" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<div class="wins-modal-body">' + rows + '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.closest('[data-action="close-source-modal"]')) {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        return;
+      }
+      var row = e.target.closest('.wins-modal-row[data-id]');
+      if (row) {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        selectedTxnId = row.getAttribute('data-id');
+        viewMode = 'detail';
+        window.scrollTo(0, 0);
+        render();
+      }
+    });
   }
 
   // ---- Achievement badges (current user) ----
@@ -1105,6 +1166,10 @@
       case 'rank-metric':
         rankMetric = target.getAttribute('data-metric') === 'volume' ? 'volume' : 'sales';
         render();
+        break;
+
+      case 'open-source':
+        openSourceModal(target.getAttribute('data-source') || 'Unknown');
         break;
 
       case 'open-detail':

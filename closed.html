@@ -85,9 +85,29 @@
     .wins-up-price { font-size: .82rem; font-weight: 700; color: var(--gray-900); flex-shrink: 0; }
 
     /* deal sources */
-    .wins-src-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 11px; }
-    .wins-src-row:last-child { margin-bottom: 2px; }
+    .wins-src-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; padding: 5px 6px; border-radius: 8px; cursor: pointer; transition: background .12s; }
+    .wins-src-row:hover { background: var(--gray-50); }
+    .wins-src-row:last-child { margin-bottom: 0; }
     .wins-src-pct { width: 30px; height: 30px; border-radius: 50%; background: var(--indigo-light); color: var(--indigo); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .6rem; font-weight: 800; }
+
+    /* deal-source popup */
+    .wins-modal-overlay { position: fixed; inset: 0; z-index: 10030; background: rgba(10,22,40,.45); display: flex; align-items: center; justify-content: center; padding: 20px; animation: winsFade .2s ease; }
+    .wins-modal { background: #fff; border-radius: 16px; max-width: 480px; width: 100%; max-height: 82vh; display: flex; flex-direction: column; box-shadow: 0 24px 64px rgba(0,0,0,.32); overflow: hidden; }
+    .wins-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--gray-100); }
+    .wins-modal-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-900); }
+    .wins-modal-meta { font-size: .78rem; color: var(--gray-500); margin-top: 3px; }
+    .wins-modal-close { background: none; border: none; font-size: 1.7rem; line-height: 1; color: var(--gray-400); cursor: pointer; padding: 0 4px; }
+    .wins-modal-close:hover { color: var(--gray-700); }
+    .wins-modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px 10px 12px; }
+    .wins-modal-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 10px; border-radius: 8px; cursor: pointer; border-bottom: 1px solid var(--gray-50); }
+    .wins-modal-row:last-child { border-bottom: none; }
+    .wins-modal-row:hover { background: var(--gray-50); }
+    .wins-modal-row-main { min-width: 0; }
+    .wins-modal-addr { font-size: .88rem; font-weight: 700; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wins-modal-sub { font-size: .74rem; color: var(--gray-400); margin-top: 1px; }
+    .wins-modal-right { text-align: right; flex-shrink: 0; }
+    .wins-modal-price { font-size: .9rem; font-weight: 800; color: var(--gray-900); }
+    .wins-modal-status { font-size: .7rem; font-weight: 700; margin-top: 1px; }
     .wins-src-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     .wins-src-top { display: flex; justify-content: space-between; gap: 8px; }
     .wins-src-name { font-size: .8rem; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
