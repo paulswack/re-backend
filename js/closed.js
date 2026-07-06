@@ -601,11 +601,11 @@
 
   // Big headline metric + secondary line for a podium agent, based on the active toggle
   function podiumPrimary(a) {
-    return rankMetric === 'volume' ? compactMoney(a.volume) : salesLabel(a.deals);
+    return rankMetric === 'volume' ? Data.formatCurrency(a.volume) : salesLabel(a.deals);
   }
   function podiumSecondary(a, behind) {
-    var base = rankMetric === 'volume' ? salesLabel(a.deals) : compactMoney(a.volume) + ' volume';
-    var behindStr = behind > 0 ? (rankMetric === 'volume' ? compactMoney(behind) : behind) + ' behind' : '';
+    var base = rankMetric === 'volume' ? salesLabel(a.deals) : Data.formatCurrency(a.volume) + ' volume';
+    var behindStr = behind > 0 ? (rankMetric === 'volume' ? Data.formatCurrency(behind) : behind) + ' behind' : '';
     return base + (behindStr ? ' · ' + behindStr : '');
   }
 
@@ -619,7 +619,7 @@
       '<div class="wins-champ-tag">🏆 Team Leader</div>' +
       '<div class="wins-champ-name">' + escapeHtml(a.name) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
       '<div class="wins-champ-vol">' + podiumPrimary(a) + '</div>' +
-      '<div class="wins-champ-sub">' + podiumSecondary(a, 0) + ' · ' + compactMoney(a.gci) + ' GCI</div>' +
+      '<div class="wins-champ-sub">' + podiumSecondary(a, 0) + ' · ' + Data.formatCurrency(a.gci) + ' GCI</div>' +
       (prize ? '<div class="wins-podium-prize champ">🎁 ' + escapeHtml(prize) + '</div>' : '') +
     '</div>';
   }
