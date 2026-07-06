@@ -1043,27 +1043,99 @@
     document.body.appendChild(input);
     input.addEventListener('change', function () {
       var file = input.files && input.files[0];
-      if (!file) { if (input.parentNode) document.body.removeChild(input); return; }
+      if (input.parentNode) document.body.removeChild(input);
+      if (!file) return;
       var reader = new FileReader();
-      reader.onload = function (ev) {
-        var img = new Image();
-        img.onload = function () {
-          // center-crop to a square and downscale to 400px
-          var size = Math.min(img.width, img.height);
-          var sx = (img.width - size) / 2, sy = (img.height - size) / 2;
-          var out = 400;
-          var canvas = document.createElement('canvas');
-          canvas.width = out; canvas.height = out;
-          canvas.getContext('2d').drawImage(img, sx, sy, size, size, 0, 0, out, out);
-          saveAgentPhoto(uname, user, canvas.toDataURL('image/jpeg', 0.85));
-          if (input.parentNode) document.body.removeChild(input);
-        };
-        img.onerror = function () { showToast('Could not read that image', 'error'); if (input.parentNode) document.body.removeChild(input); };
-        img.src = ev.target.result;
-      };
+      reader.onload = function (ev) { showAgentCropModal(ev.target.result, uname, user); };
       reader.readAsDataURL(file);
     });
     input.click();
+  }
+
+  // Interactive crop with zoom (slider / scroll) and drag-to-position
+  function showAgentCropModal(imgSrc, uname, user) {
+    var old = document.getElementById('agtCropModal');
+    if (old) old.remove();
+    var zoom = 1, offsetX = 0, offsetY = 0;
+    var dragging = false, dragStartX = 0, dragStartY = 0, startOffX = 0, startOffY = 0;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'agtCropModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10060;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)';
+    var modal = document.createElement('div');
+    modal.style.cssText = 'background:#fff;border-radius:16px;padding:26px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25)';
+    modal.innerHTML =
+      '<h3 style="font-size:1.05rem;font-weight:800;color:var(--gray-900);margin-bottom:4px">Adjust ' + escapeHtml(selectedAgent) + '\'s Photo</h3>' +
+      '<p style="font-size:.8rem;color:var(--gray-400);margin-bottom:16px">Drag to position · scroll or use the slider to zoom</p>' +
+      '<div id="agtCropArea" style="width:220px;height:220px;border-radius:50%;overflow:hidden;margin:0 auto;border:3px solid var(--gray-200);cursor:grab;position:relative;background:#000;touch-action:none">' +
+        '<img id="agtCropImg" src="' + imgSrc + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(1);max-width:none;max-height:none;pointer-events:none;user-select:none" draggable="false">' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin:16px auto;max-width:250px">' +
+        '<span style="font-size:1rem;color:var(--gray-400)">−</span>' +
+        '<input type="range" id="agtCropZoom" min="50" max="300" value="100" style="flex:1;accent-color:var(--indigo,#002242)">' +
+        '<span style="font-size:1rem;color:var(--gray-400)">+</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+        '<button id="agtCropCancel" class="btn btn-outline btn-sm">Cancel</button>' +
+        '<button id="agtCropSave" class="btn btn-primary btn-sm">Save Photo</button>' +
+      '</div>';
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var cropArea = document.getElementById('agtCropArea');
+    var cropImg = document.getElementById('agtCropImg');
+    var cropZoom = document.getElementById('agtCropZoom');
+    var BOX = 220;
+    var img = new Image();
+    img.onload = function () {
+      var minDim = Math.min(img.width, img.height);
+      var initialScale = BOX / minDim;
+      zoom = Math.max(initialScale, 0.5);
+      cropZoom.min = Math.round(initialScale * 100);
+      cropZoom.value = Math.round(zoom * 100);
+      updateTransform();
+    };
+    img.src = imgSrc;
+
+    function updateTransform() {
+      cropImg.style.transform = 'translate(calc(-50% + ' + offsetX + 'px), calc(-50% + ' + offsetY + 'px)) scale(' + zoom + ')';
+    }
+    function onMove(e) { if (!dragging) return; offsetX = startOffX + (e.clientX - dragStartX); offsetY = startOffY + (e.clientY - dragStartY); updateTransform(); }
+    function onUp() { dragging = false; if (cropArea) cropArea.style.cursor = 'grab'; }
+    function onTouchMove(e) { if (!dragging || e.touches.length !== 1) return; offsetX = startOffX + (e.touches[0].clientX - dragStartX); offsetY = startOffY + (e.touches[0].clientY - dragStartY); updateTransform(); e.preventDefault(); }
+    function cleanup() {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onTouchMove);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }
+
+    cropZoom.addEventListener('input', function () { zoom = parseInt(this.value) / 100; updateTransform(); });
+    cropArea.addEventListener('mousedown', function (e) { dragging = true; dragStartX = e.clientX; dragStartY = e.clientY; startOffX = offsetX; startOffY = offsetY; cropArea.style.cursor = 'grabbing'; e.preventDefault(); });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    cropArea.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { dragging = true; dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY; startOffX = offsetX; startOffY = offsetY; e.preventDefault(); } }, { passive: false });
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', function () { dragging = false; });
+    cropArea.addEventListener('wheel', function (e) { e.preventDefault(); var nv = parseInt(cropZoom.value) + (e.deltaY > 0 ? -6 : 6); nv = Math.max(parseInt(cropZoom.min), Math.min(300, nv)); cropZoom.value = nv; zoom = nv / 100; updateTransform(); }, { passive: false });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) cleanup(); });
+    document.getElementById('agtCropCancel').addEventListener('click', cleanup);
+    document.getElementById('agtCropSave').addEventListener('click', function () {
+      var out = 400, ratio = out / BOX;
+      var canvas = document.createElement('canvas');
+      canvas.width = out; canvas.height = out;
+      var ctx = canvas.getContext('2d');
+      var s = zoom;
+      var dw = img.width * s * ratio;
+      var dh = img.height * s * ratio;
+      var dx = (out / 2) + offsetX * ratio - dw / 2;
+      var dy = (out / 2) + offsetY * ratio - dh / 2;
+      ctx.beginPath(); ctx.arc(out / 2, out / 2, out / 2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      ctx.drawImage(img, dx, dy, dw, dh);
+      var croppedData = canvas.toDataURL('image/jpeg', 0.85);
+      cleanup();
+      saveAgentPhoto(uname, user, croppedData);
+    });
   }
 
   function saveAgentPhoto(uname, user, dataUrl) {
