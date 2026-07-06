@@ -353,10 +353,36 @@ var ApiBridge = (function () {
 
   // ---- Debounce helper ----
   var _debounceTimers = {};
+  var _pendingSyncFns = {};
   function debounceSync(key, fn, delay) {
     if (_debounceTimers[key]) clearTimeout(_debounceTimers[key]);
-    _debounceTimers[key] = setTimeout(fn, delay || 500);
+    _pendingSyncFns[key] = fn;
+    _debounceTimers[key] = setTimeout(function () {
+      delete _pendingSyncFns[key];
+      delete _debounceTimers[key];
+      fn();
+    }, delay || 500);
   }
+
+  // Flush any pending debounced saves immediately — called when the page is
+  // hidden/navigating away so a save is never lost. Uses fetch keepalive so the
+  // request survives the page unload.
+  function flushPendingSyncs() {
+    var keys = Object.keys(_pendingSyncFns);
+    if (!keys.length) return;
+    window.__API_KEEPALIVE__ = true;
+    keys.forEach(function (k) {
+      if (_debounceTimers[k]) { clearTimeout(_debounceTimers[k]); delete _debounceTimers[k]; }
+      var fn = _pendingSyncFns[k];
+      delete _pendingSyncFns[k];
+      try { fn(); } catch (e) {}
+    });
+    window.__API_KEEPALIVE__ = false;
+  }
+  window.addEventListener('pagehide', flushPendingSyncs);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') flushPendingSyncs();
+  });
 
   // ---- Intercept all localStorage writes and sync to server ----
   function interceptWrites() {

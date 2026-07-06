@@ -44,6 +44,9 @@ var API = (function () {
   function request(method, path, body) {
     var opts = { method: method, headers: headers() };
     if (body !== undefined) opts.body = JSON.stringify(body);
+    // During a page-unload flush, keepalive lets the request finish after the
+    // page goes away (so navigating doesn't drop a pending save).
+    if (typeof window !== 'undefined' && window.__API_KEEPALIVE__) opts.keepalive = true;
     return fetch(BASE + path, opts).then(function (res) {
       // Auto-refresh token if server sent a new one
       var refreshedToken = res.headers.get('X-Refreshed-Token');
