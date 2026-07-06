@@ -453,14 +453,10 @@ var ApiBridge = (function () {
             if (!uname) return;
             var allEntries = JSON.parse(capturedTaxVal);
             var myEntries = allEntries.filter(function (e) { return e.username === uname || (!e.username && uname === 'admin'); });
-            var dict = {};
-            try {
-              var s = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
-              dict = s._tax_entries || {};
-              if (Array.isArray(dict)) dict = {};
-            } catch (e) {}
-            dict[uname] = myEntries;
-            API.updateSettings({ _tax_entries: dict }).catch(notifySyncError);
+            // Push ONLY this agent's slot — the server deep-merges _tax_entries by
+            // username, so one agent's save can never wipe another agent's entries.
+            var taxPayload = {}; taxPayload[uname] = myEntries;
+            API.updateSettings({ _tax_entries: taxPayload }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -475,14 +471,9 @@ var ApiBridge = (function () {
             if (!uname) return;
             var allTrips = JSON.parse(capturedMileVal);
             var myTrips = allTrips.filter(function (t) { return t.username === uname || (!t.username && uname === 'admin'); });
-            var dict = {};
-            try {
-              var s = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
-              dict = s._mileage || {};
-              if (Array.isArray(dict)) dict = {};
-            } catch (e) {}
-            dict[uname] = myTrips;
-            API.updateSettings({ _mileage: dict }).catch(notifySyncError);
+            // Push ONLY this agent's slot (server deep-merges _mileage by username)
+            var milePayload = {}; milePayload[uname] = myTrips;
+            API.updateSettings({ _mileage: milePayload }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
@@ -761,13 +752,9 @@ var ApiBridge = (function () {
             var sess = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}');
             var uname = sess.username || (API.getUser() && API.getUser().username);
             if (!uname) return;
-            var existing = {};
-            try {
-              var adminSettings = JSON.parse(localStorage.getItem(PREFIX + 'admin_settings') || '{}');
-              existing = adminSettings._tax_settings || {};
-            } catch (e) {}
-            existing[uname] = JSON.parse(value);
-            API.updateSettings({ _tax_settings: existing }).catch(notifySyncError);
+            // Push ONLY this agent's slot (server deep-merges _tax_settings by username)
+            var tsPayload = {}; tsPayload[uname] = JSON.parse(value);
+            API.updateSettings({ _tax_settings: tsPayload }).catch(notifySyncError);
           } catch (e) {}
         }, 500);
       }
