@@ -1031,6 +1031,59 @@
     return u ? u.username : null;
   }
 
+  // Team lead (or the agent) can add/replace a photo from the snapshot.
+  function triggerAgentPhotoUpload(name) {
+    var uname = usernameForAgent(name);
+    var user = getUsersList().find(function (u) { return u.username === uname; });
+    if (!uname) { showToast('No account found for this agent', 'error'); return; }
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      if (!file) { if (input.parentNode) document.body.removeChild(input); return; }
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        var img = new Image();
+        img.onload = function () {
+          // center-crop to a square and downscale to 400px
+          var size = Math.min(img.width, img.height);
+          var sx = (img.width - size) / 2, sy = (img.height - size) / 2;
+          var out = 400;
+          var canvas = document.createElement('canvas');
+          canvas.width = out; canvas.height = out;
+          canvas.getContext('2d').drawImage(img, sx, sy, size, size, 0, 0, out, out);
+          saveAgentPhoto(uname, user, canvas.toDataURL('image/jpeg', 0.85));
+          if (input.parentNode) document.body.removeChild(input);
+        };
+        img.onerror = function () { showToast('Could not read that image', 'error'); if (input.parentNode) document.body.removeChild(input); };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    input.click();
+  }
+
+  function saveAgentPhoto(uname, user, dataUrl) {
+    var profiles = {};
+    try { profiles = JSON.parse(localStorage.getItem('reb_profiles') || '{}'); } catch (e) {}
+    if (!profiles[uname]) profiles[uname] = {};
+    profiles[uname].photo = dataUrl;
+    localStorage.setItem('reb_profiles', JSON.stringify(profiles));
+    // Authoritative save to the user's photo_url column (syncs to every device)
+    if (user && user.id && typeof API !== 'undefined' && API.isLoggedIn && API.isLoggedIn()) {
+      API.updateUser(user.id, { photo_url: dataUrl })
+        .then(function () { showToast('Photo updated!'); })
+        .catch(function () { showToast('Saved locally — will retry sync', 'error'); });
+    } else {
+      showToast('Photo updated!');
+    }
+    refreshPhotos();
+    render();
+  }
+
   function snapHeroStat(v, l) {
     return '<div class="snap-hero-stat"><div class="snap-hero-stat-val">' + v + '</div><div class="snap-hero-stat-lbl">' + l + '</div></div>';
   }
@@ -1112,7 +1165,8 @@
     s += '<div class="snap-hero" style="background:' + heroGradient(t.current.color) + '">';
     s += '<div class="snap-hero-glow"></div>';
     s += '<div class="snap-hero-top">';
-    s += '<div class="snap-hero-ring">' + avatarMarkup(name, 'snap-hero-avatar') + '</div>';
+    s += '<div class="snap-hero-ring">' + avatarMarkup(name, 'snap-hero-avatar') +
+      (canEdit ? '<button class="snap-photo-btn" data-action="change-agent-photo" title="Add / change photo">📷</button>' : '') + '</div>';
     s += '<div class="snap-hero-id"><div class="snap-hero-name">' + escapeHtml(name) + (name === MY_NAME ? ' <span class="wins-you">YOU</span>' : '') + '</div>';
     s += '<div class="snap-hero-chips"><span class="snap-chip">' + t.current.icon + ' ' + t.current.name + '</span>';
     if (profile.rank) s += '<span class="snap-chip ghost">🏅 #' + profile.rank + ' of ' + profile.teamSize + '</span>';
@@ -1325,6 +1379,10 @@
       case 'open-agent':
         selectedAgent = target.getAttribute('data-agent') || null;
         if (selectedAgent) { viewMode = 'agent'; agentGoalEdit = false; window.scrollTo(0, 0); render(); }
+        break;
+
+      case 'change-agent-photo':
+        if (selectedAgent) triggerAgentPhotoUpload(selectedAgent);
         break;
 
       case 'edit-agent-goal':

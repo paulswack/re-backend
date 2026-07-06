@@ -51,8 +51,10 @@
     .snap-hero { position: relative; overflow: hidden; border-radius: 18px; padding: 24px 26px; margin-bottom: 16px; color: #fff; }
     .snap-hero-glow { position: absolute; top: -80px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.16), transparent 70%); pointer-events: none; }
     .snap-hero-top { display: flex; align-items: center; gap: 16px; position: relative; }
-    .snap-hero-ring { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.2); box-shadow: 0 0 0 4px rgba(255,255,255,.3); }
+    .snap-hero-ring { position: relative; width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.2); box-shadow: 0 0 0 4px rgba(255,255,255,.3); }
     .snap-hero-avatar { width: 76px !important; height: 76px !important; font-size: 1.5rem !important; }
+    .snap-photo-btn { position: absolute; bottom: -2px; right: -2px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; background: var(--gray-900); color: #fff; font-size: .8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,.3); padding: 0; }
+    .snap-photo-btn:hover { background: var(--indigo); }
     .snap-hero-name { font-size: 1.5rem; font-weight: 800; letter-spacing: -.4px; }
     .snap-hero-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
     .snap-chip { font-size: .78rem; font-weight: 800; background: rgba(255,255,255,.94); color: var(--gray-900); padding: 3px 11px; border-radius: 20px; }
@@ -499,7 +501,7 @@
   <script src="js/api-bridge.js?v=1782003300"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782003700"></script>
+  <script src="js/closed.js?v=1782003800"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>
