@@ -473,7 +473,7 @@
 
     // inline stat trio
     s += '<div class="wins-hero-stats">';
-    s += heroStat(compactMoney(p.ytdVolume), 'volume');
+    s += heroStat(Data.formatCurrency(p.ytdVolume), 'volume');
     s += heroStat(Data.formatCurrency(p.ytdGci), 'GCI');
     s += heroStat(String(closedCount), closedCount === 1 ? 'deal' : 'deals');
     s += '</div>';
@@ -504,9 +504,9 @@
     var activeL = Data.getListings().filter(function (l) { return l.status === 'active'; });
     var sumP = function (arr) { return arr.reduce(function (acc, x) { return acc + (parseFloat(x.price) || 0); }, 0); };
     s += '<div class="wins-hero-tiles">';
-    s += heroTile('Total Closed', closedT.length, compactMoney(sumP(closedT)));
-    s += heroTile('In Escrow', escrowT.length, compactMoney(sumP(escrowT)));
-    s += heroTile('Active Listings', activeL.length, compactMoney(sumP(activeL)));
+    s += heroTile('Total Closed', closedT.length, Data.formatCurrency(sumP(closedT)));
+    s += heroTile('In Escrow', escrowT.length, Data.formatCurrency(sumP(escrowT)));
+    s += heroTile('Active Listings', activeL.length, Data.formatCurrency(sumP(activeL)));
     s += '</div>';
 
     s += '</div>';
@@ -1120,7 +1120,7 @@
     s += '</div></div></div>';
     s += '<div class="snap-hero-stats">';
     s += snapHeroStat(String(salesThisYear), salesThisYear === 1 ? 'Sale' : 'Sales');
-    s += snapHeroStat(compactMoney(profile.ytdVolume), 'Volume');
+    s += snapHeroStat(Data.formatCurrency(profile.ytdVolume), 'Volume');
     s += snapHeroStat(Data.formatCurrency(profile.ytdGci), 'GCI');
     s += '</div>';
     if (t.next) {
@@ -1132,9 +1132,9 @@
 
     // Pipeline tiles
     s += '<div class="snap-tiles">';
-    s += snapTile('🎉', 'Closed', closed.length, compactMoney(closedVol), '#1A7F4B');
-    s += snapTile('🔑', 'In Escrow', escrow.length, compactMoney(escrowVol), '#1E5FA8');
-    s += snapTile('🏡', 'Active Listings', listings.length, compactMoney(listingVol), '#B86B00');
+    s += snapTile('🎉', 'Closed', closed.length, Data.formatCurrency(closedVol), '#1A7F4B');
+    s += snapTile('🔑', 'In Escrow', escrow.length, Data.formatCurrency(escrowVol), '#1E5FA8');
+    s += snapTile('🏡', 'Active Listings', listings.length, Data.formatCurrency(listingVol), '#B86B00');
     s += '</div>';
 
     // Goals
