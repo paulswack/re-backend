@@ -41,10 +41,64 @@
       vertical-align: middle;
     }
     /* base .agent-avatar is display:none with only a bg color — give ours full layout */
-    .wins-champ-avatar, .wins-runner-avatar, .wins-lb-avatar, .wins-feed-avatar, .wins-mlb-avatar {
+    .wins-champ-avatar, .wins-runner-avatar, .wins-lb-avatar, .wins-feed-avatar, .wins-mlb-avatar, .snap-hero-avatar {
       display: flex !important; align-items: center; justify-content: center;
       border-radius: 50%; color: #fff; font-weight: 700;
     }
+    .wins-clickable { cursor: pointer; }
+
+    /* ---- Agent snapshot ---- */
+    .snap-hero { position: relative; overflow: hidden; border-radius: 18px; padding: 24px 26px; margin-bottom: 16px; color: #fff; }
+    .snap-hero-glow { position: absolute; top: -80px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.16), transparent 70%); pointer-events: none; }
+    .snap-hero-top { display: flex; align-items: center; gap: 16px; position: relative; }
+    .snap-hero-ring { width: 84px; height: 84px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.2); box-shadow: 0 0 0 4px rgba(255,255,255,.3); }
+    .snap-hero-avatar { width: 76px !important; height: 76px !important; font-size: 1.5rem !important; }
+    .snap-hero-name { font-size: 1.5rem; font-weight: 800; letter-spacing: -.4px; }
+    .snap-hero-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .snap-chip { font-size: .78rem; font-weight: 800; background: rgba(255,255,255,.94); color: var(--gray-900); padding: 3px 11px; border-radius: 20px; }
+    .snap-chip.ghost { background: rgba(255,255,255,.16); color: #fff; }
+    .snap-hero-stats { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 20px; position: relative; }
+    .snap-hero-stat-val { font-size: 1.9rem; font-weight: 800; letter-spacing: -.5px; }
+    .snap-hero-stat-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: rgba(255,255,255,.72); font-weight: 700; margin-top: 2px; }
+    .snap-tier-bar { height: 8px; border-radius: 20px; background: rgba(255,255,255,.22); overflow: hidden; margin-top: 18px; position: relative; }
+    .snap-tier-fill { height: 100%; border-radius: 20px; background: #fff; box-shadow: 0 0 12px rgba(255,255,255,.6); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+    .snap-tier-meta { font-size: .74rem; color: rgba(255,255,255,.82); font-weight: 600; margin-top: 6px; position: relative; }
+
+    .snap-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 6px; }
+    @media (max-width: 560px) { .snap-tiles { grid-template-columns: 1fr; } }
+    .snap-tile { background: var(--white); border-radius: 14px; box-shadow: var(--shadow-sm); padding: 16px 18px; text-align: center; }
+    .snap-tile-icon { font-size: 1.6rem; line-height: 1; }
+    .snap-tile-val { font-size: 1.8rem; font-weight: 800; color: var(--gray-900); margin-top: 4px; }
+    .snap-tile-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-400); font-weight: 700; }
+    .snap-tile-sub { font-size: .82rem; font-weight: 700; color: var(--gray-500); margin-top: 2px; }
+
+    .snap-section-head { margin: 22px 0 12px; }
+    .snap-section-head h3 { font-size: 1.05rem; font-weight: 800; color: var(--gray-900); display: flex; align-items: center; gap: 8px; margin: 0; }
+    .snap-list { padding: 6px 8px; }
+    .snap-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border-bottom: 1px solid var(--gray-50); border-radius: 8px; text-decoration: none; color: inherit; cursor: pointer; }
+    .snap-row:last-child { border-bottom: none; }
+    .snap-row:hover { background: var(--gray-50); }
+    .snap-row-main { min-width: 0; }
+    .snap-row-addr { font-size: .9rem; font-weight: 700; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .snap-row-sub { font-size: .74rem; color: var(--gray-400); margin-top: 1px; }
+    .snap-row-right { text-align: right; flex-shrink: 0; }
+    .snap-row-price { font-size: .92rem; font-weight: 800; color: var(--gray-900); }
+    .snap-row-status { font-size: .7rem; font-weight: 700; margin-top: 1px; }
+    .snap-empty { text-align: center; padding: 22px; color: var(--gray-400); font-size: .85rem; }
+
+    .snap-goals { padding: 18px 20px; }
+    .snap-goal { margin-bottom: 14px; }
+    .snap-goal:last-child { margin-bottom: 0; }
+    .snap-goal-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .snap-goal-label { font-size: .82rem; font-weight: 800; color: var(--gray-700); }
+    .snap-goal-text { font-size: .82rem; font-weight: 700; color: var(--gray-500); }
+    .snap-goal-track { height: 14px; border-radius: 20px; background: var(--gray-100); overflow: hidden; }
+    .snap-goal-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #1A7F4B, #34D399); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+    .snap-goal-fill.hit { background: linear-gradient(90deg, #B86B00, #F59E0B, #D4AF37); }
+    .snap-goal-edit label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); margin: 10px 0 4px; }
+    .snap-goal-edit input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 1rem; font-weight: 700; color: var(--gray-900); }
+    .snap-goal-edit input:focus { outline: none; border-color: var(--emerald); }
+    .snap-goal-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 
     /* ---- Three-column row: Leaderboard · Upcoming · Sources ---- */
     /* fluid: 3 equal columns on desktop, auto-drops to 2 then 1 on tablets/phones */
@@ -445,7 +499,7 @@
   <script src="js/api-bridge.js?v=1782003300"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782003400"></script>
+  <script src="js/closed.js?v=1782003500"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

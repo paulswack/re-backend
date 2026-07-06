@@ -19,8 +19,10 @@
   });
 
   // ---- State ----
-  var viewMode = 'list';        // 'list' or 'detail'
+  var viewMode = 'list';        // 'list' | 'detail' | 'agent'
   var selectedTxnId = null;
+  var selectedAgent = null;     // agent name for the snapshot view
+  var agentGoalEdit = false;
   var currentRange = 'year';    // all | year | quarter | month
   var rankMetric = 'sales';     // 'sales' | 'volume' — how the leaders + leaderboard are ranked
   var winsLimit = 12;           // how many wins-feed cards to show
@@ -607,9 +609,11 @@
     return base + (behindStr ? ' · ' + behindStr : '');
   }
 
+  function agentAttr(name) { return (name || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+
   function champCol(a, prize) {
     var me = a.name === MY_NAME;
-    return '<div class="wins-champ' + (me ? ' me' : '') + '">' +
+    return '<div class="wins-champ wins-clickable' + (me ? ' me' : '') + '" data-action="open-agent" data-agent="' + agentAttr(a.name) + '">' +
       '<div class="wins-champ-crown">👑</div>' +
       '<div class="wins-champ-ring">' + avatarMarkup(a.name, 'wins-champ-avatar') + '</div>' +
       '<div class="wins-champ-tag">🏆 Team Leader</div>' +
@@ -625,7 +629,7 @@
     var badge = place === 2 ? '<div class="wins-runner-medal">🥈</div>'
       : place === 3 ? '<div class="wins-runner-medal">🥉</div>'
       : '<div class="wins-runner-rankpill">' + place + 'th</div>';
-    return '<div class="wins-runner' + (me ? ' me' : '') + '">' +
+    return '<div class="wins-runner wins-clickable' + (me ? ' me' : '') + '" data-action="open-agent" data-agent="' + agentAttr(a.name) + '">' +
       badge +
       avatarMarkup(a.name, 'wins-runner-avatar') +
       '<div class="wins-runner-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
@@ -674,7 +678,7 @@
         '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '">Volume</span></div>';
       ranked.forEach(function (a) {
         var me = a.name === MY_NAME;
-        body += '<div class="wins-mlb-row' + (me ? ' me' : '') + '">';
+        body += '<div class="wins-mlb-row wins-clickable' + (me ? ' me' : '') + '" data-action="open-agent" data-agent="' + agentAttr(a.name) + '" title="View ' + escapeHtml(a.name) + '\'s snapshot">';
         body += '<span class="wins-mlb-rank">' + (a.deals > 0 ? a.rank : '—') + '</span>';
         body += avatarMarkup(a.name, 'wins-mlb-avatar');
         body += '<span class="wins-mlb-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</span>';
@@ -1012,6 +1016,151 @@
   }
 
   // ============================================================
+  //  AGENT SNAPSHOT
+  // ============================================================
+  function getAgentGoalsMap() {
+    try { return JSON.parse(localStorage.getItem('reb_agent_goals') || '{}'); } catch (e) { return {}; }
+  }
+  function setAgentGoal(username, closings, volume) {
+    var g = getAgentGoalsMap();
+    g[username] = { closings: closings, volume: volume };
+    localStorage.setItem('reb_agent_goals', JSON.stringify(g));
+  }
+  function usernameForAgent(name) {
+    var u = getUsersList().find(function (x) { return x.displayName === name; });
+    return u ? u.username : null;
+  }
+
+  function snapHeroStat(v, l) {
+    return '<div class="snap-hero-stat"><div class="snap-hero-stat-val">' + v + '</div><div class="snap-hero-stat-lbl">' + l + '</div></div>';
+  }
+  function snapTile(icon, label, count, sub, color) {
+    return '<div class="snap-tile"><div class="snap-tile-icon" style="color:' + color + '">' + icon + '</div>' +
+      '<div class="snap-tile-val">' + count + '</div><div class="snap-tile-lbl">' + label + '</div>' +
+      '<div class="snap-tile-sub">' + sub + '</div></div>';
+  }
+  function snapSection(title, count, rowsHtml) {
+    return '<div class="snap-section-head"><h3>' + title + ' <span class="wins-count-pill">' + count + '</span></h3></div>' +
+      '<div class="wins-card snap-list">' + rowsHtml + '</div>';
+  }
+  function snapEmpty(msg) { return '<div class="snap-empty">' + escapeHtml(msg) + '</div>'; }
+  function snapRow(id, addr, sub, price, status, color, clickable) {
+    return '<div class="snap-row"' + (clickable ? ' data-action="open-detail" data-id="' + id + '"' : '') + '>' +
+      '<div class="snap-row-main"><div class="snap-row-addr">' + escapeHtml(addr || '—') + '</div><div class="snap-row-sub">' + escapeHtml(sub || '') + '</div></div>' +
+      '<div class="snap-row-right"><div class="snap-row-price">' + price + '</div><div class="snap-row-status" style="color:' + color + '">' + status + '</div></div></div>';
+  }
+  function snapRowLink(href, addr, sub, price, status, color) {
+    return '<a class="snap-row" href="' + href + '">' +
+      '<div class="snap-row-main"><div class="snap-row-addr">' + escapeHtml(addr || '—') + '</div><div class="snap-row-sub">' + escapeHtml(sub || '') + '</div></div>' +
+      '<div class="snap-row-right"><div class="snap-row-price">' + price + '</div><div class="snap-row-status" style="color:' + color + '">' + status + '</div></div></a>';
+  }
+  function goalBar(label, text, pct, hit) {
+    return '<div class="snap-goal">' +
+      '<div class="snap-goal-top"><span class="snap-goal-label">' + label + '</span><span class="snap-goal-text">' + text + (hit ? ' 🎉' : '') + '</span></div>' +
+      '<div class="snap-goal-track"><div class="snap-goal-fill' + (hit ? ' hit' : '') + '" style="width:' + pct.toFixed(0) + '%"></div></div></div>';
+  }
+  function renderAgentGoalCard(name, uname, goal, salesThisYear, ytdVolume, canEdit) {
+    var firstName = name.split(/\s+/)[0];
+    var s = '<div class="snap-section-head"><h3>🎯 ' + escapeHtml(firstName) + '\'s Goals</h3></div>';
+    s += '<div class="wins-card snap-goals">';
+    if (agentGoalEdit && canEdit) {
+      s += '<div class="snap-goal-edit">';
+      s += '<label>Closings goal (this year)</label>';
+      s += '<input id="agtGoalClosings" type="text" inputmode="numeric" value="' + goal.closings + '" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')">';
+      s += '<label>Volume goal ($)</label>';
+      s += '<input id="agtGoalVolume" type="text" inputmode="numeric" value="' + goal.volume + '" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')">';
+      s += '<div class="snap-goal-actions"><button class="btn btn-primary btn-sm" data-action="save-agent-goal" data-username="' + escapeHtml(uname || '') + '">Save goals</button>';
+      s += '<button class="wins-link-btn" data-action="cancel-agent-goal">Cancel</button></div>';
+      s += '</div>';
+    } else {
+      var cPct = goal.closings > 0 ? Math.min(100, salesThisYear / goal.closings * 100) : 0;
+      s += goalBar('Closings', salesThisYear + ' of ' + goal.closings, cPct, salesThisYear >= goal.closings && goal.closings > 0);
+      var vPct = goal.volume > 0 ? Math.min(100, ytdVolume / goal.volume * 100) : 0;
+      s += goalBar('Volume', Data.formatCurrency(ytdVolume) + ' of ' + Data.formatCurrency(goal.volume), vPct, ytdVolume >= goal.volume && goal.volume > 0);
+      if (canEdit) s += '<button class="wins-link-btn" data-action="edit-agent-goal" style="margin-top:6px">✏️ Adjust goals</button>';
+    }
+    s += '</div>';
+    return s;
+  }
+
+  function renderAgentSnapshot() {
+    window.scrollTo(0, 0);
+    var name = selectedAgent;
+    var agents = buildAgentStats();
+    var profile = buildProfile(name, agents);
+    var t = profile.tier;
+
+    var allTxns = Data.getTransactions();
+    var closed = allTxns.filter(function (x) { return x.agent === name && x.status === 'closed'; });
+    var escrow = allTxns.filter(function (x) { return x.agent === name && (x.status === 'active' || x.status === 'pending'); });
+    var listings = Data.getListings().filter(function (l) { return l.agent === name && l.status === 'active'; });
+    closed.sort(function (a, b) { return (b.closeDate || '').localeCompare(a.closeDate || ''); });
+    escrow.sort(function (a, b) { return (a.closeDate || '').localeCompare(b.closeDate || ''); });
+    var sumP = function (arr) { return arr.reduce(function (s2, x) { return s2 + (parseFloat(x.price) || 0); }, 0); };
+    var closedVol = sumP(closed), escrowVol = sumP(escrow), listingVol = sumP(listings);
+    var salesThisYear = thisYearClosed(name).length;
+
+    var uname = usernameForAgent(name);
+    var goalsMap = getAgentGoalsMap();
+    var goal = (uname && goalsMap[uname]) ? goalsMap[uname] : { closings: 8, volume: 2000000 };
+    var canEdit = (name === MY_NAME) || (Auth && typeof Auth.isPrivileged === 'function' && Auth.isPrivileged());
+
+    var s = '';
+    s += '<button class="detail-back-btn" data-action="back-to-list"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back to Dashboard</button>';
+
+    // Hero (tinted to the agent's producer tier)
+    s += '<div class="snap-hero" style="background:' + heroGradient(t.current.color) + '">';
+    s += '<div class="snap-hero-glow"></div>';
+    s += '<div class="snap-hero-top">';
+    s += '<div class="snap-hero-ring">' + avatarMarkup(name, 'snap-hero-avatar') + '</div>';
+    s += '<div class="snap-hero-id"><div class="snap-hero-name">' + escapeHtml(name) + (name === MY_NAME ? ' <span class="wins-you">YOU</span>' : '') + '</div>';
+    s += '<div class="snap-hero-chips"><span class="snap-chip">' + t.current.icon + ' ' + t.current.name + '</span>';
+    if (profile.rank) s += '<span class="snap-chip ghost">🏅 #' + profile.rank + ' of ' + profile.teamSize + '</span>';
+    if (profile.streak > 0) s += '<span class="snap-chip ghost">🔥 ' + profile.streak + ' mo</span>';
+    s += '</div></div></div>';
+    s += '<div class="snap-hero-stats">';
+    s += snapHeroStat(String(salesThisYear), salesThisYear === 1 ? 'Sale' : 'Sales');
+    s += snapHeroStat(compactMoney(profile.ytdVolume), 'Volume');
+    s += snapHeroStat(Data.formatCurrency(profile.ytdGci), 'GCI');
+    s += '</div>';
+    if (t.next) {
+      var pct = Math.round(t.progress * 100);
+      s += '<div class="snap-tier-bar"><div class="snap-tier-fill" style="width:' + pct + '%"></div></div>';
+      s += '<div class="snap-tier-meta">' + pct + '% to ' + t.next.icon + ' ' + t.next.name + '</div>';
+    }
+    s += '</div>';
+
+    // Pipeline tiles
+    s += '<div class="snap-tiles">';
+    s += snapTile('🎉', 'Closed', closed.length, compactMoney(closedVol), '#1A7F4B');
+    s += snapTile('🔑', 'In Escrow', escrow.length, compactMoney(escrowVol), '#1E5FA8');
+    s += snapTile('🏡', 'Active Listings', listings.length, compactMoney(listingVol), '#B86B00');
+    s += '</div>';
+
+    // Goals
+    s += renderAgentGoalCard(name, uname, goal, salesThisYear, profile.ytdVolume, canEdit);
+
+    // Lists
+    s += snapSection('🎉 Closings', closed.length, closed.length ? closed.map(function (x) {
+      return snapRow(x.id, x.address, Data.formatDate(x.closeDate), Data.formatCurrency(x.price), 'Closed', '#1A7F4B', true);
+    }).join('') : snapEmpty('No closings yet'));
+
+    s += snapSection('🔑 In Escrow', escrow.length, escrow.length ? escrow.map(function (x) {
+      var st = x.status === 'pending' ? 'Pending' : 'Active';
+      var col = x.status === 'pending' ? '#B86B00' : '#1E5FA8';
+      return snapRowLink('deal-detail-txn.html#' + x.id, x.address, x.closeDate ? 'Closes ' + Data.formatDate(x.closeDate) : '', Data.formatCurrency(x.price), st, col);
+    }).join('') : snapEmpty('Nothing in escrow'));
+
+    s += snapSection('🏡 Active Listings', listings.length, listings.length ? listings.map(function (l) {
+      var specs = [l.beds ? l.beds + ' bd' : '', l.baths ? l.baths + ' ba' : '', l.sqft ? Number(l.sqft).toLocaleString() + ' sqft' : ''].filter(Boolean).join(' · ');
+      return snapRowLink('deal-detail.html#' + l.id, l.address, specs, Data.formatCurrency(l.price), 'Listed', '#B86B00');
+    }).join('') : snapEmpty('No active listings'));
+
+    pageBody.innerHTML = s;
+    if (agentGoalEdit) { var gi = document.getElementById('agtGoalClosings'); if (gi) gi.focus(); }
+  }
+
+  // ============================================================
   //  DETAIL VIEW (edit a closed deal) — preserved
   // ============================================================
   function renderDetail() {
@@ -1145,6 +1294,7 @@
   // ============================================================
   function render() {
     if (viewMode === 'detail' && selectedTxnId) renderDetail();
+    else if (viewMode === 'agent' && selectedAgent) renderAgentSnapshot();
     else renderList();
   }
 
@@ -1172,6 +1322,33 @@
         openSourceModal(target.getAttribute('data-source') || 'Unknown');
         break;
 
+      case 'open-agent':
+        selectedAgent = target.getAttribute('data-agent') || null;
+        if (selectedAgent) { viewMode = 'agent'; agentGoalEdit = false; window.scrollTo(0, 0); render(); }
+        break;
+
+      case 'edit-agent-goal':
+        agentGoalEdit = true;
+        renderAgentSnapshot();
+        break;
+
+      case 'cancel-agent-goal':
+        agentGoalEdit = false;
+        renderAgentSnapshot();
+        break;
+
+      case 'save-agent-goal': {
+        var uNameG = target.getAttribute('data-username');
+        var cIn = document.getElementById('agtGoalClosings');
+        var vIn = document.getElementById('agtGoalVolume');
+        var cVal = cIn ? (parseInt(cIn.value.replace(/[^0-9]/g, ''), 10) || 0) : 0;
+        var vVal = vIn ? (parseInt(vIn.value.replace(/[^0-9]/g, ''), 10) || 0) : 0;
+        if (uNameG) { setAgentGoal(uNameG, cVal, vVal); showToast('Goals saved!'); }
+        agentGoalEdit = false;
+        renderAgentSnapshot();
+        break;
+      }
+
       case 'open-detail':
         selectedTxnId = target.getAttribute('data-id');
         viewMode = 'detail';
@@ -1182,6 +1359,7 @@
       case 'back-to-list':
         viewMode = 'list';
         selectedTxnId = null;
+        selectedAgent = null;
         render();
         break;
 
