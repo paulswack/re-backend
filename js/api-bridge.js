@@ -787,6 +787,26 @@ var ApiBridge = (function () {
     };
   }
 
+  function _syncUname() {
+    try { var s = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}'); return s.username || (API.getUser() && API.getUser().username) || null; } catch (e) { return null; }
+  }
+  // Keep any of the current user's local entries that aren't on the server yet
+  // (added but not synced) so a down-sync can never wipe unsynced work.
+  function mergeLocalUnsynced(serverArr, storageKey) {
+    try {
+      var uname = _syncUname();
+      var local = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      if (!Array.isArray(local)) return serverArr;
+      var seen = {};
+      serverArr.forEach(function (e) { if (e && e.id) seen[e.id] = true; });
+      local.forEach(function (e) {
+        if (!e || !e.id || seen[e.id]) return;
+        if (e.username === uname || (!e.username && uname === 'admin')) serverArr.push(e);
+      });
+    } catch (e) {}
+    return serverArr;
+  }
+
   // ---- Load settings-stored data back into localStorage ----
   function loadSettingsData(settings) {
     if (!settings) return;
@@ -798,6 +818,7 @@ var ApiBridge = (function () {
         if (!Array.isArray(taxData)) {
           Object.keys(taxData).forEach(function (u) { (taxData[u] || []).forEach(function (e) { flatTax.push(e); }); });
         }
+        flatTax = mergeLocalUnsynced(flatTax, PREFIX + 'tax_entries');
         localStorage.setItem(PREFIX + 'tax_entries', JSON.stringify(flatTax));
       } catch (e) {}
     }
@@ -809,6 +830,7 @@ var ApiBridge = (function () {
         if (!Array.isArray(mileData)) {
           Object.keys(mileData).forEach(function (u) { (mileData[u] || []).forEach(function (e) { flatMile.push(e); }); });
         }
+        flatMile = mergeLocalUnsynced(flatMile, PREFIX + 'mileage');
         localStorage.setItem(PREFIX + 'mileage', JSON.stringify(flatMile));
       } catch (e) {}
     }
