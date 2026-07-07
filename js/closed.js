@@ -486,15 +486,13 @@
     }
     s += '</div>';
 
-    // thin tier progress bar
-    if (t.next) {
-      s += '<div class="wins-tier-bar-wrap">';
-      s += '<div class="wins-tier-bar"><div class="wins-tier-fill" style="width:' + pct + '%"></div></div>';
-      s += '<div class="wins-tier-bar-meta">' + pct + '% to ' + t.next.icon + ' ' + t.next.name + '</div>';
-      s += '</div>';
-    } else {
-      s += '<div class="wins-tier-bar-meta" style="margin-top:10px">👑 Top tier reached — you\'re a Legend</div>';
-    }
+    // progress toward this agent's volume goal
+    var heroGoal = getAgentGoalsMap()[SESSION.username] || { closings: 8, volume: 2000000 };
+    var heroGoalPct = heroGoal.volume > 0 ? Math.min(100, Math.round(p.ytdVolume / heroGoal.volume * 100)) : 0;
+    s += '<div class="wins-tier-bar-wrap">';
+    s += '<div class="wins-tier-bar"><div class="wins-tier-fill" style="width:' + heroGoalPct + '%"></div></div>';
+    s += '<div class="wins-tier-bar-meta">' + heroGoalPct + '% of ' + Data.formatCurrency(heroGoal.volume) + ' volume goal</div>';
+    s += '</div>';
 
     // Team pipeline tiles (moved from the dashboard): Total Closed · In Escrow · Active Listings
     var allTxns = Data.getTransactions();
@@ -1248,11 +1246,9 @@
     s += snapHeroStat(Data.formatCurrency(profile.ytdVolume), 'Volume');
     s += snapHeroStat(Data.formatCurrency(profile.ytdGci), 'GCI');
     s += '</div>';
-    if (t.next) {
-      var pct = Math.round(t.progress * 100);
-      s += '<div class="snap-tier-bar"><div class="snap-tier-fill" style="width:' + pct + '%"></div></div>';
-      s += '<div class="snap-tier-meta">' + pct + '% to ' + t.next.icon + ' ' + t.next.name + '</div>';
-    }
+    var snapGoalPct = goal.volume > 0 ? Math.min(100, Math.round(profile.ytdVolume / goal.volume * 100)) : 0;
+    s += '<div class="snap-tier-bar"><div class="snap-tier-fill" style="width:' + snapGoalPct + '%"></div></div>';
+    s += '<div class="snap-tier-meta">' + snapGoalPct + '% of ' + Data.formatCurrency(goal.volume) + ' volume goal</div>';
     s += '</div>';
 
     // Pipeline tiles
