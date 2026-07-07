@@ -175,6 +175,11 @@
     });
   }
 
+  // This-year sales count, weighted so a dual-side deal counts as 2 (matches the leaderboard)
+  function weightedSales(name) {
+    return thisYearClosed(name).reduce(function (s, t) { return s + dealWeight(t); }, 0);
+  }
+
   // ---- Goals (annual GCI target per agent), stored locally ----
   function getGoals() {
     try { return JSON.parse(localStorage.getItem('reb_agent_goals') || '{}'); } catch (e) { return {}; }
@@ -455,7 +460,7 @@
     var t = p.tier;
     var pct = Math.round(t.progress * 100);
     var year = new Date().getFullYear();
-    var closedCount = thisYearClosed(MY_NAME).length;
+    var closedCount = weightedSales(MY_NAME);
 
     // Hero banner color is editable in Admin Settings → Wins Prizes & Badges.
     // When unset, the built-in emerald gradient (from CSS) is kept.
@@ -530,7 +535,7 @@
     var target = isSales ? (goal.closings || 0) : (goal.volume || 0);
     var pct = target > 0 ? Math.min(100, Math.round(cur / target * 100)) : 0;
     var label = isSales
-      ? (salesCount + ' of ' + target + ' closings goal')
+      ? (salesCount + ' of ' + target + ' sales goal')
       : (Data.formatCurrency(ytdVolume) + ' of ' + Data.formatCurrency(target) + ' volume goal');
     return { pct: pct, label: label };
   }
@@ -1216,7 +1221,7 @@
       s += '</div>';
     } else {
       var cPct = goal.closings > 0 ? Math.min(100, salesThisYear / goal.closings * 100) : 0;
-      s += goalBar('Closings', salesThisYear + ' of ' + goal.closings, cPct, salesThisYear >= goal.closings && goal.closings > 0);
+      s += goalBar('Sales', salesThisYear + ' of ' + goal.closings, cPct, salesThisYear >= goal.closings && goal.closings > 0);
       var vPct = goal.volume > 0 ? Math.min(100, ytdVolume / goal.volume * 100) : 0;
       s += goalBar('Volume', Data.formatCurrency(ytdVolume) + ' of ' + Data.formatCurrency(goal.volume), vPct, ytdVolume >= goal.volume && goal.volume > 0);
       if (canEdit) s += '<button class="wins-link-btn" data-action="edit-agent-goal" style="margin-top:6px">✏️ Adjust goals</button>';
@@ -1240,7 +1245,7 @@
     escrow.sort(function (a, b) { return (a.closeDate || '').localeCompare(b.closeDate || ''); });
     var sumP = function (arr) { return arr.reduce(function (s2, x) { return s2 + (parseFloat(x.price) || 0); }, 0); };
     var closedVol = sumP(closed), escrowVol = sumP(escrow), listingVol = sumP(listings);
-    var salesThisYear = thisYearClosed(name).length;
+    var salesThisYear = weightedSales(name);
 
     var uname = usernameForAgent(name);
     var goalsMap = getAgentGoalsMap();
