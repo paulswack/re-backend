@@ -468,7 +468,6 @@
     s += '<div class="wins-hero-greet">' + (MY_NAME ? escapeHtml(MY_NAME) : 'Your') + ' ' + year + ' Results</div>';
     s += '<div class="wins-hero-chips">';
     s += '<span class="wins-tier-chip" style="color:' + t.current.color + '">' + t.current.icon + ' ' + t.current.name + '</span>';
-    if (p.streak > 0) s += '<span class="wins-hero-streak" title="Consecutive months with a closing">🔥 ' + p.streak + ' mo</span>';
     s += '</div></div>';
 
     // inline stat trio
@@ -1242,7 +1241,6 @@
     s += '<div class="snap-hero-id"><div class="snap-hero-name">' + escapeHtml(name) + (name === MY_NAME ? ' <span class="wins-you">YOU</span>' : '') + '</div>';
     s += '<div class="snap-hero-chips"><span class="snap-chip">' + t.current.icon + ' ' + t.current.name + '</span>';
     if (profile.rank) s += '<span class="snap-chip ghost">🏅 #' + profile.rank + ' of ' + profile.teamSize + '</span>';
-    if (profile.streak > 0) s += '<span class="snap-chip ghost">🔥 ' + profile.streak + ' mo</span>';
     s += '</div></div></div>';
     s += '<div class="snap-hero-stats">';
     s += snapHeroStat(String(salesThisYear), salesThisYear === 1 ? 'Sale' : 'Sales');
