@@ -1751,6 +1751,12 @@
   function mapCsvHeader(h) {
     h = String(h || '').trim().toLowerCase();
     if (/transaction\s*id|deal\s*id|record\s*id|lofty\s*id|^id$/.test(h)) return 'lofty_id';
+    if (/buyer.*email/.test(h)) return 'buyer_email';
+    if (/buyer.*(phone|mobile|cell)/.test(h)) return 'buyer_phone';
+    if (/buyer.*name|^buyer$/.test(h)) return 'buyer_name';
+    if (/seller.*email/.test(h)) return 'seller_email';
+    if (/seller.*(phone|mobile|cell)/.test(h)) return 'seller_phone';
+    if (/seller.*name|^seller$/.test(h)) return 'seller_name';
     if (/address|property/.test(h)) return 'address';
     if (/city/.test(h)) return 'city';
     if (/state|province/.test(h)) return 'state';
@@ -1813,7 +1819,9 @@
       ['type', 'Buyer, Seller, or Dual'],
       ['agent_name', 'Agent full name (match a team member\'s name)'],
       ['close_date', 'Closing date'],
-      ['source', 'Lead source (defaults to "Lofty")']
+      ['source', 'Lead source (defaults to "Lofty")'],
+      ['buyer_name, buyer_phone, buyer_email', 'Buyer contact — shows on the deal'],
+      ['seller_name, seller_phone, seller_email', 'Seller contact — shows on the deal']
     ];
     var rows = fields.map(function (f) {
       return '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:var(--gray-700);white-space:nowrap;vertical-align:top">' + f[0] + '</td><td style="padding:4px 0;color:var(--gray-500)">' + f[1] + '</td></tr>';

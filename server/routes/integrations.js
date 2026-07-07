@@ -118,7 +118,31 @@ async function upsertWithIndex(mapped, teamId, index) {
   if (loftyId) index.byLoftyId[loftyId] = rec;
   if (matchedManual && na) delete index.byAddr[na];            // now linked — no longer a manual candidate
   else if (action === 'created' && na && !loftyId && !(na in index.byAddr)) index.byAddr[na] = rec;
-  return action;
+  return { id: result.data.id, action: action };
+}
+
+// Pull buyer/seller contact info out of a raw Lofty record.
+function extractParties(b) {
+  b = b || {};
+  const out = [];
+  const bn = b.buyer_name || b.buyer || '', bp = b.buyer_phone || '', be = b.buyer_email || '';
+  if (bn || bp || be) out.push({ party_type: 'buyer', name: String(bn).trim(), phone: String(bp).trim(), email: String(be).trim(), sort_order: 0, metadata: { relationship: 'Primary' } });
+  const sn = b.seller_name || b.seller || '', sp = b.seller_phone || '', se = b.seller_email || '';
+  if (sn || sp || se) out.push({ party_type: 'seller', name: String(sn).trim(), phone: String(sp).trim(), email: String(se).trim(), sort_order: 0, metadata: { relationship: 'Primary' } });
+  return out;
+}
+
+// Write parties onto a transaction. Only replaces the side(s) actually provided,
+// so a buyer-only payload won't wipe an existing seller (and vice-versa).
+async function syncParties(txnId, parties) {
+  if (!txnId || !parties || !parties.length) return;
+  const types = {};
+  parties.forEach(function (p) { types[p.party_type] = true; });
+  for (const ty of Object.keys(types)) {
+    await getSupabase().from('transaction_parties').delete().eq('transaction_id', txnId).eq('party_type', ty);
+  }
+  const rows = parties.map(function (p) { return Object.assign({}, p, { transaction_id: txnId }); });
+  await getSupabase().from('transaction_parties').insert(rows);
 }
 
 // GET /api/integrations/lofty/token — Team Lead retrieves the team's webhook token
@@ -146,8 +170,9 @@ router.post('/lofty/transaction', async (req, res) => {
     const teamId = decoded.teamId;
 
     const index = await loadIndex(teamId);
-    const action = await upsertWithIndex(mapLoftyRow(req.body, teamId), teamId, index);
-    res.status(200).json({ ok: true, action: action });
+    const out = await upsertWithIndex(mapLoftyRow(req.body, teamId), teamId, index);
+    await syncParties(out.id, extractParties(req.body));
+    res.status(200).json({ ok: true, action: out.action });
   } catch (err) {
     console.error('Lofty webhook error:', err);
     res.status(500).json({ error: 'Failed to import transaction', detail: err.message || String(err) });
@@ -163,8 +188,9 @@ router.post('/lofty/import', requireAuth, requireLead, async (req, res) => {
     let created = 0, updated = 0, failed = 0;
     for (const b of rows) {
       try {
-        const action = await upsertWithIndex(mapLoftyRow(b, teamId), teamId, index);
-        if (action === 'updated') updated++; else created++;
+        const out = await upsertWithIndex(mapLoftyRow(b, teamId), teamId, index);
+        await syncParties(out.id, extractParties(b));
+        if (out.action === 'updated') updated++; else created++;
       } catch (e) {
         failed++;
         console.error('Import row failed:', e.message || e);
