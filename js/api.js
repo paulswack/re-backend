@@ -169,6 +169,7 @@ var API = (function () {
   function getSettings() { return get('/settings'); }
   function updateSettings(data) { return put('/settings', data); }
   function getLoftyWebhook() { return get('/integrations/lofty/token'); }
+  function importLofty(data) { return post('/integrations/lofty/import', data); }
 
   // ---- Team ----
   function getTeam() { return get('/teams'); }
@@ -355,7 +356,7 @@ var API = (function () {
     createUser: createUser, updateUser: updateUser, deleteUser: deleteUser,
 
     // Settings
-    getSettings: getSettings, updateSettings: updateSettings, getLoftyWebhook: getLoftyWebhook,
+    getSettings: getSettings, updateSettings: updateSettings, getLoftyWebhook: getLoftyWebhook, importLofty: importLofty,
 
     // Team
     getTeam: getTeam, updateTeam: updateTeam,

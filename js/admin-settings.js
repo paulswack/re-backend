@@ -936,7 +936,7 @@
     body.innerHTML = h;
     initDragAndDrop();
     initLiveFormatting();
-    if (activeTab === 'integrations') loadLoftyWebhook();
+    if (activeTab === 'integrations') { loadLoftyWebhook(); initCsvImport(); }
   }
 
   function initLiveFormatting() {
@@ -1708,8 +1708,100 @@
     h += '</div>';
     h += '<div style="font-size:.82rem;color:var(--gray-600);margin-top:16px;line-height:1.6">' + zapierSteps() + '</div>';
     h += '</div>';
+
+    // ---- CSV import (free, no Zapier needed) ----
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Import from CSV (Lofty export)</div>';
+    h += '<p style="font-size:.85rem;color:var(--gray-600);margin-bottom:10px">Export your transactions from Lofty to a CSV, then upload it here to bring them in. Great for loading past deals. Columns are matched automatically (Address, Price, Status, Type, Agent, Close Date, Source, and a Lofty/Transaction ID if present).</p>';
+    h += '<input type="file" id="csvFile" accept=".csv,text/csv" style="font-size:.85rem">';
+    h += '<div id="csvStatus" style="font-size:.82rem;color:var(--gray-600);margin-top:10px"></div>';
+    h += '<p style="font-size:.76rem;color:var(--gray-400);margin-top:10px">Tip: if your CSV includes a Lofty/Transaction ID column, re-importing updates those deals in place. Without an ID column, re-importing the same file can create duplicates.</p>';
+    h += '</div>';
+
     h += '</div>';
     return h;
+  }
+
+  // Minimal CSV parser (handles quoted fields, embedded commas/newlines, "" escapes)
+  function parseCSV(text) {
+    var rows = [], row = [], cur = '', inQ = false;
+    text = String(text).replace(/^﻿/, ''); // strip BOM
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+        else cur += c;
+      } else if (c === '"') {
+        inQ = true;
+      } else if (c === ',') {
+        row.push(cur); cur = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cur); cur = '';
+        if (row.length > 1 || row[0] !== '') rows.push(row);
+        row = [];
+      } else {
+        cur += c;
+      }
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  function mapCsvHeader(h) {
+    h = String(h || '').trim().toLowerCase();
+    if (/transaction\s*id|deal\s*id|record\s*id|lofty\s*id|^id$/.test(h)) return 'lofty_id';
+    if (/address|property/.test(h)) return 'address';
+    if (/city/.test(h)) return 'city';
+    if (/state|province/.test(h)) return 'state';
+    if (/zip|postal/.test(h)) return 'zip';
+    if (/price|amount|purchase|volume/.test(h)) return 'price';
+    if (/status|stage/.test(h)) return 'status';
+    if (/type|side|represent/.test(h)) return 'type';
+    if (/agent/.test(h)) return 'agent_name';
+    if (/clos.*date|closing|settle/.test(h)) return 'close_date';
+    if (/source|lead/.test(h)) return 'source';
+    if (/note/.test(h)) return 'notes';
+    return null;
+  }
+
+  function initCsvImport() {
+    var input = document.getElementById('csvFile');
+    if (!input) return;
+    input.addEventListener('change', function () {
+      var status = document.getElementById('csvStatus');
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var rows;
+        try { rows = parseCSV(e.target.result); } catch (err) { if (status) status.textContent = 'Could not read that CSV file.'; return; }
+        if (!rows.length || rows.length < 2) { if (status) status.textContent = 'That file needs a header row and at least one deal.'; return; }
+        var headers = rows[0].map(mapCsvHeader);
+        if (!headers.filter(Boolean).length) { if (status) status.textContent = 'Could not recognize any columns. Make sure the first row has headers like Address, Price, Status.'; return; }
+        var out = [];
+        for (var r = 1; r < rows.length; r++) {
+          var obj = {}, any = false;
+          for (var c = 0; c < headers.length; c++) {
+            if (headers[c] && rows[r][c] != null && String(rows[r][c]).trim() !== '') { obj[headers[c]] = String(rows[r][c]).trim(); any = true; }
+          }
+          if (any) out.push(obj);
+        }
+        if (!out.length) { if (status) status.textContent = 'No data rows found under the headers.'; return; }
+        if (typeof API === 'undefined' || !API.isLoggedIn()) { if (status) status.textContent = 'Please sign in as a Team Lead.'; return; }
+        if (status) status.textContent = 'Importing ' + out.length + ' deal' + (out.length === 1 ? '' : 's') + '…';
+        API.importLofty({ rows: out }).then(function (res) {
+          var msg = '<span style="color:var(--emerald);font-weight:700">Done!</span> ' + (res.created || 0) + ' added, ' + (res.updated || 0) + ' updated';
+          if (res.failed) msg += ', ' + res.failed + ' skipped';
+          msg += '. Refresh the app to see them.';
+          if (status) status.innerHTML = msg;
+          input.value = '';
+        }).catch(function (err) {
+          if (status) status.textContent = 'Import failed: ' + (err && err.message ? err.message : 'please try again') + '.';
+        });
+      };
+      reader.readAsText(file);
+    });
   }
 
   function zapierSteps() {
