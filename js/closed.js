@@ -1192,8 +1192,8 @@
       s += '<div class="snap-goal-edit">';
       s += '<label>Closings goal (this year)</label>';
       s += '<input id="agtGoalClosings" type="text" inputmode="numeric" value="' + goal.closings + '" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')">';
-      s += '<label>Volume goal ($)</label>';
-      s += '<input id="agtGoalVolume" type="text" inputmode="numeric" value="' + goal.volume + '" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')">';
+      s += '<label>Volume goal</label>';
+      s += '<input id="agtGoalVolume" type="text" inputmode="numeric" value="' + (goal.volume ? '$' + Number(goal.volume).toLocaleString('en-US') : '') + '" placeholder="$2,000,000" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'">';
       s += '<div class="snap-goal-actions"><button class="btn btn-primary btn-sm" data-action="save-agent-goal" data-username="' + escapeHtml(uname || '') + '">Save goals</button>';
       s += '<button class="wins-link-btn" data-action="cancel-agent-goal">Cancel</button></div>';
       s += '</div>';
