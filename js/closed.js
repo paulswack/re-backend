@@ -25,6 +25,7 @@
   var agentGoalEdit = false;
   var currentRange = 'year';    // all | year | quarter | month
   var rankMetric = 'sales';     // 'sales' | 'volume' — how the leaders + leaderboard are ranked
+  var goalMetric = 'sales';     // 'sales' | 'volume' — which goal the hero progress line tracks
   var winsLimit = 12;           // how many wins-feed cards to show
   var goalEditMode = false;
   var celebrationDone = false;
@@ -486,12 +487,12 @@
     }
     s += '</div>';
 
-    // progress toward this agent's volume goal
+    // progress toward this agent's goal (sales or volume, toggleable)
     var heroGoal = getAgentGoalsMap()[SESSION.username] || { closings: 8, volume: 2000000 };
-    var heroGoalPct = heroGoal.volume > 0 ? Math.min(100, Math.round(p.ytdVolume / heroGoal.volume * 100)) : 0;
+    var hgp = goalProgress(closedCount, p.ytdVolume, heroGoal);
     s += '<div class="wins-tier-bar-wrap">';
-    s += '<div class="wins-tier-bar"><div class="wins-tier-fill" style="width:' + heroGoalPct + '%"></div></div>';
-    s += '<div class="wins-tier-bar-meta">' + heroGoalPct + '% of ' + Data.formatCurrency(heroGoal.volume) + ' volume goal</div>';
+    s += '<div class="hero-goal-row"><span class="wins-tier-bar-meta">' + hgp.pct + '% · ' + hgp.label + '</span>' + heroGoalToggle() + '</div>';
+    s += '<div class="wins-tier-bar"><div class="wins-tier-fill" style="width:' + hgp.pct + '%"></div></div>';
     s += '</div>';
 
     // Team pipeline tiles (moved from the dashboard): Total Closed · In Escrow · Active Listings
@@ -520,6 +521,24 @@
       '<div class="wins-hero-tile-val">' + value + '</div>' +
       '<div class="wins-hero-tile-lbl">' + label + '</div>' +
       '<div class="wins-hero-tile-sub">' + sub + '</div></div>';
+  }
+
+  // Goal progress for the hero line, based on the active goal toggle
+  function goalProgress(salesCount, ytdVolume, goal) {
+    var isSales = goalMetric === 'sales';
+    var cur = isSales ? salesCount : ytdVolume;
+    var target = isSales ? (goal.closings || 0) : (goal.volume || 0);
+    var pct = target > 0 ? Math.min(100, Math.round(cur / target * 100)) : 0;
+    var label = isSales
+      ? (salesCount + ' of ' + target + ' closings goal')
+      : (Data.formatCurrency(ytdVolume) + ' of ' + Data.formatCurrency(target) + ' volume goal');
+    return { pct: pct, label: label };
+  }
+  function heroGoalToggle() {
+    var isSales = goalMetric === 'sales';
+    return '<span class="hero-goal-toggle">' +
+      '<button class="hgt-btn' + (isSales ? ' active' : '') + '" data-action="goal-metric" data-metric="sales">Sales</button>' +
+      '<button class="hgt-btn' + (!isSales ? ' active' : '') + '" data-action="goal-metric" data-metric="volume">Volume</button></span>';
   }
 
   // ---- GCI goal thermometer ----
@@ -1246,9 +1265,9 @@
     s += snapHeroStat(Data.formatCurrency(profile.ytdVolume), 'Volume');
     s += snapHeroStat(Data.formatCurrency(profile.ytdGci), 'GCI');
     s += '</div>';
-    var snapGoalPct = goal.volume > 0 ? Math.min(100, Math.round(profile.ytdVolume / goal.volume * 100)) : 0;
-    s += '<div class="snap-tier-bar"><div class="snap-tier-fill" style="width:' + snapGoalPct + '%"></div></div>';
-    s += '<div class="snap-tier-meta">' + snapGoalPct + '% of ' + Data.formatCurrency(goal.volume) + ' volume goal</div>';
+    var sgp = goalProgress(salesThisYear, profile.ytdVolume, goal);
+    s += '<div class="hero-goal-row"><span class="snap-tier-meta">' + sgp.pct + '% · ' + sgp.label + '</span>' + heroGoalToggle() + '</div>';
+    s += '<div class="snap-tier-bar"><div class="snap-tier-fill" style="width:' + sgp.pct + '%"></div></div>';
     s += '</div>';
 
     // Pipeline tiles
@@ -1436,6 +1455,11 @@
 
       case 'rank-metric':
         rankMetric = target.getAttribute('data-metric') === 'volume' ? 'volume' : 'sales';
+        render();
+        break;
+
+      case 'goal-metric':
+        goalMetric = target.getAttribute('data-metric') === 'volume' ? 'volume' : 'sales';
         render();
         break;
 

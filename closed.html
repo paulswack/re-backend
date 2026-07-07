@@ -205,6 +205,12 @@
     .wins-tier-bar { height: 6px; border-radius: 20px; background: rgba(255,255,255,.16); overflow: hidden; }
     .wins-tier-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #D4AF37, #F5D77E); transition: width .6s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 10px rgba(212,175,55,.5); }
     .wins-tier-bar-meta { font-size: .72rem; color: rgba(255,255,255,.72); font-weight: 600; margin-top: 6px; }
+    /* hero goal line + Sales/Volume toggle */
+    .hero-goal-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+    .hero-goal-row .wins-tier-bar-meta, .hero-goal-row .snap-tier-meta { margin-top: 0; }
+    .hero-goal-toggle { display: inline-flex; background: rgba(255,255,255,.16); border-radius: 8px; padding: 2px; flex-shrink: 0; }
+    .hgt-btn { border: none; background: none; cursor: pointer; font-size: .66rem; font-weight: 800; color: rgba(255,255,255,.75); padding: 3px 10px; border-radius: 6px; }
+    .hgt-btn.active { background: #fff; color: var(--gray-900); }
     /* team pipeline tiles inside the hero */
     .wins-hero-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; position: relative; }
     .wins-hero-tile { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 10px; padding: 10px 13px; }
@@ -501,7 +507,7 @@
   <script src="js/api-bridge.js?v=1782003300"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/closed.js?v=1782004300"></script>
+  <script src="js/closed.js?v=1782004400"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>
