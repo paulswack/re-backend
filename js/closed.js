@@ -1087,10 +1087,11 @@
     var BOX = 220;
     var img = new Image();
     img.onload = function () {
-      var minDim = Math.min(img.width, img.height);
-      var initialScale = BOX / minDim;
-      zoom = Math.max(initialScale, 0.5);
-      cropZoom.min = Math.round(initialScale * 100);
+      var fillScale = BOX / Math.min(img.width, img.height);    // just covers the circle
+      var containScale = BOX / Math.max(img.width, img.height); // whole image fits in the box
+      zoom = fillScale;                                          // default: cover the circle
+      cropZoom.min = Math.max(5, Math.round(containScale * 100 * 0.5)); // allow zooming well out
+      cropZoom.max = Math.max(300, Math.round(fillScale * 100 * 2.5));  // and well in
       cropZoom.value = Math.round(zoom * 100);
       updateTransform();
     };
@@ -1116,7 +1117,7 @@
     cropArea.addEventListener('touchstart', function (e) { if (e.touches.length === 1) { dragging = true; dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY; startOffX = offsetX; startOffY = offsetY; e.preventDefault(); } }, { passive: false });
     document.addEventListener('touchmove', onTouchMove, { passive: false });
     document.addEventListener('touchend', function () { dragging = false; });
-    cropArea.addEventListener('wheel', function (e) { e.preventDefault(); var nv = parseInt(cropZoom.value) + (e.deltaY > 0 ? -6 : 6); nv = Math.max(parseInt(cropZoom.min), Math.min(300, nv)); cropZoom.value = nv; zoom = nv / 100; updateTransform(); }, { passive: false });
+    cropArea.addEventListener('wheel', function (e) { e.preventDefault(); var nv = parseInt(cropZoom.value) + (e.deltaY > 0 ? -6 : 6); nv = Math.max(parseInt(cropZoom.min), Math.min(parseInt(cropZoom.max), nv)); cropZoom.value = nv; zoom = nv / 100; updateTransform(); }, { passive: false });
     overlay.addEventListener('click', function (e) { if (e.target === overlay) cleanup(); });
     document.getElementById('agtCropCancel').addEventListener('click', cleanup);
     document.getElementById('agtCropSave').addEventListener('click', function () {
