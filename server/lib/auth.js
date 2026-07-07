@@ -10,6 +10,12 @@ function verifyToken(token) {
   return jwt.verify(token, JWT_SECRET);
 }
 
+// Long-lived token for inbound integrations (e.g. Lofty via Zapier). No expiry —
+// it's a shared secret in the webhook URL; encodes the team so posts are scoped.
+function generateWebhookToken(teamId) {
+  return jwt.sign({ teamId: teamId, type: 'lofty-webhook' }, JWT_SECRET);
+}
+
 // Middleware: require valid JWT
 function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -87,4 +93,4 @@ async function requireActiveSubscription(req, res, next) {
   }
 }
 
-module.exports = { generateToken, verifyToken, requireAuth, requireLead, requireActiveSubscription };
+module.exports = { generateToken, verifyToken, generateWebhookToken, requireAuth, requireLead, requireActiveSubscription };

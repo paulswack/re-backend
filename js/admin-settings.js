@@ -905,7 +905,8 @@
     { key: 'announcements', label: 'Announcements', icon: '<path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>' },
     { key: 'marketing', label: 'Marketing Activities', icon: '<path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>' },
     { key: 'notifications', label: 'Notifications', icon: '<path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>' },
-    { key: 'emailTemplates', label: 'Email Templates', icon: '<path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>' }
+    { key: 'emailTemplates', label: 'Email Templates', icon: '<path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>' },
+    { key: 'integrations', label: 'Integrations', icon: '<path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>' }
   ];
 
   var activeTab = 'general';
@@ -935,6 +936,7 @@
     body.innerHTML = h;
     initDragAndDrop();
     initLiveFormatting();
+    if (activeTab === 'integrations') loadLoftyWebhook();
   }
 
   function initLiveFormatting() {
@@ -1076,6 +1078,7 @@
       case 'marketing': return renderMarketing();
       case 'notifications': return renderNotifications();
       case 'emailTemplates': return renderEmailTemplates();
+      case 'integrations': return renderIntegrations();
       default: return '';
     }
   }
@@ -1692,6 +1695,61 @@
     return h;
   }
 
+  // ---- Integrations (Lofty via Zapier) ----
+  function renderIntegrations() {
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Integrations</h2><p>Bring your Lofty CRM transactions into the back office automatically via Zapier.</p></div>';
+    h += '<div class="as-card">';
+    h += '<div class="as-card-title">Lofty → Back Office (Zapier)</div>';
+    h += '<p style="font-size:.85rem;color:var(--gray-600);margin-bottom:10px">Your team\'s private webhook URL. Zapier sends each Lofty transaction here and it appears in the back office. Keep this URL secret — anyone with it can add deals to your team.</p>';
+    h += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">';
+    h += '<code id="loftyUrl" style="flex:1;min-width:240px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:9px 12px;font-size:.76rem;word-break:break-all;color:var(--gray-700)">Loading…</code>';
+    h += '<button class="btn btn-primary btn-sm" id="loftyCopy" data-action="copy-lofty-url">Copy</button>';
+    h += '</div>';
+    h += '<div style="font-size:.82rem;color:var(--gray-600);margin-top:16px;line-height:1.6">' + zapierSteps() + '</div>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function zapierSteps() {
+    var fields = [
+      ['lofty_id', 'Lofty\'s transaction ID — used to avoid duplicates (recommended)'],
+      ['address, city, state, zip', 'Property address'],
+      ['price', 'Sale price'],
+      ['status', 'We auto-map common Lofty stages to closed / pending / active'],
+      ['type', 'Buyer, Seller, or Dual'],
+      ['agent_name', 'Agent full name (match a team member\'s name)'],
+      ['close_date', 'Closing date'],
+      ['source', 'Lead source (defaults to "Lofty")']
+    ];
+    var rows = fields.map(function (f) {
+      return '<tr><td style="padding:4px 12px 4px 0;font-weight:700;color:var(--gray-700);white-space:nowrap;vertical-align:top">' + f[0] + '</td><td style="padding:4px 0;color:var(--gray-500)">' + f[1] + '</td></tr>';
+    }).join('');
+    return '<strong style="color:var(--gray-700)">Set it up in Zapier:</strong>' +
+      '<ol style="margin:8px 0 12px 18px">' +
+        '<li>Trigger: <b>Lofty</b> → new/updated transaction.</li>' +
+        '<li>Action: <b>Webhooks by Zapier → POST</b>.</li>' +
+        '<li>URL: paste the webhook URL above. Payload type: <b>JSON</b>.</li>' +
+        '<li>Map your Lofty fields to these keys:</li>' +
+      '</ol>' +
+      '<table style="font-size:.8rem;border-collapse:collapse">' + rows + '</table>';
+  }
+
+  function loadLoftyWebhook() {
+    var el = document.getElementById('loftyUrl');
+    if (!el) return;
+    if (typeof API === 'undefined' || !API.isLoggedIn()) { el.textContent = 'Sign in as a Team Lead to view your webhook URL.'; return; }
+    API.getLoftyWebhook().then(function (d) {
+      var url = window.location.origin + '/api/integrations/lofty/transaction?token=' + (d && d.token ? d.token : '');
+      el.textContent = url;
+      var copyBtn = document.getElementById('loftyCopy');
+      if (copyBtn) copyBtn.setAttribute('data-url', url);
+    }).catch(function () {
+      el.textContent = 'Could not load — a Team Lead account is required.';
+    });
+  }
+
   // ---- Expense Categories ----
   function renderExpenses() {
     var cats = settings.expenseCategories;
@@ -2062,6 +2120,20 @@
     if (action === 'switch-tab') {
       activeTab = btn.getAttribute('data-tab');
       render();
+      return;
+    }
+
+    if (action === 'copy-lofty-url') {
+      var urlEl = document.getElementById('loftyUrl');
+      var url = btn.getAttribute('data-url') || (urlEl ? urlEl.textContent : '');
+      if (url && navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function () { showToast('Webhook URL copied'); });
+      } else if (urlEl) {
+        var range = document.createRange(); range.selectNode(urlEl);
+        window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+        try { document.execCommand('copy'); showToast('Webhook URL copied'); } catch (e) {}
+        window.getSelection().removeAllRanges();
+      }
       return;
     }
 
