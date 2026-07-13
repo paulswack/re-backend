@@ -275,24 +275,17 @@
     if (item.completed) {
       datePill = '<span class="cl-row-date done"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>Done</span>';
     } else if (item.dueDate) {
+      // Show the actual date on the side, color-coded (no "days late / until due" text)
       var dCls = 'future';
-      var dLabel;
-      if (dLeft === null) {
-        dLabel = item.dueDate;
-      } else if (dLeft < 0) {
-        dCls = 'overdue'; dLabel = Math.abs(dLeft) + 'd late';
-      } else if (dLeft === 0) {
-        dCls = 'soon'; dLabel = 'Today';
-      } else if (dLeft === 1) {
-        dCls = 'soon'; dLabel = 'Tomorrow';
-      } else if (dLeft <= 7) {
-        dCls = 'soon'; dLabel = dLeft + 'd';
-      } else {
-        try {
-          var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
-          dLabel = dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        } catch(e) { dLabel = item.dueDate; }
+      if (dLeft !== null) {
+        if (dLeft < 0) dCls = 'overdue';
+        else if (dLeft <= 7) dCls = 'soon';
       }
+      var dLabel;
+      try {
+        var dd = new Date(item.dueDate.split(' ')[0] + 'T00:00:00');
+        dLabel = isNaN(dd.getTime()) ? item.dueDate : dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } catch (e) { dLabel = item.dueDate; }
       datePill = '<span class="cl-row-date ' + dCls + '">' + dLabel + '</span>';
     }
 
@@ -1088,8 +1081,7 @@
       // Date input
       html += '<input type="date" class="kd-date" data-kd-idx="' + idx + '" value="' + (kd.date || '') + '" style="font-size:.8rem;color:var(--gray-600);background:transparent;border:1.5px solid transparent;border-radius:6px;padding:3px 6px;' + (kd.status !== 'pending' ? 'color:var(--gray-300);' : '') + '" onfocus="this.style.borderColor=\'var(--indigo)\';this.style.background=\'#fff\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">';
 
-      // Days badge
-      html += daysBadge;
+      // (Date shown via the input above; left-border color flags overdue/soon — no "days late/left" text)
 
       // Notify bell toggle
       var notifyOn = !!kd.notify;
