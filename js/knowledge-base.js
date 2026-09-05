@@ -945,10 +945,19 @@
     }).join('');
 
     var html = '<div class="step-row" data-step-idx="' + idx + '" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin-bottom:10px;">';
-    html += '<div class="form-row" style="display:grid;grid-template-columns:1fr 120px auto;gap:10px;align-items:start;">';
+    // Header: step number + reorder / remove controls
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    html += '<span class="step-num" style="font-size:12px;font-weight:700;color:#64748B;">Step ' + (idx + 1) + '</span>';
+    html += '<div style="display:flex;gap:6px;">';
+    html += '<button class="btn btn-outline btn-sm" data-action="move-step-up" data-step-idx="' + idx + '" type="button" title="Move up" style="padding:4px 10px;line-height:1;">&#8593;</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="move-step-down" data-step-idx="' + idx + '" type="button" title="Move down" style="padding:4px 10px;line-height:1;">&#8595;</button>';
+    html += '<button class="btn btn-outline btn-sm" data-action="remove-step" data-step-idx="' + idx + '" type="button" title="Remove step" style="color:#DC2626;border-color:#FECACA;padding:4px 10px;">Remove</button>';
+    html += '</div>';
+    html += '</div>';
+    // Title + type
+    html += '<div class="form-row" style="display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:start;">';
     html += '<div class="form-group" style="margin:0;"><input type="text" class="form-control step-title" value="' + escapeHtml(step.title) + '" placeholder="Step title"></div>';
     html += '<div class="form-group" style="margin:0;"><select class="form-control step-type">' + typeOpts + '</select></div>';
-    html += '<button class="btn btn-outline btn-sm" data-action="remove-step" data-step-idx="' + idx + '" style="color:#DC2626;border-color:#FECACA;padding:6px 10px;" type="button">&times;</button>';
     html += '</div>';
     html += '<div class="form-group" style="margin:8px 0 0 0;"><textarea class="form-control step-desc" rows="2" placeholder="Step description (supports formatting)...">' + escapeHtml(step.description || '') + '</textarea></div>';
     html += '<div class="form-group" style="margin:6px 0 0 0;"><input type="text" class="form-control step-video" value="' + escapeHtml(step.videoUrl || '') + '" placeholder="Video URL for this step (optional)"></div>';
@@ -956,31 +965,62 @@
     return html;
   }
 
-  var stepCounter = 0;
+  // Renumber steps and keep every control's data-step-idx aligned with DOM order.
+  function reindexSteps() {
+    var stepsList = document.getElementById('stepsList');
+    if (!stepsList) return;
+    var rows = stepsList.querySelectorAll('.step-row');
+    for (var i = 0; i < rows.length; i++) {
+      rows[i].setAttribute('data-step-idx', i);
+      var num = rows[i].querySelector('.step-num');
+      if (num) num.textContent = 'Step ' + (i + 1);
+      var btns = rows[i].querySelectorAll('[data-step-idx]');
+      for (var j = 0; j < btns.length; j++) { btns[j].setAttribute('data-step-idx', i); }
+    }
+  }
 
   function addStepRow() {
     var stepsList = document.getElementById('stepsList');
     if (!stepsList) return;
-    var idx = stepsList.children.length;
+    var idx = stepsList.querySelectorAll('.step-row').length;
     var div = document.createElement('div');
     div.innerHTML = stepRowHtml(idx, null);
-    stepsList.appendChild(div.firstChild);
+    var row = div.firstChild;
+    stepsList.appendChild(row);
+    reindexSteps();
+    // The list can be long — make the newly added step obvious.
+    try {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var titleInput = row.querySelector('.step-title');
+      if (titleInput) titleInput.focus();
+    } catch (e) {}
   }
 
   function removeStepRow(idx) {
     var stepsList = document.getElementById('stepsList');
     if (!stepsList) return;
     var rows = stepsList.querySelectorAll('.step-row');
-    if (rows[idx]) {
-      stepsList.removeChild(rows[idx]);
+    if (rows[idx]) stepsList.removeChild(rows[idx]);
+    reindexSteps();
+  }
+
+  // Move a step up or down. Reorders the actual DOM nodes so any text the user has
+  // typed moves with the step, then renumbers.
+  function moveStepRow(idx, dir) {
+    var stepsList = document.getElementById('stepsList');
+    if (!stepsList) return;
+    var rows = stepsList.querySelectorAll('.step-row');
+    var row = rows[idx];
+    if (!row) return;
+    if (dir === 'up' && idx > 0) {
+      stepsList.insertBefore(row, rows[idx - 1]);
+    } else if (dir === 'down' && idx < rows.length - 1) {
+      stepsList.insertBefore(rows[idx + 1], row);
+    } else {
+      return;
     }
-    // Re-index
-    var remaining = stepsList.querySelectorAll('.step-row');
-    for (var i = 0; i < remaining.length; i++) {
-      remaining[i].setAttribute('data-step-idx', i);
-      var removeBtn = remaining[i].querySelector('[data-action="remove-step"]');
-      if (removeBtn) removeBtn.setAttribute('data-step-idx', i);
-    }
+    reindexSteps();
+    try { row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
   }
 
   function collectSteps() {
@@ -1224,6 +1264,10 @@
       addStepRow();
     } else if (action === 'remove-step') {
       removeStepRow(parseInt(target.getAttribute('data-step-idx'), 10));
+    } else if (action === 'move-step-up') {
+      moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'up');
+    } else if (action === 'move-step-down') {
+      moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'down');
     }
   });
 
