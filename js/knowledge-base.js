@@ -18,6 +18,8 @@
   var PREFIX = 'reb_';
   var STORAGE_KEY = 'reb_knowledge_base';
   var PROGRESS_KEY = 'reb_training_progress';
+  var SEED_VERSION_KEY = 'reb_kb_seed_version';
+  var SEED_VERSION = 2; // bump when default seed content changes, then add a migrateItems() step
   var pageBody = document.getElementById('pageBody');
   var currentView = 'list'; // list, detail, form
   var currentFilter = 'All';
@@ -54,6 +56,170 @@
     'advanced':     { bg: '#FEE2E2', text: '#991B1B' }
   };
 
+  // ---- New Agent Onboarding — the 90-day program (also used by migrateItems) ----
+  var ONBOARDING_ITEM = {
+    id: 'kb-010',
+    title: 'New Agent Onboarding — First 90 Days',
+    category: 'Training Materials',
+    type: 'training',
+    pinned: true,
+    tags: ['onboarding', 'new agent', '90-day', 'checklist', 'training'],
+    difficulty: 'beginner',
+    videoUrl: '',
+    createdBy: 'Paul Swack',
+    createdAt: '2026-09-05T10:00:00Z',
+    content: [
+      `# Welcome to the Team — Your First 90 Days`,
+      ``,
+      `Every agent who joins Elite Real Estate Group gets the same runway: a full quarter with a defined objective for each stretch of it. Week one is setup. The first month is fundamentals and shadowing. The second is reps under supervision. The third is live ball — your own listing appointment, your own buyer, your own file.`,
+      ``,
+      `> Ninety days to build a business, not just hold a license. Work the checklist in the Training Steps below from top to bottom, and lean on the playbook here whenever you get stuck.`,
+      ``,
+      `**Program leads:** Paul Swack & Meghan Smith`,
+      ``,
+      `**Check-in:** 15 minutes, monthly · **Milestone reviews:** Day 30, Day 60, Day 90`,
+      ``,
+      `## How the 90 Days Work`,
+      ``,
+      `1. **Before Day One — Clear the runway.** Meghan owns this. Nothing here is your job; it exists so day one is about people and production, not passwords.`,
+      `2. **Week One — Get equipped.** Be findable, reachable, and in the room. Every tool live, every profile public, and you've watched a real producer work a real day.`,
+      `3. **Days 8–30 — Fundamentals and reps.** Build the database, build the habit, and get in front of live buyers and sellers with an experienced agent beside you.`,
+      `4. **Days 31–60 — Live reps, supervised.** Do the real thing with a net under you: a practice offer, a solo showing, presentations in role-play before the living room.`,
+      `5. **Days 61–90 — Live ball.** Your own client, your own file, your own closing table. The team is behind you, not in front of you.`,
+      ``,
+      `---`,
+      ``,
+      `# Playbook`,
+      ``,
+      `## The Tech Stack`,
+      ``,
+      `Six tools, each with one job. Learn them in this order — the ones at the top are useless without the ones below them being current.`,
+      ``,
+      `- **Team Drive** *(Day 1)* — Presentations, marketing templates, vendor list, disclosure packets, brand assets.`,
+      `- **Lofty CRM** *(Week 1)* — System of record. Every lead, every conversation, every follow-up task. If it isn't in Lofty, it didn't happen.`,
+      `- **MLS** *(Week 1)* — Listings, comps, showing scheduling and lockbox access. Your CMA lives or dies here.`,
+      `- **KW Command** *(Week 1)* — Brokerage platform: training, designs, and your KW agent profile.`,
+      `- **Fidelity Agent 1** *(Week 1)* — Property profiles, farm data, net sheets and title questions from your phone.`,
+      `- **SentriLock** *(Week 2)* — Lockbox access on your phone. Set it up before you need to get into a house.`,
+      ``,
+      `## Lead Gen Standards`,
+      ``,
+      `The team's minimum daily standard for a new agent. Results vary; the inputs don't.`,
+      ``,
+      `- **2 hours** — Lead gen block, every weekday, calendar-defended`,
+      `- **20** — Conversations attempted per day`,
+      `- **5** — Handwritten notes per week`,
+      `- **1** — Open house per week`,
+      `- **100** — People in your database by day 30`,
+      `- **24 hours** — Maximum follow-up time on any new lead`,
+      ``,
+      `> **Paul to confirm.** These are starting numbers — swap in the team's real standards before this goes out to the first new agent.`,
+      ``,
+      `## Scripts That Earn the Appointment`,
+      ``,
+      `Say them out loud until they sound like you. The words matter less than the fact that you're not improvising while someone is deciding whether to trust you.`,
+      ``,
+      `### Sphere — the announcement call`,
+      `> "Hey [name], it's [you] — no favor, just news. I've joined Paul Swack's team at Keller Williams here on the Central Coast, and I'm doing real estate full time now. You're one of the first people I wanted to tell. If you ever hear someone wondering what their place is worth, I'd love to be the person you point them to."`,
+      ``,
+      `### Open house — the door`,
+      `> "Come on in — I'm [you] with Elite Real Estate Group. Have you been through this one before? What's got you out looking today?" Then stop talking. The next question earns the appointment: "If this one isn't it, do you want me to send you the ones that are before they hit the sites?"`,
+      ``,
+      `### Neighbor invite — the day before`,
+      `> "Hi, I'm [you] with Elite Real Estate Group — I'm hosting the open house at [address] tomorrow from noon to two and wanted you to have first look before the public does. Do you know anyone who's been hoping to move into the neighborhood?"`,
+      ``,
+      `### Online lead — first text, inside five minutes`,
+      `> "Hi [name] — [you] with Elite Real Estate Group. Saw you looking at [address]. Do you want the disclosures on that one, or are you still narrowing down areas? Either way I can help."`,
+      ``,
+      `### The price objection`,
+      `> "I hear you, and I'd want the higher number too. Here's what I can promise: I'll show you exactly what the last three comparable homes sold for and what they had that this one doesn't. Then you pick the number — you just won't be picking it blind."`,
+      ``,
+      `### "I have a friend in the business"`,
+      `> "That's great — loyalty matters, and I'd never ask you to burn a relationship. Can I ask what they've sold in this area in the last year? If the answer's a good one, use them. If it isn't, I'd like the chance to show you what our team does differently."`,
+      ``,
+      `## Your First Transaction, Step by Step`,
+      ``,
+      `Every step has a clock attached to it, and missing one costs your client money or leverage. Run it with a TC the first time, then run it yourself.`,
+      ``,
+      `1. **Offer accepted** — Confirm every signature and initial, and send the fully executed contract to your TC the same day.`,
+      `2. **Open escrow** — Escrow and title opened, escrow number circulated to both sides, lender looped in.`,
+      `3. **Earnest money delivered** — On the contract's clock, with the wire confirmation saved to the file. Warn your buyer about wire fraud before they send a dollar.`,
+      `4. **Disclosures delivered** — Seller disclosures and the natural hazard report out to the buyer, receipt acknowledged in writing.`,
+      `5. **Inspections ordered** — General, and anything the general recommends: roof, sewer, pest, chimney. Book them early in the contingency period, not on the last day.`,
+      `6. **Appraisal ordered** — Lender-ordered. Meet the appraiser with your comps if the price needs support.`,
+      `7. **Loan progress checked** — Talk to the lender weekly, in a call, not a text thread. Underwriting surprises are the number one closing delay.`,
+      `8. **Request for repairs negotiated** — Ask for what matters: health, safety and expensive systems. Nickel-and-diming a seller costs goodwill you'll need at the walkthrough.`,
+      `9. **Contingencies removed in writing** — Never verbally, never assumed. This is the moment your client's deposit is on the line.`,
+      `10. **Final walkthrough** — Verify repairs, run the appliances, and check that nothing left with the seller that shouldn't have.`,
+      `11. **Signing and funding** — Loan docs signed, funds wired, loan funds. Set expectations early: recording day is not always signing day.`,
+      `12. **Recording and keys** — Confirm recording, then hand over the keys in person. Closing gift, review request, and the annual touch plan into Lofty before you archive the file.`,
+      ``,
+      `## How We Operate`,
+      ``,
+      `- **Answer the phone.** Speed is the cheapest competitive advantage in this business. If you can't answer, call back the same day — every time.`,
+      `- **Ask early, not after.** Nobody has ever been in trouble here for asking a question. People get in trouble for guessing on a contract.`,
+      `- **The client's money isn't yours to gamble.** Deadlines, deposits and disclosures get treated like they're your own. Put everything in writing.`,
+      `- **Fourth-generation local means something.** Know the neighborhoods, schools, coastal quirks and inventory well enough to answer without looking it up.`,
+      `- **Celebrate your teammates loudly.** First contract, first close, hard-won listing — it goes in the group chat. This works because it's a team.`,
+      `- **Do the boring thing daily.** The lead gen block is non-negotiable. Talent is optional in this business; consistency isn't.`,
+      ``,
+      `## Check-in Cadence`,
+      ``,
+      `Accountability is scheduled, not spontaneous. Every meeting below is on the calendar before day one.`,
+      ``,
+      `- **Day 1** *(45 min)* — Welcome sit-down with Paul: goals, expectations, who to call for what.`,
+      `- **Weekly, first 30 days** *(20 min)* — Your shadow producer: what you saw, what confused you, what's next.`,
+      `- **Monthly, ongoing** *(15 min)* — Paul and Meghan: numbers, blockers, one thing to fix before next month.`,
+      `- **Day 30 · 60 · 90** *(30 min)* — Milestone review against this checklist and your written goals.`
+    ].join('\n'),
+    steps: [
+      // ===== Before Day One =====
+      { title: 'Before Day 1 · Confirm license, board & MLS', type: 'Do', videoUrl: '', description: `**Owner: Meghan.** License hung with the brokerage, association membership active, MLS credentials issued, E&O and dues squared away. An agent who can't pull comps on day two loses a week of momentum.` },
+      { title: 'Before Day 1 · Create accounts before arrival', type: 'Do', videoUrl: '', description: `**Owner: Meghan.** Team email, Lofty CRM seat, KW Command access, Team Drive permissions, and an invite to the team group chat — all waiting in the inbox on morning one.` },
+      { title: 'Before Day 1 · Book the week-one calendar', type: 'Do', videoUrl: '', description: `**Owner: Meghan.** Welcome sit-down with Paul, headshot session, shadow day with a top producer, and the first open house — all on the calendar before the agent walks in.` },
+      { title: 'Before Day 1 · Assign the shadow producer', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Name the specific agent this person shadows for the first 30 days, and tell that agent they've been named. A vague "shadow someone" never happens.` },
+      { title: 'Before Day 1 · Collect birthday & work anniversary', type: 'Do', videoUrl: '', description: `**Owner: Meghan.** Straight into the team calendar on day one. We celebrate both, every year — a small thing that says this is a team, not a desk rental.` },
+
+      // ===== Week One =====
+      { title: 'Week 1 · Join Team Drive & the group chat', type: 'Do', videoUrl: '', description: `**Owner: Meghan.** Introduce yourself in the group chat on day one. Team Drive is where listing presentations, marketing templates, vendor lists and disclosure packets live — browse the folders before you need them under pressure.` },
+      { title: 'Week 1 · Register with Lofty CRM & start the training modules', type: 'Do', videoUrl: '', description: `Lofty is the system of record. If a conversation happened and it isn't in Lofty, it didn't happen. Finish the onboarding modules this week — not "eventually".\n- Import your phone contacts and clean the duplicates\n- Set up your smart lists and daily task view\n- Turn on mobile notifications so new leads never sit` },
+      { title: 'Week 1 · Download the Fidelity Agent 1 app', type: 'Do', videoUrl: '', description: `Property profiles, comps, net sheets and farm data in your pocket. Run one property through it this week so you're not learning it in front of a client.` },
+      { title: 'Week 1 · Update your voicemail', type: 'Do', videoUrl: '', description: `Name, team, brokerage, and a promise you keep. "You've reached Jane Doe with Elite Real Estate Group at Keller Williams Central Coast. Leave your name, number and the property address, and I'll call you back today."` },
+      { title: 'Week 1 · Get your headshot', type: 'Do', videoUrl: '', description: `**Owner: Marketing.** Team-standard headshot against the team backdrop. It feeds the bio, the signature, the cards, the sign riders and every profile you build this month, so it comes first.` },
+      { title: 'Week 1 · Write your bio', type: 'Do', videoUrl: '', description: `Roughly 150 words. Where you're from, why real estate, who you serve, and one human detail people remember. Lead with the client, not your resume. Paul reviews it before it goes live.` },
+      { title: 'Week 1 · Order business cards', type: 'Do', videoUrl: '', description: `**Owner: Marketing.** Team template, your DRE number, your cell, your QR code. Order a quantity you'll actually hand out — cards in a drawer are a cost, not a tool.` },
+      { title: 'Week 1 · Build your email signature', type: 'Do', videoUrl: '', description: `**Owner: Marketing.** Team template: name, title, Elite Real Estate Group / Keller Williams Central Coast, cell, website, DRE #. Legal line and equal-housing mark included. Install it on desktop and phone.` },
+      { title: 'Week 1 · Set your 1-year & 5-year goals', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Write both down and bring them to your welcome sit-down. Work them backward: units, then average price point, then GCI, then the weekly conversations that produce them. Vague goals produce vague weeks.` },
+      { title: 'Week 1 · Shadow a top producer for a full day', type: 'Watch', videoUrl: '', description: `Not a coffee — a whole day. Lead gen block, showings, listing appointment, the calls nobody enjoys. Take notes on what they say, not just what they do, and bring three questions to your next check-in.` },
+
+      // ===== Days 8–30 =====
+      { title: 'Days 8–30 · Load 100 people into your database', type: 'Do', videoUrl: '', description: `Your sphere is the cheapest lead source you'll ever own. Phone, email, past coworkers, teammates, neighbors, the person who cuts your hair. Tag them in Lofty and start the eight-week touch plan.` },
+      { title: 'Days 8–30 · Start the daily lead gen block', type: 'Do', videoUrl: '', description: `**Paul confirms the times.** Same hours, every weekday, calendar-blocked and defended. This is the one habit that separates the agents who are still here in year three from the ones who aren't.` },
+      { title: 'Days 8–30 · Set up your social media', type: 'Do', videoUrl: '', description: `**Owner: Marketing.** Business profiles with the team headshot, the team bio language, and your DRE number in the profile. Marketing hands you the first month of content; you post it and answer every comment and DM.\n- Follow every teammate and the brokerage accounts\n- Announce your license and your new team — that post alone starts conversations\n- Post three times a week: one market, one property, one you` },
+      { title: 'Days 8–30 · Create your QR code', type: 'Do', videoUrl: '', description: `**Owner: Marketing.** Points to your agent page or home-valuation landing page. Goes on your cards, your open house sign-in, your flyers and your sign riders. Test it with your own phone before it prints.` },
+      { title: 'Days 8–30 · Shadow four open houses', type: 'Watch', videoUrl: '', description: `Two watching, two running the door under supervision. Learn the setup, the signage route, the sign-in, the questions that turn a neighbor into an appointment, and the follow-up that happens that same night.` },
+      { title: 'Days 8–30 · Preview ten properties', type: 'Do', videoUrl: '', description: `On the Central Coast, price per square foot swings block to block. Walk homes across at least three of our submarkets so you can speak to value from memory instead of a printout.` },
+      { title: 'Days 8–30 · Learn the contract, section by section', type: 'Read', videoUrl: '', description: `**Owner: Erin / Tiffany.** Sit with a TC and read a full purchase agreement out loud — timelines, contingencies, disclosures, addenda. You cannot negotiate a document you haven't read.` },
+      { title: 'Days 8–30 · Day 30 review with Paul', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Database count, lead gen consistency, conversations held, appointments set. We're grading the process this month, not the results.` },
+
+      // ===== Days 31–60 =====
+      { title: 'Days 31–60 · Write a practice offer & defend it', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Pick a live listing, write a complete offer — price, terms, contingency timelines, addenda, disclosures — and walk Paul and your shadow agent through every field and why you chose it. Expect to be pushed on the terms.` },
+      { title: 'Days 31–60 · Run a virtual showing with Paul', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Pick an active listing, open the lockbox with SentriLock, and FaceTime Paul through the property as if he were an out-of-area buyer. Narrate the home, the light, the layout, the trade-offs — and handle his questions live.` },
+      { title: 'Days 31–60 · Host your own open house', type: 'Do', videoUrl: '', description: `You own it end to end: signs out, sign-in running, neighbors invited the day before, and every visitor followed up with within 24 hours. Report the count and the appointments set.` },
+      { title: 'Days 31–60 · Deliver the buyer consultation, out loud', type: 'Do', videoUrl: '', description: `Role-play the full consultation with a teammate: process, representation agreement, financing, timelines, how we compete for a home here. Then do it for a real buyer with your shadow agent in the room.` },
+      { title: 'Days 31–60 · Deliver the listing presentation, out loud', type: 'Do', videoUrl: '', description: `Team listing presentation, your words, no reading from the deck. Pricing conversation, marketing plan, commission conversation. Practice it until the objections stop rattling you.` },
+      { title: 'Days 31–60 · Build your CMA from scratch', type: 'Do', videoUrl: '', description: `Pull one for a home you've previewed, defend every comp and every adjustment, and land on a price range you'd stake your name on. Have a top producer red-line it.` },
+      { title: 'Days 31–60 · Day 60 review with Paul', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Appointments set and held, offers written, pipeline in Lofty. This is where we course-correct the habits before they harden.` },
+
+      // ===== Days 61–90 =====
+      { title: 'Days 61–90 · Sign your first client', type: 'Do', videoUrl: '', description: `Buyer representation agreement or listing agreement, signed, from a relationship you generated. Announce it in the group chat — we celebrate the first one loudly.` },
+      { title: 'Days 61–90 · Open your first file with a TC', type: 'Do', videoUrl: '', description: `**Owner: Erin / Tiffany.** Learn the handoff: what the TC needs from you, when, and what stays yours. The "Your First Transaction" checklist in the playbook above is the sequence you'll run every time after this.` },
+      { title: 'Days 61–90 · Run a full negotiation with Paul on the line', type: 'Do', videoUrl: '', description: `**Owner: Paul.** Counteroffers, the request for repairs, and the conversation where somebody has to move. Call Paul before you send anything you can't take back.` },
+      { title: 'Days 61–90 · Set your post-close follow-up plan', type: 'Do', videoUrl: '', description: `Closing gift, review request, and the annual touch plan in Lofty before the file is archived. Your business in year two is built out of the clients you closed in year one.` },
+      { title: 'Days 61–90 · Day 90 review & next-quarter plan', type: 'Do', videoUrl: '', description: `**Owner: Paul & Meghan.** Look back at the 1-year goal you wrote in week one. Rebuild it with ninety days of real data behind it, and set the standards you'll carry into the next quarter.` }
+    ]
+  };
+
   // ---- Seed data — comprehensive team knowledge base templates ----
   var SEED_DATA = [
     // =============== SCRIPTS & DIALOGUES ===============
@@ -87,18 +253,7 @@
       content: '# Top Producer Daily Schedule\n\n## Morning Power Hour (7:00 - 8:00 AM)\n- Review daily goals and priorities\n- Check new leads and respond within 5 minutes\n- Review showing schedule for the day\n- Check transaction deadlines and follow-ups\n\n## Lead Generation Block (8:00 - 10:00 AM)\n**This is non-negotiable. Protect this time.**\n- 20+ prospecting calls (sphere, FSBOs, expireds)\n- 10+ follow-up texts or emails\n- Social media engagement (15 min max)\n- Door knocking or pop-bys (if scheduled)\n\n## Client Work (10:00 AM - 12:00 PM)\n- Showings\n- Listing appointments\n- Buyer consultations\n- Contract writing and negotiations\n\n## Lunch & Learning (12:00 - 1:00 PM)\n- Lunch with a referral partner, past client, or sphere contact\n- Or: Listen to real estate podcast/audiobook while eating\n\n## Transaction Management (1:00 - 3:00 PM)\n- Update CRM and pipeline\n- Follow up with lenders, title companies, inspectors\n- Review and send client updates\n- Prepare CMAs and listing presentations\n\n## Marketing & Admin (3:00 - 4:00 PM)\n- Create social media content\n- Review and respond to showing feedback\n- Update listings\n- Handle paperwork and compliance\n\n## End of Day (4:00 - 5:00 PM)\n- Plan tomorrow\'s schedule\n- Send any outstanding client communications\n- Review goals progress\n- Log activities in the system\n\n---\n\n> **Key principle:** Lead generation comes FIRST, not last. The agents who prospect first thing in the morning consistently outperform those who "get to it later."' },
 
     // =============== TRAINING MATERIALS ===============
-    { id: 'kb-010', title: 'New Agent Onboarding', category: 'Training Materials', type: 'training', pinned: true, tags: ['onboarding', 'new agent', 'training'], difficulty: 'beginner', estimatedMinutes: 45, videoUrl: '', createdBy: 'Team Lead', createdAt: '2026-01-10T10:00:00Z',
-      content: '# Welcome to the Team!\n\nThis onboarding training will walk you through everything you need to know to hit the ground running. Complete each step below and check them off as you go.\n\n> Take your time with each step. This is the foundation for your success on our team.',
-      steps: [
-        { title: 'Read the Team Handbook', type: 'Read', description: 'Review our team policies, commission structure, splits, expectations, and code of conduct.', videoUrl: '' },
-        { title: 'Set Up Your Profile', type: 'Do', description: 'Go to your Profile page and add your photo, phone number, and email. This information shows up on the client portal.', videoUrl: '' },
-        { title: 'Learn the System', type: 'Do', description: 'Walk through each section of the back office — Dashboard, Listings, Current Escrows, Marketing, Reviews. Click around and get familiar.', videoUrl: '' },
-        { title: 'Add Your Review Links', type: 'Do', description: 'Go to Reviews → Review Links tab. Add your Google, Zillow, and other review profile URLs.', videoUrl: '' },
-        { title: 'Set Up Your Marketing Activities', type: 'Do', description: 'Go to Marketing and review the weekly and monthly activity checklists. Start checking off what you\'ve done this week.', videoUrl: '' },
-        { title: 'Review the Scripts', type: 'Read', description: 'Read through the Buyer Consultation Script and Listing Presentation Script in the Knowledge Base.', videoUrl: '' },
-        { title: 'Shadow a Showing or Listing Appointment', type: 'Do', description: 'Ask the team lead to shadow your next showing or listing appointment. Take notes.', videoUrl: '' },
-        { title: 'Make Your First 10 Prospecting Calls', type: 'Do', description: 'Using the scripts in the Knowledge Base, make 10 calls to your sphere of influence. Log them in Bold 100.', videoUrl: '' }
-      ] },
+    ONBOARDING_ITEM,
 
     { id: 'kb-011', title: 'Mastering the Listing Presentation', category: 'Training Materials', type: 'training', pinned: false, tags: ['listing', 'presentation', 'training', 'seller'], difficulty: 'intermediate', estimatedMinutes: 60, videoUrl: '', createdBy: 'Team Lead', createdAt: '2026-01-11T10:00:00Z',
       content: '# Mastering the Listing Presentation\n\nThe listing presentation is the single most important skill for growing your business. A strong presentation wins listings, and listings generate buyer leads, sign calls, and sphere expansion.\n\n> **Goal:** After this training, you should be able to deliver a confident 30-minute listing presentation from memory.',
@@ -262,8 +417,45 @@
     if (!items || items.length === 0) {
       var seeded = SEED_DATA.map(function (item) { return item; });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
       return seeded;
     }
+    // Upgrade default content already saved in older installs
+    return migrateItems(items);
+  }
+
+  // ---- Seed migrations — upgrade default content already saved before SEED_VERSION bumps ----
+  function migrateItems(items) {
+    var stored = parseInt(localStorage.getItem(SEED_VERSION_KEY) || '1', 10);
+    if (isNaN(stored)) stored = 1;
+    if (stored >= SEED_VERSION) return items;
+
+    var changed = false;
+
+    // v2 — replace the original 8-step onboarding with the 90-day program
+    if (stored < 2) {
+      var idx = -1;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === ONBOARDING_ITEM.id) { idx = i; break; }
+      }
+      if (idx !== -1) items[idx] = ONBOARDING_ITEM;
+      else items.unshift(ONBOARDING_ITEM);
+      changed = true;
+      // Step semantics changed — clear stale completion so no false checkmarks carry over
+      try {
+        var praw = localStorage.getItem(PROGRESS_KEY);
+        if (praw) {
+          var all = JSON.parse(praw) || {};
+          Object.keys(all).forEach(function (u) {
+            if (all[u] && all[u][ONBOARDING_ITEM.id]) delete all[u][ONBOARDING_ITEM.id];
+          });
+          localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
+        }
+      } catch (e) {}
+    }
+
+    if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
     return items;
   }
 
