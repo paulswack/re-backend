@@ -944,15 +944,16 @@
       return '<option value="' + t + '"' + (step.type === t ? ' selected' : '') + '>' + t + '</option>';
     }).join('');
 
+    var gripSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="pointer-events:none;"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg>';
+
     var html = '<div class="step-row" data-step-idx="' + idx + '" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px;margin-bottom:10px;">';
-    // Header: step number + reorder / remove controls
+    // Header: drag handle + step number + remove
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    html += '<div style="display:flex;align-items:center;gap:8px;">';
+    html += '<span class="kb-drag-handle" draggable="true" title="Drag to reorder">' + gripSvg + '</span>';
     html += '<span class="step-num" style="font-size:12px;font-weight:700;color:#64748B;">Step ' + (idx + 1) + '</span>';
-    html += '<div style="display:flex;gap:6px;">';
-    html += '<button class="btn btn-outline btn-sm" data-action="move-step-up" data-step-idx="' + idx + '" type="button" title="Move up" style="padding:4px 10px;line-height:1;">&#8593;</button>';
-    html += '<button class="btn btn-outline btn-sm" data-action="move-step-down" data-step-idx="' + idx + '" type="button" title="Move down" style="padding:4px 10px;line-height:1;">&#8595;</button>';
-    html += '<button class="btn btn-outline btn-sm" data-action="remove-step" data-step-idx="' + idx + '" type="button" title="Remove step" style="color:#DC2626;border-color:#FECACA;padding:4px 10px;">Remove</button>';
     html += '</div>';
+    html += '<button class="btn btn-outline btn-sm" data-action="remove-step" data-step-idx="' + idx + '" type="button" title="Remove step" style="color:#DC2626;border-color:#FECACA;padding:4px 10px;">Remove</button>';
     html += '</div>';
     // Title + type
     html += '<div class="form-row" style="display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:start;">';
@@ -1004,23 +1005,33 @@
     reindexSteps();
   }
 
-  // Move a step up or down. Reorders the actual DOM nodes so any text the user has
-  // typed moves with the step, then renumbers.
-  function moveStepRow(idx, dir) {
-    var stepsList = document.getElementById('stepsList');
-    if (!stepsList) return;
-    var rows = stepsList.querySelectorAll('.step-row');
-    var row = rows[idx];
-    if (!row) return;
-    if (dir === 'up' && idx > 0) {
-      stepsList.insertBefore(row, rows[idx - 1]);
-    } else if (dir === 'down' && idx < rows.length - 1) {
-      stepsList.insertBefore(rows[idx + 1], row);
-    } else {
-      return;
-    }
-    reindexSteps();
-    try { row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+  // ---- Drag-and-drop reordering of training steps ----
+  var draggedRow = null;
+
+  // One-time styles for the drag handle and dragging state.
+  function ensureStepDnDStyle() {
+    if (document.getElementById('kbStepDnDStyle')) return;
+    var st = document.createElement('style');
+    st.id = 'kbStepDnDStyle';
+    st.textContent =
+      '.kb-drag-handle{cursor:grab;color:#94A3B8;display:inline-flex;align-items:center;padding:2px 4px;border-radius:4px;user-select:none;}' +
+      '.kb-drag-handle:hover{color:#475569;background:#EEF2F7;}' +
+      '.kb-drag-handle:active{cursor:grabbing;}' +
+      '.step-row.dragging{opacity:.45;border-color:#6366F1;box-shadow:0 4px 14px rgba(99,102,241,.18);}';
+    document.head.appendChild(st);
+  }
+
+  // Given the pointer Y, find the step-row the dragged item should be inserted
+  // before (or null to append at the end). Standard MDN drag-sort pattern.
+  function getDragAfterElement(container, y) {
+    var rows = Array.prototype.slice.call(container.querySelectorAll('.step-row:not(.dragging)'));
+    var closest = { offset: -Infinity, element: null };
+    rows.forEach(function (child) {
+      var box = child.getBoundingClientRect();
+      var offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) closest = { offset: offset, element: child };
+    });
+    return closest.element;
   }
 
   function collectSteps() {
@@ -1264,10 +1275,6 @@
       addStepRow();
     } else if (action === 'remove-step') {
       removeStepRow(parseInt(target.getAttribute('data-step-idx'), 10));
-    } else if (action === 'move-step-up') {
-      moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'up');
-    } else if (action === 'move-step-down') {
-      moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'down');
     }
   });
 
@@ -1331,7 +1338,45 @@
     }
   });
 
+  // ---- Drag-and-drop wiring (delegated on document; drag events bubble) ----
+  document.addEventListener('dragstart', function (e) {
+    var handle = e.target.closest ? e.target.closest('.kb-drag-handle') : null;
+    if (!handle) return;
+    var row = handle.closest('.step-row');
+    if (!row) return;
+    draggedRow = row;
+    row.classList.add('dragging');
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', 'step'); } catch (ex) {} // Firefox needs data set
+      try { e.dataTransfer.setDragImage(row, 20, 20); } catch (ex) {}
+    }
+  });
+
+  document.addEventListener('dragover', function (e) {
+    if (!draggedRow) return;
+    var stepsList = document.getElementById('stepsList');
+    if (!stepsList || !stepsList.contains(e.target)) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    var after = getDragAfterElement(stepsList, e.clientY);
+    if (after == null) stepsList.appendChild(draggedRow);
+    else if (after !== draggedRow) stepsList.insertBefore(draggedRow, after);
+  });
+
+  document.addEventListener('drop', function (e) {
+    if (draggedRow && document.getElementById('stepsList')) e.preventDefault();
+  });
+
+  document.addEventListener('dragend', function () {
+    if (!draggedRow) return;
+    draggedRow.classList.remove('dragging');
+    draggedRow = null;
+    reindexSteps();
+  });
+
   // ---- Init ----
+  ensureStepDnDStyle();
   renderList();
 
   // Re-render once the API bridge has loaded the team's shared Knowledge Base from
