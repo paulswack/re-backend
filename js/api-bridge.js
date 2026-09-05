@@ -320,8 +320,16 @@ var ApiBridge = (function () {
       API.getEmailTemplates().then(function (d) { localStorage.setItem(PREFIX + 'review_templates', JSON.stringify(d)); }).catch(notifySyncError),
       API.getMeetingNotes().then(function (d) { localStorage.setItem(PREFIX + 'meeting_notes', JSON.stringify(d)); }).catch(notifySyncError),
       API.getAgentGoals().then(function (d) { _rawGoals = d || []; }).catch(notifySyncError),
-      // Knowledge base handled by its own seed logic — don't overwrite
-      Promise.resolve(),
+      // Knowledge base — load the team's shared copy so content syncs across all
+      // devices. Written while _syncing is true, so this does not re-trigger a push.
+      // knowledge-base.js overlays its seed migration (self-heals a stale server
+      // copy) and re-renders on the apiBridgeReady event below.
+      API.getSettings().then(function (d) {
+        var kb = d && d._knowledge_base;
+        if (kb && Array.isArray(kb) && kb.length > 0) {
+          localStorage.setItem(PREFIX + 'knowledge_base', JSON.stringify(kb));
+        }
+      }).catch(notifySyncError),
       API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(notifySyncError),
       API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(notifySyncError),
       API.getNotifications().then(function (d) { localStorage.setItem(PREFIX + 'notifications', JSON.stringify(d)); }).catch(notifySyncError)

@@ -59,6 +59,7 @@
   // ---- New Agent Onboarding — the 90-day program (also used by migrateItems) ----
   var ONBOARDING_ITEM = {
     id: 'kb-010',
+    seedVersion: SEED_VERSION, // force-upgraded on any device whose stored copy is behind
     title: 'New Agent Onboarding — First 90 Days',
     category: 'Training Materials',
     type: 'training',
@@ -424,24 +425,33 @@
     return migrateItems(items);
   }
 
-  // ---- Seed migrations — upgrade default content already saved before SEED_VERSION bumps ----
+  // ---- Seed reconcile ----
+  // Runs on every load, on whatever set of items we have — whether seeded locally or
+  // just pulled from the team's shared server copy. Ensures the managed onboarding
+  // template is always at the current code version, so it reaches every device and a
+  // stale shared copy can't silently downgrade it. All other resources are left
+  // untouched, so agent-created/edited articles sync freely. An in-app edit to the
+  // onboarding keeps its seedVersion (saveResource mutates in place), so it is NOT
+  // reverted here — only a code SEED_VERSION bump overrides it.
   function migrateItems(items) {
-    var stored = parseInt(localStorage.getItem(SEED_VERSION_KEY) || '1', 10);
-    if (isNaN(stored)) stored = 1;
-    if (stored >= SEED_VERSION) return items;
-
     var changed = false;
 
-    // v2 — replace the original 8-step onboarding with the 90-day program
-    if (stored < 2) {
-      var idx = -1;
-      for (var i = 0; i < items.length; i++) {
-        if (items[i].id === ONBOARDING_ITEM.id) { idx = i; break; }
-      }
+    var idx = -1;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === ONBOARDING_ITEM.id) { idx = i; break; }
+    }
+    var storedItemVersion = idx !== -1 ? (items[idx].seedVersion || 0) : -1;
+    if (storedItemVersion < ONBOARDING_ITEM.seedVersion) {
       if (idx !== -1) items[idx] = ONBOARDING_ITEM;
       else items.unshift(ONBOARDING_ITEM);
       changed = true;
-      // Step semantics changed — clear stale completion so no false checkmarks carry over
+    }
+
+    // One-time-per-device cleanup when upgrading from the original 8-step onboarding:
+    // clear stale step-completion so old indices don't show as checked on the new steps.
+    var localVer = parseInt(localStorage.getItem(SEED_VERSION_KEY) || '1', 10);
+    if (isNaN(localVer)) localVer = 1;
+    if (localVer < SEED_VERSION) {
       try {
         var praw = localStorage.getItem(PROGRESS_KEY);
         if (praw) {
@@ -452,10 +462,10 @@
           localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
         }
       } catch (e) {}
+      localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
     }
 
     if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
     return items;
   }
 
@@ -1279,5 +1289,14 @@
 
   // ---- Init ----
   renderList();
+
+  // Re-render once the API bridge has loaded the team's shared Knowledge Base from
+  // the server, so resources added or edited on other devices appear here. Skip
+  // while a form is open so in-progress input is never discarded.
+  document.addEventListener('apiBridgeReady', function () {
+    if (currentView === 'form') return;
+    if (currentView === 'detail' && viewingId) { renderDetail(viewingId); return; }
+    renderList();
+  });
 
 })();
