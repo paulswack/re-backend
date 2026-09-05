@@ -38,6 +38,14 @@ router.put('/', requireAuth, async (req, res) => {
   try {
     const incoming = req.body.settings || req.body;
 
+    // Knowledge Base is admin-managed. Silently drop _knowledge_base writes from
+    // non-leads so an agent (or a bypassed UI) can't modify the shared team KB,
+    // while still letting the rest of their settings in this request save.
+    if (incoming && incoming._knowledge_base !== undefined &&
+        req.user.role !== 'Team Lead' && req.user.role !== 'Admin') {
+      delete incoming._knowledge_base;
+    }
+
     // Fetch existing settings for merge
     const { data: existing } = await getSupabase()
       .from('teams')

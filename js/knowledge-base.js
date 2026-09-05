@@ -27,6 +27,15 @@
   var viewingId = null;
   var editingId = null;
 
+  // Knowledge Base is admin-managed: only Team Lead / Admin may add, edit, or delete.
+  // The server (routes/settings.js) drops _knowledge_base writes from non-leads too,
+  // so this can't be bypassed via the UI.
+  function canEditKB(silent) {
+    if (Auth.isPrivileged()) return true;
+    if (!silent && typeof showToast === 'function') showToast('Only team leads can edit the Knowledge Base.', 'error');
+    return false;
+  }
+
   // ---- Categories with colors ----
   var CATEGORIES = {
     'Scripts & Dialogues':   { bg: '#EEF2FF', text: '#4F46E5' },
@@ -845,6 +854,7 @@
 
   // ---- Render form view ----
   function renderForm(id) {
+    if (!canEditKB()) { currentView = 'list'; renderList(); return; }
     var items = getItems();
     var item = null;
     if (id) {
@@ -1058,6 +1068,7 @@
 
   // ---- Save resource ----
   function saveResource(id) {
+    if (!canEditKB()) return;
     var title = document.getElementById('kbTitle').value.trim();
     var category = document.getElementById('kbCategory').value;
     var type = document.getElementById('kbType').value;
@@ -1128,6 +1139,7 @@
 
   // ---- New Article Modal ----
   function openArticleModal() {
+    if (!canEditKB()) return;
     var catOpts = CATEGORY_KEYS.map(function (cat) {
       return '<option value="' + escapeHtml(cat) + '">' + escapeHtml(cat) + '</option>';
     }).join('');
@@ -1164,6 +1176,7 @@
   }
 
   function saveArticle() {
+    if (!canEditKB()) return;
     var title = document.getElementById('artTitle').value.trim();
     var category = document.getElementById('artCategory').value;
     var content = document.getElementById('artContent').value.trim();
@@ -1197,6 +1210,7 @@
 
   // ---- Delete resource ----
   function deleteResource(id) {
+    if (!canEditKB()) return;
     if (!confirm('Delete this resource?')) return;
     var items = getItems().filter(function (i) { return i.id !== id; });
     saveItems(items);
@@ -1377,6 +1391,11 @@
 
   // ---- Init ----
   ensureStepDnDStyle();
+  // Hide the always-present "New Article" top-bar button for non-admins.
+  if (!Auth.isPrivileged()) {
+    var newArticleBtn = document.querySelector('[data-action="new-article"]');
+    if (newArticleBtn) newArticleBtn.style.display = 'none';
+  }
   renderList();
 
   // Re-render once the API bridge has loaded the team's shared Knowledge Base from
