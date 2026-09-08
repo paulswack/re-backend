@@ -1136,11 +1136,11 @@
       case 'mkt-monthly': return loadMktConfig().monthly;
       case 'portal-txn-milestones': return loadPortalConfig().txnMilestones;
       case 'portal-lst-milestones': return loadPortalConfig().lstMilestones;
-      case 'sidebar-order': return (settings.sidebarOrder || []).length ? settings.sidebarOrder.map(function(p) { return { page: p }; }) : [
+      case 'sidebar-order': return ((settings.sidebarOrder || []).length ? settings.sidebarOrder.map(function(p) { return { page: p }; }) : [
         {page:'closed.html'},{page:'deal-room.html'},
-        {page:'tax-center.html'},{page:'meeting-notes.html'},{page:'vendors.html'},{page:'marketing.html'},
+        {page:'tax-center.html'},{page:'meeting-notes.html'},{page:'marketing.html'},
         {page:'knowledge-base.html'},{page:'recruiting.html'},{page:'bold100.html'}
-      ];
+      ]).filter(function (it) { return it.page !== 'vendors.html'; });
       default: return null;
     }
   }
@@ -1424,7 +1424,6 @@
       { page: 'deal-room.html', label: 'Deal Room' },
       { page: 'tax-center.html', label: 'Tax Center' },
       { page: 'meeting-notes.html', label: 'Monthly Meeting 1-1' },
-      { page: 'vendors.html', label: 'Vendors' },
       { page: 'marketing.html', label: 'Marketing' },
       { page: 'knowledge-base.html', label: 'Knowledge Base' },
       { page: 'recruiting.html', label: 'Recruiting' },
