@@ -19,7 +19,7 @@
   var STORAGE_KEY = 'reb_knowledge_base';
   var PROGRESS_KEY = 'reb_training_progress';
   var SEED_VERSION_KEY = 'reb_kb_seed_version';
-  var SEED_VERSION = 3; // bump when the managed onboarding content changes so every device picks it up
+  var SEED_VERSION = 4; // bump when the managed onboarding content changes so every device picks it up
   var pageBody = document.getElementById('pageBody');
   var currentView = 'list'; // list, detail, form
   var currentFilter = 'All';
@@ -78,102 +78,7 @@
     videoUrl: '',
     createdBy: 'Paul Swack',
     createdAt: '2026-09-05T10:00:00Z',
-    content: [
-      `# Welcome to the Team — Your First 90 Days`,
-      ``,
-      `Every agent who joins Elite Real Estate Group gets the same runway: a full quarter with a defined objective for each stretch of it. Week one is setup. The first month is fundamentals and shadowing. The second is reps under supervision. The third is live ball — your own listing appointment, your own buyer, your own file.`,
-      ``,
-      `> Ninety days to build a business, not just hold a license. Work the checklist in the Training Steps below from top to bottom, and lean on the playbook here whenever you get stuck.`,
-      ``,
-      `**Program leads:** Paul Swack & Meghan Smith`,
-      ``,
-      `**Check-in:** 15 minutes, monthly · **Milestone reviews:** Day 30, Day 60, Day 90`,
-      ``,
-      `---`,
-      ``,
-      `# Playbook`,
-      ``,
-      `## The Tech Stack`,
-      ``,
-      `Six tools, each with one job. Learn them in this order — the ones at the top are useless without the ones below them being current.`,
-      ``,
-      `- **Team Drive** *(Day 1)* — Presentations, marketing templates, vendor list, disclosure packets, brand assets.`,
-      `- **Lofty CRM** *(Week 1)* — System of record. Every lead, every conversation, every follow-up task. If it isn't in Lofty, it didn't happen.`,
-      `- **MLS** *(Week 1)* — Listings, comps, showing scheduling and lockbox access. Your CMA lives or dies here.`,
-      `- **KW Command** *(Week 1)* — Brokerage platform: training, designs, and your KW agent profile.`,
-      `- **Fidelity Agent 1** *(Week 1)* — Property profiles, farm data, net sheets and title questions from your phone.`,
-      `- **SentriLock** *(Week 2)* — Lockbox access on your phone. Set it up before you need to get into a house.`,
-      ``,
-      `## Lead Gen Standards`,
-      ``,
-      `The team's minimum daily standard for a new agent. Results vary; the inputs don't.`,
-      ``,
-      `- **2 hours** — Lead gen block, every weekday, calendar-defended`,
-      `- **20** — Conversations attempted per day`,
-      `- **5** — Handwritten notes per week`,
-      `- **1** — Open house per week`,
-      `- **100** — People in your database by day 30`,
-      `- **24 hours** — Maximum follow-up time on any new lead`,
-      ``,
-      `> **Paul to confirm.** These are starting numbers — swap in the team's real standards before this goes out to the first new agent.`,
-      ``,
-      `## Scripts That Earn the Appointment`,
-      ``,
-      `Say them out loud until they sound like you. The words matter less than the fact that you're not improvising while someone is deciding whether to trust you.`,
-      ``,
-      `### Sphere — the announcement call`,
-      `> "Hey [name], it's [you] — no favor, just news. I've joined Paul Swack's team at Keller Williams here on the Central Coast, and I'm doing real estate full time now. You're one of the first people I wanted to tell. If you ever hear someone wondering what their place is worth, I'd love to be the person you point them to."`,
-      ``,
-      `### Open house — the door`,
-      `> "Come on in — I'm [you] with Elite Real Estate Group. Have you been through this one before? What's got you out looking today?" Then stop talking. The next question earns the appointment: "If this one isn't it, do you want me to send you the ones that are before they hit the sites?"`,
-      ``,
-      `### Neighbor invite — the day before`,
-      `> "Hi, I'm [you] with Elite Real Estate Group — I'm hosting the open house at [address] tomorrow from noon to two and wanted you to have first look before the public does. Do you know anyone who's been hoping to move into the neighborhood?"`,
-      ``,
-      `### Online lead — first text, inside five minutes`,
-      `> "Hi [name] — [you] with Elite Real Estate Group. Saw you looking at [address]. Do you want the disclosures on that one, or are you still narrowing down areas? Either way I can help."`,
-      ``,
-      `### The price objection`,
-      `> "I hear you, and I'd want the higher number too. Here's what I can promise: I'll show you exactly what the last three comparable homes sold for and what they had that this one doesn't. Then you pick the number — you just won't be picking it blind."`,
-      ``,
-      `### "I have a friend in the business"`,
-      `> "That's great — loyalty matters, and I'd never ask you to burn a relationship. Can I ask what they've sold in this area in the last year? If the answer's a good one, use them. If it isn't, I'd like the chance to show you what our team does differently."`,
-      ``,
-      `## Your First Transaction, Step by Step`,
-      ``,
-      `Every step has a clock attached to it, and missing one costs your client money or leverage. Run it with a TC the first time, then run it yourself.`,
-      ``,
-      `1. **Offer accepted** — Confirm every signature and initial, and send the fully executed contract to your TC the same day.`,
-      `2. **Open escrow** — Escrow and title opened, escrow number circulated to both sides, lender looped in.`,
-      `3. **Earnest money delivered** — On the contract's clock, with the wire confirmation saved to the file. Warn your buyer about wire fraud before they send a dollar.`,
-      `4. **Disclosures delivered** — Seller disclosures and the natural hazard report out to the buyer, receipt acknowledged in writing.`,
-      `5. **Inspections ordered** — General, and anything the general recommends: roof, sewer, pest, chimney. Book them early in the contingency period, not on the last day.`,
-      `6. **Appraisal ordered** — Lender-ordered. Meet the appraiser with your comps if the price needs support.`,
-      `7. **Loan progress checked** — Talk to the lender weekly, in a call, not a text thread. Underwriting surprises are the number one closing delay.`,
-      `8. **Request for repairs negotiated** — Ask for what matters: health, safety and expensive systems. Nickel-and-diming a seller costs goodwill you'll need at the walkthrough.`,
-      `9. **Contingencies removed in writing** — Never verbally, never assumed. This is the moment your client's deposit is on the line.`,
-      `10. **Final walkthrough** — Verify repairs, run the appliances, and check that nothing left with the seller that shouldn't have.`,
-      `11. **Signing and funding** — Loan docs signed, funds wired, loan funds. Set expectations early: recording day is not always signing day.`,
-      `12. **Recording and keys** — Confirm recording, then hand over the keys in person. Closing gift, review request, and the annual touch plan into Lofty before you archive the file.`,
-      ``,
-      `## How We Operate`,
-      ``,
-      `- **Answer the phone.** Speed is the cheapest competitive advantage in this business. If you can't answer, call back the same day — every time.`,
-      `- **Ask early, not after.** Nobody has ever been in trouble here for asking a question. People get in trouble for guessing on a contract.`,
-      `- **The client's money isn't yours to gamble.** Deadlines, deposits and disclosures get treated like they're your own. Put everything in writing.`,
-      `- **Fourth-generation local means something.** Know the neighborhoods, schools, coastal quirks and inventory well enough to answer without looking it up.`,
-      `- **Celebrate your teammates loudly.** First contract, first close, hard-won listing — it goes in the group chat. This works because it's a team.`,
-      `- **Do the boring thing daily.** The lead gen block is non-negotiable. Talent is optional in this business; consistency isn't.`,
-      ``,
-      `## Check-in Cadence`,
-      ``,
-      `Accountability is scheduled, not spontaneous. Every meeting below is on the calendar before day one.`,
-      ``,
-      `- **Day 1** *(45 min)* — Welcome sit-down with Paul: goals, expectations, who to call for what.`,
-      `- **Weekly, first 30 days** *(20 min)* — Your shadow producer: what you saw, what confused you, what's next.`,
-      `- **Monthly, ongoing** *(15 min)* — Paul and Meghan: numbers, blockers, one thing to fix before next month.`,
-      `- **Day 30 · 60 · 90** *(30 min)* — Milestone review against this checklist and your written goals.`
-    ].join('\n'),
+    content: '',
     steps: [
       // ===== Before Day One =====
       { title: 'Before Day 1 · Confirm license, board & MLS', type: 'Do', videoUrl: '', description: `**Owner: Meghan.** License hung with the brokerage, association membership active, MLS credentials issued, E&O and dues squared away. An agent who can't pull comps on day two loses a week of momentum.` },
@@ -441,10 +346,14 @@
     for (var i = 0; i < items.length; i++) {
       if (items[i].id === ONBOARDING_ITEM.id) { idx = i; break; }
     }
-    var storedItemVersion = idx !== -1 ? (items[idx].seedVersion || 0) : -1;
-    if (storedItemVersion < ONBOARDING_ITEM.seedVersion) {
-      if (idx !== -1) items[idx] = ONBOARDING_ITEM;
-      else items.unshift(ONBOARDING_ITEM);
+    if (idx === -1) {
+      // Missing entirely — add it.
+      items.unshift(ONBOARDING_ITEM);
+      changed = true;
+    } else if (!items[idx].userEdited && (items[idx].seedVersion || 0) < ONBOARDING_ITEM.seedVersion) {
+      // Behind the current code version and not customized in-app — force-upgrade.
+      // Admin edits (userEdited) are preserved so the Settings task editor sticks.
+      items[idx] = ONBOARDING_ITEM;
       changed = true;
     }
 
@@ -1070,7 +979,7 @@
 
     if (!title) { showToast('Title is required.', 'error'); return; }
     if (!category) { showToast('Please select a category.', 'error'); return; }
-    if (!content) { showToast('Content is required.', 'error'); return; }
+    if (!content && type !== 'training') { showToast('Content is required.', 'error'); return; }
 
     var tags = tagsRaw ? tagsRaw.split(',').map(function (t) { return t.trim(); }).filter(function (t) { return t; }) : [];
     var videoUrl = document.getElementById('kbVideoUrl').value.trim();
@@ -1101,6 +1010,7 @@
           item.difficulty = difficulty;
           item.estimatedMinutes = estimatedMinutes;
           item.steps = steps;
+          item.userEdited = true; // protect from code-seed reconcile overwrite
         }
         return item;
       });

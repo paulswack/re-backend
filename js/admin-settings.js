@@ -41,6 +41,39 @@
   var PREFIX = 'reb_';
   var SETTINGS_KEY = PREFIX + 'admin_settings';
 
+  // ---- Onboarding tasks (stored inside the Knowledge Base onboarding item) ----
+  var KB_KEY = PREFIX + 'knowledge_base';
+  var ONBOARDING_ID = 'kb-010';
+  var STEP_TYPES = ['Read', 'Watch', 'Do', 'Quiz', 'Video'];
+
+  function loadKbItems() {
+    try { return JSON.parse(localStorage.getItem(KB_KEY) || '[]') || []; } catch (e) { return []; }
+  }
+  function getOnboardingItem() {
+    var items = loadKbItems();
+    for (var i = 0; i < items.length; i++) { if (items[i].id === ONBOARDING_ID) return items[i]; }
+    return null;
+  }
+  function getOnboardingSteps() {
+    var it = getOnboardingItem();
+    return (it && it.steps) ? it.steps : [];
+  }
+  // Writes steps back to the onboarding item and marks it user-edited so the
+  // Knowledge Base seed reconcile won't overwrite it. Saving syncs to the team
+  // via the api-bridge localStorage interceptor.
+  function saveOnboardingSteps(steps) {
+    var items = loadKbItems();
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === ONBOARDING_ID) {
+        items[i].steps = steps;
+        items[i].userEdited = true;
+        localStorage.setItem(KB_KEY, JSON.stringify(items));
+        return true;
+      }
+    }
+    return false;
+  }
+
   // ---- Default Settings ----
   var DEFAULTS = {
     theme: {
@@ -887,6 +920,55 @@
     return h;
   }
 
+  // ---- Onboarding Tasks ----
+  function renderOnboarding() {
+    var item = getOnboardingItem();
+    var h = '<div class="as-section">';
+    h += '<div class="as-section-header"><h2>Onboarding Tasks</h2><p>Edit the New Agent Onboarding checklist. Changes save automatically and sync to everyone.</p></div>';
+
+    if (!item) {
+      h += '<div class="as-card"><div class="as-empty">The onboarding checklist hasn\'t loaded on this device yet. Open the <a href="knowledge-base.html">Knowledge Base</a> once, then come back.</div></div>';
+      h += '</div>';
+      return h;
+    }
+
+    var steps = item.steps || [];
+
+    h += '<div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">';
+    h += '<div style="font-size:.8rem;color:var(--gray-500)">' + steps.length + ' task' + (steps.length !== 1 ? 's' : '') + ' · drag the handle to reorder</div>';
+    h += '<button class="btn btn-primary btn-sm" data-action="add-onboarding-task"><svg viewBox="0 0 24 24" width="16" height="16" style="fill:currentColor;margin-right:4px"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>Add Task</button>';
+    h += '</div>';
+
+    if (steps.length === 0) {
+      h += '<div class="as-card"><div class="as-empty">No tasks yet. Click "Add Task" to create one.</div></div>';
+      h += '</div>';
+      return h;
+    }
+
+    h += '<div id="onbList">';
+    steps.forEach(function (step, i) {
+      var typeOpts = STEP_TYPES.map(function (t) {
+        return '<option value="' + t + '"' + (step.type === t ? ' selected' : '') + '>' + t + '</option>';
+      }).join('');
+      h += '<div class="onb-row as-card" data-index="' + i + '" style="padding:12px;margin-bottom:10px">';
+      // header: handle + label + type + remove
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+      h += '<span class="onb-handle" draggable="true" title="Drag to reorder"><svg viewBox="0 0 24 24" width="16" height="16" style="pointer-events:none" fill="var(--gray-300)"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></span>';
+      h += '<span class="onb-num" style="font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">Task ' + (i + 1) + '</span>';
+      h += '<div style="flex:1"></div>';
+      h += '<select data-action="update-onboarding-type" data-index="' + i + '" style="padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.8rem;background:#fff">' + typeOpts + '</select>';
+      h += '<button class="btn btn-outline btn-sm" data-action="remove-onboarding-task" data-index="' + i + '" style="color:var(--rose);border-color:var(--gray-200);padding:4px 9px;font-size:.85rem" title="Remove task">&times;</button>';
+      h += '</div>';
+      h += '<input type="text" value="' + escHtml(step.title || '') + '" data-action="update-onboarding-title" data-index="' + i + '" placeholder="Task title" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.9rem;font-weight:600;margin-bottom:6px">';
+      h += '<textarea data-action="update-onboarding-desc" data-index="' + i + '" placeholder="Description (optional)" rows="2" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.82rem;resize:vertical;font-family:inherit">' + escHtml(step.description || '') + '</textarea>';
+      h += '</div>';
+    });
+    h += '</div>';
+
+    h += '</div>';
+    return h;
+  }
+
   // ---- Tab definitions ----
   var TABS = [
     { key: 'theme', label: 'Theme & Colors', icon: '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>' },
@@ -895,6 +977,7 @@
     { key: 'listings', label: 'Listing Settings', icon: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>' },
     { key: 'leadSources', label: 'Lead Sources', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' },
     { key: 'checklists', label: 'Checklist Templates', icon: '<path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>' },
+    { key: 'onboarding', label: 'Onboarding Tasks', icon: '<path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>' },
     { key: 'expenses', label: 'Expense Categories', icon: '<path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>' },
     { key: 'teamRoles', label: 'Team & Roles', icon: '<path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>' },
     { key: 'leaderboard', label: 'Leaderboard Settings', icon: '<path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>' },
@@ -1075,6 +1158,7 @@
       case 'goals': return renderGoals();
       case 'announcements': return renderAnnouncements();
       case 'checklists': return renderChecklists();
+      case 'onboarding': return renderOnboarding();
       case 'marketing': return renderMarketing();
       case 'notifications': return renderNotifications();
       case 'emailTemplates': return renderEmailTemplates();
@@ -2545,6 +2629,22 @@
       return;
     }
 
+    // ---- Onboarding tasks ----
+    if (action === 'add-onboarding-task') {
+      var oAdd = getOnboardingSteps().slice();
+      oAdd.push({ title: 'New task', type: 'Do', description: '', videoUrl: '' });
+      if (saveOnboardingSteps(oAdd)) { showToast('Task added'); render(); }
+      else { showToast('Open the Knowledge Base once first, then edit here', 'error'); }
+      return;
+    }
+    if (action === 'remove-onboarding-task') {
+      var oRem = getOnboardingSteps().slice();
+      if (isNaN(index) || index < 0 || index >= oRem.length) return;
+      oRem.splice(index, 1);
+      if (saveOnboardingSteps(oRem)) { showToast('Task removed'); render(); }
+      return;
+    }
+
     // ---- Marketing ----
     if (action === 'switch-mkt-tab') {
       mktEditTab = btn.getAttribute('data-tab');
@@ -2703,6 +2803,13 @@
     var index = parseInt(el.getAttribute('data-index'));
     var field = el.getAttribute('data-field');
     var key = el.getAttribute('data-key');
+
+    // Onboarding task type
+    if (action === 'update-onboarding-type') {
+      var otSteps = getOnboardingSteps().slice();
+      if (otSteps[index]) { otSteps[index].type = el.value; saveOnboardingSteps(otSteps); }
+      return;
+    }
 
     // Badge emoji dropdown (built-in)
     if (action === 'update-badge-icon') {
@@ -2997,6 +3104,18 @@
     if (!action) return;
     var index = parseInt(el.getAttribute('data-index'));
 
+    // Onboarding task title / description
+    if (action === 'update-onboarding-title') {
+      var obtSteps = getOnboardingSteps().slice();
+      if (obtSteps[index]) { obtSteps[index].title = el.value.trim(); saveOnboardingSteps(obtSteps); }
+      return;
+    }
+    if (action === 'update-onboarding-desc') {
+      var obdSteps = getOnboardingSteps().slice();
+      if (obdSteps[index]) { obdSteps[index].description = el.value; saveOnboardingSteps(obdSteps); }
+      return;
+    }
+
     if (action === 'update-txn-status-label') {
       var val = el.value.trim();
       if (!val) { showToast('Status name cannot be empty', 'error'); render(); return; }
@@ -3277,6 +3396,61 @@
     var branding = {};
     try { branding = (JSON.parse(localStorage.getItem('reb_email_templates') || '{}'))._branding || {}; } catch(e) {}
     preview.innerHTML = buildEmailPreview(vals, branding.brandColor || '#002242');
+  });
+
+  // ---- Onboarding task drag-and-drop reorder (handle-based; delegated) ----
+  var onbDrag = null;
+  function onbAfterElement(container, y) {
+    var rows = Array.prototype.slice.call(container.querySelectorAll('.onb-row:not(.dragging)'));
+    var closest = { offset: -Infinity, element: null };
+    rows.forEach(function (c) {
+      var b = c.getBoundingClientRect();
+      var o = y - b.top - b.height / 2;
+      if (o < 0 && o > closest.offset) closest = { offset: o, element: c };
+    });
+    return closest.element;
+  }
+  document.addEventListener('dragstart', function (e) {
+    var handle = e.target.closest ? e.target.closest('.onb-handle') : null;
+    if (!handle) return;
+    var row = handle.closest('.onb-row');
+    if (!row) return;
+    onbDrag = row;
+    row.classList.add('dragging');
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', 'onb'); } catch (x) {}
+      try { e.dataTransfer.setDragImage(row, 20, 20); } catch (x) {}
+    }
+  });
+  document.addEventListener('dragover', function (e) {
+    if (!onbDrag) return;
+    var list = document.getElementById('onbList');
+    if (!list || !list.contains(e.target)) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    var after = onbAfterElement(list, e.clientY);
+    if (after == null) list.appendChild(onbDrag);
+    else if (after !== onbDrag) list.insertBefore(onbDrag, after);
+  });
+  document.addEventListener('drop', function (e) {
+    if (onbDrag && document.getElementById('onbList')) e.preventDefault();
+  });
+  document.addEventListener('dragend', function () {
+    if (!onbDrag) return;
+    onbDrag.classList.remove('dragging');
+    onbDrag = null;
+    var list = document.getElementById('onbList');
+    if (!list) return;
+    var order = [];
+    list.querySelectorAll('.onb-row').forEach(function (r) { order.push(parseInt(r.getAttribute('data-index'), 10)); });
+    var steps = getOnboardingSteps();
+    var reordered = order.map(function (i) { return steps[i]; }).filter(Boolean);
+    if (reordered.length === steps.length && steps.length > 0) {
+      saveOnboardingSteps(reordered);
+      showToast('Tasks reordered');
+      render();
+    }
   });
 
 })();

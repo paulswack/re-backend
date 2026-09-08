@@ -32,6 +32,10 @@
     .as-hidden-badges { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--gray-200); }
     .as-hidden-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-400); margin-bottom: 6px; }
     .as-hidden-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: .85rem; color: var(--gray-600); }
+    .onb-handle { cursor: grab; display: inline-flex; align-items: center; padding: 2px 4px; border-radius: 4px; }
+    .onb-handle:hover { background: var(--gray-100); }
+    .onb-handle:active { cursor: grabbing; }
+    .onb-row.dragging { opacity: .45; border-color: var(--indigo); box-shadow: 0 4px 14px rgba(99,102,241,.18); }
   </style>
 </head>
 <body>
@@ -85,7 +89,7 @@
   <script src="js/api-bridge.js?v=1788457000"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/admin-settings.js?v=1782004800"></script>
+  <script src="js/admin-settings.js?v=1788462000"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>
