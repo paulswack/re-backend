@@ -1947,7 +1947,7 @@
         '<li>URL: paste the webhook URL above. Payload type: <b>JSON</b>.</li>' +
         '<li>Map your Lofty fields to these keys:</li>' +
       '</ol>' +
-      '<table style="font-size:.8rem;border-collapse:collapse">' + rows + '</table>';
+      '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="font-size:.8rem;border-collapse:collapse">' + rows + '</table></div>';
   }
 
   function loadLoftyWebhook() {
