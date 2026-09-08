@@ -25,7 +25,17 @@ router.get('/', requireAuth, async (req, res) => {
       .single();
 
     if (error) throw error;
-    res.json(data?.settings || {});
+    const settings = data?.settings || {};
+
+    // Onboarding/training progress is private. Only Team Lead / Admin receive every
+    // agent's progress; everyone else gets only their own slice, so other agents'
+    // progress never reaches their device.
+    if (settings._training_progress && req.user.role !== 'Team Lead' && req.user.role !== 'Admin') {
+      const mine = settings._training_progress[req.user.username];
+      settings._training_progress = mine ? { [req.user.username]: mine } : {};
+    }
+
+    res.json(settings);
   } catch (err) {
     console.error('GET settings error:', err);
     res.status(500).json({ error: 'Failed to fetch settings' });
