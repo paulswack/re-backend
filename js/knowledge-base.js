@@ -19,7 +19,7 @@
   var STORAGE_KEY = 'reb_knowledge_base';
   var PROGRESS_KEY = 'reb_training_progress';
   var SEED_VERSION_KEY = 'reb_kb_seed_version';
-  var SEED_VERSION = 2; // bump when default seed content changes, then add a migrateItems() step
+  var SEED_VERSION = 3; // bump when the managed onboarding content changes so every device picks it up
   var pageBody = document.getElementById('pageBody');
   var currentView = 'list'; // list, detail, form
   var currentFilter = 'All';
@@ -88,14 +88,6 @@
       `**Program leads:** Paul Swack & Meghan Smith`,
       ``,
       `**Check-in:** 15 minutes, monthly · **Milestone reviews:** Day 30, Day 60, Day 90`,
-      ``,
-      `## How the 90 Days Work`,
-      ``,
-      `1. **Before Day One — Clear the runway.** Meghan owns this. Nothing here is your job; it exists so day one is about people and production, not passwords.`,
-      `2. **Week One — Get equipped.** Be findable, reachable, and in the room. Every tool live, every profile public, and you've watched a real producer work a real day.`,
-      `3. **Days 8–30 — Fundamentals and reps.** Build the database, build the habit, and get in front of live buyers and sellers with an experienced agent beside you.`,
-      `4. **Days 31–60 — Live reps, supervised.** Do the real thing with a net under you: a practice offer, a solo showing, presentations in role-play before the living room.`,
-      `5. **Days 61–90 — Live ball.** Your own client, your own file, your own closing table. The team is behind you, not in front of you.`,
       ``,
       `---`,
       ``,
@@ -456,11 +448,11 @@
       changed = true;
     }
 
-    // One-time-per-device cleanup when upgrading from the original 8-step onboarding:
-    // clear stale step-completion so old indices don't show as checked on the new steps.
     var localVer = parseInt(localStorage.getItem(SEED_VERSION_KEY) || '1', 10);
     if (isNaN(localVer)) localVer = 1;
-    if (localVer < SEED_VERSION) {
+    // Clear stale step-completion ONLY for the original 8-step -> 35-step upgrade (v1 -> v2).
+    // Later content bumps keep the same steps, so agents' progress must be preserved.
+    if (localVer < 2) {
       try {
         var praw = localStorage.getItem(PROGRESS_KEY);
         if (praw) {
@@ -471,8 +463,8 @@
           localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
         }
       } catch (e) {}
-      localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
     }
+    if (localVer < SEED_VERSION) localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
 
     if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     return items;
