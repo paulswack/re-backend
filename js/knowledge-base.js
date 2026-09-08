@@ -910,6 +910,7 @@
     html += '<div style="display:flex;align-items:center;gap:8px;">';
     html += '<span class="kb-drag-handle" draggable="true" title="Drag to reorder">' + gripSvg + '</span>';
     html += '<span class="step-num" style="font-size:12px;font-weight:700;color:#64748B;">Step ' + (idx + 1) + '</span>';
+    html += '<span class="kb-move-group"><button class="kb-move" data-action="move-step-up" data-step-idx="' + idx + '" type="button" title="Move up">&#8593;</button><button class="kb-move" data-action="move-step-down" data-step-idx="' + idx + '" type="button" title="Move down">&#8595;</button></span>';
     html += '</div>';
     html += '<button class="btn btn-outline btn-sm" data-action="remove-step" data-step-idx="' + idx + '" type="button" title="Remove step" style="color:#DC2626;border-color:#FECACA;padding:4px 10px;">Remove</button>';
     html += '</div>';
@@ -963,6 +964,20 @@
     reindexSteps();
   }
 
+  // Touch fallback: reorder by swapping DOM rows (drag doesn't work on touch).
+  function moveStepRow(idx, dir) {
+    var stepsList = document.getElementById('stepsList');
+    if (!stepsList) return;
+    var rows = stepsList.querySelectorAll('.step-row');
+    var row = rows[idx];
+    if (!row) return;
+    if (dir === 'up' && idx > 0) stepsList.insertBefore(row, rows[idx - 1]);
+    else if (dir === 'down' && idx < rows.length - 1) stepsList.insertBefore(rows[idx + 1], row);
+    else return;
+    reindexSteps();
+    try { row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+  }
+
   // ---- Drag-and-drop reordering of training steps ----
   var draggedRow = null;
 
@@ -975,7 +990,11 @@
       '.kb-drag-handle{cursor:grab;color:#94A3B8;display:inline-flex;align-items:center;padding:2px 4px;border-radius:4px;user-select:none;}' +
       '.kb-drag-handle:hover{color:#475569;background:#EEF2F7;}' +
       '.kb-drag-handle:active{cursor:grabbing;}' +
-      '.step-row.dragging{opacity:.45;border-color:#6366F1;box-shadow:0 4px 14px rgba(99,102,241,.18);}';
+      '.step-row.dragging{opacity:.45;border-color:#6366F1;box-shadow:0 4px 14px rgba(99,102,241,.18);}' +
+      '.kb-move-group{display:none;gap:4px;}' +
+      '.kb-move{width:34px;height:30px;line-height:1;padding:0;font-size:1rem;border:1px solid #E2E8F0;background:#fff;border-radius:6px;cursor:pointer;color:#64748B;}' +
+      '.kb-move:active{background:#F1F5F9;}' +
+      '@media (hover: none) and (pointer: coarse){.kb-move-group{display:inline-flex;}.kb-drag-handle{display:none;}}';
     document.head.appendChild(st);
   }
 
@@ -1240,6 +1259,10 @@
       addStepRow();
     } else if (action === 'remove-step') {
       removeStepRow(parseInt(target.getAttribute('data-step-idx'), 10));
+    } else if (action === 'move-step-up') {
+      moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'up');
+    } else if (action === 'move-step-down') {
+      moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'down');
     }
   });
 

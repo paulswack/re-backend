@@ -36,6 +36,14 @@
     .onb-handle:hover { background: var(--gray-100); }
     .onb-handle:active { cursor: grabbing; }
     .onb-row.dragging { opacity: .45; border-color: var(--indigo); box-shadow: 0 4px 14px rgba(99,102,241,.18); }
+    .onb-move-group { display: none; gap: 4px; }
+    .onb-move { width: 34px; height: 30px; line-height: 1; padding: 0; font-size: 1rem; border: 1px solid var(--gray-200); background: #fff; border-radius: 6px; cursor: pointer; color: var(--gray-500); }
+    .onb-move:active { background: var(--gray-100); }
+    /* On touch devices drag-and-drop doesn't work — show arrows, hide the drag grip. */
+    @media (hover: none) and (pointer: coarse) {
+      .onb-move-group { display: inline-flex; }
+      .onb-handle { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -89,7 +97,7 @@
   <script src="js/api-bridge.js?v=1788464000"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
-  <script src="js/admin-settings.js?v=1788463000"></script>
+  <script src="js/admin-settings.js?v=1788465000"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/datepicker.js?v=1776903705"></script>

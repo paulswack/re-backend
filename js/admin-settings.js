@@ -920,8 +920,25 @@
     return h;
   }
 
+  // Inject editor styles via JS so they ship with this (cache-busted) file, not the HTML.
+  function ensureOnbStyle() {
+    if (document.getElementById('onbEditorStyle')) return;
+    var st = document.createElement('style');
+    st.id = 'onbEditorStyle';
+    st.textContent =
+      '.onb-handle{cursor:grab;display:inline-flex;align-items:center;padding:2px 4px;border-radius:4px;}' +
+      '.onb-handle:active{cursor:grabbing;}' +
+      '.onb-row.dragging{opacity:.45;box-shadow:0 4px 14px rgba(99,102,241,.18);}' +
+      '.onb-move-group{display:none;gap:4px;}' +
+      '.onb-move{width:34px;height:30px;line-height:1;padding:0;font-size:1rem;border:1px solid var(--gray-200);background:#fff;border-radius:6px;cursor:pointer;color:var(--gray-500);}' +
+      '.onb-move:active{background:var(--gray-100);}' +
+      '@media (hover: none) and (pointer: coarse){.onb-move-group{display:inline-flex;}.onb-handle{display:none;}}';
+    document.head.appendChild(st);
+  }
+
   // ---- Onboarding Tasks ----
   function renderOnboarding() {
+    ensureOnbStyle();
     var item = getOnboardingItem();
     var h = '<div class="as-section">';
     h += '<div class="as-section-header"><h2>Onboarding Tasks</h2><p>Edit the New Agent Onboarding checklist. Changes save automatically and sync to everyone.</p></div>';
@@ -955,6 +972,8 @@
       h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
       h += '<span class="onb-handle" draggable="true" title="Drag to reorder"><svg viewBox="0 0 24 24" width="16" height="16" style="pointer-events:none" fill="var(--gray-300)"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></span>';
       h += '<span class="onb-num" style="font-size:.72rem;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px">Task ' + (i + 1) + '</span>';
+      // Touch-only reorder arrows (drag doesn't work on touchscreens; shown via CSS media query)
+      h += '<span class="onb-move-group"><button class="onb-move" data-action="move-onboarding-up" data-index="' + i + '" type="button" title="Move up">&#8593;</button><button class="onb-move" data-action="move-onboarding-down" data-index="' + i + '" type="button" title="Move down">&#8595;</button></span>';
       h += '<div style="flex:1"></div>';
       h += '<select data-action="update-onboarding-type" data-index="' + i + '" style="padding:5px 8px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.8rem;background:#fff">' + typeOpts + '</select>';
       h += '<button class="btn btn-outline btn-sm" data-action="remove-onboarding-task" data-index="' + i + '" style="color:var(--rose);border-color:var(--gray-200);padding:4px 9px;font-size:.85rem" title="Remove task">&times;</button>';
@@ -2658,6 +2677,14 @@
     if (action === 'remove-onboarding-pdf') {
       var oPdf = getOnboardingSteps().slice();
       if (oPdf[index]) { oPdf[index].pdfData = ''; oPdf[index].pdfName = ''; oPdf[index].pdfUrl = ''; saveOnboardingSteps(oPdf); showToast('PDF removed'); render(); }
+      return;
+    }
+    if (action === 'move-onboarding-up' || action === 'move-onboarding-down') {
+      var oMove = getOnboardingSteps().slice();
+      var to = index + (action === 'move-onboarding-up' ? -1 : 1);
+      if (isNaN(index) || to < 0 || to >= oMove.length) return;
+      var tmp = oMove[index]; oMove[index] = oMove[to]; oMove[to] = tmp;
+      if (saveOnboardingSteps(oMove)) render();
       return;
     }
 
