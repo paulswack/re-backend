@@ -341,9 +341,12 @@
         document.getElementById('recurFreqGroup').style.display = '';
         document.getElementById('entryRecurFreq').value = editEntry.recurFreq || 'monthly';
       }
-      // Pre-fill receipt if exists
-      if (editEntry.receiptData) {
-        document.getElementById('receiptData').value = editEntry.receiptData;
+      // Pre-fill receipt if exists (Storage URL or legacy base64)
+      var editRcpt = getReceiptView(editEntry);
+      if (editRcpt.has) {
+        document.getElementById('receiptData').value = editEntry.receiptData || '';
+        document.getElementById('receiptUrl').value = editEntry.receiptUrl || '';
+        document.getElementById('receiptIsImage').value = editRcpt.isImage ? '1' : '';
         document.getElementById('receiptName').value = editEntry.receiptName || '';
         var preview = document.getElementById('receiptPreview');
         var prompt = document.getElementById('receiptPrompt');
@@ -352,11 +355,10 @@
         area.style.background = 'var(--indigo-light)';
         prompt.style.display = 'none';
         preview.style.display = 'block';
-        var isImg = editEntry.receiptData.startsWith('data:image');
-        if (isImg) {
-          preview.innerHTML = '<img src="' + editEntry.receiptData + '" style="max-height:80px;border-radius:6px;margin-bottom:4px"><div style="font-size:.78rem;font-weight:600;color:var(--indigo)">' + (editEntry.receiptName || 'Receipt') + '</div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:4px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
+        if (editRcpt.isImage) {
+          preview.innerHTML = '<img src="' + editRcpt.src + '" style="max-height:80px;border-radius:6px;margin-bottom:4px"><div style="font-size:.78rem;font-weight:600;color:var(--indigo)">' + editRcpt.name + '</div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:4px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
         } else {
-          preview.innerHTML = '<div style="display:flex;align-items:center;gap:8px;justify-content:center"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--indigo)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg><span style="font-size:.82rem;font-weight:600;color:var(--indigo)">' + (editEntry.receiptName || 'Document') + '</span></div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:6px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
+          preview.innerHTML = '<div style="display:flex;align-items:center;gap:8px;justify-content:center"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--indigo)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg><span style="font-size:.82rem;font-weight:600;color:var(--indigo)">' + editRcpt.name + '</span></div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:6px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
         }
       } else {
         clearReceipt();
@@ -453,19 +455,20 @@
       case 'view-receipt':
         var rid = e.target.getAttribute('data-id') || e.target.closest('[data-id]').getAttribute('data-id');
         var rEntry = getTaxEntries().find(function (en) { return en.id === rid; });
-        if (rEntry && rEntry.receiptData) {
-          var isImg = rEntry.receiptData.startsWith('data:image');
+        var rv = getReceiptView(rEntry);
+        if (rEntry && rv.has) {
+          var isImg = rv.isImage;
           var overlay = document.createElement('div');
           overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer';
           overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:20px;max-width:700px;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);cursor:default" onclick="event.stopPropagation()">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
-              '<div><div style="font-size:1rem;font-weight:700;color:var(--gray-900)">Receipt</div><div style="font-size:.78rem;color:var(--gray-400)">' + (rEntry.receiptName || 'Document') + ' &middot; ' + (rEntry.description || rEntry.category) + '</div></div>' +
+              '<div><div style="font-size:1rem;font-weight:700;color:var(--gray-900)">Receipt</div><div style="font-size:.78rem;color:var(--gray-400)">' + rv.name + ' &middot; ' + (rEntry.description || rEntry.category) + '</div></div>' +
               '<div style="display:flex;gap:8px">' +
-                '<a href="' + rEntry.receiptData + '" download="' + (rEntry.receiptName || 'receipt') + '" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">Download</a>' +
+                '<a href="' + rv.src + '" download="' + rv.name + '" target="_blank" rel="noopener" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">Download</a>' +
                 '<button class="btn btn-outline btn-sm" onclick="this.closest(\'[style]\').parentElement.remove()" style="padding:4px 10px">&times;</button>' +
               '</div>' +
             '</div>' +
-            (isImg ? '<img src="' + rEntry.receiptData + '" style="max-width:100%;border-radius:8px;border:1px solid var(--gray-200)">' : '<div style="padding:40px;text-align:center;background:var(--gray-50);border-radius:8px"><svg viewBox="0 0 24 24" width="48" height="48" fill="var(--indigo)" style="display:block;margin:0 auto 12px"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg><div style="font-size:.88rem;font-weight:600;color:var(--gray-700)">' + (rEntry.receiptName || 'PDF Document') + '</div><a href="' + rEntry.receiptData + '" download="' + (rEntry.receiptName || 'receipt') + '" class="btn btn-primary btn-sm" style="margin-top:12px" onclick="event.stopPropagation()">Download PDF</a></div>') +
+            (isImg ? '<img src="' + rv.src + '" style="max-width:100%;border-radius:8px;border:1px solid var(--gray-200)">' : '<div style="padding:40px;text-align:center;background:var(--gray-50);border-radius:8px"><svg viewBox="0 0 24 24" width="48" height="48" fill="var(--indigo)" style="display:block;margin:0 auto 12px"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg><div style="font-size:.88rem;font-weight:600;color:var(--gray-700)">' + rv.name + '</div><a href="' + rv.src + '" download="' + rv.name + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="margin-top:12px" onclick="event.stopPropagation()">Download PDF</a></div>') +
           '</div>';
           overlay.addEventListener('click', function () { this.remove(); });
           document.body.appendChild(overlay);
@@ -538,25 +541,33 @@
     receiptFileInput.addEventListener('change', function () {
       var file = this.files[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { showToast('File too large. Max 5MB.', 'error'); this.value = ''; return; }
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        document.getElementById('receiptData').value = e.target.result;
-        document.getElementById('receiptName').value = file.name;
-        var preview = document.getElementById('receiptPreview');
-        var prompt = document.getElementById('receiptPrompt');
-        var area = document.getElementById('receiptUploadArea');
+      if (file.size > 25 * 1024 * 1024) { showToast('File too large. Max 25MB.', 'error'); this.value = ''; return; }
+      var isImage = file.type.indexOf('image/') === 0;
+      var area = document.getElementById('receiptUploadArea');
+      var prompt = document.getElementById('receiptPrompt');
+      var preview = document.getElementById('receiptPreview');
+      prompt.style.display = 'none';
+      preview.style.display = 'block';
+      preview.innerHTML = '<div style="font-size:.8rem;color:var(--gray-500)">Uploading…</div>';
+      var fileRef = this;
+      API.uploadFile(file, 'receipts').then(function (resp) {
+        document.getElementById('receiptUrl').value = resp.url;
+        document.getElementById('receiptName').value = resp.name || file.name;
+        document.getElementById('receiptIsImage').value = isImage ? '1' : '';
+        document.getElementById('receiptData').value = ''; // no base64 for new uploads
         area.style.borderColor = 'var(--indigo)';
         area.style.background = 'var(--indigo-light)';
-        prompt.style.display = 'none';
-        preview.style.display = 'block';
-        if (file.type.startsWith('image/')) {
-          preview.innerHTML = '<img src="' + e.target.result + '" style="max-height:80px;border-radius:6px;margin-bottom:4px"><div style="font-size:.78rem;font-weight:600;color:var(--indigo)">' + file.name + '</div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:4px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
+        var nm = resp.name || file.name;
+        if (isImage) {
+          preview.innerHTML = '<img src="' + resp.url + '" style="max-height:80px;border-radius:6px;margin-bottom:4px"><div style="font-size:.78rem;font-weight:600;color:var(--indigo)">' + nm + '</div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:4px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
         } else {
-          preview.innerHTML = '<div style="display:flex;align-items:center;gap:8px;justify-content:center"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--indigo)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg><span style="font-size:.82rem;font-weight:600;color:var(--indigo)">' + file.name + '</span></div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:6px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
+          preview.innerHTML = '<div style="display:flex;align-items:center;gap:8px;justify-content:center"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--indigo)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg><span style="font-size:.82rem;font-weight:600;color:var(--indigo)">' + nm + '</span></div><button type="button" onclick="event.stopPropagation();clearReceipt()" style="margin-top:6px;font-size:.72rem;color:var(--rose);background:none;border:none;cursor:pointer;font-weight:600">Remove</button>';
         }
-      };
-      reader.readAsDataURL(file);
+      }).catch(function (err) {
+        if (fileRef) fileRef.value = '';
+        clearReceipt();
+        showToast('Upload failed: ' + ((err && (err.error || err.message)) || 'try again'), 'error');
+      });
     });
   }
 
@@ -564,6 +575,8 @@
     document.getElementById('receiptFile').value = '';
     document.getElementById('receiptData').value = '';
     document.getElementById('receiptName').value = '';
+    document.getElementById('receiptUrl').value = '';
+    document.getElementById('receiptIsImage').value = '';
     var preview = document.getElementById('receiptPreview');
     var prompt = document.getElementById('receiptPrompt');
     var area = document.getElementById('receiptUploadArea');
@@ -573,6 +586,14 @@
     area.style.borderColor = 'var(--gray-200)';
     area.style.background = 'var(--gray-50)';
   };
+
+  // Resolve a receipt to a viewable source, supporting Storage URLs and legacy base64.
+  function getReceiptView(en) {
+    if (!en) return { has: false, src: '', isImage: false, name: 'Receipt' };
+    if (en.receiptUrl) return { has: true, src: en.receiptUrl, isImage: !!en.receiptIsImage, name: en.receiptName || 'Receipt' };
+    if (en.receiptData) return { has: true, src: en.receiptData, isImage: en.receiptData.indexOf('data:image') === 0, name: en.receiptName || 'Receipt' };
+    return { has: false, src: '', isImage: false, name: 'Receipt' };
+  }
 
   function saveEntry() {
     var type = document.getElementById('entryType').value;
@@ -587,6 +608,8 @@
     var editId = document.getElementById('entryId').value;
     var receiptData = document.getElementById('receiptData').value;
     var receiptFileName = document.getElementById('receiptName').value;
+    var receiptUrl = document.getElementById('receiptUrl').value;
+    var receiptIsImage = document.getElementById('receiptIsImage').value === '1';
 
     if (!amount || !date) {
       showToast('Please fill in amount and date.', 'error');
@@ -607,7 +630,10 @@
         entries[idx].recurring = recurring;
         entries[idx].recurFreq = recurring ? recurFreq : null;
         entries[idx].updatedAt = new Date().toISOString();
-        if (receiptData) { entries[idx].receiptData = receiptData; entries[idx].receiptName = receiptFileName; }
+        entries[idx].receiptUrl = receiptUrl || null;
+        entries[idx].receiptData = receiptData || null;
+        entries[idx].receiptIsImage = receiptUrl ? receiptIsImage : (entries[idx].receiptIsImage || false);
+        entries[idx].receiptName = receiptFileName || null;
         saveTaxEntries(entries);
         showToast('Entry updated.');
       }
@@ -625,6 +651,8 @@
         recurring: recurring,
         recurFreq: recurring ? recurFreq : null,
         receiptData: receiptData || null,
+        receiptUrl: receiptUrl || null,
+        receiptIsImage: receiptUrl ? receiptIsImage : false,
         receiptName: receiptFileName || null,
         username: taxSession ? taxSession.username : 'admin',
         createdAt: new Date().toISOString()
@@ -1071,11 +1099,12 @@
         var color = getCatColor(e.category);
         var isChecked = selectedExpenseIds[e.id] ? ' checked' : '';
         var receiptHtml = '';
-        if (e.receiptData) {
-          var isImage = e.receiptData.startsWith('data:image');
+        var lv = getReceiptView(e);
+        if (lv.has) {
+          var isImage = lv.isImage;
           receiptHtml = '<div style="display:flex;align-items:center;gap:6px">' +
             (isImage
-              ? '<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200);flex-shrink:0;cursor:pointer" data-action="view-receipt" data-id="' + e.id + '"><img src="' + e.receiptData + '" style="width:100%;height:100%;object-fit:cover"></div>'
+              ? '<div style="width:36px;height:36px;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200);flex-shrink:0;cursor:pointer" data-action="view-receipt" data-id="' + e.id + '"><img src="' + lv.src + '" style="width:100%;height:100%;object-fit:cover"></div>'
               : '<div style="width:36px;height:36px;border-radius:6px;background:var(--indigo-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer" data-action="view-receipt" data-id="' + e.id + '"><svg viewBox="0 0 24 24" width="16" height="16" fill="var(--indigo)"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg></div>') +
           '</div>';
         }

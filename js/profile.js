@@ -175,27 +175,41 @@
       ctx.arc(200, 200, 200, 0, Math.PI * 2);
       ctx.clip();
       ctx.drawImage(img, dx, dy, dw, dh);
-      var croppedData = canvas.toDataURL('image/jpeg', 0.85);
 
-      // Save locally
-      var profiles = getProfiles();
-      if (!profiles[session.username]) profiles[session.username] = {};
-      profiles[session.username].photo = croppedData;
-      saveProfiles(profiles);
-
-      // Save to server
-      if (typeof API !== 'undefined' && API.isLoggedIn()) {
-        var user = API.getUser();
-        API.updateUser(user.id, { photo_url: croppedData }).then(function () {
+      function persistPhoto(photoValue) {
+        var profiles = getProfiles();
+        if (!profiles[session.username]) profiles[session.username] = {};
+        profiles[session.username].photo = photoValue;
+        saveProfiles(profiles);
+        if (typeof API !== 'undefined' && API.isLoggedIn()) {
+          var user = API.getUser();
+          API.updateUser(user.id, { photo_url: photoValue }).then(function () {
+            showToast('Photo saved!');
+          }).catch(function () { showToast('Photo saved locally', 'error'); });
+        } else {
           showToast('Photo saved!');
-        }).catch(function () { showToast('Photo saved locally', 'error'); });
-      } else {
-        showToast('Photo saved!');
+        }
+        renderHeader();
+        populateSidebarUser();
+        overlay.remove();
       }
 
-      renderHeader();
-      populateSidebarUser();
-      overlay.remove();
+      // Logged in → upload the cropped image to Supabase Storage (store URL).
+      // Offline/demo → fall back to a base64 data URL.
+      if (typeof API !== 'undefined' && API.isLoggedIn()) {
+        showToast('Uploading photo…');
+        canvas.toBlob(function (blob) {
+          if (!blob) { showToast('Could not process image', 'error'); return; }
+          var file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+          API.uploadFile(file, 'photos').then(function (resp) {
+            persistPhoto(resp.url);
+          }).catch(function (err) {
+            showToast('Upload failed: ' + ((err && (err.error || err.message)) || 'try again'), 'error');
+          });
+        }, 'image/jpeg', 0.85);
+      } else {
+        persistPhoto(canvas.toDataURL('image/jpeg', 0.85));
+      }
     });
   }
 

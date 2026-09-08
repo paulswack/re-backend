@@ -1154,9 +1154,23 @@
       var dy = (out / 2) + offsetY * ratio - dh / 2;
       ctx.beginPath(); ctx.arc(out / 2, out / 2, out / 2, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
       ctx.drawImage(img, dx, dy, dw, dh);
-      var croppedData = canvas.toDataURL('image/jpeg', 0.85);
-      cleanup();
-      saveAgentPhoto(uname, user, croppedData);
+      // Logged in → upload cropped image to Supabase Storage (store URL); else base64.
+      if (typeof API !== 'undefined' && API.isLoggedIn && API.isLoggedIn()) {
+        showToast('Uploading photo…');
+        canvas.toBlob(function (blob) {
+          if (!blob) { showToast('Could not process image', 'error'); return; }
+          var file = new File([blob], 'agent-photo.jpg', { type: 'image/jpeg' });
+          API.uploadFile(file, 'photos').then(function (resp) {
+            cleanup();
+            saveAgentPhoto(uname, user, resp.url);
+          }).catch(function (err) {
+            showToast('Upload failed: ' + ((err && (err.error || err.message)) || 'try again'), 'error');
+          });
+        }, 'image/jpeg', 0.85);
+      } else {
+        cleanup();
+        saveAgentPhoto(uname, user, canvas.toDataURL('image/jpeg', 0.85));
+      }
     });
   }
 
