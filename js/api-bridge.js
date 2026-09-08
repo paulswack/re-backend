@@ -329,6 +329,13 @@ var ApiBridge = (function () {
         if (kb && Array.isArray(kb) && kb.length > 0) {
           localStorage.setItem(PREFIX + 'knowledge_base', JSON.stringify(kb));
         }
+        // Onboarding/training progress — shared per-agent so admins can see everyone.
+        // Merge server (all agents) with local, letting local win for this device's own
+        // user so unsynced progress isn't lost.
+        var srvProg = (d && d._training_progress) || {};
+        var locProg = {};
+        try { locProg = JSON.parse(localStorage.getItem(PREFIX + 'training_progress') || '{}') || {}; } catch (e) {}
+        localStorage.setItem(PREFIX + 'training_progress', JSON.stringify(Object.assign({}, srvProg, locProg)));
       }).catch(notifySyncError),
       API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(notifySyncError),
       API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(notifySyncError),
@@ -460,6 +467,21 @@ var ApiBridge = (function () {
       if (key === PREFIX + 'knowledge_base') {
         debounceSync('knowledge', function () {
           try { API.updateSettings({ _knowledge_base: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
+        }, 500);
+      }
+
+      // Training/onboarding progress — send only THIS user's slice so the server
+      // deep-merge updates them without clobbering other agents' progress.
+      if (key === PREFIX + 'training_progress') {
+        debounceSync('training_progress', function () {
+          try {
+            var sess = JSON.parse(localStorage.getItem(PREFIX + 'session') || '{}');
+            var uname = sess.username || (API.getUser() && API.getUser().username);
+            if (!uname) return;
+            var all = JSON.parse(value) || {};
+            var mine = {}; mine[uname] = all[uname] || {};
+            API.updateSettings({ _training_progress: mine }).catch(notifySyncError);
+          } catch (e) {}
         }, 500);
       }
 

@@ -11,7 +11,8 @@ const DEEP_MERGE_KEYS = [
   '_txn_parties', '_lst_parties', '_txn_updates', '_lst_updates',
   '_deal_checklists', '_portal_links', '_tax_settings',
   '_tax_entries', '_mileage',
-  '_notif_sent', '_calendar_events', '_profiles'
+  '_notif_sent', '_calendar_events', '_profiles',
+  '_training_progress'
 ];
 
 // GET /api/settings — team settings

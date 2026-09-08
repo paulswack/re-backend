@@ -26,6 +26,7 @@
   var searchQuery = '';
   var viewingId = null;
   var editingId = null;
+  var viewingProgressUser = null; // admin: whose onboarding progress to show (null = self)
 
   // Knowledge Base is admin-managed: only Team Lead / Admin may add, edit, or delete.
   // The server (routes/settings.js) drops _knowledge_base writes from non-leads too,
@@ -402,6 +403,18 @@
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
   }
 
+  // All agents' progress (synced): { username: { itemId: [stepIndices] } }
+  function getAllProgress() {
+    var raw = localStorage.getItem(PROGRESS_KEY);
+    try { return JSON.parse(raw) || {}; } catch (e) { return {}; }
+  }
+
+  // Team members, for the admin progress selector.
+  function getTeamUsers() {
+    var raw = localStorage.getItem(PREFIX + 'users');
+    try { return JSON.parse(raw) || []; } catch (e) { return []; }
+  }
+
   // ---- Badge helpers ----
   function categoryBadge(cat) {
     var c = CATEGORIES[cat] || { bg: '#F1F5F9', text: '#475569' };
@@ -652,8 +665,14 @@
     }
     if (!item) { currentView = 'list'; renderList(); return; }
 
-    var progress = getProgress();
-    var completedSteps = progress[item.id] || [];
+    // Whose progress are we showing? Admins can view any agent; everyone else sees self.
+    var session = Auth.getSession();
+    var selfName = session ? session.username : '';
+    var canPickUser = Auth.isPrivileged() && item.type === 'training';
+    var viewUser = (canPickUser && viewingProgressUser) ? viewingProgressUser : selfName;
+    var isViewingOther = viewUser !== selfName;
+    var allProgress = getAllProgress();
+    var completedSteps = (allProgress[viewUser] && allProgress[viewUser][item.id]) ? allProgress[viewUser][item.id] : [];
 
     var html = '';
 
@@ -710,7 +729,25 @@
       var pct = item.steps.length > 0 ? Math.round((completedSteps.length / item.steps.length) * 100) : 0;
 
       html += '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border:1px solid #E2E8F0;padding:24px;">';
-      html += '<h3 style="margin:0 0 16px 0;font-size:18px;font-weight:700;color:#1E293B;">Training Steps</h3>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">';
+      html += '<h3 style="margin:0;font-size:18px;font-weight:700;color:#1E293B;">Training Steps</h3>';
+      if (canPickUser) {
+        var users = getTeamUsers();
+        var opts = '<option value="">You' + (session && session.displayName ? ' (' + escapeHtml(session.displayName) + ')' : '') + '</option>';
+        users.filter(function (u) { return u.username && u.username !== selfName; })
+          .sort(function (a, b) { return (a.displayName || a.username || '').localeCompare(b.displayName || b.username || ''); })
+          .forEach(function (u) {
+            opts += '<option value="' + escapeHtml(u.username) + '"' + (viewUser === u.username ? ' selected' : '') + '>' + escapeHtml(u.displayName || u.username) + '</option>';
+          });
+        html += '<label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#64748B;">View progress for: <select data-action="view-progress-user" style="padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:13px;background:#fff;">' + opts + '</select></label>';
+      }
+      html += '</div>';
+
+      if (isViewingOther) {
+        var vu = getTeamUsers().filter(function (u) { return u.username === viewUser; })[0];
+        var vuName = vu ? (vu.displayName || vu.username) : viewUser;
+        html += '<div style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF;border-radius:8px;padding:8px 12px;font-size:12.5px;margin-bottom:14px;">Viewing <b>' + escapeHtml(vuName) + '</b>’s progress — read-only</div>';
+      }
 
       // Progress bar
       html += '<div style="margin-bottom:20px;">';
@@ -727,7 +764,7 @@
         html += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:10px;border:1px solid ' + (isCompleted ? '#BBF7D0' : '#E2E8F0') + ';background:' + (isCompleted ? '#F0FDF4' : '#fff') + ';margin-bottom:10px;">';
         // Checkbox
         html += '<label style="display:flex;align-items:center;cursor:pointer;flex-shrink:0;margin-top:2px;">';
-        html += '<input type="checkbox" ' + (isCompleted ? 'checked' : '') + ' data-action="toggle-step" data-item-id="' + item.id + '" data-step-idx="' + idx + '" style="width:18px;height:18px;cursor:pointer;accent-color:#10B981;">';
+        html += '<input type="checkbox" ' + (isCompleted ? 'checked' : '') + (isViewingOther ? ' disabled' : '') + ' data-action="toggle-step" data-item-id="' + item.id + '" data-step-idx="' + idx + '" style="width:18px;height:18px;cursor:' + (isViewingOther ? 'default' : 'pointer') + ';accent-color:#10B981;">';
         html += '</label>';
         // Step content
         html += '<div style="flex:1;min-width:0;">';
@@ -1178,12 +1215,14 @@
       renderList();
     } else if (action === 'view-item') {
       viewingId = target.getAttribute('data-id');
+      viewingProgressUser = null;
       currentView = 'detail';
       renderDetail(viewingId);
     } else if (action === 'back-to-list') {
       currentView = 'list';
       editingId = null;
       viewingId = null;
+      viewingProgressUser = null;
       renderList();
     } else if (action === 'add-resource') {
       editingId = null;
@@ -1217,6 +1256,14 @@
       var itemId = target.getAttribute('data-item-id');
       var stepIdx = target.getAttribute('data-step-idx');
       toggleStep(itemId, stepIdx);
+      return;
+    }
+
+    // Admin: switch which agent's onboarding progress is shown
+    var progSel = e.target.closest('[data-action="view-progress-user"]');
+    if (progSel && viewingId) {
+      viewingProgressUser = progSel.value || null;
+      renderDetail(viewingId);
       return;
     }
 
