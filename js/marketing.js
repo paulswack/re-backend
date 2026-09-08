@@ -442,17 +442,20 @@
   // ---- Render: Banner ----
   function renderBanner(wPct, mPct, streak, wDone, wTotal) {
     var h = '<div class="mkt-banner">';
-    h += '<div class="mkt-banner-title">Marketing Hub</div>';
+    h += '<div class="mkt-banner-title">Your Marketing This Week</div>';
     h += '<div class="mkt-banner-sub">' + motivationalMessage(wPct, streak) + '</div>';
-    h += '<div class="mkt-banner-stats">';
-    h += '<div class="mkt-banner-stat"><div class="mkt-banner-stat-val">' + wDone + '/' + wTotal + '</div><div class="mkt-banner-stat-label">This Week</div></div>';
-    h += '<div class="mkt-banner-stat"><div class="mkt-banner-stat-val">' + wPct + '%</div><div class="mkt-banner-stat-label">Weekly Progress</div></div>';
-    h += '<div class="mkt-banner-stat"><div class="mkt-banner-stat-val">' + mPct + '%</div><div class="mkt-banner-stat-label">Monthly Progress</div></div>';
-    h += '<div class="mkt-banner-stat"><div class="mkt-banner-stat-val">' + streak + (streak > 0 ? ' 🔥' : '') + '</div><div class="mkt-banner-stat-label">Week Streak</div></div>';
+    // One clear focus: this week's progress, as a bar (not a wall of zeros)
+    h += '<div style="margin-top:18px;max-width:560px">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px">';
+    h += '<span style="font-size:1.7rem;font-weight:800;color:#fff;line-height:1">' + wDone + '<span style="font-size:1rem;font-weight:600;opacity:.75"> / ' + wTotal + ' done</span></span>';
+    h += '<span style="font-size:.85rem;font-weight:700;color:#fff;opacity:.9">' + (streak > 0 ? '🔥 ' + streak + '-week streak' : 'Complete one to start a streak') + '</span>';
+    h += '</div>';
+    h += '<div style="height:12px;background:rgba(255,255,255,.25);border-radius:99px;overflow:hidden"><div style="height:100%;width:' + wPct + '%;background:#fff;border-radius:99px;transition:width .45s cubic-bezier(.32,.72,0,1)"></div></div>';
     if (privileged) {
-      h += '<div class="mkt-banner-stat"><div class="mkt-banner-stat-val">' + teamAvgWeekly() + '%</div><div class="mkt-banner-stat-label">Team Avg</div></div>';
+      h += '<div style="margin-top:12px;font-size:.8rem;color:rgba(255,255,255,.8)">Team average this week: <b style="color:#fff">' + teamAvgWeekly() + '%</b></div>';
     }
-    h += '</div></div>';
+    h += '</div>';
+    h += '</div>';
     return h;
   }
 
@@ -842,28 +845,19 @@
     html += '</div>';
 
     if (currentView === 'activities') {
-      // Donut Rings
-      html += '<div class="mkt-rings-row">';
-      html += '<div class="mkt-ring-card"><div class="mkt-ring-wrap">' + donutSVG(wPct, 140, 10) + '<div class="mkt-ring-pct">' + wPct + '<small>%</small></div></div>';
-      html += '<div class="mkt-ring-title">Weekly Progress</div><div class="mkt-ring-sub">' + wDone + '/' + wActivities.length + ' activities</div></div>';
-      html += '<div class="mkt-ring-card"><div class="mkt-ring-wrap">' + donutSVG(mPct, 140, 10) + '<div class="mkt-ring-pct">' + mPct + '<small>%</small></div></div>';
-      html += '<div class="mkt-ring-title">Monthly Progress</div><div class="mkt-ring-sub">' + mDone + '/' + mActivities.length + ' activities</div></div>';
-      html += '</div>';
-
-      // Category breakdown
-      html += renderCategoryBreakdown(activities, checked);
-
-      // Marketing badges (above the activity list)
-      html += renderMarketingBadges();
-
-      // Period toggle
-      html += '<div style="display:flex;gap:8px;margin-bottom:20px">';
+      // ---- Action first: period toggle + the checklist right up top ----
+      html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
       html += '<button class="lb-filter-btn' + (currentTab === 'weekly' ? ' active' : '') + '" data-action="switch-tab" data-tab="weekly">Weekly</button>';
       html += '<button class="lb-filter-btn' + (currentTab === 'monthly' ? ' active' : '') + '" data-action="switch-tab" data-tab="monthly">Monthly</button>';
       html += '</div>';
 
-      // Activity checklist
       html += renderActivityList(activities, checked, periodKey);
+
+      // ---- Secondary: progress detail + badges, below the action ----
+      html += '<div style="margin-top:24px">';
+      html += renderCategoryBreakdown(activities, checked);
+      html += renderMarketingBadges();
+      html += '</div>';
 
     } else if (currentView === 'history') {
       // Period toggle for history
