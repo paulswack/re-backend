@@ -84,6 +84,24 @@ var API = (function () {
   function put(path, body) { return request('PUT', path, body); }
   function del(path) { return request('DELETE', path); }
 
+  // Multipart file upload → Supabase Storage. Returns { url, name, path }.
+  // Don't set Content-Type — the browser sets the multipart boundary.
+  function uploadFile(file, folder) {
+    var fd = new FormData();
+    fd.append('file', file);
+    if (folder) fd.append('folder', folder);
+    var h = {};
+    if (_token) h['Authorization'] = 'Bearer ' + _token;
+    return fetch(BASE + '/uploads', { method: 'POST', headers: h, body: fd }).then(function (res) {
+      if (res.status === 401) {
+        localStorage.removeItem('reb_jwt'); localStorage.removeItem('reb_user_cache');
+        window.location.href = 'login.html';
+        return Promise.reject(new Error('Unauthorized'));
+      }
+      return res.json().then(function (data) { if (!res.ok) return Promise.reject(data); return data; });
+    });
+  }
+
   // ---- Auth ----
   function setSession(token, user) {
     _token = token;
@@ -342,6 +360,9 @@ var API = (function () {
     register: register, login: login, logout: logout, me: me,
     getToken: getToken, getUser: getUser, isLoggedIn: isLoggedIn, isPrivileged: isPrivileged,
     setSession: setSession, clearSession: clearSession,
+
+    // Files
+    uploadFile: uploadFile,
 
     // Transactions
     getTransactions: getTransactions, getTransaction: getTransaction,

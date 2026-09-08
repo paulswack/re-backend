@@ -2854,27 +2854,28 @@
       return;
     }
 
-    // Onboarding task PDF upload (stored as a base64 data URL on the step)
+    // Onboarding task PDF upload → Supabase Storage (URL stored on the step, not base64)
     if (action === 'upload-onboarding-pdf') {
       var file = el.files && el.files[0];
       if (!file) return;
       var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
       if (!isPdf) { showToast('Please choose a PDF file', 'error'); el.value = ''; return; }
-      if (file.size > 10 * 1024 * 1024) { showToast('PDF too large (max 10MB). Use a PDF link for bigger files.', 'error'); el.value = ''; return; }
+      if (file.size > 25 * 1024 * 1024) { showToast('PDF too large (max 25MB). Use a PDF link for bigger files.', 'error'); el.value = ''; return; }
       var pdfIdx = index;
-      var reader = new FileReader();
-      reader.onload = function (ev) {
+      showToast('Uploading PDF…');
+      API.uploadFile(file, 'onboarding').then(function (resp) {
         var steps = getOnboardingSteps().slice();
         if (steps[pdfIdx]) {
-          steps[pdfIdx].pdfData = ev.target.result;
-          steps[pdfIdx].pdfName = file.name;
-          steps[pdfIdx].pdfUrl = '';
+          steps[pdfIdx].pdfUrl = resp.url;
+          steps[pdfIdx].pdfName = resp.name || file.name;
+          steps[pdfIdx].pdfData = ''; // no longer embed base64 in the shared blob
           saveOnboardingSteps(steps);
           showToast('PDF attached');
           render();
         }
-      };
-      reader.readAsDataURL(file);
+      }).catch(function (err) {
+        showToast('Upload failed: ' + ((err && (err.error || err.message)) || 'try again'), 'error');
+      });
       return;
     }
 
