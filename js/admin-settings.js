@@ -961,6 +961,17 @@
       h += '</div>';
       h += '<input type="text" value="' + escHtml(step.title || '') + '" data-action="update-onboarding-title" data-index="' + i + '" placeholder="Task title" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.9rem;font-weight:600;margin-bottom:6px">';
       h += '<textarea data-action="update-onboarding-desc" data-index="' + i + '" placeholder="Description (optional)" rows="2" style="width:100%;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.82rem;resize:vertical;font-family:inherit">' + escHtml(step.description || '') + '</textarea>';
+      // Optional PDF attachment
+      var pdfIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="flex-shrink:0"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>';
+      h += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">';
+      if (step.pdfData || step.pdfName) {
+        h += '<span style="display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--indigo);font-weight:600;background:var(--indigo-light);padding:5px 10px;border-radius:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis">' + pdfIcon + escHtml(step.pdfName || 'PDF attached') + '</span>';
+        h += '<button class="btn btn-outline btn-sm" data-action="remove-onboarding-pdf" data-index="' + i + '" style="color:var(--rose);border-color:var(--gray-200);padding:4px 9px;font-size:.72rem">Remove PDF</button>';
+      } else {
+        h += '<label class="btn btn-outline btn-sm" style="cursor:pointer;font-size:.75rem;color:var(--indigo);border-color:var(--indigo);display:inline-flex;align-items:center;gap:5px">' + pdfIcon + 'Attach PDF<input type="file" accept="application/pdf,.pdf" data-action="upload-onboarding-pdf" data-index="' + i + '" style="display:none"></label>';
+        h += '<input type="text" value="' + escHtml(step.pdfUrl || '') + '" data-action="update-onboarding-pdfurl" data-index="' + i + '" placeholder="or paste a PDF link (URL)" style="flex:1;min-width:170px;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:6px;font-size:.8rem">';
+      }
+      h += '</div>';
       h += '</div>';
     });
     h += '</div>';
@@ -2644,6 +2655,11 @@
       if (saveOnboardingSteps(oRem)) { showToast('Task removed'); render(); }
       return;
     }
+    if (action === 'remove-onboarding-pdf') {
+      var oPdf = getOnboardingSteps().slice();
+      if (oPdf[index]) { oPdf[index].pdfData = ''; oPdf[index].pdfName = ''; oPdf[index].pdfUrl = ''; saveOnboardingSteps(oPdf); showToast('PDF removed'); render(); }
+      return;
+    }
 
     // ---- Marketing ----
     if (action === 'switch-mkt-tab') {
@@ -2808,6 +2824,30 @@
     if (action === 'update-onboarding-type') {
       var otSteps = getOnboardingSteps().slice();
       if (otSteps[index]) { otSteps[index].type = el.value; saveOnboardingSteps(otSteps); }
+      return;
+    }
+
+    // Onboarding task PDF upload (stored as a base64 data URL on the step)
+    if (action === 'upload-onboarding-pdf') {
+      var file = el.files && el.files[0];
+      if (!file) return;
+      var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+      if (!isPdf) { showToast('Please choose a PDF file', 'error'); el.value = ''; return; }
+      if (file.size > 10 * 1024 * 1024) { showToast('PDF too large (max 10MB). Use a PDF link for bigger files.', 'error'); el.value = ''; return; }
+      var pdfIdx = index;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        var steps = getOnboardingSteps().slice();
+        if (steps[pdfIdx]) {
+          steps[pdfIdx].pdfData = ev.target.result;
+          steps[pdfIdx].pdfName = file.name;
+          steps[pdfIdx].pdfUrl = '';
+          saveOnboardingSteps(steps);
+          showToast('PDF attached');
+          render();
+        }
+      };
+      reader.readAsDataURL(file);
       return;
     }
 
@@ -3113,6 +3153,11 @@
     if (action === 'update-onboarding-desc') {
       var obdSteps = getOnboardingSteps().slice();
       if (obdSteps[index]) { obdSteps[index].description = el.value; saveOnboardingSteps(obdSteps); }
+      return;
+    }
+    if (action === 'update-onboarding-pdfurl') {
+      var opuSteps = getOnboardingSteps().slice();
+      if (opuSteps[index]) { opuSteps[index].pdfUrl = el.value.trim(); saveOnboardingSteps(opuSteps); }
       return;
     }
 

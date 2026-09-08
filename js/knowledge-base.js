@@ -741,6 +741,16 @@
         if (step.videoUrl) {
           html += getVideoEmbed(step.videoUrl, '100%', '280');
         }
+        if (step.pdfData || step.pdfUrl) {
+          var pdfHref = step.pdfData || step.pdfUrl;
+          var pdfLabel = step.pdfName || 'View PDF';
+          var pdfAttrs = step.pdfData
+            ? ' download="' + escapeHtml(step.pdfName || 'document.pdf') + '"'
+            : ' target="_blank" rel="noopener"';
+          html += '<a href="' + escapeHtml(pdfHref) + '"' + pdfAttrs + ' style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 12px;background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>' +
+            escapeHtml(pdfLabel) + '</a>';
+        }
         html += '</div></div>';
       });
 
