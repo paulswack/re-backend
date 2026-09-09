@@ -450,6 +450,7 @@
     html += podiumBlock(agents);
     html += badgesBlock(profile);
     html += leaderboardBlock(agents);
+    html += marketingProgressBlock();
     html += winsFeedBlock(rangedClosed);
 
     pageBody.innerHTML = html;
@@ -685,6 +686,60 @@
       '<button class="wins-mt-btn' + (rankMetric === 'sales' ? ' active' : '') + '" data-action="rank-metric" data-metric="sales">Sales</button>' +
       '<button class="wins-mt-btn' + (rankMetric === 'volume' ? ' active' : '') + '" data-action="rank-metric" data-metric="volume">Volume</button>' +
     '</div>';
+  }
+
+  // ---- Admin-only: each agent's marketing activity progress this week ----
+  // Matches the week-key format used by the Marketing page (YYYY-Wnn).
+  function mktWeekKey() {
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    var jan1 = new Date(d.getFullYear(), 0, 1);
+    var days = Math.floor((d - jan1) / 86400000);
+    var week = Math.ceil((days + jan1.getDay() + 1) / 7);
+    return d.getFullYear() + '-W' + (week < 10 ? '0' : '') + week;
+  }
+
+  function marketingProgressBlock() {
+    var isLead = (Auth && typeof Auth.isPrivileged === 'function') ? Auth.isPrivileged() : false;
+    if (!isLead) return '';
+
+    var weeklyIds = [];
+    try {
+      var cfg = JSON.parse(localStorage.getItem('reb_marketing_config') || '{}');
+      weeklyIds = (cfg.weekly || []).map(function (a) { return a.id; });
+    } catch (e) {}
+    var total = weeklyIds.length;
+
+    var users = getUsersList().filter(function (u) { return u.role !== 'Team Lead'; });
+    if (!users.length) return '';
+
+    var mkt = {};
+    try { mkt = JSON.parse(localStorage.getItem('reb_marketing') || '{}'); } catch (e) {}
+    var wk = mktWeekKey();
+
+    var body = '';
+    if (!total) {
+      body = '<div class="wins-tri-empty">No weekly activities set up yet — configure them in Settings → Marketing Activities.</div>';
+    } else {
+      var rows = users.map(function (u) {
+        var checked = (mkt[u.username] && mkt[u.username].weekly && mkt[u.username].weekly[wk]) || {};
+        var done = weeklyIds.filter(function (id) { return checked[id]; }).length;
+        return { name: u.displayName || u.username, done: done, pct: Math.round(done / total * 100) };
+      }).sort(function (a, b) { return b.pct - a.pct; });
+
+      rows.forEach(function (r) {
+        var color = r.pct >= 80 ? '#1A7F4B' : r.pct >= 50 ? '#B86B00' : r.pct > 0 ? '#B91C1C' : '#94A3B8';
+        body += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0">';
+        body += '<span style="flex:0 0 30%;font-size:.82rem;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml((r.name || '').split(/\s+/)[0]) + '</span>';
+        body += '<span style="flex:1;height:8px;background:var(--gray-100);border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:' + r.pct + '%;background:' + color + ';border-radius:99px;transition:width .4s"></span></span>';
+        body += '<span style="flex:0 0 auto;min-width:66px;text-align:right;font-size:.78rem;font-weight:700;color:' + color + '">' + r.done + '/' + total + ' · ' + r.pct + '%</span>';
+        body += '</div>';
+      });
+    }
+
+    return '<div class="wins-card" style="margin-top:16px">' +
+      '<div class="wins-tri-head wins-tri-head-flex"><span>📣 Team Marketing · This Week</span>' +
+      '<a href="marketing.html" class="btn btn-outline btn-sm" style="font-size:.72rem;padding:4px 10px">Open Marketing</a></div>' +
+      '<div class="wins-tri-body">' + body + '</div></div>';
   }
 
   function leaderboardCol(agents) {
