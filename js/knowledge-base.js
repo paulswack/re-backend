@@ -602,13 +602,25 @@
     var readPct = totalArticles > 0 ? Math.round(readCount / totalArticles * 100) : 0;
 
     html += '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #E2E8F0;margin-bottom:24px;overflow:hidden">';
-    html += '<div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="document.getElementById(\'learningPathBody\').style.display=document.getElementById(\'learningPathBody\').style.display===\'none\'?\'\':\'none\';this.querySelector(\'.lp-arrow\').style.transform=document.getElementById(\'learningPathBody\').style.display===\'none\'?\'\':\' rotate(180deg)\'">';
+    var remaining = totalArticles - readCount;
+    var lpNote = totalArticles === 0 ? ''
+      : readPct === 100 ? 'Every resource complete — nice work.'
+      : readCount === 0 ? 'Tick items off as you work through them.'
+      : remaining + (remaining === 1 ? ' resource to go' : ' resources to go');
+
+    // A full-width bar with the percentage set large reads as something worth
+    // finishing. The old 120x6 strip was easy to miss and, at 0%, showed nothing.
+    html += '<div style="padding:16px 20px;border-bottom:1px solid #F1F5F9;cursor:pointer" onclick="document.getElementById(\'learningPathBody\').style.display=document.getElementById(\'learningPathBody\').style.display===\'none\'?\'\':\'none\';this.querySelector(\'.lp-arrow\').style.transform=document.getElementById(\'learningPathBody\').style.display===\'none\'?\'\':\' rotate(180deg)\'">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px">';
     html += '<div style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="#6366F1"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>';
     html += '<div><div style="font-size:.92rem;font-weight:700;color:#1E293B">Learning Path</div>';
-    html += '<div style="font-size:.72rem;color:#64748B">' + readCount + ' of ' + totalArticles + ' completed (' + readPct + '%)</div></div></div>';
-    html += '<div style="display:flex;align-items:center;gap:12px">';
-    html += '<div title="' + readCount + ' of ' + totalArticles + ' read" style="width:120px;height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden"><div style="height:100%;width:' + readPct + '%;background:linear-gradient(90deg,#6366F1,#3B82F6);border-radius:99px;transition:width .3s"></div></div>';
+    html += '<div style="font-size:.72rem;color:#64748B">' + readCount + ' of ' + totalArticles + ' completed' + (lpNote ? ' · ' + lpNote : '') + '</div></div></div>';
+    html += '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">';
+    html += '<span style="font-size:1.5rem;font-weight:800;line-height:1;color:' + (readPct === 100 ? '#059669' : '#6366F1') + '">' + readPct + '<span style="font-size:.9rem;font-weight:700">%</span></span>';
     html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#F8FAFC;border:1px solid #E2E8F0;flex-shrink:0"><svg class="lp-arrow" viewBox="0 0 24 24" width="16" height="16" fill="#64748B" style="transition:transform .2s"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span>';
+    html += '</div></div>';
+    html += '<div title="' + readCount + ' of ' + totalArticles + ' read" style="height:14px;background:#E2E8F0;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(15,23,42,.08)">';
+    html += '<div style="height:100%;width:' + readPct + '%;' + (readPct > 0 ? 'min-width:14px;' : '') + 'background:' + (readPct === 100 ? 'linear-gradient(90deg,#10B981,#059669)' : 'linear-gradient(90deg,#6366F1,#3B82F6)') + ';border-radius:99px;transition:width .45s ease"></div>';
     html += '</div></div>';
 
     // Collapsible body grouped by category
