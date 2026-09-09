@@ -1159,70 +1159,6 @@
     renderList();
   }
 
-  // ---- New Article Modal ----
-  function openArticleModal() {
-    if (!canEditKB()) return;
-    var html = '<div class="modal-overlay open" id="articleModalOverlay">';
-    html += '<div class="modal" style="max-width:580px;">';
-    html += '<div class="modal-header">';
-    html += '<h3 style="margin:0;">New Article</h3>';
-    html += '<button class="modal-close" data-action="close-article-modal">&times;</button>';
-    html += '</div>';
-    html += '<div class="modal-body">';
-    html += '<div class="form-group"><label>Title *</label><input type="text" id="artTitle" class="form-control" placeholder="Article title"></div>';
-    html += '<div class="form-group"><label>Content *</label><textarea id="artContent" class="form-control" rows="10" placeholder="Write your article here...\n\nFormatting tips:\n# Heading 1\n## Heading 2\n**bold** *italic*\n- bullet point\n1. numbered list\n> callout block\n--- divider"></textarea></div>';
-    html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Supports: # headings, **bold**, *italic*, - bullets, - [ ] checkboxes, > callouts, [link](url)</div>';
-    html += '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">';
-    html += '<button class="btn btn-outline" data-action="close-article-modal">Cancel</button>';
-    html += '<button class="btn btn-primary" data-action="save-article">Save Article</button>';
-    html += '</div>';
-    html += '</div></div></div>';
-
-    var container = document.createElement('div');
-    container.id = 'articleModal';
-    container.innerHTML = html;
-    document.body.appendChild(container);
-
-    var titleInput = document.getElementById('artTitle');
-    if (titleInput) titleInput.focus();
-  }
-
-  function closeArticleModal() {
-    var modal = document.getElementById('articleModal');
-    if (modal) modal.parentNode.removeChild(modal);
-  }
-
-  function saveArticle() {
-    if (!canEditKB()) return;
-    var title = document.getElementById('artTitle').value.trim();
-    var content = document.getElementById('artContent').value.trim();
-
-    if (!title) { showToast('Title is required.', 'error'); return; }
-    if (!content) { showToast('Content is required.', 'error'); return; }
-
-    var session = Auth.getSession();
-    var items = getItems();
-    items.push({
-      id: generateId(),
-      title: title,
-      category: '',
-      type: 'article',
-      content: content,
-      tags: [],
-      pinned: false,
-      videoUrl: '',
-      difficulty: null,
-      estimatedMinutes: null,
-      steps: [],
-      createdBy: session ? (session.displayName || session.username) : 'Unknown',
-      createdAt: new Date().toISOString()
-    });
-    saveItems(items);
-    closeArticleModal();
-    showToast('Article saved successfully.');
-    renderList();
-  }
-
   // ---- Delete resource ----
   function deleteResource(id) {
     if (!canEditKB()) return;
@@ -1270,13 +1206,7 @@
     if (!target) return;
     var action = target.getAttribute('data-action');
 
-    if (action === 'new-article') {
-      openArticleModal();
-    } else if (action === 'close-article-modal') {
-      closeArticleModal();
-    } else if (action === 'save-article') {
-      saveArticle();
-    } else if (action === 'filter') {
+    if (action === 'filter') {
       currentFilter = target.getAttribute('data-filter');
       renderList();
     } else if (action === 'view-item') {
@@ -1311,12 +1241,6 @@
     } else if (action === 'move-step-down') {
       moveStepRow(parseInt(target.getAttribute('data-step-idx'), 10), 'down');
     }
-  });
-
-  // Close article modal on overlay click
-  document.addEventListener('click', function (e) {
-    var overlay = document.getElementById('articleModalOverlay');
-    if (overlay && e.target === overlay) closeArticleModal();
   });
 
   // Handle checkbox changes for training steps
@@ -1420,11 +1344,6 @@
 
   // ---- Init ----
   ensureStepDnDStyle();
-  // Hide the always-present "New Article" top-bar button for non-admins.
-  if (!Auth.isPrivileged()) {
-    var newArticleBtn = document.querySelector('[data-action="new-article"]');
-    if (newArticleBtn) newArticleBtn.style.display = 'none';
-  }
   renderList();
 
   // Re-render once the API bridge has loaded the team's shared Knowledge Base from
