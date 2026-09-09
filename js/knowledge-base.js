@@ -591,9 +591,9 @@
     html += '<div style="display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="#6366F1"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>';
     html += '<div><div style="font-size:.92rem;font-weight:700;color:#1E293B">Learning Path</div>';
     html += '<div style="font-size:.72rem;color:#64748B">' + readCount + ' of ' + totalArticles + ' completed (' + readPct + '%)</div></div></div>';
-    html += '<div style="display:flex;align-items:center;gap:10px">';
-    html += '<div style="width:120px;height:6px;background:#F1F5F9;border-radius:99px;overflow:hidden"><div style="height:100%;width:' + readPct + '%;background:linear-gradient(90deg,#6366F1,#3B82F6);border-radius:99px;transition:width .3s"></div></div>';
-    html += '<svg class="lp-arrow" viewBox="0 0 24 24" width="18" height="18" fill="#94A3B8" style="transition:transform .2s"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>';
+    html += '<div style="display:flex;align-items:center;gap:12px">';
+    html += '<div title="' + readCount + ' of ' + totalArticles + ' read" style="width:120px;height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden"><div style="height:100%;width:' + readPct + '%;background:linear-gradient(90deg,#6366F1,#3B82F6);border-radius:99px;transition:width .3s"></div></div>';
+    html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:#F8FAFC;border:1px solid #E2E8F0;flex-shrink:0"><svg class="lp-arrow" viewBox="0 0 24 24" width="16" height="16" fill="#64748B" style="transition:transform .2s"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span>';
     html += '</div></div>';
 
     // Collapsible body grouped by category

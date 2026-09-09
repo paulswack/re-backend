@@ -2075,3 +2075,43 @@ span.flatpickr-weekday {
 /* Alt input (the friendly display field) */
 .flatpickr-input.flatpickr-mobile { display: block; }
 input.flatpickr-input[readonly] { cursor: pointer; background: #fff; }
+
+/* ---- Standalone form fields ----
+   The .form-group rules above only reach fields wrapped in a .form-group. Fields
+   rendered on their own carry .form-control, which had no definition at all, so
+   they fell back to raw browser defaults (2px inset border, no padding, no radius).
+   Affects the Knowledge Base search box and the Recruiting / Reviews fields. */
+.form-control {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: .88rem;
+  font-family: inherit;
+  color: var(--gray-800);
+  background: var(--white);
+  transition: border-color .15s;
+}
+
+.form-control:focus {
+  border-color: var(--indigo);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+}
+
+.form-control::placeholder { color: var(--gray-400); }
+
+textarea.form-control { resize: vertical; }
+
+/* Native select chrome varies wildly per OS — draw our own caret so a .form-control
+   select matches the text inputs beside it. */
+select.form-control {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239BA5B7'%3E%3Cpath d='M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
+}
