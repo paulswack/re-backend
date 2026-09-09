@@ -28,6 +28,19 @@
   var editingId = null;
   var viewingProgressUser = null; // admin: whose onboarding progress to show (null = self)
 
+  // The Knowledge Base is stored server-side as one whole array, so a push REPLACES
+  // it rather than merging. This script runs at parse time, before DOMContentLoaded
+  // fires ApiBridge.init(), so on first paint localStorage may still hold a stale
+  // copy from a previous visit. Persisting a seed reconcile against that stale copy
+  // would push it over the team's server copy and silently delete whatever this
+  // device had not seen. So reconcile in memory for the first paint and only write
+  // once the server copy has landed.
+  var serverCopyLoaded = false;
+  function canPersistSeed() {
+    // Offline and file:// installs have no server copy to wait for.
+    return serverCopyLoaded || typeof ApiBridge === 'undefined' || !ApiBridge.isServerMode();
+  }
+
   // Knowledge Base is admin-managed: only Team Lead / Admin may add, edit, or delete.
   // The server (routes/settings.js) drops _knowledge_base writes from non-leads too,
   // so this can't be bypassed via the UI.
@@ -386,8 +399,10 @@
     // If empty, load starter templates
     if (!items || items.length === 0) {
       var seeded = SEED_DATA.map(function (item) { return item; });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-      localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
+      if (canPersistSeed()) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+        localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
+      }
       return seeded;
     }
     // Upgrade default content already saved in older installs
@@ -442,7 +457,7 @@
     }
     if (localVer < SEED_VERSION) localStorage.setItem(SEED_VERSION_KEY, String(SEED_VERSION));
 
-    if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    if (changed && canPersistSeed()) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     return items;
   }
 
@@ -1450,6 +1465,8 @@
   // the server, so resources added or edited on other devices appear here. Skip
   // while a form is open so in-progress input is never discarded.
   document.addEventListener('apiBridgeReady', function () {
+    // localStorage now holds the team's copy — reconciles may persist from here on.
+    serverCopyLoaded = true;
     if (currentView === 'form') return;
     if (currentView === 'detail' && viewingId) { renderDetail(viewingId); return; }
     renderList();
