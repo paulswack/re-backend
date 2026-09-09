@@ -19,7 +19,7 @@
   var STORAGE_KEY = 'reb_knowledge_base';
   var PROGRESS_KEY = 'reb_training_progress';
   var SEED_VERSION_KEY = 'reb_kb_seed_version';
-  var SEED_VERSION = 4; // bump when the managed onboarding content changes so every device picks it up
+  var SEED_VERSION = 5; // bump when managed seed content changes so every device picks it up
   var pageBody = document.getElementById('pageBody');
   var currentView = 'list'; // list, detail, form
   var currentFilter = 'All';
@@ -128,6 +128,68 @@
     ]
   };
 
+  // ---- New Listing SOP — the six-phase listing checklist (also used by migrateItems) ----
+  var LISTING_SOP_ITEM = {
+    id: 'kb-007',
+    seedVersion: SEED_VERSION, // force-upgraded on any device whose stored copy is behind
+    title: 'New Listing SOP — Step by Step',
+    category: 'SOPs & Processes',
+    type: 'training',
+    pinned: true,
+    tags: ['listing', 'SOP', 'process', 'checklist'],
+    difficulty: 'beginner',
+    videoUrl: '',
+    createdBy: 'Team Lead',
+    createdAt: '2026-01-07T10:00:00Z',
+    content: "# New Listing Standard Operating Procedure\n\nEvery listing runs the same six phases, from the appointment through the thirty-day follow-up. Work the checklist below in order and tick each step as you go.\n\n> Progress saves per agent, so this is one running checklist — clear it when you start the next listing.",
+    steps: [
+      { title: "Phase 1 · Run the CMA", type: "Do", videoUrl: '', description: "Five or more sold comparables from the last 90 days, plus the actives you are competing against. Land on a range you can defend comp by comp, adjustment by adjustment." },
+      { title: "Phase 1 · Prepare the listing presentation", type: "Do", videoUrl: '', description: "Tax records, previous sales, neighborhood comps, and the printed folder. Rehearse the pricing conversation before you walk in — that is the part that decides whether you leave with a signature." },
+      { title: "Phase 1 · Sign the listing agreement", type: "Do", videoUrl: '', description: "Term, list price, commission, and any exclusions in writing. Nothing goes to market before this is executed." },
+      { title: "Phase 1 · Collect keys, access and gate codes", type: "Do", videoUrl: '', description: "Every key, fob, gate code, alarm code and HOA contact. Test each one before you leave the property — a lockbox that does not open costs you a showing." },
+      { title: "Phase 1 · Review and sign the seller disclosures", type: "Read", videoUrl: '', description: "Walk the seller through the full disclosure package rather than handing it over. Incomplete disclosures are the most common source of post-closing disputes." },
+      { title: "Phase 1 · Agree the pricing strategy", type: "Do", videoUrl: '', description: "Set the list price and the review cadence in the same conversation: what happens at 14 days and at 30 if the showings do not come. Agreeing it now makes the reduction conversation routine instead of adversarial." },
+      { title: "Phase 2 · Order the pre-listing inspection", type: "Do", videoUrl: '', description: "Where it applies. Finding the problem before a buyer does turns a renegotiation into a disclosure." },
+      { title: "Phase 2 · Schedule photography and drone", type: "Do", videoUrl: '', description: "Book the shoot for after staging and cleaning, never before. Confirm the time of day that shows the house best." },
+      { title: "Phase 2 · Order sign installation", type: "Do", videoUrl: '', description: "Sign and rider ordered so they are in the ground for launch day, not the week after." },
+      { title: "Phase 2 · Create the property flyer and feature sheet", type: "Do", videoUrl: '', description: "Team template. Upgrades, feature list, neighborhood highlights, and your contact details with a working QR code." },
+      { title: "Phase 2 · Write the MLS description and get seller approval", type: "Do", videoUrl: '', description: "Lead with what makes the home different, not the bedroom count. Send it to the seller in writing and get approval before it publishes." },
+      { title: "Phase 2 · Verify every property detail", type: "Do", videoUrl: '', description: "Square footage, beds, baths, lot size, year built, HOA dues and schools — checked against tax records, not the seller memory. A wrong number in the MLS is a liability, not a typo." },
+      { title: "Phase 2 · Stage the home or deliver the staging consultation", type: "Do", videoUrl: '', description: "Full stage or a walkthrough with specific, room-by-room instructions. Vague advice does not get followed." },
+      { title: "Phase 2 · Deliver the deep-clean recommendation", type: "Do", videoUrl: '', description: "Carpets, windows, garage, and the smell of the house. Give the seller the vendor list so the answer is a phone number, not a project." },
+      { title: "Phase 3 · Enter the listing in the MLS", type: "Do", videoUrl: '', description: "Every field completed, photos in the order that tells the story, showing instructions correct." },
+      { title: "Phase 3 · Proof the live listing", type: "Read", videoUrl: '', description: "Read it back as a buyer would, on a phone. Photo order, description, price, every field. Fix errors before the first showing, not after." },
+      { title: "Phase 3 · Share on social media", type: "Do", videoUrl: '', description: "Instagram, Facebook and LinkedIn, with location tagged and the team accounts tagged. Answer every comment and DM the same day." },
+      { title: "Phase 3 · Send to the buyer database", type: "Do", videoUrl: '', description: "Push it to every buyer whose criteria it matches, and call the three it fits best rather than only emailing." },
+      { title: "Phase 3 · Announce to the office and team", type: "Do", videoUrl: '', description: "Office email and the team group chat. Other agents in the building have buyers you do not." },
+      { title: "Phase 3 · Schedule the first-weekend open house", type: "Do", videoUrl: '', description: "On the calendar before launch, not after. The first weekend on market draws the most traffic you will ever get." },
+      { title: "Phase 3 · Send Just Listed postcards to the neighborhood", type: "Do", videoUrl: '', description: "Neighbors pick their neighbors, and the ones thinking about selling are watching what your sign does." },
+      { title: "Phase 4 · Weekly seller update", type: "Do", videoUrl: '', description: "Same day every week, by call, whether or not there is news. Sellers do not leave agents who communicate; they leave the ones who go quiet." },
+      { title: "Phase 4 · Track every showing and collect feedback", type: "Do", videoUrl: '', description: "Log each showing and chase the agent for feedback the same day. Patterns in feedback are your pricing evidence." },
+      { title: "Phase 4 · Share showing feedback with the seller", type: "Do", videoUrl: '', description: "Unedited, including the parts that sting. Feedback from strangers moves sellers on price when your opinion cannot." },
+      { title: "Phase 4 · 14-day price check-in", type: "Do", videoUrl: '', description: "The conversation you agreed to at the listing appointment. Showings, feedback and competition measured against the market — then decide together." },
+      { title: "Phase 4 · Open houses the first two weekends", type: "Do", videoUrl: '', description: "Minimum. Signs out early, neighbors invited the day before, every visitor followed up within 24 hours." },
+      { title: "Phase 4 · Monitor competing listings", type: "Read", videoUrl: '', description: "New listings, price cuts and pendings in the submarket every week. When the competition moves, your seller should hear it from you first." },
+      { title: "Phase 5 · Update MLS status to Pending", type: "Do", videoUrl: '', description: "Same day the contract is ratified. A stale Active status wastes other agents time and skews your own days-on-market." },
+      { title: "Phase 5 · Coordinate the buyer inspection", type: "Do", videoUrl: '', description: "Access, timing, and the seller prepared for what happens. Confirm the appointment with all parties in writing." },
+      { title: "Phase 5 · Track every contingency deadline", type: "Do", videoUrl: '', description: "Inspection, appraisal, loan and disclosure dates on the calendar with reminders ahead of each one. Missed deadlines are how deals — and licenses — get lost." },
+      { title: "Phase 5 · Coordinate appraisal access", type: "Do", videoUrl: '', description: "Meet the appraiser where you can, with the comps and the upgrade list in hand. It is the cheapest insurance against a low appraisal." },
+      { title: "Phase 5 · Weekly updates to both sides", type: "Do", videoUrl: '', description: "Seller and cooperating agent, every week until close. Silence during escrow is where anxiety and renegotiation start." },
+      { title: "Phase 5 · Review the closing statement", type: "Read", videoUrl: '', description: "Line by line against the contract before the seller signs. Commission, credits, prorations and fees — errors are routine and always yours to catch." },
+      { title: "Phase 6 · Schedule the final walkthrough", type: "Do", videoUrl: '', description: "Booked early enough that a problem found in it can still be solved before closing." },
+      { title: "Phase 6 · Attend closing", type: "Do", videoUrl: '', description: "Be in the room or on the call. The last impression is the one that gets referred." },
+      { title: "Phase 6 · Deliver keys to the buyer agent", type: "Do", videoUrl: '', description: "Every key, fob, remote and code you collected at the listing appointment, handed over on confirmation of recording." },
+      { title: "Phase 6 · Remove the lockbox and sign", type: "Do", videoUrl: '', description: "Within a few days of closing. A sign left up after the sale is free advertising for how you finish." },
+      { title: "Phase 6 · Send the closing gift", type: "Do", videoUrl: '', description: "Something specific to them, not branded merchandise. The gift is what they show people when they tell the story." },
+      { title: "Phase 6 · Request the Google and Zillow review", type: "Do", videoUrl: '', description: "Ask at closing while the relief is fresh, then send the link the same day. A review asked for a month later rarely gets written." },
+      { title: "Phase 6 · Add the seller to your past-client database", type: "Do", videoUrl: '', description: "Into the CRM with the close date, the anniversary and the annual touch plan before the file is archived." },
+      { title: "Phase 6 · Send the 30-day follow-up", type: "Do", videoUrl: '', description: "Check in a month after closing. It is the natural moment to ask who else they know who is moving." }
+    ]
+  };
+
+  // Code-managed checklists, reconciled on every load by migrateItems().
+  var MANAGED_ITEMS = [ONBOARDING_ITEM, LISTING_SOP_ITEM];
+
   // ---- Seed data — comprehensive team knowledge base templates ----
   var SEED_DATA = [
     // =============== SCRIPTS & DIALOGUES ===============
@@ -151,8 +213,8 @@
       content: '# Top 10 Seller Objections\n\n## 1. "Your commission is too high."\n> "I understand it\'s a significant investment. My marketing plan, negotiation skills, and track record typically net sellers more than the difference in commission. My average seller gets X% above asking price."\n\n## 2. "I want to try FSBO first."\n> "I respect that. Did you know that FSBOs sell for an average of 26% less than agent-assisted sales? I\'d love to show you the data and what a professional marketing plan can do."\n\n## 3. "Another agent said they could sell it for more."\n> "I\'d be cautious about an agent who tells you what you want to hear rather than what the market says. Overpricing leads to longer days on market and ultimately a lower sale price. Let me show you the data."\n\n## 4. "We\'re not ready to sell yet."\n> "No problem at all. When do you think you might be ready? I can prepare a market analysis closer to that time so you know exactly what to expect."\n\n## 5. "We had a bad experience with our last agent."\n> "I\'m sorry to hear that. Can you share what went wrong? I want to make sure I address those concerns upfront. Here\'s how I do things differently..."\n\n## 6. "We want to wait for spring."\n> "Spring does bring more buyers, but it also brings more competition from other sellers. Right now there are fewer homes on the market, which means less competition for you. Serious buyers are always looking."\n\n## 7. "I don\'t want strangers in my house."\n> "I completely understand. We use a managed showing system — every visitor is pre-screened, accompanied, and tracked. I can also set up virtual tours to reduce unnecessary visits."\n\n## 8. "The Zestimate says our home is worth more."\n> "Zillow\'s algorithm doesn\'t see inside your home or account for local nuances. A proper CMA using actual sold comparables in your neighborhood is much more accurate. Let me show you."' },
 
     // =============== SOPs & PROCESSES ===============
-    { id: 'kb-007', title: 'New Listing SOP — Step by Step', category: 'SOPs & Processes', type: 'article', pinned: true, tags: ['listing', 'SOP', 'process', 'checklist'], videoUrl: '', createdBy: 'Team Lead', createdAt: '2026-01-07T10:00:00Z',
-      content: '# New Listing Standard Operating Procedure\n\n## Phase 1: Listing Appointment (Day 0)\n- Run CMA with 5+ comparable properties\n- Prepare listing presentation\n- Sign listing agreement\n- Collect keys, access codes, and gate codes\n- Review and sign seller\'s disclosure\n- Discuss pricing strategy\n\n## Phase 2: Pre-Listing Prep (Days 1-5)\n- Order pre-listing inspection (if applicable)\n- Schedule professional photography and drone shots\n- Order sign installation\n- Create property flyer and feature sheet\n- Write MLS description (have seller approve)\n- Verify all property details (sqft, beds, baths, lot, year built)\n- Stage home or provide staging consultation\n- Deep clean recommendation\n\n## Phase 3: Launch Day (Day 6-7)\n- Enter listing in MLS\n- Verify all photos and details are correct\n- Share on social media (Instagram, Facebook, LinkedIn)\n- Send to buyer leads database\n- Email office/team announcement\n- Schedule open house for first weekend\n- Send "Just Listed" postcards to neighborhood\n\n## Phase 4: Active Marketing (Ongoing)\n- Weekly seller updates (calls or emails)\n- Track all showings and collect feedback\n- Share showing feedback with seller\n- Adjust price strategy if needed (14-day check-in)\n- Open houses (minimum first 2 weekends)\n- Monitor competing listings\n\n## Phase 5: Under Contract\n- Update MLS status to Pending\n- Coordinate buyer\'s inspection\n- Monitor all contingency deadlines\n- Coordinate appraisal access\n- Weekly buyer and seller updates\n- Review closing statement\n\n## Phase 6: Closing & Post-Close\n- Schedule final walkthrough\n- Attend closing\n- Deliver keys to buyer\'s agent\n- Remove lockbox and sign\n- Send closing gift to seller\n- Request Google/Zillow review\n- Add to past client database\n- Send 30-day follow-up' },
+    LISTING_SOP_ITEM,
+
 
     { id: 'kb-008', title: 'Buyer Transaction SOP', category: 'SOPs & Processes', type: 'article', pinned: false, tags: ['buyer', 'SOP', 'process', 'escrow'], videoUrl: '', createdBy: 'Team Lead', createdAt: '2026-01-08T10:00:00Z',
       content: '# Buyer Transaction SOP\n\n## Phase 1: Pre-Offer\n- Verify buyer is pre-approved\n- Set up property search criteria\n- Schedule and attend showings\n- Provide neighborhood and market data\n- Discuss offer strategy\n\n## Phase 2: Offer & Negotiation\n- Write offer with appropriate contingencies\n- Present offer to listing agent\n- Negotiate terms, price, and closing date\n- Get ratified contract signed by all parties\n- Send executed contract to:\n  - Title/escrow company\n  - Lender\n  - Both agents\n\n## Phase 3: In Escrow (Days 1-7)\n- Open escrow and confirm receipt\n- Deliver earnest money within contract timeline\n- Order home inspection\n- Review seller disclosures with buyer\n- Begin loan processing with lender\n\n## Phase 4: Due Diligence (Days 7-21)\n- Attend home inspection\n- Review inspection report with buyer\n- Submit repair request if needed\n- Negotiate repairs/credits\n- Order appraisal through lender\n- Review preliminary title report\n\n## Phase 5: Loan & Closing Prep (Days 21-35)\n- Follow up with lender weekly\n- Review appraisal results\n- Remove contingencies per contract\n- Review closing disclosure (3 days before closing)\n- Schedule final walkthrough\n- Coordinate closing time and location\n- Confirm wire transfer instructions with buyer\n\n## Phase 6: Closing Day\n- Attend final walkthrough\n- Attend closing\n- Deliver keys\n- Send congratulations gift\n- Request review/testimonial\n- Add to past client database' },
@@ -343,20 +405,24 @@
   function migrateItems(items) {
     var changed = false;
 
-    var idx = -1;
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].id === ONBOARDING_ITEM.id) { idx = i; break; }
-    }
-    if (idx === -1) {
-      // Missing entirely — add it.
-      items.unshift(ONBOARDING_ITEM);
-      changed = true;
-    } else if (!items[idx].userEdited && (items[idx].seedVersion || 0) < ONBOARDING_ITEM.seedVersion) {
-      // Behind the current code version and not customized in-app — force-upgrade.
-      // Admin edits (userEdited) are preserved so the Settings task editor sticks.
-      items[idx] = ONBOARDING_ITEM;
-      changed = true;
-    }
+    // Checklist items whose content is managed in code. Each is reconciled against
+    // the stored copy on every load so a content change here reaches every device.
+    MANAGED_ITEMS.forEach(function (managed) {
+      var idx = -1;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === managed.id) { idx = i; break; }
+      }
+      if (idx === -1) {
+        // Missing entirely — add it.
+        items.unshift(managed);
+        changed = true;
+      } else if (!items[idx].userEdited && (items[idx].seedVersion || 0) < managed.seedVersion) {
+        // Behind the current code version and not customized in-app — force-upgrade.
+        // Admin edits (userEdited) are preserved so the Settings task editor sticks.
+        items[idx] = managed;
+        changed = true;
+      }
+    });
 
     var localVer = parseInt(localStorage.getItem(SEED_VERSION_KEY) || '1', 10);
     if (isNaN(localVer)) localVer = 1;
