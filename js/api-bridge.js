@@ -80,6 +80,21 @@ var ApiBridge = (function () {
     });
   }
 
+  // Union two { itemId: [stepIndex, ...] } slices. Used only for the signed-in user's
+  // own onboarding progress: a completed step must never be lost to a stale copy on
+  // either side, so ticks are merged rather than one side replacing the other.
+  function unionProgress(srv, loc) {
+    srv = srv || {}; loc = loc || {};
+    var out = {};
+    Object.keys(srv).forEach(function (k) { out[k] = (srv[k] || []).slice(); });
+    Object.keys(loc).forEach(function (k) {
+      var arr = out[k] || [];
+      (loc[k] || []).forEach(function (i) { if (arr.indexOf(i) === -1) arr.push(i); });
+      out[k] = arr.sort(function (a, b) { return a - b; });
+    });
+    return out;
+  }
+
   // ---- Load all data from server ----
   function loadAll() {
     if (!isServerMode()) return Promise.resolve();
@@ -330,12 +345,27 @@ var ApiBridge = (function () {
           localStorage.setItem(PREFIX + 'knowledge_base', JSON.stringify(kb));
         }
         // Onboarding/training progress — shared per-agent so admins can see everyone.
-        // Merge server (all agents) with local, letting local win for this device's own
-        // user so unsynced progress isn't lost.
+        // The server is authoritative for every OTHER agent (a stale local snapshot must
+        // not mask their newer progress). Only this device's own user can hold ticks the
+        // server has never seen — clicked offline, or before this sync shipped — so that
+        // one slice is unioned and pushed back up. Without the push, progress recorded
+        // before the sync existed would stay stranded in the agent's browser forever.
         var srvProg = (d && d._training_progress) || {};
         var locProg = {};
         try { locProg = JSON.parse(localStorage.getItem(PREFIX + 'training_progress') || '{}') || {}; } catch (e) {}
-        localStorage.setItem(PREFIX + 'training_progress', JSON.stringify(Object.assign({}, srvProg, locProg)));
+        var me = (API.getUser() && API.getUser().username) || '';
+        var mergedProg = Object.assign({}, locProg, srvProg);
+        if (me) {
+          mergedProg[me] = unionProgress(srvProg[me], locProg[me]);
+          if (Object.keys(mergedProg[me]).length === 0) delete mergedProg[me];
+        }
+        localStorage.setItem(PREFIX + 'training_progress', JSON.stringify(mergedProg));
+        // Backfill: this device knows something the server doesn't — send it once.
+        if (me && mergedProg[me] &&
+            JSON.stringify(mergedProg[me]) !== JSON.stringify(srvProg[me] || {})) {
+          var backfill = {}; backfill[me] = mergedProg[me];
+          API.updateSettings({ _training_progress: backfill }).catch(notifySyncError);
+        }
       }).catch(notifySyncError),
       API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(notifySyncError),
       API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(notifySyncError),
