@@ -62,8 +62,6 @@
     'Team Policies':         { bg: '#F1F5F9', text: '#334155' }
   };
 
-  var CATEGORY_KEYS = Object.keys(CATEGORIES);
-
   var STEP_TYPES = ['Read', 'Watch', 'Do', 'Quiz', 'Video'];
   var STEP_ICONS = {
     'Read':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>',
@@ -498,6 +496,7 @@
 
   // ---- Badge helpers ----
   function categoryBadge(cat) {
+    if (!cat) return ''; // resources created since the category picker was removed
     var c = CATEGORIES[cat] || { bg: '#F1F5F9', text: '#475569' };
     return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:' + c.bg + ';color:' + c.text + ';">' + escapeHtml(cat) + '</span>';
   }
@@ -919,24 +918,6 @@
     // Title
     html += '<div class="form-group"><label>Title *</label><input type="text" id="kbTitle" class="form-control" value="' + escapeHtml(v.title || '') + '" placeholder="Resource title"></div>';
 
-    // Row: Category + Type
-    html += '<div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
-    var catOpts = CATEGORY_KEYS.map(function (cat) {
-      var sel = v.category === cat ? ' selected' : '';
-      return '<option value="' + escapeHtml(cat) + '"' + sel + '>' + escapeHtml(cat) + '</option>';
-    }).join('');
-    html += '<div class="form-group"><label>Category *</label><select id="kbCategory" class="form-control"><option value="">Select category</option>' + catOpts + '</select></div>';
-    html += '<div class="form-group"><label>Type *</label><select id="kbType" class="form-control"><option value="article"' + (v.type === 'article' ? ' selected' : '') + '>Article</option><option value="training"' + (v.type === 'training' ? ' selected' : '') + '>Training</option></select></div>';
-    html += '</div>';
-
-    // Row: Difficulty + Estimated Time (shown for training)
-    html += '<div id="trainingFields" style="' + (v.type === 'training' ? '' : 'display:none;') + '">';
-    html += '<div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
-    html += '<div class="form-group"><label>Difficulty</label><select id="kbDifficulty" class="form-control"><option value="beginner"' + (v.difficulty === 'beginner' ? ' selected' : '') + '>Beginner</option><option value="intermediate"' + (v.difficulty === 'intermediate' ? ' selected' : '') + '>Intermediate</option><option value="advanced"' + (v.difficulty === 'advanced' ? ' selected' : '') + '>Advanced</option></select></div>';
-    html += '<div class="form-group"><label>Estimated Minutes</label><input type="number" id="kbMinutes" class="form-control" value="' + (v.estimatedMinutes || '') + '" placeholder="e.g. 30"></div>';
-    html += '</div>';
-    html += '</div>';
-
     // Video URL
     html += '<div class="form-group"><label>Video URL (optional)</label><input type="text" id="kbVideoUrl" class="form-control" value="' + escapeHtml(v.videoUrl || '') + '" placeholder="YouTube, Vimeo, or Loom URL"></div>';
     html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Supports YouTube, Vimeo, Loom, and Google Drive video links. Video will display at the top of the article.</div>';
@@ -954,9 +935,10 @@
     html += '</div>';
 
     // Training steps section
-    html += '<div id="stepsSection" style="' + (v.type === 'training' ? '' : 'display:none;') + 'margin-top:20px;padding-top:20px;border-top:1px solid #E2E8F0;">';
+    html += '<div id="stepsSection" style="margin-top:20px;padding-top:20px;border-top:1px solid #E2E8F0;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
-    html += '<h3 style="margin:0;font-size:16px;font-weight:700;">Training Steps</h3>';
+    html += '<div><h3 style="margin:0;font-size:16px;font-weight:700;">Checklist Steps</h3>';
+    html += '<div style="font-size:.72rem;color:#94A3B8;margin-top:2px">Add steps to make this a tickable checklist. Leave empty for a plain article.</div></div>';
     html += '<button class="btn btn-outline btn-sm" data-action="add-step" type="button">+ Add Step</button>';
     html += '</div>';
     html += '<div id="stepsList">';
@@ -977,16 +959,6 @@
     html += '</div>';
 
     pageBody.innerHTML = html;
-
-    // Toggle training fields on type change
-    var typeSelect = document.getElementById('kbType');
-    if (typeSelect) {
-      typeSelect.addEventListener('change', function () {
-        var isTraining = this.value === 'training';
-        document.getElementById('trainingFields').style.display = isTraining ? '' : 'none';
-        document.getElementById('stepsSection').style.display = isTraining ? '' : 'none';
-      });
-    }
   }
 
   function stepRowHtml(idx, step) {
@@ -1130,28 +1102,20 @@
   function saveResource(id) {
     if (!canEditKB()) return;
     var title = document.getElementById('kbTitle').value.trim();
-    var category = document.getElementById('kbCategory').value;
-    var type = document.getElementById('kbType').value;
     var content = document.getElementById('kbContent').value.trim();
     var tagsRaw = document.getElementById('kbTags').value.trim();
     var pinned = document.getElementById('kbPinned').checked;
 
+    // Steps decide what this is: any steps and it renders as a tickable checklist,
+    // none and it is a plain article. There is no Type picker any more.
+    var steps = collectSteps();
+    var type = steps.length > 0 ? 'training' : 'article';
+
     if (!title) { showToast('Title is required.', 'error'); return; }
-    if (!category) { showToast('Please select a category.', 'error'); return; }
     if (!content && type !== 'training') { showToast('Content is required.', 'error'); return; }
 
     var tags = tagsRaw ? tagsRaw.split(',').map(function (t) { return t.trim(); }).filter(function (t) { return t; }) : [];
     var videoUrl = document.getElementById('kbVideoUrl').value.trim();
-
-    var difficulty = null;
-    var estimatedMinutes = null;
-    var steps = [];
-    if (type === 'training') {
-      difficulty = document.getElementById('kbDifficulty').value;
-      var minVal = document.getElementById('kbMinutes').value;
-      estimatedMinutes = minVal ? parseInt(minVal, 10) : null;
-      steps = collectSteps();
-    }
 
     var session = Auth.getSession();
     var items = getItems();
@@ -1160,14 +1124,11 @@
       items = items.map(function (item) {
         if (item.id === id) {
           item.title = title;
-          item.category = category;
           item.type = type;
           item.content = content;
           item.tags = tags;
           item.pinned = pinned;
           item.videoUrl = videoUrl;
-          item.difficulty = difficulty;
-          item.estimatedMinutes = estimatedMinutes;
           item.steps = steps;
           item.userEdited = true; // protect from code-seed reconcile overwrite
         }
@@ -1178,14 +1139,14 @@
       items.push({
         id: generateId(),
         title: title,
-        category: category,
+        category: '',
         type: type,
         content: content,
         tags: tags,
         pinned: pinned,
         videoUrl: videoUrl,
-        difficulty: difficulty,
-        estimatedMinutes: estimatedMinutes,
+        difficulty: null,
+        estimatedMinutes: null,
         steps: steps,
         createdBy: session ? session.displayName : 'Unknown',
         createdAt: new Date().toISOString()
@@ -1201,10 +1162,6 @@
   // ---- New Article Modal ----
   function openArticleModal() {
     if (!canEditKB()) return;
-    var catOpts = CATEGORY_KEYS.map(function (cat) {
-      return '<option value="' + escapeHtml(cat) + '">' + escapeHtml(cat) + '</option>';
-    }).join('');
-
     var html = '<div class="modal-overlay open" id="articleModalOverlay">';
     html += '<div class="modal" style="max-width:580px;">';
     html += '<div class="modal-header">';
@@ -1213,7 +1170,6 @@
     html += '</div>';
     html += '<div class="modal-body">';
     html += '<div class="form-group"><label>Title *</label><input type="text" id="artTitle" class="form-control" placeholder="Article title"></div>';
-    html += '<div class="form-group"><label>Category *</label><select id="artCategory" class="form-control"><option value="">Select category</option>' + catOpts + '</select></div>';
     html += '<div class="form-group"><label>Content *</label><textarea id="artContent" class="form-control" rows="10" placeholder="Write your article here...\n\nFormatting tips:\n# Heading 1\n## Heading 2\n**bold** *italic*\n- bullet point\n1. numbered list\n> callout block\n--- divider"></textarea></div>';
     html += '<div style="font-size:.72rem;color:#94A3B8;margin:-8px 0 12px">Supports: # headings, **bold**, *italic*, - bullets, - [ ] checkboxes, > callouts, [link](url)</div>';
     html += '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">';
@@ -1239,11 +1195,9 @@
   function saveArticle() {
     if (!canEditKB()) return;
     var title = document.getElementById('artTitle').value.trim();
-    var category = document.getElementById('artCategory').value;
     var content = document.getElementById('artContent').value.trim();
 
     if (!title) { showToast('Title is required.', 'error'); return; }
-    if (!category) { showToast('Please select a category.', 'error'); return; }
     if (!content) { showToast('Content is required.', 'error'); return; }
 
     var session = Auth.getSession();
@@ -1251,7 +1205,7 @@
     items.push({
       id: generateId(),
       title: title,
-      category: category,
+      category: '',
       type: 'article',
       content: content,
       tags: [],
