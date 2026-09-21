@@ -64,6 +64,97 @@
 
   function gci(price) { return (parseFloat(price) || 0) * COMMISSION_RATE; }
 
+  // ---- Commission -------------------------------------------------------
+  // Agents don't all earn the same slice: each has their own commission rate
+  // and their own broker split, so one flat rate can't value the team's deals.
+  // Resolution order for any deal, best source first:
+  //   1. the exact take-home the agent typed on that deal
+  //   2. that agent's own rate x split from their Tax Center
+  //   3. the team default from Admin Settings
+  //   4. the legacy flat rate
+  function taxSettingsByUser() {
+    try { return JSON.parse(localStorage.getItem('reb_tax_settings_all') || '{}'); } catch (e) { return {}; }
+  }
+
+  // Tax settings are keyed by username; deals record the agent's display name.
+  function taxSettingsForAgent(displayName) {
+    if (!displayName) return null;
+    var all = taxSettingsByUser();
+    var match = getUsersList().filter(function (u) {
+      return (u.displayName || u.username) === displayName;
+    })[0];
+    var uname = match && match.username;
+    if (uname && all[uname]) return all[uname];
+    // The signed-in user's own slot lives in its own key and stays freshest.
+    if (displayName === MY_NAME) {
+      try {
+        var mine = JSON.parse(localStorage.getItem('reb_tax_settings') || 'null');
+        if (mine) return mine;
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  function rateSplitFor(displayName) {
+    var t = taxSettingsForAgent(displayName);
+    if (t && t.commissionRate > 0 && t.agentSplit > 0) {
+      return { rate: t.commissionRate, split: t.agentSplit, source: 'tax' };
+    }
+    var teamRate = parseFloat(getAdminSetting('general.defaultCommissionRate', 0)) || 0;
+    var teamSplit = parseFloat(getAdminSetting('general.defaultAgentSplit', 0)) || 0;
+    if (teamRate > 0 && teamSplit > 0) {
+      return { rate: teamRate, split: teamSplit, source: 'team' };
+    }
+    return { rate: COMMISSION_RATE, split: 1, source: 'legacy' };
+  }
+
+  function hasTypedCommission(t) {
+    return !!t && t.commission !== null && t.commission !== undefined && t.commission !== '';
+  }
+
+  // Where a deal's number came from — drives the "actual vs estimated"
+  // labelling so a projection is never mistaken for real pay.
+  function commissionSource(t) {
+    if (hasTypedCommission(t)) return 'actual';
+    return rateSplitFor(t && t.agent).source;
+  }
+
+  function dealCommission(t) {
+    if (!t) return 0;
+    if (hasTypedCommission(t)) {
+      var typed = parseFloat(t.commission);
+      if (!isNaN(typed)) return typed;
+    }
+    var rs = rateSplitFor(t.agent);
+    return (parseFloat(t.price) || 0) * rs.rate * rs.split;
+  }
+
+  function sumCommission(list) {
+    return (list || []).reduce(function (s, t) { return s + dealCommission(t); }, 0);
+  }
+
+  function countTyped(list) {
+    return (list || []).filter(hasTypedCommission).length;
+  }
+
+  // "9 of 12 actual" / "all 12 actual" / "all estimated" — one honest caption.
+  function accuracyNote(list) {
+    var total = (list || []).length;
+    if (!total) return '';
+    var typed = countTyped(list);
+    if (typed === 0) return 'all estimated';
+    if (typed === total) return 'all ' + total + ' actual';
+    return typed + ' of ' + total + ' actual';
+  }
+
+  // Parse "$18,750" -> 18750; empty -> null (clears the override).
+  function parseCommissionInput(v) {
+    var raw = String(v == null ? '' : v).replace(/[^0-9.]/g, '');
+    if (raw === '') return null;
+    var n = parseFloat(raw);
+    return isNaN(n) ? null : n;
+  }
+
   // Compact money like $1.2M / $845K for tight spaces
   function compactMoney(n) {
     n = parseFloat(n) || 0;
@@ -209,13 +300,19 @@
       return {
         name: name,
         volume: volume,
-        gci: volume * COMMISSION_RATE,
+        gci: sumCommission(mine),
+        typedCount: countTyped(mine),
+        accuracy: accuracyNote(mine),
         deals: deals,
         rawCount: mine.length
       };
     });
 
     agents.sort(function (a, b) {
+      if (rankMetric === 'commission') {
+        if (b.gci !== a.gci) return b.gci - a.gci;
+        return b.volume - a.volume;
+      }
       if (rankMetric === 'volume') {
         if (b.volume !== a.volume) return b.volume - a.volume;
         return b.deals - a.deals;
@@ -389,7 +486,7 @@
 
     // Append custom badges created in Admin Settings (criterion evaluated on this year's stats)
     var customBadges = getAdminSetting('customBadges', []) || [];
-    var metricVals = { sales: yCount, volume: yVolume, gci: yVolume * COMMISSION_RATE, streak: yStreak, single: yMaxDeal, month: yBestMonth };
+    var metricVals = { sales: yCount, volume: yVolume, gci: sumCommission(ytd), streak: yStreak, single: yMaxDeal, month: yBestMonth };
     customBadges.forEach(function (cb) {
       if (!cb || !cb.id) return;
       var cur = metricVals[cb.metric]; if (cur === undefined) cur = 0;
@@ -420,7 +517,9 @@
       career: career,
       careerVolume: careerVolume,
       ytdVolume: ytdVolume,
-      ytdGci: ytdVolume * COMMISSION_RATE,
+      ytdGci: sumCommission(ytd),
+      ytdAccuracy: accuracyNote(ytd),
+      careerGci: sumCommission(career),
       careerCount: career.length,
       biggest: biggest,
       bestMonthLabel: bestMonthLabel,
@@ -480,7 +579,7 @@
     // inline stat trio
     s += '<div class="wins-hero-stats">';
     s += heroStat(Data.formatCurrency(p.ytdVolume), 'volume');
-    s += heroStat(Data.formatCurrency(p.ytdGci), 'GCI');
+    s += heroStat(Data.formatCurrency(p.ytdGci), 'COMMISSION');
     s += heroStat(String(closedCount), closedCount === 1 ? 'deal' : 'deals');
     s += '</div>';
 
@@ -552,10 +651,12 @@
     var goals = getGoals();
     var goal = parseFloat(goals[MY_NAME]) || 0;
     var earned = p.ytdGci;
+    var earnedNote = p.ytdAccuracy;
 
     var s = '<div class="wins-card wins-goal">';
     s += '<div class="wins-goal-head">';
-    s += '<div class="wins-goal-title">🎯 ' + new Date().getFullYear() + ' Commission Goal</div>';
+    s += '<div class="wins-goal-title">🎯 ' + new Date().getFullYear() + ' Commission Goal' +
+      (earnedNote ? '<span style="font-weight:600;font-size:.72rem;opacity:.75;margin-left:8px">' + escapeHtml(earnedNote) + '</span>' : '') + '</div>';
     if (!goalEditMode && goal > 0) {
       s += '<button class="wins-link-btn" data-action="edit-goal">Edit goal</button>';
     }
@@ -603,7 +704,10 @@
     // Prizes for the top 3 — overridable in Admin Settings → Wins Prizes
     var prizes = getAdminSetting('podiumPrizes', DEFAULT_PODIUM_PRIZES) || {};
 
-    function metricVal(a) { return rankMetric === 'volume' ? a.volume : a.deals; }
+    function metricVal(a) {
+      if (rankMetric === 'commission') return a.gci;
+      return rankMetric === 'volume' ? a.volume : a.deals;
+    }
     var champTop = metricVal(top[0]);
     function gap(i) { return champTop - metricVal(top[i]); }
 
@@ -623,11 +727,15 @@
 
   // Big headline metric + secondary line for a podium agent, based on the active toggle
   function podiumPrimary(a) {
+    if (rankMetric === 'commission') return Data.formatCurrency(a.gci);
     return rankMetric === 'volume' ? Data.formatCurrency(a.volume) : salesLabel(a.deals);
   }
   function podiumSecondary(a, behind) {
-    var base = rankMetric === 'volume' ? salesLabel(a.deals) : Data.formatCurrency(a.volume) + ' volume';
-    var behindStr = behind > 0 ? (rankMetric === 'volume' ? Data.formatCurrency(behind) : behind) + ' behind' : '';
+    var moneyMetric = (rankMetric === 'volume' || rankMetric === 'commission');
+    var base = rankMetric === 'volume' ? salesLabel(a.deals)
+      : rankMetric === 'commission' ? salesLabel(a.deals) + ' · ' + Data.formatCurrency(a.volume) + ' volume'
+      : Data.formatCurrency(a.volume) + ' volume';
+    var behindStr = behind > 0 ? (moneyMetric ? Data.formatCurrency(behind) : behind) + ' behind' : '';
     return base + (behindStr ? ' · ' + behindStr : '');
   }
 
@@ -641,7 +749,7 @@
       '<div class="wins-champ-tag">🏆 Team Leader</div>' +
       '<div class="wins-champ-name">' + escapeHtml(a.name) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</div>' +
       '<div class="wins-champ-vol">' + podiumPrimary(a) + '</div>' +
-      '<div class="wins-champ-sub">' + podiumSecondary(a, 0) + ' · ' + Data.formatCurrency(a.gci) + ' GCI</div>' +
+      '<div class="wins-champ-sub">' + podiumSecondary(a, 0) + (rankMetric === 'commission' ? '' : ' · ' + Data.formatCurrency(a.gci) + ' commission') + '</div>' +
       (prize ? '<div class="wins-podium-prize champ">🎁 ' + escapeHtml(prize) + '</div>' : '') +
     '</div>';
   }
@@ -685,6 +793,7 @@
     return '<div class="wins-metric-toggle">' +
       '<button class="wins-mt-btn' + (rankMetric === 'sales' ? ' active' : '') + '" data-action="rank-metric" data-metric="sales">Sales</button>' +
       '<button class="wins-mt-btn' + (rankMetric === 'volume' ? ' active' : '') + '" data-action="rank-metric" data-metric="volume">Volume</button>' +
+      '<button class="wins-mt-btn' + (rankMetric === 'commission' ? ' active' : '') + '" data-action="rank-metric" data-metric="commission">Commission</button>' +
     '</div>';
   }
 
@@ -749,9 +858,10 @@
     if (!ranked.length) {
       body = triEmpty('No sales yet');
     } else {
+      var commActive = rankMetric === 'commission';
       body += '<div class="wins-mlb-head"><span class="wins-mlb-rank">#</span><span class="wins-mlb-name">Agent</span>' +
         '<span class="wins-mlb-sales' + (salesActive ? ' active' : '') + '">Sales</span>' +
-        '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '">Volume</span></div>';
+        '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '">' + (commActive ? 'Commission' : 'Volume') + '</span></div>';
       ranked.forEach(function (a) {
         var me = a.name === MY_NAME;
         body += '<div class="wins-mlb-row wins-clickable' + (me ? ' me' : '') + '" data-action="open-agent" data-agent="' + agentAttr(a.name) + '" title="View ' + escapeHtml(a.name) + '\'s snapshot">';
@@ -759,7 +869,7 @@
         body += avatarMarkup(a.name, 'wins-mlb-avatar');
         body += '<span class="wins-mlb-name">' + escapeHtml(a.name.split(/\s+/)[0]) + (me ? ' <span class="wins-you">YOU</span>' : '') + '</span>';
         body += '<span class="wins-mlb-sales' + (salesActive ? ' active' : '') + '">' + a.deals + '</span>';
-        body += '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '">' + Data.formatCurrency(a.volume) + '</span>';
+        body += '<span class="wins-mlb-vol' + (!salesActive ? ' active' : '') + '" title="' + escapeHtml(commActive ? a.accuracy : '') + '">' + Data.formatCurrency(commActive ? a.gci : a.volume) + '</span>';
         body += '</div>';
       });
     }
@@ -934,7 +1044,7 @@
     s += recordCard('🐋', 'Biggest Deal', p.biggest ? Data.formatCurrency(p.biggest.price) : '—',
         p.biggest ? (p.biggest.address || '') : '');
     s += recordCard('🗓️', 'Best Month', p.bestMonthCount ? p.bestMonthCount + ' deals' : '—', p.bestMonthLabel);
-    s += recordCard('💰', 'Career GCI', Data.formatCurrency(p.careerVolume * COMMISSION_RATE), p.careerCount + ' closings');
+    s += recordCard('💰', 'Career Commission', Data.formatCurrency(p.careerGci), p.careerCount + ' closings');
     s += recordCard('⚡', 'Fastest Close', p.fastest !== null ? p.fastest + ' days' : '—', 'Contract to close');
     s += '</div>';
     return s;
@@ -974,7 +1084,7 @@
       s += '<div class="wins-feed-addr">' + escapeHtml(t.address || '—') + '</div>';
       s += '<div class="wins-feed-nums">';
       s += '<div class="wins-feed-price">' + Data.formatCurrency(t.price) + '</div>';
-      s += '<div class="wins-feed-gci">+' + Data.formatCurrency(gci(t.price)) + ' GCI</div>';
+      s += '<div class="wins-feed-gci">+' + Data.formatCurrency(dealCommission(t)) + (commissionSource(t) === 'actual' ? '' : ' est.') + '</div>';
       s += '</div>';
       s += '</div>';
     });
@@ -1057,7 +1167,7 @@
         '<div class="wins-celebrate-title">' + (mine ? 'Congratulations!' : escapeHtml((txn.agent || 'A teammate').split(/\s+/)[0]) + ' just closed!') + '</div>' +
         '<div class="wins-celebrate-addr">' + escapeHtml(txn.address || 'A new deal') + '</div>' +
         '<div class="wins-celebrate-price">' + Data.formatCurrency(txn.price) + '</div>' +
-        '<div class="wins-celebrate-gci">+' + Data.formatCurrency(gci(txn.price)) + ' commission</div>' +
+        '<div class="wins-celebrate-gci">+' + Data.formatCurrency(dealCommission(txn)) + ' commission</div>' +
         '<button class="btn btn-primary" data-action="close-celebrate" style="margin-top:18px">' +
           (mine ? 'Let\'s go! 🚀' : 'Nice! 👏') + '</button>' +
       '</div>';
@@ -1337,7 +1447,7 @@
     s += '<div class="snap-hero-stats">';
     s += snapHeroStat(String(salesThisYear), salesThisYear === 1 ? 'Sale' : 'Sales');
     s += snapHeroStat(Data.formatCurrency(profile.ytdVolume), 'Volume');
-    s += snapHeroStat(Data.formatCurrency(profile.ytdGci), 'GCI');
+    s += snapHeroStat(Data.formatCurrency(profile.ytdGci), 'COMMISSION');
     s += '</div>';
     var sgp = goalProgress(salesThisYear, profile.ytdVolume, goal);
     s += '<div class="hero-goal-row"><span class="snap-tier-meta">' + sgp.pct + '% · ' + sgp.label + '</span>' + heroGoalToggle() + '</div>';
@@ -1410,7 +1520,8 @@
     html += '<div style="font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:16px;letter-spacing:-.3px;line-height:1.25">' + escapeHtml(t.address || '—') + '</div>';
     html += '<div style="display:flex;gap:24px;flex-wrap:wrap">';
     html += heroPair('Sale Price', Data.formatCurrencyFull(t.price));
-    html += heroPair('Commission', Data.formatCurrencyFull(gci(t.price)));
+    var cSrc = commissionSource(t);
+    html += heroPair(cSrc === 'actual' ? 'My Commission' : 'Commission (est.)', Data.formatCurrencyFull(dealCommission(t)));
     html += heroPair('Close Date', t.closeDate ? Data.formatDate(t.closeDate) : '—');
     html += heroPair('Agent', t.agent || '—');
     html += '</div></div>';
@@ -1433,6 +1544,30 @@
     html += '<div><label style="' + lStyle + '">Close Date</label><input type="date" class="closed-edit-field" data-field="closeDate" value="' + (t.closeDate || '') + '" style="' + iStyle + '"></div>';
     var priceDisplay = t.price ? '$' + parseInt(t.price, 10).toLocaleString('en-US') : '';
     html += '<div><label style="' + lStyle + '">Sale Price</label><input type="text" class="closed-edit-field" data-field="price" value="' + priceDisplay + '" placeholder="$0" style="' + iStyle + '" oninput="var r=this.value.replace(/[^0-9]/g,\'\');this.value=r?\'$\'+parseInt(r,10).toLocaleString(\'en-US\'):\'\'"></div>';
+    // Take-home commission. The placeholder shows the estimate it replaces and
+    // the hint says where that estimate came from, so the number is never a
+    // mystery. Clearing the box restores the estimate (stored as NULL).
+    var commRS = rateSplitFor(t.agent);
+    var commHint;
+    if (hasTypedCommission(t)) {
+      commHint = 'Your exact take-home. Clear this box to go back to an estimate.';
+    } else if (commRS.source === 'tax') {
+      commHint = 'Estimated from your Tax Center: ' + (commRS.rate * 100).toFixed(2).replace(/.?0+$/, '') +
+        '% commission x ' + Math.round(commRS.split * 100) + '% split. Type your exact take-home to replace it.';
+    } else if (commRS.source === 'team') {
+      commHint = 'Estimated from the team default. Set your own rate and split in the Tax Center, or type your exact take-home.';
+    } else {
+      commHint = 'Estimated at ' + (COMMISSION_RATE * 100).toFixed(2) + '%. Set your rate and split in the Tax Center, or type your exact take-home.';
+    }
+    var commDisplay = hasTypedCommission(t)
+      ? '$' + Math.round(parseFloat(t.commission)).toLocaleString('en-US')
+      : '';
+    var commPlaceholder = Data.formatCurrencyFull(dealCommission(t)) + ' (est.)';
+    html += '<div style="grid-column:1/-1"><label style="' + lStyle + '">My Commission &middot; take-home</label>' +
+      '<input type="text" class="closed-edit-field" data-field="commission" value="' + escapeHtml(commDisplay) + '" ' +
+      'placeholder="' + escapeHtml(commPlaceholder) + '" style="' + iStyle + '" ' +
+      'id="commissionInput">' +
+      '<div style="font-size:.72rem;color:var(--gray-500);margin-top:5px;line-height:1.4">' + escapeHtml(commHint) + '</div></div>';
     html += '<div><label style="' + lStyle + '">Lead Source</label><select class="closed-edit-field" data-field="source" style="' + iStyle + '"><option value="">Select source...</option>';
     leadSources.forEach(function (src) {
       html += '<option value="' + escapeHtml(src) + '"' + (src === t.source ? ' selected' : '') + '>' + escapeHtml(src) + '</option>';
@@ -1463,6 +1598,15 @@
 
     pageBody.innerHTML = html;
 
+    // Format the commission box as money while typing.
+    var commInput = document.getElementById('commissionInput');
+    if (commInput) {
+      commInput.addEventListener('input', function () {
+        var digits = commInput.value.replace(/[^0-9]/g, '');
+        commInput.value = digits ? '$' + parseInt(digits, 10).toLocaleString('en-US') : '';
+      });
+    }
+
     // Auto-save fields on change/blur
     var autoSaveTxnId = t.id;
     pageBody.querySelectorAll('.closed-edit-field').forEach(function (inp) {
@@ -1472,6 +1616,7 @@
         if (!field) return;
         var val = inp.value;
         if (field === 'price') val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
+        if (field === 'commission') val = parseCommissionInput(val);
         var update = {}; update[field] = val;
         Data.updateTransaction(autoSaveTxnId, update);
         showToast('Saved');
@@ -1528,7 +1673,8 @@
         break;
 
       case 'rank-metric':
-        rankMetric = target.getAttribute('data-metric') === 'volume' ? 'volume' : 'sales';
+        var wantMetric = target.getAttribute('data-metric');
+        rankMetric = (wantMetric === 'volume' || wantMetric === 'commission') ? wantMetric : 'sales';
         render();
         break;
 
@@ -1625,6 +1771,7 @@
           var field = f.getAttribute('data-field');
           var val = f.value;
           if (field === 'price') val = parseFloat(val.replace(/[^0-9.]/g, '')) || 0;
+          if (field === 'commission') val = parseCommissionInput(val);
           updates[field] = val;
         });
         Data.updateTransaction(editId, updates);

@@ -62,6 +62,7 @@ CREATE TABLE transactions (
   agent_name TEXT,
   source TEXT,
   close_date DATE,
+  commission NUMERIC(12,2), -- agent's exact take-home; NULL = not entered, UI estimates instead
   notes TEXT,
   metadata JSONB DEFAULT '{}', -- beds, baths, sqft stored here
   created_at TIMESTAMPTZ DEFAULT NOW(),

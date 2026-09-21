@@ -65,7 +65,7 @@ var ApiBridge = (function () {
   function mapTransactions(txns) {
     return txns.map(function (t) {
       var meta = t.metadata || {};
-      return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip, type: t.type, status: t.status, price: parseFloat(t.price) || 0, agent: t.agent_name, agentId: t.agent_id, source: t.source, closeDate: t.close_date, notes: t.notes, beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null, sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
+      return { id: t.id, address: t.address, city: t.city, state: t.state, zip: t.zip, type: t.type, status: t.status, price: parseFloat(t.price) || 0, agent: t.agent_name, agentId: t.agent_id, source: t.source, closeDate: t.close_date, commission: (t.commission == null ? null : parseFloat(t.commission)), notes: t.notes, beds: t.beds || meta.beds || null, baths: t.baths || meta.baths || null, sqft: t.sqft || meta.sqft || null, metadata: meta, createdAt: t.created_at };
     });
   }
   function mapListings(lsts) {
@@ -127,7 +127,7 @@ var ApiBridge = (function () {
             address: t.address, city: t.city || '', state: t.state || '', zip: t.zip || '',
             type: t.type || 'Buyer', status: t.status || 'pending',
             price: t.price || 0, agent_name: t.agent || '', source: t.source || '',
-            close_date: t.closeDate || null, notes: t.notes || ''
+            close_date: t.closeDate || null, commission: (t.commission == null ? null : t.commission), notes: t.notes || ''
           }).then(function (created) {
             if (created && created.id) t.server_id = created.id;
           }).catch(notifySyncError);
@@ -825,7 +825,7 @@ var ApiBridge = (function () {
                   status: t.status, price: t.price,
                   address: t.address, city: t.city || '', state: t.state || '', zip: t.zip || '',
                   type: t.type || 'Buyer', agent_name: t.agent || '', source: t.source || '',
-                  close_date: t.closeDate || null, notes: t.notes || ''
+                  close_date: t.closeDate || null, commission: (t.commission == null ? null : t.commission), notes: t.notes || ''
                 };
                 if (t.metadata) txnUpdate.metadata = t.metadata;
                 API.updateTransaction(t.id, txnUpdate).catch(notifySyncError);
@@ -931,6 +931,10 @@ var ApiBridge = (function () {
         if (uname && settings._tax_settings[uname]) {
           localStorage.setItem(PREFIX + 'tax_settings', JSON.stringify(settings._tax_settings[uname]));
         }
+        // Also keep the full { username: settings } map. The Wins page needs
+        // every agent's rate + split to value their deals for the ranking,
+        // not just the signed-in user's.
+        localStorage.setItem(PREFIX + 'tax_settings_all', JSON.stringify(settings._tax_settings));
       } catch (e) {}
     }
   }

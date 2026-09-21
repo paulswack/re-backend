@@ -384,6 +384,8 @@
       if (updates.agent !== undefined) mapped.agent_name = updates.agent;
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.closeDate !== undefined) mapped.close_date = updates.closeDate;
+      // null is meaningful here: it clears the override and returns the deal to an estimate.
+      if (updates.commission !== undefined) mapped.commission = updates.commission;
       if (updates.notes !== undefined) mapped.notes = updates.notes;
       // Store beds/baths/sqft in metadata JSONB since they're not separate columns
       if (updates.beds !== undefined || updates.baths !== undefined || updates.sqft !== undefined) {
