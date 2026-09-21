@@ -41,6 +41,15 @@ var API = (function () {
     return h;
   }
 
+  // Tell the two failure modes apart. Blaming the user's connection when the
+  // server or its database is down sends them hunting for a Wi-Fi problem.
+  function networkErrorMessage() {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return "You're offline — check your internet connection";
+    }
+    return 'Server unreachable — the back office may be temporarily down';
+  }
+
   function request(method, path, body) {
     var opts = { method: method, headers: headers() };
     if (body !== undefined) opts.body = JSON.stringify(body);
@@ -69,10 +78,12 @@ var API = (function () {
         return data;
       });
     }).catch(function (err) {
-      // Network errors (offline, server down, CORS)
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      // Network errors (offline, server down, CORS). Browsers word this
+      // differently — Chrome "Failed to fetch", Firefox "NetworkError...",
+      // Safari "Load failed" — so treat any TypeError from fetch as one.
+      if (err instanceof TypeError) {
         if (typeof showToast === 'function') {
-          showToast('Network error — check your connection', 'error');
+          showToast(networkErrorMessage(), 'error');
         }
       }
       return Promise.reject(err);

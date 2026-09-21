@@ -40,8 +40,12 @@ var ApiBridge = (function () {
     if ((now - (window._syncErrThrottle[label] || 0)) < 10000) return;
     window._syncErrThrottle[label] = now;
     if (typeof showToast === 'function') {
-      var detail = msg || 'connection problem';
-      showToast('⚠ Couldn\'t sync ' + label + ' to server: ' + detail + '. Try again or check your connection.', 'error');
+      var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+      var detail = msg || (offline ? 'no internet connection' : 'server unreachable');
+      var advice = offline
+        ? ' Your changes are saved locally and will sync when you reconnect.'
+        : ' Your changes are saved locally and will retry automatically.';
+      showToast('⚠ Couldn\'t sync ' + label + ' to server: ' + detail + '.' + advice, 'error');
     }
   }
   window.notifySyncError = notifySyncError;

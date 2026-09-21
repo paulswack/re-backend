@@ -52,6 +52,7 @@ app.use(express.static(path.join(__dirname, '..'), {
 }));
 
 const { requireAuth, requireActiveSubscription } = require('./lib/auth');
+const { getSupabase } = require('./lib/supabase');
 
 // API Routes — auth and portal are public, everything else requires auth + active subscription
 app.use('/api/auth', authRoutes);
@@ -74,16 +75,49 @@ app.use('/api/ai', requireAuth, requireActiveSubscription, aiRoutes);
 // Integrations: inbound webhook is token-authenticated inside the route (no JWT)
 app.use('/api/integrations', integrationRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check — actually probes the database. A paused or unreachable
+// Supabase project must report unhealthy here, otherwise an outage looks
+// like a green light and the frontend blames the user's network instead.
+app.get('/api/health', async (req, res) => {
+  const startedAt = Date.now();
+  try {
+    const probe = getSupabase()
+      .from('users')
+      .select('id', { head: true, count: 'exact' })
+      .limit(1);
+    // Don't let a hung socket hold the health check open forever.
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('database probe timed out')), 5000)
+    );
+    const { error } = await Promise.race([probe, timeout]);
+    if (error) throw new Error(error.message);
+    res.json({
+      status: 'ok',
+      database: 'up',
+      latencyMs: Date.now() - startedAt,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: 'degraded',
+      database: 'down',
+      error: err.message,
+      latencyMs: Date.now() - startedAt,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Unmatched /api/* — return 404 instead of falling through. Without this the
+// request never gets a response and the caller hangs until it times out, which
+// surfaces in the UI as a bogus "check your connection" error.
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'Not found: ' + req.method + ' ' + req.path });
 });
 
 // SPA fallback — serve index.html for non-API, non-file routes
 app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
-  }
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
