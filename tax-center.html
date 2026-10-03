@@ -261,6 +261,19 @@
             <input type="number" id="agentSplitCustom" value="100" style="display:none">
             <span id="agentSplitCustomPct"></span>
           </div>
+          <!-- Commission from closed deals: derived from the Wins page, not hand-entered -->
+          <div class="card" style="margin-bottom:20px;">
+            <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <h3 style="font-size:1rem;font-weight:700;color:var(--gray-900);">Commission from Closed Deals</h3>
+                <p style="font-size:.78rem;color:var(--gray-400);" id="commissionIncomeNote">Pulled automatically from your closed escrows.</p>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div id="commissionTotalBadge" style="font-size:1.1rem;font-weight:800;color:var(--emerald);"></div>
+              </div>
+            </div>
+            <div id="commissionIncomeList"></div>
+          </div>
           <div class="card" style="margin-bottom:20px;">
             <div style="padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;">
               <div>
@@ -548,6 +561,7 @@
   <script src="js/api-bridge.js?v=1788556000"></script>
   <script src="js/auth.js?v=1782002000"></script>
   <script src="js/data.js?v=1778010824"></script>
+  <script src="js/commission.js?v=1791049373764"></script>
   <script src="js/tax-center.js?v=1788468000"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

@@ -64,96 +64,18 @@
 
   function gci(price) { return (parseFloat(price) || 0) * COMMISSION_RATE; }
 
-  // ---- Commission -------------------------------------------------------
-  // Agents don't all earn the same slice: each has their own commission rate
-  // and their own broker split, so one flat rate can't value the team's deals.
-  // Resolution order for any deal, best source first:
-  //   1. the exact take-home the agent typed on that deal
-  //   2. that agent's own rate x split from their Tax Center
-  //   3. the team default from Admin Settings
-  //   4. the legacy flat rate
-  function taxSettingsByUser() {
-    try { return JSON.parse(localStorage.getItem('reb_tax_settings_all') || '{}'); } catch (e) { return {}; }
-  }
-
-  // Tax settings are keyed by username; deals record the agent's display name.
-  function taxSettingsForAgent(displayName) {
-    if (!displayName) return null;
-    var all = taxSettingsByUser();
-    var match = getUsersList().filter(function (u) {
-      return (u.displayName || u.username) === displayName;
-    })[0];
-    var uname = match && match.username;
-    if (uname && all[uname]) return all[uname];
-    // The signed-in user's own slot lives in its own key and stays freshest.
-    if (displayName === MY_NAME) {
-      try {
-        var mine = JSON.parse(localStorage.getItem('reb_tax_settings') || 'null');
-        if (mine) return mine;
-      } catch (e) {}
-    }
-    return null;
-  }
-
-  function rateSplitFor(displayName) {
-    var t = taxSettingsForAgent(displayName);
-    if (t && t.commissionRate > 0 && t.agentSplit > 0) {
-      return { rate: t.commissionRate, split: t.agentSplit, source: 'tax' };
-    }
-    var teamRate = parseFloat(getAdminSetting('general.defaultCommissionRate', 0)) || 0;
-    var teamSplit = parseFloat(getAdminSetting('general.defaultAgentSplit', 0)) || 0;
-    if (teamRate > 0 && teamSplit > 0) {
-      return { rate: teamRate, split: teamSplit, source: 'team' };
-    }
-    return { rate: COMMISSION_RATE, split: 1, source: 'legacy' };
-  }
-
-  function hasTypedCommission(t) {
-    return !!t && t.commission !== null && t.commission !== undefined && t.commission !== '';
-  }
-
-  // Where a deal's number came from — drives the "actual vs estimated"
-  // labelling so a projection is never mistaken for real pay.
-  function commissionSource(t) {
-    if (hasTypedCommission(t)) return 'actual';
-    return rateSplitFor(t && t.agent).source;
-  }
-
-  function dealCommission(t) {
-    if (!t) return 0;
-    if (hasTypedCommission(t)) {
-      var typed = parseFloat(t.commission);
-      if (!isNaN(typed)) return typed;
-    }
-    var rs = rateSplitFor(t.agent);
-    return (parseFloat(t.price) || 0) * rs.rate * rs.split;
-  }
-
-  function sumCommission(list) {
-    return (list || []).reduce(function (s, t) { return s + dealCommission(t); }, 0);
-  }
-
-  function countTyped(list) {
-    return (list || []).filter(hasTypedCommission).length;
-  }
-
-  // "9 of 12 actual" / "all 12 actual" / "all estimated" — one honest caption.
-  function accuracyNote(list) {
-    var total = (list || []).length;
-    if (!total) return '';
-    var typed = countTyped(list);
-    if (typed === 0) return 'all estimated';
-    if (typed === total) return 'all ' + total + ' actual';
-    return typed + ' of ' + total + ' actual';
-  }
-
-  // Parse "$18,750" -> 18750; empty -> null (clears the override).
-  function parseCommissionInput(v) {
-    var raw = String(v == null ? '' : v).replace(/[^0-9.]/g, '');
-    if (raw === '') return null;
-    var n = parseFloat(raw);
-    return isNaN(n) ? null : n;
-  }
+  // ---- Commission ----------------------------------------------------
+  // Resolution lives in js/commission.js so the Wins page and the Tax
+  // Center can never disagree about what a deal paid. These are thin
+  // aliases kept for readability at the call sites below.
+  function rateSplitFor(displayName) { return Commission.rateSplitFor(displayName); }
+  function hasTypedCommission(t) { return Commission.hasTyped(t); }
+  function commissionSource(t) { return Commission.source(t); }
+  function dealCommission(t) { return Commission.forDeal(t); }
+  function sumCommission(list) { return Commission.sum(list); }
+  function countTyped(list) { return Commission.countTyped(list); }
+  function accuracyNote(list) { return Commission.accuracyNote(list); }
+  function parseCommissionInput(v) { return Commission.parseInput(v); }
 
   // Compact money like $1.2M / $845K for tight spaces
   function compactMoney(n) {

@@ -125,6 +125,15 @@
     localStorage.setItem(PREFIX + 'tax_settings', JSON.stringify(s));
   }
 
+  // Deal addresses and agent names are user-entered, so escape before
+  // dropping them into innerHTML.
+  function escapeHtml(str) {
+    if (str == null) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   function generateId() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
@@ -752,6 +761,9 @@
     var trips = getMileageTrips();
 
     // Agent-level access control
+    var taxYear = new Date().getFullYear();
+    function inTaxYear(d) { return !!d && String(d).slice(0, 4) === String(taxYear); }
+
     // Prefer in-memory API user (always correct after login) over reb_session (can be stale)
     var apiUser = (typeof API !== 'undefined' && API.isLoggedIn()) ? API.getUser() : null;
     var taxSession = apiUser ? {
@@ -775,16 +787,34 @@
       trips = trips.filter(function (t) { return t.username === taxSession.username || (!t.username && taxSession.username === 'admin'); });
     }
 
-    // Manual income only
+    // Commission earned on closed deals is this agent's real income. It used to
+    // be missing entirely, so Net Profit and the tax estimates below were built
+    // on referrals and bonuses alone — a fraction of what they actually made.
+    // A Team Lead may be viewing one agent or the whole team; match that.
+    var commissionUser = isLead ? (selectedTaxAgent || 'all') : taxSession.username;
+    var commissionRows = Commission.incomeRows(commissionUser, taxYear);
+    var commissionTotal = commissionRows.reduce(function (sum, r) { return sum + r.amount; }, 0);
+
+    // These cards are labelled year-to-date, so scope them to the tax year.
+    // The tab renderers below still receive the unfiltered lists, and the
+    // Reports tab does its own filtering from its year picker.
+    var ytdEntries = entries.filter(function (e) { return inTaxYear(e.date); });
+    var ytdTrips = trips.filter(function (t) { return inTaxYear(t.date); });
+
     var incomeEntries = entries.filter(function (e) { return e.type === 'income'; });
-    var totalIncome = incomeEntries.reduce(function (sum, e) { return sum + (e.amount || 0); }, 0);
+    var manualIncome = ytdEntries
+      .filter(function (e) { return e.type === 'income'; })
+      .reduce(function (sum, e) { return sum + (e.amount || 0); }, 0);
+    var totalIncome = manualIncome + commissionTotal;
 
     // Expenses
     var expenseEntries = entries.filter(function (e) { return e.type === 'expense'; });
-    var totalExpenses = expenseEntries.reduce(function (sum, e) { return sum + (e.amount || 0); }, 0);
+    var totalExpenses = ytdEntries
+      .filter(function (e) { return e.type === 'expense'; })
+      .reduce(function (sum, e) { return sum + (e.amount || 0); }, 0);
 
     // Mileage deduction
-    var totalMiles = trips.reduce(function (sum, t) { return sum + (t.miles || 0); }, 0);
+    var totalMiles = ytdTrips.reduce(function (sum, t) { return sum + (t.miles || 0); }, 0);
     var mileageDeduction = totalMiles * IRS_MILEAGE_RATE;
 
     var totalDeductions = totalExpenses + mileageDeduction;
@@ -820,10 +850,10 @@
       buildStatCard('violet', '<path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>', Data.formatCurrencyFull(ytdSavingsNeeded), 'YTD Savings Needed');
 
     // ========== OVERVIEW TAB ==========
-    renderOverview(entries, trips, totalIncome, totalExpenses, mileageDeduction, netProfit);
+    renderOverview(entries, trips, totalIncome, totalExpenses, mileageDeduction, netProfit, commissionRows);
 
     // ========== INCOME TAB ==========
-    renderIncome(incomeEntries);
+    renderIncome(incomeEntries, commissionRows, commissionUser);
 
     // ========== EXPENSES TAB ==========
     renderExpenses(expenseEntries, totalExpenses);
@@ -843,7 +873,7 @@
   }
 
   // ========== OVERVIEW ==========
-  function renderOverview(entries, trips, totalIncome, totalExpenses, mileageDeduction, netProfit) {
+  function renderOverview(entries, trips, totalIncome, totalExpenses, mileageDeduction, netProfit, commissionRows) {
     // Bar chart: last 6 months income vs expenses
     var now = new Date();
     var months = [];
@@ -870,6 +900,14 @@
       if (e.type === 'expense' && monthlyExpense[key] !== undefined) {
         monthlyExpense[key] += (e.amount || 0);
       }
+    });
+
+    // Commission lands in the month the deal closed.
+    (commissionRows || []).forEach(function (r) {
+      if (!r.date) return;
+      var d = new Date(r.date);
+      var key = d.getFullYear() + '-' + d.getMonth();
+      if (monthlyIncome[key] !== undefined) monthlyIncome[key] += r.amount;
     });
 
     var maxVal = 1;
@@ -952,9 +990,57 @@
   }
 
   // ========== INCOME ==========
-  function renderIncome(incomeEntries) {
+  function renderIncome(incomeEntries, commissionRows, commissionUser) {
+    commissionRows = commissionRows || [];
     var manualTotal = incomeEntries.reduce(function (s, e) { return s + (e.amount || 0); }, 0);
     document.getElementById('incomeTotalBadge').textContent = '+' + Data.formatCurrencyFull(manualTotal);
+
+    // ---- Commission from closed deals (derived, never hand-edited) ----
+    var commTotal = commissionRows.reduce(function (s, r) { return s + r.amount; }, 0);
+    var commBadge = document.getElementById('commissionTotalBadge');
+    if (commBadge) commBadge.textContent = '+' + Data.formatCurrencyFull(commTotal);
+
+    var estimatedCount = commissionRows.filter(function (r) { return r.estimated; }).length;
+    var noteEl = document.getElementById('commissionIncomeNote');
+    if (noteEl) {
+      if (!commissionRows.length) {
+        noteEl.textContent = 'Closed deals will appear here automatically.';
+      } else if (estimatedCount === 0) {
+        noteEl.textContent = commissionRows.length + ' closed deal' + (commissionRows.length === 1 ? '' : 's') +
+          ' in ' + new Date().getFullYear() + ' · every amount is your entered take-home.';
+      } else {
+        noteEl.textContent = commissionRows.length + ' closed deal' + (commissionRows.length === 1 ? '' : 's') +
+          ' in ' + new Date().getFullYear() + ' · ' + estimatedCount + ' still estimated. ' +
+          'Enter your exact take-home on the deal to make this precise.';
+      }
+    }
+
+    var commList = document.getElementById('commissionIncomeList');
+    if (commList) {
+      if (!commissionRows.length) {
+        commList.innerHTML = '<div class="empty-state" style="padding:30px 20px;">' +
+          '<h3>No closed deals yet</h3><p>Commission is pulled in automatically when a deal closes.</p></div>';
+      } else {
+        commList.innerHTML = commissionRows.map(function (r) {
+          var tag = r.estimated
+            ? '<span style="font-size:.68rem;font-weight:700;color:var(--amber);background:rgba(245,158,11,.12);padding:2px 7px;border-radius:99px;margin-left:6px;">EST.</span>'
+            : '';
+          return '<div class="expense-row">' +
+            '<div class="expense-cat-dot" style="background:var(--emerald);"></div>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:.88rem;font-weight:600;color:var(--gray-800);">' + escapeHtml(r.address) + tag + '</div>' +
+              '<div style="font-size:.75rem;color:var(--gray-400);">Closed ' + Data.formatDate(r.date) +
+                ' &middot; ' + Data.formatCurrencyFull(r.price) + ' sale' +
+                (r.agent ? ' &middot; ' + escapeHtml(r.agent) : '') + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<div style="font-size:.92rem;font-weight:700;color:var(--emerald);">+' + Data.formatCurrencyFull(r.amount) + '</div>' +
+              '<a class="btn btn-outline btn-sm" href="closed.html" style="padding:4px 8px;">View</a>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
 
     // Manual income
     var manualList = document.getElementById('manualIncomeList');
@@ -989,6 +1075,9 @@
         if (e.date && e.date.startsWith(key)) {
           manualInc += (e.amount || 0);
         }
+      });
+      commissionRows.forEach(function (r) {
+        if (r.date && String(r.date).startsWith(key)) manualInc += r.amount;
       });
       monthData.push({ label: MONTH_NAMES[i], total: manualInc });
     }
@@ -1196,7 +1285,17 @@
     var yearEntries = entries.filter(function (e) { return e.date && e.date.startsWith(String(year)); });
     var yearTrips = trips.filter(function (t) { return t.date && t.date.startsWith(String(year)); });
 
-    var totalIncome = yearEntries.filter(function (e) { return e.type === 'income'; }).reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+    var manualIncome = yearEntries.filter(function (e) { return e.type === 'income'; }).reduce(function (s, e) { return s + (e.amount || 0); }, 0);
+
+    // Commission for the selected report year, for whichever agent is in view.
+    var reportUser = (typeof selectedTaxAgent !== 'undefined' && selectedTaxAgent) ? selectedTaxAgent : 'all';
+    if (!Auth.isPrivileged()) {
+      var rptSession = Auth.getSession() || {};
+      reportUser = rptSession.username || reportUser;
+    }
+    var reportCommissionDeals = Commission.closedDeals(reportUser, year);
+    var commissionIncome = Commission.sum(reportCommissionDeals);
+    var totalIncome = manualIncome + commissionIncome;
 
     // Expenses by category
     var yearExpenses = yearEntries.filter(function (e) { return e.type === 'expense'; });
@@ -1217,7 +1316,15 @@
 
     // Schedule C Preview
     var schedC = document.getElementById('scheduleCPreview');
-    var rows = '<div class="sched-c-row"><div class="sched-c-label">Income (referrals, bonuses, other)</div><div class="sched-c-value">' + Data.formatCurrencyFull(totalIncome) + '</div></div>';
+    var rows = '';
+    if (commissionIncome > 0 || reportCommissionDeals.length) {
+      var accuracy = Commission.accuracyNote(reportCommissionDeals);
+      rows += '<div class="sched-c-row"><div class="sched-c-label">Commission income (' +
+        reportCommissionDeals.length + ' closing' + (reportCommissionDeals.length === 1 ? '' : 's') +
+        (accuracy ? ' &middot; ' + accuracy : '') +
+        ')</div><div class="sched-c-value">' + Data.formatCurrencyFull(commissionIncome) + '</div></div>';
+    }
+    rows += '<div class="sched-c-row"><div class="sched-c-label">Other income (referrals, bonuses)</div><div class="sched-c-value">' + Data.formatCurrencyFull(manualIncome) + '</div></div>';
     rows += '<div class="sched-c-row total"><div class="sched-c-label">Total Gross Income</div><div class="sched-c-value" style="color:var(--emerald);">' + Data.formatCurrencyFull(totalIncome) + '</div></div>';
     rows += '<div style="height:16px;"></div>';
     rows += '<div style="font-size:.82rem;font-weight:700;color:var(--gray-500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Expenses</div>';
