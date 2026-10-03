@@ -1139,8 +1139,8 @@
       case 'sidebar-order': return ((settings.sidebarOrder || []).length ? settings.sidebarOrder.map(function(p) { return { page: p }; }) : [
         {page:'closed.html'},{page:'deal-room.html'},
         {page:'tax-center.html'},{page:'meeting-notes.html'},{page:'marketing.html'},
-        {page:'knowledge-base.html'},{page:'recruiting.html'},{page:'bold100.html'}
-      ]).filter(function (it) { return it.page !== 'vendors.html'; });
+        {page:'knowledge-base.html'},{page:'recruiting.html'}
+      ]).filter(function (it) { return it.page !== 'vendors.html' && it.page !== 'bold100.html'; });
       default: return null;
     }
   }
@@ -1426,8 +1426,7 @@
       { page: 'meeting-notes.html', label: 'Monthly Meeting 1-1' },
       { page: 'marketing.html', label: 'Marketing' },
       { page: 'knowledge-base.html', label: 'Knowledge Base' },
-      { page: 'recruiting.html', label: 'Recruiting' },
-      { page: 'bold100.html', label: 'Bold 100' }
+      { page: 'recruiting.html', label: 'Recruiting' }
     ];
     var savedOrder = settings.sidebarOrder || [];
     // Build ordered list: saved order first, then any new pages

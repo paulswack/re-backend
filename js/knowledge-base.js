@@ -257,7 +257,7 @@
         { title: 'FSBO & Expired Listing Strategies', type: 'Read', description: 'Study the FSBO and Expired scripts. Understand the psychology — they\'re frustrated, not hostile. You\'re offering help.', videoUrl: '' },
         { title: 'Create Your Weekly Prospecting Schedule', type: 'Do', description: 'Block 2 hours every morning for prospecting. Map out which days you\'ll focus on: sphere calls, FSBOs, expireds, door knocking, and follow-ups.', videoUrl: '' },
         { title: 'Social Media Lead Gen Strategy', type: 'Read', description: 'Learn how to generate leads from Instagram, Facebook, and LinkedIn without being salesy. Focus on value-first content.', videoUrl: '' },
-        { title: 'Track Your Numbers', type: 'Do', description: 'Start tracking your daily prospecting numbers in Bold 100: calls made, contacts reached, appointments set. What gets measured gets managed.', videoUrl: '' },
+        { title: 'Track Your Numbers', type: 'Do', description: 'Start tracking your daily prospecting numbers: calls made, contacts reached, appointments set. What gets measured gets managed.', videoUrl: '' },
         { title: 'Complete the 5-Day Challenge', type: 'Do', description: 'For 5 consecutive days: make 20 prospecting calls, send 10 follow-up texts, and post 1 piece of content on social media. Log everything.', videoUrl: '' }
       ] },
 

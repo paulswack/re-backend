@@ -372,7 +372,6 @@ var ApiBridge = (function () {
         }
       }).catch(notifySyncError),
       API.getRecruits().then(function (d) { if (d && d.length > 0) localStorage.setItem(PREFIX + 'recruits', JSON.stringify(d)); }).catch(notifySyncError),
-      API.getBold100().then(function (d) { localStorage.setItem(PREFIX + 'bold100', JSON.stringify(d)); }).catch(notifySyncError),
       API.getNotifications().then(function (d) { localStorage.setItem(PREFIX + 'notifications', JSON.stringify(d)); }).catch(notifySyncError)
     ];
 
@@ -572,13 +571,6 @@ var ApiBridge = (function () {
       if (key === PREFIX + 'marketing') {
         debounceSync('marketing', function () {
           try { API.updateSettings({ _marketing: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
-        }, 500);
-      }
-
-      // Bold 100
-      if (key === PREFIX + 'bold100') {
-        debounceSync('bold100', function () {
-          try { API.updateSettings({ _bold100: JSON.parse(value) }).catch(notifySyncError); } catch (e) {}
         }, 500);
       }
 
@@ -901,7 +893,7 @@ var ApiBridge = (function () {
 
     var keys = [
       '_marketing:marketing',
-      '_bold100:bold100', '_review_requests:review_requests', '_review_scorecard:review_scorecard',
+      '_review_requests:review_requests', '_review_scorecard:review_scorecard',
       '_review_links:review_links', '_review_templates:review_templates',
       '_agent_goals:agent_goals', '_checklist_templates:checklist_templates',
       '_deal_checklists:deal_checklists', '_txn_updates:txn_updates', '_lst_updates:lst_updates',

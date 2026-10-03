@@ -348,21 +348,6 @@ CREATE TABLE vendors (
 );
 
 -- ============================================================
--- BOLD 100 (contact tracking)
--- ============================================================
-CREATE TABLE bold100_contacts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  sprint_key TEXT NOT NULL, -- e.g. 2026-03-31
-  contact_name TEXT,
-  contact_type TEXT, -- call, text, email, in_person
-  day_number INTEGER,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================================
 -- KNOWLEDGE BASE
 -- ============================================================
 CREATE TABLE knowledge_articles (
@@ -439,7 +424,6 @@ ALTER TABLE meeting_action_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vendors ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bold100_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE knowledge_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recruits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;

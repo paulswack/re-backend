@@ -281,13 +281,6 @@ var API = (function () {
   }
   function upsertAgentGoal(data) { return post('/misc/agent-goals', data); }
 
-  function getBold100(params) {
-    var qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return get('/misc/bold100' + qs);
-  }
-  function createBold100(data) { return post('/misc/bold100', data); }
-  function deleteBold100(id) { return del('/misc/bold100/' + id); }
-
   function getKnowledge() { return get('/misc/knowledge'); }
   function createKnowledge(data) { return post('/misc/knowledge', data); }
   function updateKnowledge(id, data) { return put('/misc/knowledge/' + id, data); }
@@ -423,7 +416,6 @@ var API = (function () {
     getMeetingNotes: getMeetingNotes, createMeetingNote: createMeetingNote,
     updateMeetingNote: updateMeetingNote, deleteMeetingNote: deleteMeetingNote,
     getAgentGoals: getAgentGoals, upsertAgentGoal: upsertAgentGoal,
-    getBold100: getBold100, createBold100: createBold100, deleteBold100: deleteBold100,
     getKnowledge: getKnowledge, createKnowledge: createKnowledge,
     updateKnowledge: updateKnowledge, deleteKnowledge: deleteKnowledge,
     getRecruits: getRecruits, createRecruit: createRecruit,
