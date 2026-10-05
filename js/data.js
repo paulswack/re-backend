@@ -16,6 +16,17 @@
     localStorage.setItem(PREFIX + key, JSON.stringify(arr));
   }
 
+  // Postgres date columns reject an empty string (error 22007), and the UI
+  // uses '' for "no date yet" all over the place — a blank Close Date on a new
+  // escrow, or clearing it when moving a deal back to pending. Sending that
+  // straight through made the server reject the whole write, so the record
+  // lived only in localStorage and vanished on the next sync.
+  function dateOrNull(v) {
+    if (v === undefined || v === null) return null;
+    var str = String(v).trim();
+    return str === '' ? null : str;
+  }
+
   function generateId() {
     return Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
@@ -349,11 +360,19 @@
     var result = txns.add(item); // save locally first for instant UI
     window._suppressTxnSync = false;
     if (isServerMode() && result) {
+      // beds/baths/sqft have no columns of their own; they live in metadata.
+      // This used to send an empty object, so a new escrow lost them as soon
+      // as the server copy was fetched back over the local one.
+      var createMeta = {};
+      if (item.beds !== undefined && item.beds !== null) createMeta.beds = item.beds;
+      if (item.baths !== undefined && item.baths !== null) createMeta.baths = item.baths;
+      if (item.sqft !== undefined && item.sqft !== null) createMeta.sqft = item.sqft;
       var p = API.createTransaction({
         address: item.address, city: item.city, state: item.state, zip: item.zip,
         type: item.type, status: item.status, price: item.price,
-        agent_name: item.agent, source: item.source, close_date: item.closeDate,
-        notes: item.notes, metadata: {}
+        agent_name: item.agent, source: item.source, close_date: dateOrNull(item.closeDate),
+        notes: item.notes, commission: (item.commission == null ? null : item.commission),
+        metadata: createMeta
       }).then(function (serverItem) {
         // Store server ID without replacing local ID (local ID is used for navigation)
         var items = getCollection('transactions');
@@ -383,7 +402,7 @@
       if (updates.price !== undefined) mapped.price = updates.price;
       if (updates.agent !== undefined) mapped.agent_name = updates.agent;
       if (updates.source !== undefined) mapped.source = updates.source;
-      if (updates.closeDate !== undefined) mapped.close_date = updates.closeDate;
+      if (updates.closeDate !== undefined) mapped.close_date = dateOrNull(updates.closeDate);
       // null is meaningful here: it clears the override and returns the deal to an estimate.
       if (updates.commission !== undefined) mapped.commission = updates.commission;
       if (updates.notes !== undefined) mapped.notes = updates.notes;
@@ -437,7 +456,7 @@
         agent_name: item.agent,
         beds: item.beds, baths: item.baths, sqft: item.sqft,
         description: item.description, source: item.source,
-        listing_date: item.listingDate, property_type: item.propertyType || '',
+        listing_date: dateOrNull(item.listingDate), property_type: item.propertyType || '',
         parties: partyRows.length > 0 ? partyRows : undefined
       }).then(function (serverItem) {
         var items = getCollection('listings');
@@ -494,7 +513,7 @@
       if (updates.sqft !== undefined) mapped.sqft = updates.sqft;
       if (updates.description !== undefined) mapped.description = updates.description;
       if (updates.source !== undefined) mapped.source = updates.source;
-      if (updates.listingDate !== undefined) mapped.listing_date = updates.listingDate;
+      if (updates.listingDate !== undefined) mapped.listing_date = dateOrNull(updates.listingDate);
       if (updates.propertyType !== undefined) mapped.property_type = updates.propertyType;
       var pLst = API.updateListing(apiId, mapped);
       pLst.catch(function (err) { (window.notifySyncError || console.error)('Listing', err); });

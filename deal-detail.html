@@ -13,6 +13,12 @@
     (function() {
       var id = window._forceDetailId;
       if (!id) return;
+      // Demo mode has no JWT by design. Without this check the guard below
+      // bounced every deal click to login.html, which then sent the visitor
+      // back to the Dashboard -- so no deal could be opened in a demo at all.
+      try {
+        if (localStorage.getItem('reb_demo_mode') === 'true') return;
+      } catch (e) {}
       var token = localStorage.getItem('reb_jwt');
       if (!token) { window.location.href = 'login.html'; return; }
       try { var p = JSON.parse(atob(token.split('.')[1])); if (p.exp && p.exp * 1000 < Date.now()) { localStorage.removeItem('reb_jwt'); window.location.href = 'login.html'; return; } } catch(e) {}

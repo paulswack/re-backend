@@ -662,8 +662,14 @@
       render();
     });
   } else {
-    // Not logged in via API — show message
-    pageBody.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-500)"><p>Please log out and log back in to refresh your data.</p><a href="login.html" style="color:var(--indigo);font-weight:600">Go to Login</a></div>';
+    // No API session: demo mode, file://, or an expired token. render() above
+    // already drew whatever is in local storage, so don't blow that away —
+    // doing so blanked the whole Deal Room in demo mode. Only point the user
+    // at logging back in when there is genuinely nothing to show.
+    var hasLocalData = (Data.getListings().length + Data.getTransactions().length) > 0;
+    if (!hasLocalData) {
+      pageBody.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-500)"><p>Please log out and log back in to refresh your data.</p><a href="login.html" style="color:var(--indigo);font-weight:600">Go to Login</a></div>';
+    }
   }
 
   document.addEventListener('apiBridgeReady', function () {

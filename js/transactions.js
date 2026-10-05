@@ -469,6 +469,12 @@
     html += '<div class="form-group"><label>Baths</label><input type="number" id="fBaths" value="' + (t && t.baths ? t.baths : '') + '" placeholder="—" min="0" step="0.5" style="padding:12px 16px"></div>';
     html += '<div class="form-group"><label>Sq Ft</label><input type="number" id="fSqft" value="' + (t && t.sqft ? t.sqft : '') + '" placeholder="—" min="0" style="padding:12px 16px"></div>';
     html += '</div>';
+    var fTypeVal = (t && t.type) || 'Buyer';
+    html += '<div class="form-group"><label>Representing</label><select id="fType" style="padding:12px 16px">' +
+      ['Buyer', 'Seller', 'Dual'].map(function (opt) {
+        return '<option value="' + opt + '"' + (fTypeVal === opt ? ' selected' : '') + '>' + opt + '</option>';
+      }).join('') +
+      '</select></div>';
     html += '<div class="form-group"><label>Notes</label><textarea id="fNotes" rows="2" placeholder="Additional details..." style="padding:12px 16px">' + escapeHtml(t ? t.notes || '' : '') + '</textarea></div>';
     html += '</div></div>';
 
@@ -752,14 +758,35 @@
 
     if (!t) {
       if (viewMode === 'detail' && selectedTxnId) {
+        // The deal is not in local data yet. Usually that means a server fetch
+        // is still in flight, but it can also mean the save never landed or the
+        // deal was deleted elsewhere. This used to sit on "Loading deal..."
+        // forever with no way out, so: always offer an escape hatch, and stop
+        // claiming to load once it is clear nothing is coming.
+        var stillWaiting = _dealLoadWaited < DEAL_LOAD_TIMEOUT_MS;
         pageBody.innerHTML = '<div style="text-align:center;padding:60px 20px">' +
-          '<div style="font-size:1rem;color:var(--gray-500);margin-bottom:8px">Loading deal...</div></div>';
+          (stillWaiting
+            ? '<div style="font-size:1rem;color:var(--gray-500);margin-bottom:16px">Loading deal...</div>'
+            : '<div style="font-size:1rem;font-weight:700;color:var(--gray-800);margin-bottom:6px">Could not load this deal</div>' +
+              '<div style="font-size:.86rem;color:var(--gray-500);margin-bottom:18px">It may have been deleted, or the save did not reach the server. Open it again from the Deal Room.</div>') +
+          '<a href="deal-room.html" style="display:inline-block;padding:9px 18px;background:var(--indigo);color:#fff;border-radius:8px;font-size:.85rem;font-weight:600;text-decoration:none">Back to Deal Room</a>' +
+          '</div>';
+        if (stillWaiting && !_dealLoadTimer) {
+          _dealLoadTimer = setTimeout(function () {
+            _dealLoadTimer = null;
+            _dealLoadWaited = DEAL_LOAD_TIMEOUT_MS;
+            render();
+          }, DEAL_LOAD_TIMEOUT_MS);
+        }
         return;
       }
       viewMode = 'list';
       renderList();
       return;
     }
+    // Found it, so reset the wait for the next lookup.
+    if (_dealLoadTimer) { clearTimeout(_dealLoadTimer); _dealLoadTimer = null; }
+    _dealLoadWaited = 0;
 
     var parties = getParties();
     var txnParties = parties[selectedTxnId] || {};
@@ -809,7 +836,11 @@
     var _txnStatusLabel = _txnStatusLabels[t.status] || t.status;
     var zillowUrl = 'https://www.zillow.com/homes/' + encodeURIComponent((t.address || '') + (t.city ? ', ' + t.city : '') + (t.state ? ', ' + t.state : '')) + '_rb/';
 
-    var _txnStages = ['active', 'pending', 'closed'];
+    var DEAL_LOAD_TIMEOUT_MS = 6000;
+  var _dealLoadTimer = null;
+  var _dealLoadWaited = 0;
+
+  var _txnStages = ['active', 'pending', 'closed'];
     var _currentStageIdx = _txnStages.indexOf(t.status);
     if (_currentStageIdx < 0) _currentStageIdx = 0;
     var _activeTab = sessionStorage.getItem('reb_detail_tab_txn') || 'details';
@@ -1594,6 +1625,10 @@
           zip: (document.getElementById('fZip') || {}).value ? document.getElementById('fZip').value.trim() : '',
           price: parseFloat(fPrice),
           agent: fAgent,
+          // Without this every escrow silently took the server default of
+          // "Buyer", so seller-side deals showed a BUYER badge in the Deal
+          // Room and could not be corrected until after they closed.
+          type: (document.getElementById('fType') || {}).value || 'Buyer',
           status: (document.getElementById('fStatus') || {}).value || 'active',
           closeDate: (document.getElementById('fCloseDate') || {}).value || '',
           notes: (document.getElementById('fNotes') || {}).value.trim(),
