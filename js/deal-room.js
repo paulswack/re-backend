@@ -636,6 +636,7 @@
             status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id,
             beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description,
             source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
+            metadata: l.metadata || {}, openHouses: ((l.metadata || {}).openHouses) || [],
             createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
         });
         window._suppressLstSync = true;
@@ -694,6 +695,7 @@
             status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id,
             beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description,
             source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '',
+            metadata: l.metadata || {}, openHouses: ((l.metadata || {}).openHouses) || [],
             createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
         });
         window._suppressLstSync = true;

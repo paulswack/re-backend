@@ -70,7 +70,7 @@ var ApiBridge = (function () {
   }
   function mapListings(lsts) {
     return lsts.map(function (l) {
-      return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '', status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id, beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description, source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '', createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
+      return { id: l.id, address: l.address, city: l.city || '', state: l.state || '', zip: l.zip || '', status: l.status, price: parseFloat(l.price) || 0, agent: l.agent_name, agentId: l.agent_id, beds: l.beds, baths: l.baths, sqft: l.sqft, description: l.description, source: l.source, listingDate: l.listing_date, propertyType: l.property_type || '', metadata: l.metadata || {}, openHouses: ((l.metadata || {}).openHouses) || [], createdAt: l.created_at, updatedAt: l.updated_at || l.created_at };
     });
   }
   function mapAnnouncements(anns) {

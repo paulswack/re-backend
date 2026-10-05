@@ -387,7 +387,22 @@
     return result;
   }
 
+  // Fields serverUpdateTransaction knows how to send. Anything else is saved
+  // locally and never reaches the server, which looks like a successful save
+  // until the next sync overwrites it - exactly how the "Listed" date on an
+  // escrow silently lost edits. Warn instead of failing quietly.
+  var MAPPED_TXN_FIELDS = [
+    'address', 'city', 'state', 'zip', 'type', 'status', 'price', 'agent',
+    'source', 'closeDate', 'commission', 'notes', 'beds', 'baths', 'sqft',
+    'metadata', 'parties', 'id', 'server_id', 'createdAt', 'updatedAt'
+  ];
+
   function serverUpdateTransaction(id, updates) {
+    Object.keys(updates || {}).forEach(function (k) {
+      if (MAPPED_TXN_FIELDS.indexOf(k) === -1) {
+        console.warn('[Data] updateTransaction: "' + k + '" has no server mapping - saved locally only and will be lost on the next sync.');
+      }
+    });
     var result = txns.update(id, updates);
     if (isServerMode() && result) {
       var item = txns.getAll().find(function (i) { return i.id === id; });
@@ -457,6 +472,7 @@
         beds: item.beds, baths: item.baths, sqft: item.sqft,
         description: item.description, source: item.source,
         listing_date: dateOrNull(item.listingDate), property_type: item.propertyType || '',
+        metadata: Array.isArray(item.openHouses) && item.openHouses.length ? { openHouses: item.openHouses } : {},
         parties: partyRows.length > 0 ? partyRows : undefined
       }).then(function (serverItem) {
         var items = getCollection('listings');
@@ -514,6 +530,15 @@
       if (updates.description !== undefined) mapped.description = updates.description;
       if (updates.source !== undefined) mapped.source = updates.source;
       if (updates.listingDate !== undefined) mapped.listing_date = dateOrNull(updates.listingDate);
+      // openHouses has no column of its own; it rides in metadata. Merge so we
+      // never drop other metadata keys that are already on the record.
+      if (updates.openHouses !== undefined) {
+        var lstMetaItem = listings.getAll().find(function (i) { return i.id === id; });
+        var lstMeta = (lstMetaItem && lstMetaItem.metadata) ? JSON.parse(JSON.stringify(lstMetaItem.metadata)) : {};
+        lstMeta.openHouses = Array.isArray(updates.openHouses) ? updates.openHouses : [];
+        mapped.metadata = lstMeta;
+        listings.update(id, { metadata: lstMeta });
+      }
       if (updates.propertyType !== undefined) mapped.property_type = updates.propertyType;
       var pLst = API.updateListing(apiId, mapped);
       pLst.catch(function (err) { (window.notifySyncError || console.error)('Listing', err); });

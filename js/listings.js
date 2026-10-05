@@ -1211,7 +1211,9 @@
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Status</div><div class="dd-fact-value"><select class="ie-field" data-field="status">' + _lstDetailStatuses.map(function (s) { return '<option value="' + s.key + '"' + (l.status === s.key ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select></div></div>';
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Agent</div><div class="dd-fact-value"><select class="ie-field" data-field="agent">' + users.map(function(u) { return '<option value="' + escapeHtml(u.displayName) + '"' + (u.displayName === l.agent ? ' selected' : '') + '>' + escapeHtml(u.displayName) + '</option>'; }).join('') + '</select></div></div>';
     html += '<div class="dd-fact-row"><div class="dd-fact-label">Source</div><div class="dd-fact-value"><select class="ie-field" data-field="source"><option value=""' + (!l.source ? ' selected' : '') + '>—</option>' + _lstDetailSources.map(function (s) { return '<option value="' + escapeHtml(s) + '"' + (l.source === s ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('') + '</select></div></div>';
-    html += '<div class="dd-fact-row"><div class="dd-fact-label">Listed</div><div class="dd-fact-value"><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '"></div></div>';
+    if (!l._isTxn) {
+      html += '<div class="dd-fact-row"><div class="dd-fact-label">Listed</div><div class="dd-fact-value"><input type="date" class="ie-field" data-field="listingDate" value="' + (l.listingDate || '') + '"></div></div>';
+    }
 
     // Days on market
     if (l.listingDate) {
@@ -1617,22 +1619,24 @@
       coeDateInput.addEventListener('change', function () {
         var dateVal = this.value;
         var txnId = this.getAttribute('data-txn-id');
-        if (!txnId || !dateVal) return;
-        var token = localStorage.getItem('reb_jwt');
-        if (!token) { window.location.href = 'login.html'; return; }
-        try {
-          var xhr = new XMLHttpRequest();
-          xhr.open('PUT', '/api/transactions/' + txnId, false);
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-          xhr.send(JSON.stringify({ close_date: dateVal }));
-          if (xhr.status === 200) {
-            Data.updateTransaction(txnId, { closeDate: dateVal });
-            showToast('Close date saved');
-          } else if (xhr.status === 401) {
-            window.location.href = 'login.html';
-          }
-        } catch (e) {}
+        if (!txnId) return;
+        // This used to fire its own synchronous XHR, which froze the tab until
+        // the server answered, swallowed every error in an empty catch, and
+        // ignored a cleared date entirely. Go through the data layer like every
+        // other field so the write is async, empty becomes NULL rather than a
+        // value Postgres rejects, and failures actually surface.
+        var coeRes = Data.updateTransaction(txnId, { closeDate: dateVal });
+        if (!coeRes) { showToast('Could not find that escrow to update.', 'error'); return; }
+        if (coeRes._serverSync) {
+          coeRes._serverSync.then(function () {
+            showToast(dateVal ? 'Close date saved' : 'Close date cleared');
+          }).catch(function (err) {
+            var detail = (err && (err.error || err.message)) || 'server error';
+            showToast('Could not save the close date: ' + detail + '. Your change is still here - try again.', 'error');
+          });
+        } else {
+          showToast(dateVal ? 'Close date saved' : 'Close date cleared');
+        }
       });
     }
 
